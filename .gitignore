@@ -36,3 +36,11 @@ run_named_tunnel.bat
 create_task.bat
 start_agentx.bat
 python-installer.exe
+*.exe
+*.zip
+*.log
+*.bak
+logs/
+__pycache__/
+*.pyc
+python-installer.exe
