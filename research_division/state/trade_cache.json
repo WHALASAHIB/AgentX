@@ -1,5 +1,5 @@
 {
-  "cached_at": "2026-06-18T12:12:42.935418",
+  "cached_at": "2026-06-18T16:21:57.718674",
   "count": 769,
   "trades": [
     {
@@ -8,14 +8,14 @@
       "type": "BUY",
       "volume": 0.1,
       "entry_price": 160.911,
-      "exit_price": null,
+      "exit_price": 160.838,
       "open_time": "2026-06-18 14:30",
-      "close_time": "OPEN",
-      "profit": 0.0,
+      "close_time": "2026-06-18 15:21",
+      "profit": -4.54,
       "swap": 0.0,
       "commission": 0.0,
-      "net_profit": 0.0,
-      "duration": "",
+      "net_profit": -4.54,
+      "duration": "0h 51m",
       "magic": 780004,
       "comment": "MSB_SMA"
     },

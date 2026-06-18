@@ -11,10 +11,13 @@
       "description": "Low WR",
       "current_value": 0.22,
       "target_value": 0.55,
-      "status": "pending",
+      "status": "failed",
       "impact_score": 0.15,
       "category": "change_strategy",
-      "effort_hours": 8
+      "effort_hours": 8,
+      "results": {
+        "score": 0.7023
+      }
     }
   ],
   "backlog": [],

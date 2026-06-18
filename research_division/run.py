@@ -289,6 +289,10 @@ def phase_innovate_deploy(sprint_result: Dict[str, Any]) -> Dict[str, Any]:
 
             logger.info(f"Innovating: {pair}/{strategy} — {issue}")
 
+            # Mark item as in_progress
+            if hasattr(sprint_mgr, 'update_sprint_item'):
+                sprint_mgr.update_sprint_item(item.get("id"), "in_progress")
+
             # Get KPIs for this pair/strategy
             reports = analytics.generate_all_reports(
                 {"trades": trades},
@@ -330,6 +334,8 @@ def phase_innovate_deploy(sprint_result: Dict[str, Any]) -> Dict[str, Any]:
                                  "new_params": best.get("params", {})},
                                 sprint
                             )
+
+                        deploy_success = deploy_result.get("success", False)
                         deployments.append({
                             "pair": pair,
                             "strategy": strategy,
@@ -337,11 +343,26 @@ def phase_innovate_deploy(sprint_result: Dict[str, Any]) -> Dict[str, Any]:
                             "current_score": current_score,
                             "deploy_result": deploy_result,
                         })
-                        logger.info(f"Deployed improvement for {pair}/{strategy}")
+
+                        # Mark sprint item as deployed or failed
+                        if hasattr(sprint_mgr, 'update_sprint_item'):
+                            new_status = "deployed" if deploy_success else "failed"
+                            sprint_mgr.update_sprint_item(item.get("id"), new_status, {"score": new_score})
+
+                        if deploy_success:
+                            logger.info(f"Deployed improvement for {pair}/{strategy}")
+                        else:
+                            logger.warning(f"Deploy failed for {pair}/{strategy}: {deploy_result.get('error', 'unknown')}")
                     else:
                         logger.info(f"Skipping {pair}/{strategy}: improvement too small")
+                        # Mark as completed even if skipped (improvement too small)
+                        if hasattr(sprint_mgr, 'update_sprint_item'):
+                            sprint_mgr.update_sprint_item(item.get("id"), "failed", {"reason": "improvement_too_small"})
             except Exception as e:
                 logger.error(f"Innovation failed for {pair}/{strategy}: {e}")
+                # Mark sprint item as failed on exception
+                if hasattr(sprint_mgr, 'update_sprint_item'):
+                    sprint_mgr.update_sprint_item(item.get("id"), "failed", {"error": str(e)})
 
         return {
             "status": "ok",

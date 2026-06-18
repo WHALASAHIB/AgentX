@@ -324,16 +324,47 @@ def _compute_sharpe_ratio(trades: List[dict], annual_factor: float = np.sqrt(252
     return float(sharpe)
 
 
+def _parse_duration_to_minutes(duration) -> Optional[float]:
+    """Parse a duration value to minutes.
+
+    Handles:
+    - Numeric values (already in minutes)
+    - String formats: "0h 5m", "1h 47m", "0h 30m", "2h", "30m", "1h30m"
+    - Empty or None values (returns None)
+    """
+    if duration is None:
+        return None
+    if isinstance(duration, (int, float)):
+        return float(duration)
+    if not isinstance(duration, str) or not duration.strip():
+        return None
+
+    duration = duration.strip()
+    # Try simple numeric parse first
+    try:
+        return float(duration)
+    except (ValueError, TypeError):
+        pass
+
+    # Parse "Xh Ym" format (e.g. "0h 5m", "1h 47m", "1h30m", "2h", "30m")
+    import re
+    total_minutes = 0.0
+    h_match = re.search(r'(\d+(?:\.\d+)?)\s*h', duration)
+    m_match = re.search(r'(\d+(?:\.\d+)?)\s*m', duration)
+    if h_match:
+        total_minutes += float(h_match.group(1)) * 60
+    if m_match:
+        total_minutes += float(m_match.group(1))
+    return total_minutes if (h_match or m_match) else None
+
+
 def _compute_avg_duration_minutes(trades: List[dict]) -> float:
-    """Compute the average trade duration in minutes from the ``duration`` field (minutes)."""
+    """Compute the average trade duration in minutes from the ``duration`` field."""
     durations = []
     for t in trades:
-        d = t.get("duration")
+        d = _parse_duration_to_minutes(t.get("duration"))
         if d is not None:
-            try:
-                durations.append(float(d))
-            except (ValueError, TypeError):
-                pass
+            durations.append(d)
     if not durations:
         return 0.0
     return float(np.mean(durations))
@@ -704,10 +735,11 @@ def generate_pair_report(pair: str, trades: List[dict],
         dict with sections: kpis, time_analysis, market_regime, open_positions.
     """
     # Extract starting balance from equity curve if available
-    starting_balance = 0.0
+    # Equity curve points may use "equity" or "value" field
+    starting_balance = 100000.0  # Default initial balance for drawdown calc
     if equity and len(equity) > 0:
         try:
-            starting_balance = float(equity[0].get("equity", 0))
+            starting_balance = float(equity[0].get("equity") or equity[0].get("value") or starting_balance)
         except (ValueError, TypeError, AttributeError):
             pass
 
@@ -890,9 +922,9 @@ def save_analytics(reports: dict) -> bool:
     }
     history.append(entry)
 
-    # Keep only the last 365 entries to prevent unbounded growth
-    if len(history) > 365:
-        history = history[-365:]
+    # Keep only the last 30 entries to prevent unbounded growth
+    if len(history) > 30:
+        history = history[-30:]
 
     os.makedirs(STATE_DIR, exist_ok=True)
     try:

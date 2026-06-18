@@ -1989,6 +1989,151 @@ async def sse_events():
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
+# ── Research Division API ─────────────────────────────────────────────────
+
+_RESEARCH_REPORTS_DIR = Path(__file__).resolve().parent.parent / "research_division" / "reports"
+
+@app.get("/api/research/division-status")
+async def research_division_status():
+    """Return whether the research division is configured and its last report time."""
+    reports_dir = _RESEARCH_REPORTS_DIR
+    status = {
+        "configured": reports_dir.exists(),
+        "cron_active": True,  # Hermes cron job registered
+        "cron_schedule": "0 0,4,8,12,16,20 * * * (every 4 hours HKT)",
+        "last_report": None,
+        "reports_count": 0,
+    }
+    if reports_dir.exists():
+        json_files = list(reports_dir.glob("*.json"))
+        status["reports_count"] = len(json_files)
+        # Find most recent report
+        latest = None
+        latest_mtime = 0
+        for f in json_files:
+            try:
+                mtime = f.stat().st_mtime
+                if mtime > latest_mtime:
+                    latest_mtime = mtime
+                    latest = f.name
+            except OSError:
+                pass
+        if latest:
+            status["last_report"] = latest
+            status["last_report_time"] = datetime.fromtimestamp(latest_mtime, tz=timezone.utc).isoformat()
+    return status
+
+
+@app.get("/api/research/report")
+async def research_latest_report():
+    """Return the latest research report."""
+    reports_dir = _RESEARCH_REPORTS_DIR
+    if not reports_dir.exists():
+        return {"report": None, "error": "No research reports directory"}
+    
+    latest_file = None
+    latest_mtime = 0
+    for f in reports_dir.glob("*.json"):
+        try:
+            mtime = f.stat().st_mtime
+            if mtime > latest_mtime:
+                latest_mtime = mtime
+                latest_file = f
+        except OSError:
+            pass
+    
+    if not latest_file:
+        return {"report": None, "error": "No reports found"}
+    
+    try:
+        with open(latest_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {"report": data, "file": latest_file.name, "time": datetime.fromtimestamp(latest_mtime, tz=timezone.utc).isoformat()}
+    except Exception as e:
+        return {"report": None, "error": str(e)}
+
+
+@app.get("/api/research/insights")
+async def research_insights():
+    """Return actionable trading insights extracted from the latest report."""
+    reports_dir = _RESEARCH_REPORTS_DIR
+    if not reports_dir.exists():
+        return {"insights": [], "error": "No research data"}
+    
+    latest_file = None
+    latest_mtime = 0
+    for f in reports_dir.glob("*.json"):
+        try:
+            mtime = f.stat().st_mtime
+            if mtime > latest_mtime:
+                latest_mtime = mtime
+                latest_file = f
+        except OSError:
+            pass
+    
+    if not latest_file:
+        return {"insights": [], "error": "No reports found"}
+    
+    try:
+        with open(latest_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        return {"insights": [], "error": str(e)}
+    
+    # Extract actionable insights
+    insights = []
+    
+    # Per-pair recommendations
+    pair_analytics = data.get("pair_analytics", data.get("analytics", {}))
+    if isinstance(pair_analytics, dict):
+        for pair, kpis in pair_analytics.items():
+            if isinstance(kpis, dict):
+                pf = kpis.get("profit_factor", 0)
+                win_rate = kpis.get("win_rate", 0)
+                trades = kpis.get("total_trades", 0)
+                if trades >= 5:
+                    if pf > 1.5:
+                        insights.append({
+                            "type": "opportunity",
+                            "pair": pair,
+                            "message": f"{pair}: PF={pf:.2f}, WR={win_rate:.1f}% ({trades} trades) — strong strategy signal"
+                        })
+                    elif pf < 0.7:
+                        insights.append({
+                            "type": "warning",
+                            "pair": pair,
+                            "message": f"{pair}: PF={pf:.2f}, WR={win_rate:.1f}% ({trades} trades) — underperforming, review strategy"
+                        })
+    
+    # Blockers
+    blockers = data.get("blockers", [])
+    for b in blockers:
+        if isinstance(b, dict):
+            insights.append({
+                "type": "blocker",
+                "message": b.get("description", str(b))
+            })
+    
+    # Deployment info
+    deployment = data.get("deployment", {})
+    if deployment:
+        status = deployment.get("success", False)
+        insights.append({
+            "type": "deployment",
+            "message": f"Deployment {'succeeded' if status else 'failed'}: {deployment.get('message', 'No details')}"
+        })
+    
+    # Sprint info
+    sprint = data.get("sprint", {})
+    if sprint:
+        insights.append({
+            "type": "sprint",
+            "message": f"Sprint {sprint.get('number', '?')}: {sprint.get('status', 'unknown')} — {sprint.get('items_completed', 0)}/{sprint.get('items_total', 0)} items"
+        })
+    
+    return {"insights": insights, "count": len(insights), "report_time": latest_mtime}
+
+
 # ── Frontend (static files from AGENTX dashboard) ──────────────────────────
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "public")

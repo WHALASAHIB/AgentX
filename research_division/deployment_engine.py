@@ -369,8 +369,8 @@ def deploy_improvement(
         Dict with {success, new_file, backup_file, restart_result, ...}
     """
     pair = improvement_item.get("pair", "").upper()
-    strategy = improvement_item.get("strategy_name", "")
-    params = improvement_item.get("strategy_params_used", {})
+    strategy = improvement_item.get("strategy_name", improvement_item.get("strategy", ""))
+    params = improvement_item.get("strategy_params_used", improvement_item.get("new_params", {}))
     variant_name = improvement_item.get("variant_name", "unknown")
 
     if not pair or not strategy:

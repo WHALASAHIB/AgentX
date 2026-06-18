@@ -1033,10 +1033,11 @@ async function api(endpoint, options = {}) {
     return await res.json();
   } catch (err) {
     console.error(`API Error [${endpoint}]:`, err);
-    // Mark backend as offline on network errors (not on HTTP errors like 4xx)
-    if (!endpoint.startsWith('http') && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('TypeError') || err.name === 'TypeError')) {
-      backendOnline = false;
-      renderGlobalBanner();
+    // Show toast for API failures so user knows something went wrong
+    const msg = err.message || 'Unknown error';
+    if (!msg.includes('404') && !msg.includes('NetworkError') && !msg.includes('Failed to fetch')) {
+      // 4xx/5xx errors - show toast but don't mark backend offline
+      try { toast(`API: ${endpoint} - ${msg.slice(0,60)}`, 'warning', 3000); } catch(e) {}
     }
     throw err;
   }
@@ -1066,7 +1067,7 @@ function renderGlobalBanner() {
 async function performHealthCheck() {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const res = await fetch('/api/health', { signal: controller.signal });
     clearTimeout(timeoutId);
     backendOnline = res.ok;
@@ -1592,15 +1593,7 @@ async function loadXauWeeklyChart(accountId) {
   try {
     const equityData = await api('/api/bridge/accounts/' + accountId + '/equity?days=7');
     if (!equityData || equityData.length === 0) return;
-    let weeklyPrices = null;
-    try {
-      weeklyPrices = await api('/api/bridge/accounts/' + accountId + '/candles/XAUUSD?timeframe=1d&days=7');
-    } catch (e) {}
-    if (weeklyPrices && weeklyPrices.length > 0) {
-      xauTickerState.weeklyData = weeklyPrices;
-    } else {
-      xauTickerState.weeklyData = equityData;
-    }
+    xauTickerState.weeklyData = equityData;
     renderXauWeeklyChart();
   } catch (err) {
     console.error('Weekly chart load error:', err);
@@ -2603,9 +2596,18 @@ function startAutoRefresh() {
   Object.values(refreshIntervals).forEach(clearInterval);
   refreshIntervals = {};
   refreshIntervals.health = setInterval(updateBridgeStatus, 15000);
-  refreshIntervals.equity = setInterval(() => { if (document.getElementById('section-cmd').classList.contains('active')) renderEquityChart(); }, 30000);
-  refreshIntervals.activeAcct = setInterval(updateActiveAccount, 60000);
-  refreshIntervals.xauTicker = setInterval(() => { if (document.getElementById('section-cmd').classList.contains('active')) renderXauTicker(); }, 5000);
+  refreshIntervals.equity = setInterval(() => {
+    if (!backendOnline) return;
+    if (document.getElementById('section-cmd').classList.contains('active')) renderEquityChart();
+  }, 30000);
+  refreshIntervals.activeAcct = setInterval(() => {
+    if (!backendOnline) return;
+    updateActiveAccount();
+  }, 60000);
+  refreshIntervals.xauTicker = setInterval(() => {
+    if (!backendOnline) return;
+    if (document.getElementById('section-cmd').classList.contains('active')) renderXauTicker();
+  }, 5000);
 }
 
 // ==============================
