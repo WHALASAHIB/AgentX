@@ -15,6 +15,12 @@ INSTRUMENTS = {
     "XAUUSD": {"ticker": "XAUUSD", "name": "Gold vs USD", "spread_pips": 1.0, "pip_value": 0.01, "digits": 2, "contract_size": 100},
     "EURUSD": {"ticker": "EURUSD", "name": "Euro vs USD", "spread_pips": 1.0, "pip_value": 0.0001, "digits": 5, "contract_size": 100000},
     "BTCUSD": {"ticker": "BTCUSD", "name": "Bitcoin vs USD", "spread_pips": 10.0, "pip_value": 1.0, "digits": 2, "contract_size": 1},
+    "GBPUSD": {"ticker": "GBPUSD", "name": "Pound vs USD", "spread_pips": 1.0, "pip_value": 0.0001, "digits": 5, "contract_size": 100000},
+    "USDJPY": {"ticker": "USDJPY", "name": "Dollar vs Yen", "spread_pips": 0.8, "pip_value": 0.01, "digits": 3, "contract_size": 100000},
+    "USDCHF": {"ticker": "USDCHF", "name": "Dollar vs Franc", "spread_pips": 1.0, "pip_value": 0.0001, "digits": 5, "contract_size": 100000},
+    "USDCAD": {"ticker": "USDCAD", "name": "Dollar vs Canadian", "spread_pips": 1.0, "pip_value": 0.0001, "digits": 5, "contract_size": 100000},
+    "AUDUSD": {"ticker": "AUDUSD", "name": "Aussie vs USD", "spread_pips": 1.2, "pip_value": 0.0001, "digits": 5, "contract_size": 100000},
+    "NZDUSD": {"ticker": "NZDUSD", "name": "Kiwi vs USD", "spread_pips": 1.5, "pip_value": 0.0001, "digits": 5, "contract_size": 100000},
 }
 
 # Yahoo Finance symbol overrides (MT5 ticker → Yahoo ticker)
@@ -22,6 +28,12 @@ YAHOO_SYMBOL_MAP = {
     "XAUUSD": "GC=F",       # Gold Futures
     "EURUSD": "EURUSD=X",   # EUR/USD Forex
     "BTCUSD": "BTC-USD",    # Bitcoin USD
+    "GBPUSD": "GBPUSD=X",   # GBP/USD Forex
+    "USDJPY": "USDJPY=X",   # USD/JPY Forex
+    "USDCHF": "USDCHF=X",   # USD/CHF Forex
+    "USDCAD": "USDCAD=X",   # USD/CAD Forex
+    "AUDUSD": "AUDUSD=X",   # AUD/USD Forex
+    "NZDUSD": "NZDUSD=X",   # NZD/USD Forex
 }
 
 TIMEFRAME_MAP = {

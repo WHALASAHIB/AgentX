@@ -66,18 +66,81 @@ class StartBotRequest(BaseModel):
 
 # ── Bot Manager ───────────────────────────────────────────────────────────────
 
-BOT_SCRIPTS = {
-    "gold_bot": Path(__file__).resolve().parent.parent / "bots" / "gold_bot_v3.py",
-    "scalping_bot": Path(__file__).resolve().parent.parent / "bots" / "scalping_youtube_goldstrategy.py",
-    "streaming_bot": Path(__file__).resolve().parent.parent / "bots" / "streaming_bot_v3.py",
-    "gold_phoenix": Path(__file__).resolve().parent.parent / "bots" / "gold_phoenix_bot.py",
-    "scalping_hybrid": Path(__file__).resolve().parent.parent / "bots" / "scalping_phoenix_hybrid.py",
+_BOTS_DIR = Path(__file__).resolve().parent.parent / "bots"
+_ACTIVE_BOTS_DIR = _BOTS_DIR / "active_bots"
+
+# Legacy hardcoded bot scripts (backward compatibility)
+_LEGACY_BOT_SCRIPTS: dict[str, Path] = {
+    "gold_bot": _BOTS_DIR / "gold_bot_v3.py",
+    "scalping_bot": _BOTS_DIR / "scalping_youtube_goldstrategy.py",
+    "streaming_bot": _BOTS_DIR / "streaming_bot_v3.py",
+    "gold_phoenix": _BOTS_DIR / "gold_phoenix_bot.py",
+    "scalping_hybrid": _BOTS_DIR / "scalping_phoenix_hybrid.py",
 }
 
+# Map strategy names (as used in run_<strategy>.py filenames) to display names
+_STRATEGY_DISPLAY_MAP: dict[str, str] = {
+    "macd": "MACD",
+    "goldphoenix": "GoldPhoenix",
+    "bollinger": "Bollinger",
+    "sma": "SMA",
+}
+
+
+def _strategy_display_name(raw: str) -> str:
+    """Return the display name for a strategy key (e.g. 'macd' -> 'MACD')."""
+    return _STRATEGY_DISPLAY_MAP.get(raw, raw.capitalize())
+
+
+def _discover_bots() -> dict[str, Path]:
+    """Discover all available bot scripts (legacy + multi-pair).
+
+    Scans:
+      1. Legacy scripts in bots/ directory (if they exist on disk).
+      2. Multi-pair run scripts in bots/active_bots/<PAIR>/run_<strategy>.py
+         named ``{StrategyDisplay}_{PAIR}`` (e.g. ``MACD_EURUSD``).
+    """
+    bots: dict[str, Path] = {}
+
+    # 1. Legacy bots — include only if the script file actually exists
+    for name, script_path in _LEGACY_BOT_SCRIPTS.items():
+        if script_path.exists():
+            bots[name] = script_path.resolve()
+        else:
+            logger.debug("Legacy bot script not found, skipping: %s", script_path)
+
+    # 2. Multi-pair bots — discover all run_*.py under active_bots/
+    if _ACTIVE_BOTS_DIR.is_dir():
+        pair_dirs: list[Path] = sorted(
+            d for d in _ACTIVE_BOTS_DIR.iterdir() if d.is_dir()
+        )
+        for pair_dir in pair_dirs:
+            pair = pair_dir.name.upper()
+            run_files: list[Path] = sorted(pair_dir.glob("run_*.py"))
+            for run_file in run_files:
+                strategy_raw = run_file.stem[len("run_"):]
+                strategy_display = _strategy_display_name(strategy_raw)
+                bot_name = f"{strategy_display}_{pair}"
+                bots[bot_name] = run_file.resolve()
+
+    logger.info("Discovered %d bot scripts", len(bots))
+    return bots
+
+
+# Module-level dict — refreshed on startup and on-demand
+BOT_SCRIPTS: dict[str, Path] = _discover_bots()
 _bot_processes: dict[str, subprocess.Popen] = {}
+
+
+def _refresh_bot_scripts():
+    """Re-discover bot scripts and update the module-level ``BOT_SCRIPTS`` dict."""
+    global BOT_SCRIPTS
+    BOT_SCRIPTS = _discover_bots()
+
 
 def _scan_running_bots():
     """Scan for existing pythonw processes running our bot scripts using psutil."""
+    _refresh_bot_scripts()
     import psutil as _psutil
     for name, script_path in BOT_SCRIPTS.items():
         try:
@@ -231,9 +294,12 @@ async def lifespan(app: FastAPI):
     logger.info("AGENTX Backend starting (v%s)", __version__)
     _scan_running_bots()
 
+    # Refresh bot scripts to catch any new multi-pair bots
+    _refresh_bot_scripts()
+
     # Auto-start any bots not already running
     started_count = 0
-    for name, script_path in BOT_SCRIPTS.items():
+    for name, script_path in list(BOT_SCRIPTS.items()):
         if name in _bot_processes and _bot_processes[name].poll() is None:
             logger.info("Bot '%s' already running (PID %d)", name, _bot_processes[name].pid)
             continue
@@ -256,8 +322,9 @@ async def lifespan(app: FastAPI):
         if proc.poll() is None:
             proc.terminate()
             try:
-                await asyncio.wait_for(proc.wait(), timeout=3)
-            except asyncio.TimeoutError:
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, lambda: proc.wait(timeout=3))
+            except Exception:
                 proc.kill()
     logger.info("AGENTX Backend stopped")
 
@@ -475,6 +542,7 @@ async def consolidated_stats():
 
     # ── Bot Statuses ───────────────────────────────────────────────────────
     try:
+        _refresh_bot_scripts()
         bot_statuses = []
         for name in BOT_SCRIPTS:
             status = _get_bot_status(name)
@@ -720,9 +788,9 @@ async def position_detail(ticket: int, auth=Depends(require_auth)):
 
 @app.get("/api/bots")
 async def list_bots(auth=Depends(require_auth)):
-    _scan_running_bots()  # Live re-scan every time
+    _scan_running_bots()  # Live re-scan every time (also refreshes BOT_SCRIPTS)
     bots = []
-    for name in BOT_SCRIPTS:
+    for name in sorted(BOT_SCRIPTS.keys()):
         bots.append(_get_bot_status(name))
     db = get_db()
     db_bots = db.get_bots()
@@ -731,6 +799,38 @@ async def list_bots(auth=Depends(require_auth)):
         if bot["name"] in db_map:
             bot["config"] = db_map[bot["name"]].get("config", {})
     return bots
+
+
+@app.get("/api/bots/config")
+async def bot_config(auth=Depends(require_auth)):
+    """Return per-pair bot assignments and metadata for the frontend."""
+    _refresh_bot_scripts()
+    config = {
+        "legacy_bots": [],
+        "multi_pair": {},
+    }
+    legacy_names = set(_LEGACY_BOT_SCRIPTS.keys())
+    for name, script_path in BOT_SCRIPTS.items():
+        entry = {
+            "name": name,
+            "script": str(script_path),
+            "exists": script_path.exists(),
+        }
+        if name in legacy_names:
+            config["legacy_bots"].append(entry)
+        else:
+            # Multi-pair bot: extract pair and strategy from name
+            # Names are like "MACD_EURUSD" or "GoldPhoenix_XAUUSD"
+            parts = name.split("_", 1)
+            strategy_part = parts[0] if len(parts) == 2 else ""
+            pair_part = parts[1] if len(parts) == 2 else ""
+            config["multi_pair"][name] = {
+                **entry,
+                "pair": pair_part,
+                "strategy": strategy_part,
+            }
+    return config
+
 
 @app.post("/api/bots/{name}/start")
 async def start_bot(name: str, req: StartBotRequest = None, auth=Depends(require_auth)):
