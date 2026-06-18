@@ -1,0 +1,32 @@
+[
+  {
+    "code": "7040356b258c1b67",
+    "label": "Tester 1",
+    "claimed": false,
+    "claimed_by": ""
+  },
+  {
+    "code": "d342d95a936e217a",
+    "label": "Tester 2",
+    "claimed": false,
+    "claimed_by": ""
+  },
+  {
+    "code": "8a4a02589ed3dbe2",
+    "label": "Tester 3",
+    "claimed": false,
+    "claimed_by": ""
+  },
+  {
+    "code": "53f09dc86070fc5d",
+    "label": "Tester 4",
+    "claimed": false,
+    "claimed_by": ""
+  },
+  {
+    "code": "9bfcf31f815ae940",
+    "label": "Tester 5",
+    "claimed": false,
+    "claimed_by": ""
+  }
+]
