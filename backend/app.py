@@ -1440,12 +1440,165 @@ async def research_division_status(auth=Depends(require_auth)):
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
         from research.division7 import get_division_status, get_innovation_pipeline
-        return {
+        result = {
             "division": get_division_status(),
             "pipeline": get_innovation_pipeline(),
         }
+
+        # Also include Research & Invocation Division status if available
+        try:
+            rd_path = str(Path(__file__).resolve().parent.parent / "research_division")
+            if rd_path not in sys.path:
+                sys.path.insert(0, rd_path)
+            from run import status_snapshot
+            rd_status = status_snapshot()
+            result["research_division"] = {
+                "version": rd_status.get("division_version"),
+                "sprint_number": rd_status.get("sprint", {}).get("sprint_number", 0),
+                "backlog_items": len(rd_status.get("sprint", {}).get("backlog", [])),
+                "items_in_progress": len(rd_status.get("sprint", {}).get("items", [])),
+                "deployments_total": rd_status.get("deployment_stats", {}).get("total", 0),
+                "deployments_success_rate": rd_status.get("deployment_stats", {}).get("success_rate", 0),
+                "last_report_time": rd_status.get("latest_report", {}).get("generated_at", ""),
+            }
+        except Exception as rd_err:
+            result["research_division"] = {"status": "unavailable", "error": str(rd_err)}
+
+        return result
     except Exception as e:
         return {"division": None, "pipeline": [], "error": str(e)}
+
+@app.get("/api/research/sprint")
+async def research_sprint(auth=Depends(require_auth)):
+    """Get the current Research Division sprint state and blockers."""
+    try:
+        rd_path = str(Path(__file__).resolve().parent.parent / "research_division")
+        if rd_path not in sys.path:
+            sys.path.insert(0, rd_path)
+        from sprint_manager import load_sprint, detect_blockers
+        from data_collector import fetch_open_positions
+        from analytics_engine import load_analytics_history
+
+        sprint = load_sprint()
+        history = load_analytics_history()
+        positions = fetch_open_positions()
+        reports = history[-1].get("reports", {}) if history else {}
+
+        blockers = detect_blockers(reports, positions) if reports else []
+
+        return {
+            "status": "ok",
+            "sprint": sprint,
+            "blockers": blockers,
+            "analytics_history_points": len(history),
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+@app.get("/api/research/insights")
+async def research_insights(auth=Depends(require_auth)):
+    """Get latest performance insights per pair and strategy."""
+    try:
+        rd_path = str(Path(__file__).resolve().parent.parent / "research_division")
+        if rd_path not in sys.path:
+            sys.path.insert(0, rd_path)
+        from analytics_engine import load_analytics_history
+
+        history = load_analytics_history()
+        if not history:
+            return {"status": "ok", "insights": [], "message": "No analytics data yet"}
+
+        latest = history[-1].get("reports", {})
+
+        # Build per-pair insights
+        insights = []
+        for pair, report in latest.items():
+            if pair == "overall":
+                continue
+            kpis = report.get("kpis", {})
+            insights.append({
+                "pair": pair,
+                "trades": kpis.get("total_trades", 0) or 0,
+                "win_rate": round(kpis.get("win_rate", 0) or 0, 1),
+                "profit_factor": round(kpis.get("profit_factor", 0) or 0, 2),
+                "net_profit": round(kpis.get("net_profit", 0) or 0, 2),
+                "max_dd": round(kpis.get("max_drawdown_pct", 0) or 0, 1),
+                "avg_win": round(kpis.get("avg_win", 0) or 0, 2),
+                "avg_loss": round(kpis.get("avg_loss", 0) or 0, 2),
+                "expectancy_ratio": round(kpis.get("expectancy_ratio", 0) or 0, 2),
+                "consecutive_losses": kpis.get("max_consecutive_losses", 0) or 0,
+                "best_session": max(
+                    kpis.get("win_rate_by_session", {"asian": 0, "london": 0, "us": 0}),
+                    key=lambda s: (kpis.get("win_rate_by_session", {}).get(s) or 0) if not isinstance(kpis.get("win_rate_by_session", {}).get(s), dict) else (kpis.get("win_rate_by_session", {}).get(s, {}).get("win_rate", 0) or 0),
+                    default="N/A"
+                ),
+            })
+
+        # Overall market health
+        overall = latest.get("overall", {}).get("kpis", {})
+        market_health = {
+            "total_trades": overall.get("total_trades", 0),
+            "overall_win_rate": round(overall.get("win_rate", 0) or 0, 1),
+            "profit_factor": round(overall.get("profit_factor", 0) or 0, 2),
+            "net_pnl": round(overall.get("net_profit", 0) or 0, 2),
+            "max_drawdown": round(overall.get("max_drawdown_pct", 0) or 0, 1),
+            "best_pair": max(insights, key=lambda i: i["win_rate"], default={}).get("pair", "N/A") if insights else "N/A",
+            "worst_pair": min(insights, key=lambda i: i["win_rate"], default={}).get("pair", "N/A") if insights else "N/A",
+        }
+
+        return {
+            "status": "ok",
+            "generated_at": history[-1].get("timestamp", ""),
+            "market_health": market_health,
+            "insights": insights,
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+@app.get("/api/research/report")
+async def research_report(auth=Depends(require_auth)):
+    """Get the latest Research Division full report."""
+    try:
+        report_path = Path(__file__).resolve().parent.parent / "research_division" / "reports" / "latest.json"
+        if report_path.exists():
+            import json
+            report = json.loads(report_path.read_text())
+            return {"status": "ok", "report": report}
+        return {"status": "ok", "report": None, "message": "No report generated yet"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+@app.post("/api/research/run-now")
+async def research_run_now(auth=Depends(require_auth)):
+    """Trigger the Research Division to run its full cycle now."""
+    try:
+        import subprocess
+        import json
+
+        rd_path = Path(__file__).resolve().parent.parent / "research_division"
+        result = subprocess.run(
+            [sys.executable, "run.py", "--once"],
+            cwd=str(rd_path),
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        if result.returncode == 0:
+            try:
+                data = json.loads(result.stdout)
+                return {"status": "ok", "result": data}
+            except json.JSONDecodeError:
+                return {"status": "ok", "raw_output": result.stdout[:2000]}
+        return {
+            "status": "error",
+            "returncode": result.returncode,
+            "stdout": result.stdout[-1000:],
+            "stderr": result.stderr[-1000:],
+        }
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "error": "Division cycle timed out (>10 min)"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
 @app.post("/api/research/convert-document")
 async def research_convert_document(req: dict, auth=Depends(require_auth)):
