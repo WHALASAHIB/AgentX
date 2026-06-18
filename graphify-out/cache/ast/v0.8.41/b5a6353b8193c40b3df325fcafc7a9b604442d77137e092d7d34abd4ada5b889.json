@@ -1,0 +1,1 @@
+{"nodes": [{"id": "c_trading_scripts_uninstall_bridge_service_ps1", "label": "uninstall_bridge_service.ps1", "file_type": "code", "source_file": "scripts/uninstall_bridge_service.ps1", "source_location": "L1"}], "edges": [], "raw_calls": []}

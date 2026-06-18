@@ -44,3 +44,4 @@ logs/
 __pycache__/
 *.pyc
 python-installer.exe
+.env.keys
