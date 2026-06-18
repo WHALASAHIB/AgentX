@@ -35,3 +35,4 @@ run_tunnel*.bat
 run_named_tunnel.bat
 create_task.bat
 start_agentx.bat
+python-installer.exe
