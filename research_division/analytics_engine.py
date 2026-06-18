@@ -106,12 +106,13 @@ def _to_native(obj: Any) -> Any:
 # ── Core KPI computation ────────────────────────────────────────────────────────
 
 
-def compute_pair_kpis(pair: str, trades: List[dict]) -> dict:
+def compute_pair_kpis(pair: str, trades: List[dict], initial_balance: float = 0.0) -> dict:
     """Compute a comprehensive KPI dictionary for a list of trades.
 
     Args:
-        pair:  Trading pair symbol (e.g. "XAUUSD").
-        trades:  List of trade dicts.
+        pair:            Trading pair symbol (e.g. "XAUUSD").
+        trades:          List of trade dicts.
+        initial_balance: Starting account balance for realistic drawdown calc.
 
     Returns:
         dict with all KPIs listed in the module spec.
@@ -147,8 +148,8 @@ def compute_pair_kpis(pair: str, trades: List[dict]) -> dict:
     max_cons_wins = _max_consecutive(wins_mask)
     max_cons_losses = _max_consecutive(loss_mask)
 
-    # Max drawdown % — compute running equity from profits (ordered by close_time)
-    max_dd_pct = _compute_max_drawdown_pct(trades)
+    # Max drawdown % — compute from equity curve (profits + starting balance)
+    max_dd_pct = _compute_max_drawdown_pct(trades, initial_balance)
 
     # Sharpe ratio (annualised, risk-free rate ≈ 0)
     sharpe = _compute_sharpe_ratio(trades)
@@ -251,12 +252,19 @@ def _max_consecutive(mask: np.ndarray) -> int:
     return int((ends - starts).max())
 
 
-def _compute_max_drawdown_pct(trades: List[dict]) -> float:
-    """Compute peak-to-trough drawdown from cumulative trade profits,
-    ordered chronologically by close_time.
+def _compute_max_drawdown_pct(trades: List[dict], initial_balance: float = 0.0) -> float:
+    """Compute peak-to-trough drawdown from trade profits relative to starting balance.
 
-    Returns the maximum drawdown as a positive percentage (e.g. 15.0 = 15% drop).
-    Returns 0.0 if fewer than 2 trades.
+    Uses ``initial_balance + cumulative_profits`` as the equity curve so
+    drawdowns are expressed as a percentage of peak equity — not peak profit.
+
+    Args:
+        trades:          Chronological list of closed trades.
+        initial_balance: Account balance before the first trade (default 0).
+
+    Returns:
+        Maximum drawdown as a positive percentage (e.g. 15.0 = 15% drop).
+        Returns 0.0 if fewer than 2 trades or no drawdowns detected.
     """
     if len(trades) < 2:
         return 0.0
@@ -267,17 +275,21 @@ def _compute_max_drawdown_pct(trades: List[dict]) -> float:
     if len(cumulative) < 2:
         return 0.0
 
-    peak = np.maximum.accumulate(cumulative)
-    drawdowns = peak - cumulative
+    # Equity curve = starting balance + cumulative PnL
+    equity = initial_balance + cumulative
 
-    # Only calculate percentage if peak > 0
-    peak_at_dd = peak[np.where(drawdowns > 0)]
-    dd_at_peak = drawdowns[np.where(drawdowns > 0)]
+    peak = np.maximum.accumulate(equity)
+    drawdowns = peak - equity
+
+    # Only consider points where equity < peak
+    mask = drawdowns > 1.0  # Ignore sub-$1 noise
+    peak_at_dd = peak[mask]
+    dd_at_peak = drawdowns[mask]
+
     if len(peak_at_dd) == 0:
         return 0.0
 
-    # Use the initial balance as baseline if peak is 0 (trades started from 0)
-    # Since we don't have starting balance, use the peak value as denominator
+    # Drawdown % = (peak - current) / peak * 100
     dd_pcts = np.where(peak_at_dd > 0, dd_at_peak / peak_at_dd * 100, 0.0)
     return float(dd_pcts.max())
 
@@ -691,10 +703,18 @@ def generate_pair_report(pair: str, trades: List[dict],
     Returns:
         dict with sections: kpis, time_analysis, market_regime, open_positions.
     """
+    # Extract starting balance from equity curve if available
+    starting_balance = 0.0
+    if equity and len(equity) > 0:
+        try:
+            starting_balance = float(equity[0].get("equity", 0))
+        except (ValueError, TypeError, AttributeError):
+            pass
+
     return _to_native({
         "pair": pair,
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "kpis": compute_pair_kpis(pair, trades),
+        "kpis": compute_pair_kpis(pair, trades, initial_balance=starting_balance),
         "time_analysis": compute_time_analysis(trades),
         "market_regime": compute_market_regime_analysis(trades, equity),
         "open_positions": len(positions),
