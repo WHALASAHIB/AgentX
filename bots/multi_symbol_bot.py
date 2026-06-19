@@ -801,6 +801,15 @@ def startup(symbol: str, strategy: str) -> None:
 
     # Connect to MT5
     wait_for_mt5()
+    # Log explicit MT5 connection status for the per-symbol log
+    _account = mt5.account_info()
+    _terminal = mt5.terminal_info()
+    if _account:
+        logger.info("MT5 connected | account=%s server=%s balance=%.2f trade_allowed=%s",
+                     _account.login, _account.server, _account.balance, _account.trade_allowed)
+    if _terminal:
+        logger.info("Terminal build=%s connected=%s dlls_allowed=%s",
+                     _terminal.build, _terminal.connected, _terminal.dlls_allowed)
     _broker_offset_sec = detect_broker_offset()
     _last_offset_check = time.time()
     logger.info("Broker offset: %.0fs", _broker_offset_sec)
