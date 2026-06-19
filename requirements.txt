@@ -1,26 +1,36 @@
+# Core
 MetaTrader5>=5.0.45
 pandas>=2.0.0
-streamlit>=1.30.0
-plotly>=5.18.0
-python-dotenv>=1.0.0
-google-auth>=2.25.0
-google-auth-oauthlib>=1.1.0
-google-auth-httplib2>=0.1.0
-requests>=2.31.0
-
-# Backtester
-yfinance>=0.2
 numpy>=1.24
-altair>=5.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+psutil>=5.9.0
 
-# MT5 Bridge Service
+# Backend (FastAPI server, port 8005)
 fastapi>=0.110.0
 uvicorn[standard]>=0.29.0
 websockets>=12.0
 pydantic>=2.0.0
 cryptography>=41.0.0
-
-# Backend
 httpx>=0.27.0
+python-multipart>=0.0.9
+
+# Database & Cache
 psycopg2-binary>=2.9.0
 redis>=5.0.0
+
+# Auth (Google OAuth)
+google-auth>=2.25.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.0
+
+# Frontend / Dashboard tools
+streamlit>=1.30.0
+plotly>=5.18.0
+altair>=5.0
+
+# Backtesting & Data
+yfinance>=0.2
+
+# Code Graph / Knowledge Mapping
+graphifyy>=0.1.0

@@ -2742,28 +2742,36 @@ async function createFtmoChallenge() {
 // INIT
 // ==============================
 function init() {
-  performHealthCheck().then(() => {
-    initTheme(); initParticles(); initTicker(); updateBridgeStatus(); updateActiveAccount();
-    loadMagicNumbers();
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', () => { const s = item.dataset.section; if (s) navigate(s); });
+  // Attach navigation events IMMEDIATELY, don't wait for health check
+  initTheme(); initParticles(); initTicker();
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => { const s = item.dataset.section; if (s) navigate(s); });
+  });
+  const themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+  const sidebarBtn = document.getElementById('sidebarToggle');
+  if (sidebarBtn) sidebarBtn.addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); });
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) mainContent.addEventListener('click', () => { if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open'); });
+  window.addEventListener('hashchange', handleHash);
+  
+  // Bento mouse tracking glow
+  document.querySelectorAll('.bento-item').forEach(el => {
+    el.addEventListener('mousemove', e => {
+      const rect = el.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty('--mx', x + '%');
+      el.style.setProperty('--my', y + '%');
     });
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    document.getElementById('sidebarToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); });
-    document.querySelector('.main-content').addEventListener('click', () => { if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open'); });
-    window.addEventListener('hashchange', handleHash);
+  });
+  
+  // Now initialize data (can be slower - user can navigate already)
+  performHealthCheck().then(() => {
+    updateBridgeStatus(); updateActiveAccount();
+    loadMagicNumbers();
     startAutoRefresh();
     handleHash();
-    // Bento mouse tracking glow
-    document.querySelectorAll('.bento-item').forEach(el => {
-      el.addEventListener('mousemove', e => {
-        const rect = el.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        el.style.setProperty('--mx', x + '%');
-        el.style.setProperty('--my', y + '%');
-      });
-    });
   });
 }
 
