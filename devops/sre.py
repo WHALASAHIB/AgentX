@@ -87,6 +87,18 @@ def setup_logging():
 def get_free_memory_mb() -> float:
     """Return free physical memory in MB."""
     try:
+        # Try bash-friendly method first (works on git-bash, WSL, Linux)
+        r = subprocess.run(
+            ["free", "-m"], capture_output=True, text=True, timeout=10
+        )
+        for line in r.stdout.split("\n"):
+            if line.startswith("Mem:"):
+                parts = line.split()
+                return float(parts[6]) if len(parts) >= 7 else float(parts[3])
+    except:
+        pass
+    try:
+        # Fallback: wmic on native Windows
         r = subprocess.run(
             ["wmic", "OS", "get", "FreePhysicalMemory", "/Value"],
             capture_output=True, text=True, timeout=10
@@ -96,7 +108,7 @@ def get_free_memory_mb() -> float:
                 return float(line.split("=")[1].strip()) / 1024.0
     except:
         pass
-    return 99999.0  # Default high on failure
+    return 0.0  # Failed to detect — report 0, not fake 99999
 
 def get_free_disk_mb() -> float:
     """Return free disk space in MB on C: drive."""
@@ -121,7 +133,7 @@ def get_bot_processes() -> list[dict]:
             capture_output=True, text=True, timeout=15
         )
         for line in r.stdout.split("\n"):
-            if "multi_symbol_bot" in line or "gold_phoenix" in line:
+            if any(p in line for p in ["run_macd", "run_goldphoenix", "run_bollinger", "run_sma", "multi_symbol_bot", "gold_phoenix"]):
                 parts = line.split(",")
                 if len(parts) >= 2:
                     pid = parts[-1].strip()
@@ -167,7 +179,7 @@ def check_backend_health() -> dict:
     result = {"alive": False, "error": None}
     try:
         import urllib.request
-        url = f"http://127.0.0.1:{RULES['services']['backend_port']}/health"
+        url = f"http://127.0.0.1:{RULES['services']['backend_port']}/api/health"
         resp = urllib.request.urlopen(url, timeout=5)
         result["alive"] = True
         result["data"] = json.loads(resp.read().decode())
