@@ -53,11 +53,17 @@ ORDER_COMMENT = "PHOENIX_H1"
 SESSION_START_UTC = 4                # 04:00 UTC (expanded — Asian best WR hours)
 SESSION_END_UTC = 22                 # 22:00 UTC (expanded — US session profitable)
 
-# --- Risk management (fixed SL/TP: 1:2 R:R) ---
-LOT_SIZE = float(os.getenv("GOLD_PHOENIX_LOT", "0.10"))
+# --- Risk management (percentage-based, dynamic sizing) ---
+# RISK_PERCENT = percentage of CURRENT account balance risked per trade
+#   Example: 0.15% on $10K account = $15 max loss per trade
+#   If account drops to $9K → $13.50 max loss → smaller lot size
+#   If account grows to $12K → $18.00 max loss → larger lot size
+# This is 100% dynamic — reads live MT5 balance every trade, no fixed lots
+RISK_PERCENT = 0.15                   # % of current balance risked per trade
 FIXED_SL_PIPS = 200                  # 200 pip stop loss
 FIXED_TP_PIPS = 400                  # 400 pip take profit
 DEVIATION = 30
+MAX_VOLUME_PER_TRADE = 3.0           # Safety cap — never exceed this many lots
 MAX_SPREAD_POINTS = 50               # 5.0 pips max
 
 # --- Strategy parameters (backtest-optimised) ---
@@ -531,6 +537,7 @@ def normalize_volume(volume: float) -> float:
 def place_phoenix_order(order_type: int) -> bool:
     """
     Place market order with FIXED SL/TP (200/400 pips).
+    Lot size calculated dynamically from current account balance × RISK_PERCENT.
     No trailing stop — fixed TP is the exit.
     """
     global _state
@@ -575,7 +582,62 @@ def place_phoenix_order(order_type: int) -> bool:
     tp = normalize_price(tp, digits)
     price = normalize_price(price, digits)
 
-    volume = normalize_volume(LOT_SIZE)
+    # ── Risk-based position sizing (100% dynamic) ──────────────────────
+    # Reads current MT5 balance live — no fixed lots whatsoever
+    #   risk_amount = current_balance × (RISK_PERCENT / 100)
+    #   volume = risk_amount / (SL_distance_in_points × contract_value_per_point)
+    #
+    # Example: $10,000 balance, 0.15% risk, 200 pip SL on XAUUSD:
+    #   risk_amount = $15.00
+    #   SL dist = 2000 points (XAUUSD 0.01 point)
+    #   contract = 100 units × 0.01 = $1.0 per point
+    #   volume = $15 / (2000 × $1.0) = 0.0075 → rounded to 0.01 lots
+    #   If balance drops to $8,000 → risk = $12.00 → 0.006 → 0.01 lots
+    #   If balance grows to $12,000 → risk = $18.00 → 0.009 → 0.01 lots
+    # ────────────────────────────────────────────────────────────────────
+    account_info = mt5.account_info()
+    if account_info is None or point <= 0:
+        logger.error("Cannot size position: no account info or zero point")
+        return False
+
+    balance = account_info.balance
+    risk_amount = balance * (RISK_PERCENT / 100.0)
+    sl_distance_points = abs(sl - price) / point
+    contract_value = info.trade_contract_size * point
+
+    if sl_distance_points <= 0 or contract_value <= 0:
+        logger.error("Cannot size position: invalid SL distance or contract value")
+        return False
+
+    volume = risk_amount / (sl_distance_points * contract_value)
+
+    # Safety: enforce min/max and step rounding
+    step = info.volume_step
+    volume = max(info.volume_min, min(info.volume_max, volume))
+    if step > 0:
+        volume = round(volume / step) * step
+    volume = round(volume, 2)
+
+    # Cap by margin (use 30% of free margin max)
+    try:
+        margin_per_lot = mt5.order_calc_margin(
+            mt5.ORDER_TYPE_BUY, SYMBOL, 1.0, price
+        )
+        if margin_per_lot and margin_per_lot > 0 and account_info.margin_free > 0:
+            max_lot = (account_info.margin_free * 0.30) / margin_per_lot
+            volume = min(volume, round(max_lot / step) * step)
+    except Exception:
+        pass
+
+    volume = normalize_volume(volume)
+    volume = min(volume, MAX_VOLUME_PER_TRADE)
+
+    logger.info(
+        "💰 PHOENIX POSITION SIZING | balance=$%.2f risk=%.2f%% risk_amt=$%.2f "
+        "SL_dist=%.0fpts volume=%.2f lots | R:R=1:2",
+        balance, RISK_PERCENT, risk_amount,
+        sl_distance_points, volume,
+    )
 
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
@@ -847,8 +909,8 @@ def startup() -> None:
     logger.info("=" * 60)
     logger.info("Gold Phoenix Bot — Live Trading on Demo Account")
     logger.info("Signals: AsianBreak + Squeeze + Pullback + Reversal")
-    logger.info("SL/TP: %d/%d pips (1:2 R:R) | Lot: %.2f | Max %d trades/day",
-                FIXED_SL_PIPS, FIXED_TP_PIPS, LOT_SIZE, MAX_TRADES_PER_DAY)
+    logger.info("SL/TP: %d/%d pips (1:2 R:R) | Risk: %.2f%% | Max %d trades/day",
+                FIXED_SL_PIPS, FIXED_TP_PIPS, RISK_PERCENT, MAX_TRADES_PER_DAY)
     logger.info("Session: %d-%d UTC | ADX>=%.0f | BB Squeeze<=%.2f",
                 SESSION_START_UTC, SESSION_END_UTC, ADX_THRESHOLD, BB_SQUEEZE_MIN)
     logger.info("=" * 60)

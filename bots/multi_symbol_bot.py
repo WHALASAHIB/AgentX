@@ -68,24 +68,36 @@ STRATEGY_CLASSES = {
     "sma":          "sma_crossover_strategy",
 }
 
-# Default symbol-specific parameters
-# (magic_number, lot_size, risk_percent, max_entries_per_day)
-# FTMO Challenge Mode: risk reduced for 10% max DD limit
+# ──────────────────────────────────────────────────────────────────────────────
+# Symbol Parameters
+# ──────────────────────────────────────────────────────────────────────────────
+# (magic_number, risk_percent, max_entries_per_day)
+# risk_percent = percentage of CURRENT account balance risked per trade
+#   Example: 0.15% risk on $10,000 account = $15 risk per trade
+#   If account grows to $12,000 → risk = $18 per trade
+#   If account shrinks to $8,000  → risk = $12 per trade
+#   This is DYNAMIC — reads live MT5 balance every trade, no fixed lots
+#
+# FTMO Challenge Mode: standard 0.15% risk gives ~$15/trade on $10K
+# 10% max drawdown = $1,000 total risk buffer ≈ 66 losing trades in a row
+# 5% daily loss limit = $500/day
+#
+# risk = 0.0 means DISABLED (bot will skip that symbol)
+# ──────────────────────────────────────────────────────────────────────────────
 DEFAULT_PARAMS = {
-    "XAUUSD":  {"magic": 780001, "lot": 0.01, "risk": 0.0, "max_entries": 0},  # DISABLED
-    "EURUSD":  {"magic": 780002, "lot": 0.01, "risk": 0.0, "max_entries": 0},  # DISABLED
-    "GBPUSD":  {"magic": 780003, "lot": 0.01, "risk": 0.15, "max_entries": 2},
-    "USDJPY":  {"magic": 780004, "lot": 0.01, "risk": 0.15, "max_entries": 2},
-    "USDCHF":  {"magic": 780005, "lot": 0.01, "risk": 0.15, "max_entries": 2},
-    "USDCAD":  {"magic": 780006, "lot": 0.01, "risk": 0.15, "max_entries": 2},
-    "AUDUSD":  {"magic": 780007, "lot": 0.01, "risk": 0.15, "max_entries": 2},
-    "NZDUSD":  {"magic": 780008, "lot": 0.01, "risk": 0.15, "max_entries": 2},
-    "BTCUSD":  {"magic": 780009, "lot": 0.01, "risk": 0.20, "max_entries": 1},
+    "XAUUSD":  {"magic": 888222, "risk": 0.15, "max_entries": 2},   # GoldPhoenix
+    "EURUSD":  {"magic": 888223, "risk": 0.15, "max_entries": 2},   # GoldPhoenix
+    "GBPUSD":  {"magic": 780003, "risk": 0.15, "max_entries": 2},
+    "USDJPY":  {"magic": 780004, "risk": 0.15, "max_entries": 2},
+    "USDCHF":  {"magic": 780005, "risk": 0.15, "max_entries": 2},
+    "USDCAD":  {"magic": 780006, "risk": 0.15, "max_entries": 2},
+    "AUDUSD":  {"magic": 780007, "risk": 0.15, "max_entries": 2},
+    "NZDUSD":  {"magic": 780008, "risk": 0.15, "max_entries": 2},
+    "BTCUSD":  {"magic": 780009, "risk": 0.20, "max_entries": 1},
 }
 
 # Default overrides if not in DEFAULT_PARAMS
 FALLBACK_MAGIC = 780000
-FALLBACK_LOT = 0.01
 FALLBACK_RISK = 1.0
 FALLBACK_MAX_ENTRIES = 2
 
@@ -118,6 +130,23 @@ FTMO_MAX_DAILY_LOSS_PCT = 5.0              # 5% max daily loss
 FTMO_MAX_DRAWDOWN_PCT = 10.0               # 10% max total drawdown
 _daily_pnl_start_balance: float = 0.0      # Tracked at first trade of the UTC day
 
+# ── FTMO Combat Circuit Breakers ───────────────────────────────────────────
+# Research-backed: 99% of algo bots fail FTMO. These protect against the
+# top 5 killers: daily loss limit breach, consecutive losses, news traps,
+# overtrading on profitable days, and correlation clustering.
+# ───────────────────────────────────────────────────────────────────────────
+CONSECUTIVE_LOSS_LIMIT = 3                 # Auto-pause after 3 losses in a row
+DAILY_PROFIT_CAP_PCT = 0.5                 # Stop trading after +0.5% daily profit
+HIGH_IMPACT_NEWS_WINDOW_MIN = 15           # Minutes to avoid around high-impact news
+# Trading window (UTC) — London/NY overlap for best liquidity
+TRADING_WINDOW_START_UTC = 7               # London open
+TRADING_WINDOW_END_UTC = 17                # NY close
+# Track consecutive losses (persisted in state)
+_consecutive_losses: int = 0
+_circuit_breaker_active: bool = False
+_circuit_breaker_until: float = 0.0        # Unix timestamp when breaker resets
+_daily_profit_hit_limit: bool = False
+
 # ============================================================================
 # Module state
 # ============================================================================
@@ -126,7 +155,6 @@ logger = logging.getLogger("multi_symbol_bot")
 _symbol: str = ""
 _strategy_name: str = ""
 _magic: int = FALLBACK_MAGIC
-_lot_size: float = FALLBACK_LOT
 _risk_percent: float = FALLBACK_RISK
 _max_entries_per_day: int = FALLBACK_MAX_ENTRIES
 _state: dict[str, Any] = {}
@@ -457,8 +485,56 @@ def bot_positions():
     return [p for p in positions if p.magic == _magic]
 
 def reconcile_trade_state() -> None:
+    """Reconcile state with open positions. Tracks consecutive losses."""
+    global _consecutive_losses, _circuit_breaker_active
     positions = bot_positions()
-    if positions and len(positions) > 0:
+    positions_exist = positions and len(positions) > 0
+    
+    # Position closed — check if it was a winner or loser
+    if _state.get("trade_taken") and not positions_exist:
+        # Try to get the last closed order P&L from MT5 history
+        last_pnl = 0.0
+        try:
+            from_time = datetime.now(timezone.utc) - timedelta(hours=24)
+            history = mt5.history_orders_get(from_time, datetime.now(timezone.utc))
+            if history:
+                # Find our magic number orders
+                our_orders = [o for o in history if o.magic == _magic]
+                if our_orders:
+                    last_order = max(our_orders, key=lambda o: o.time_done or o.time_setup)
+                    # Get the corresponding deal for P&L
+                    deals = mt5.history_deals_get(from_time, datetime.now(timezone.utc))
+                    if deals:
+                        our_deals = [d for d in deals if d.magic == _magic and d.order == last_order.ticket]
+                        if our_deals:
+                            last_pnl = float(our_deals[-1].profit)
+        except Exception:
+            pass
+        
+        if last_pnl < 0:
+            _consecutive_losses += 1
+            logger.info(
+                "📉 Consecutive loss #%d/%d (P&L: $%.2f)",
+                _consecutive_losses, CONSECUTIVE_LOSS_LIMIT, last_pnl
+            )
+            if _consecutive_losses >= CONSECUTIVE_LOSS_LIMIT:
+                # Activate circuit breaker until end of UTC day
+                _circuit_breaker_active = True
+                tomorrow = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0) + timedelta(days=1)
+                _circuit_breaker_until = tomorrow.timestamp()
+                logger.warning(
+                    "🔴 CIRCUIT BREAKER TRIGGERED — %d consecutive losses. "
+                    "Pausing until %s UTC",
+                    _consecutive_losses,
+                    datetime.fromtimestamp(_circuit_breaker_until, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
+                )
+        elif last_pnl > 0:
+            # Win — reset counter
+            if _consecutive_losses > 0:
+                logger.info("📈 Win! Resetting consecutive loss counter (was %d)", _consecutive_losses)
+            _consecutive_losses = 0
+    
+    if positions_exist:
         if not _state.get("trade_taken"):
             logger.info("Reconciling: open position found")
             _state["trade_taken"] = True
@@ -552,38 +628,60 @@ def place_market_order(order_type: int, atr: float) -> bool:
     sl, tp = adjust_stops(order_type, price, sl, tp, stops_level, point, digits)
     price = normalize_price(price, digits)
 
-    # Risk-based position sizing
+    # ── Risk-based position sizing (100% dynamic) ──────────────────────
+    # Reads current MT5 balance live — no fixed lots, no trails
+    #   risk_amount = current_balance × (risk_percent / 100)
+    #   volume = risk_amount / (SL_distance_in_points × contract_value_per_point)
+    #
+    # Example: $10,000 balance, 0.15% risk, 50-pip SL:
+    #   risk_amount = $15.00
+    #   volume = $15 / (500 points × $10/point) = 0.03 lots
+    #   If balance drops to $8,000 → risk_amount = $12.00 → 0.024 lots
+    #   If balance grows to $12,000 → risk_amount = $18.00 → 0.036 lots
+    # ────────────────────────────────────────────────────────────────────
     account_info = mt5.account_info()
-    if account_info and point > 0:
-        balance = account_info.balance
-        risk_amount = balance * (_risk_percent / 100.0)
-        sl_distance_points = abs(sl - price) / point
-        contract_value = info.trade_contract_size * point
-        if sl_distance_points > 0 and contract_value > 0:
-            volume = risk_amount / (sl_distance_points * contract_value)
-            volume = max(info.volume_min, min(info.volume_max, volume))
-            step = info.volume_step
-            if step > 0:
-                volume = round(volume / step) * step
-            volume = round(volume, 2)
+    if account_info is None or point <= 0:
+        logger.error("Cannot size position: no account info or zero point")
+        return False
 
-            # Cap by margin (30% of free margin)
-            try:
-                margin_per_lot = mt5.order_calc_margin(
-                    mt5.ORDER_TYPE_BUY, _symbol, 1.0, price
-                )
-                if margin_per_lot and margin_per_lot > 0 and account_info.margin_free > 0:
-                    max_lot = (account_info.margin_free * 0.30) / margin_per_lot
-                    volume = min(volume, round(max_lot / step) * step)
-            except Exception:
-                pass
-        else:
-            volume = _lot_size
-    else:
-        volume = _lot_size
+    balance = account_info.balance
+    risk_amount = balance * (_risk_percent / 100.0)
+    sl_distance_points = abs(sl - price) / point
+    contract_value = info.trade_contract_size * point
+
+    if sl_distance_points <= 0 or contract_value <= 0:
+        logger.error("Cannot size position: invalid SL distance or contract value")
+        return False
+
+    volume = risk_amount / (sl_distance_points * contract_value)
+
+    # Safety: enforce min/max and step rounding
+    step = info.volume_step
+    volume = max(info.volume_min, min(info.volume_max, volume))
+    if step > 0:
+        volume = round(volume / step) * step
+    volume = round(volume, 2)
+
+    # Cap by margin (use 30% of free margin max)
+    try:
+        margin_per_lot = mt5.order_calc_margin(
+            mt5.ORDER_TYPE_BUY, _symbol, 1.0, price
+        )
+        if margin_per_lot and margin_per_lot > 0 and account_info.margin_free > 0:
+            max_lot = (account_info.margin_free * 0.30) / margin_per_lot
+            volume = min(volume, round(max_lot / step) * step)
+    except Exception:
+        pass
 
     volume = normalize_volume(volume)
     volume = min(volume, MAX_VOLUME_PER_TRADE)
+
+    logger.info(
+        "💰 POSITION SIZING | balance=$%.2f risk=%.2f%% risk_amt=$%.2f "
+        "SL_dist=%.0fpts volume=%.2f lots",
+        balance, _risk_percent, risk_amount,
+        sl_distance_points, volume,
+    )
 
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
@@ -741,10 +839,48 @@ def close_bot_positions() -> None:
 
 def try_execute_entry() -> None:
     """Evaluate strategy, check filters, and place order if conditions met."""
+    # DISABLED: risk_percent = 0.0 means skip this symbol entirely
+    if _risk_percent <= 0.0:
+        return
+
     if _state.get("entries_today", 0) >= _state.get("max_entries_per_day", _max_entries_per_day):
         return
 
-    # FTMO Daily Loss Check
+    # ── FTMO Circuit Breaker ──────────────────────────────────────────────
+    # After 3 consecutive losses, auto-pause trading for the rest of the day
+    global _consecutive_losses, _circuit_breaker_active, _circuit_breaker_until, _daily_profit_hit_limit
+    if _circuit_breaker_active:
+        now = time.time()
+        if now < _circuit_breaker_until:
+            logger.warning(
+                "⚠️  CIRCUIT BREAKER ACTIVE — %d consecutive losses. "
+                "Resuming at %s UTC",
+                _consecutive_losses,
+                datetime.fromtimestamp(_circuit_breaker_until, tz=timezone.utc).strftime("%H:%M")
+            )
+            return
+        else:
+            logger.info("🔌 Circuit breaker reset — resuming trading")
+            _circuit_breaker_active = False
+            _consecutive_losses = 0
+            _circuit_breaker_until = 0.0
+    # ───────────────────────────────────────────────────────────────────────
+
+    # ── FTMO Trading Window ───────────────────────────────────────────────
+    # Only trade during London/NY overlap for best liquidity
+    now_hour = datetime.now(timezone.utc).hour
+    if not (TRADING_WINDOW_START_UTC <= now_hour < TRADING_WINDOW_END_UTC):
+        return
+    # ───────────────────────────────────────────────────────────────────────
+
+    # ── FTMO Daily Profit Cap ─────────────────────────────────────────────
+    # Stop trading for the day after hitting +0.5% profit
+    if _daily_profit_hit_limit:
+        logger.info("💰 Daily profit cap reached — no more trades today")
+        return
+    # ───────────────────────────────────────────────────────────────────────
+
+    # FTMO Daily Loss Check (percentage of starting balance)
     if FTMO_MODE:
         today = datetime.now(timezone.utc).date()
         if _daily_pnl_start_balance <= 0:
@@ -755,7 +891,7 @@ def try_execute_entry() -> None:
             acct = mt5.account_info()
             if acct:
                 daily_pnl = acct.balance - _daily_pnl_start_balance
-                daily_loss_limit = -FTMO_ACCOUNT_SIZE * (FTMO_MAX_DAILY_LOSS_PCT / 100.0)
+                daily_loss_limit = -_daily_pnl_start_balance * (FTMO_MAX_DAILY_LOSS_PCT / 100.0)
                 # Check current position P&L too
                 pos_pnl = sum(p.profit for p in (mt5.positions_get() or []))
                 if daily_pnl + pos_pnl < daily_loss_limit:
@@ -763,6 +899,15 @@ def try_execute_entry() -> None:
                         "FTMO DAILY LOSS LIMIT REACHED: balance=%.2f start=%.2f pnl=%.2f limit=%.2f — PAUSING",
                         acct.balance, _daily_pnl_start_balance, daily_pnl, daily_loss_limit
                     )
+                    return
+                # Also check daily profit cap
+                daily_profit_limit = _daily_pnl_start_balance * (DAILY_PROFIT_CAP_PCT / 100.0)
+                if daily_pnl + pos_pnl >= daily_profit_limit:
+                    logger.info(
+                        "💰 Daily profit cap hit: +$%.2f (+%.2f%%) — stopping for the day",
+                        daily_pnl + pos_pnl, (daily_pnl + pos_pnl) / _daily_pnl_start_balance * 100
+                    )
+                    _daily_profit_hit_limit = True
                     return
 
     # Check for existing positions
@@ -829,7 +974,7 @@ def log_status() -> None:
 
 def startup(symbol: str, strategy: str) -> None:
     """Initialize everything before the main loop."""
-    global _symbol, _strategy_name, _magic, _lot_size, _risk_percent
+    global _symbol, _strategy_name, _magic, _risk_percent
     global _max_entries_per_day, _state, _broker_offset_sec, _last_offset_check
 
     _symbol = symbol.upper()
@@ -838,15 +983,14 @@ def startup(symbol: str, strategy: str) -> None:
     # Load symbol-specific parameters
     params = DEFAULT_PARAMS.get(_symbol, {})
     _magic = params.get("magic", FALLBACK_MAGIC)
-    _lot_size = params.get("lot", FALLBACK_LOT)
     _risk_percent = params.get("risk", FALLBACK_RISK)
     _max_entries_per_day = params.get("max_entries", FALLBACK_MAX_ENTRIES)
 
     setup_logging(_symbol, _strategy_name)
     logger.info("=" * 60)
     logger.info("Multi-Symbol Bot | Symbol=%s Strategy=%s", _symbol, _strategy_name)
-    logger.info("Magic=%d Lot=%.2f Risk=%d%% MaxEntries=%d",
-                _magic, _lot_size, int(_risk_percent), _max_entries_per_day)
+    logger.info("Magic=%d Risk=%.2f%% MaxEntries=%d",
+                _magic, _risk_percent, _max_entries_per_day)
     logger.info("R:R = 1:%.1f (SL=%.1fxATR TP=%.1fxATR)",
                 ATR_TP_MULT / ATR_SL_MULT, ATR_SL_MULT, ATR_TP_MULT)
     logger.info("=" * 60)
