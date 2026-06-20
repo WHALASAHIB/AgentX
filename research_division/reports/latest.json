@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-06-21T00:04:28.940873+08:00",
+  "sprint_number": 2,
+  "market_summary": {
+    "total_trades": 810,
+    "overall_win_rate": 0.3,
+    "overall_profit_factor": 5.04,
+    "net_profit": 96685.85,
+    "max_drawdown": 11.3,
+    "accounts_balance": 0
+  },
+  "pairs": {
+    "AUDUSD": {
+      "trades": 8,
+      "win_rate": 0.5,
+      "profit_factor": 2.43,
+      "net_profit": 1728.06,
+      "max_drawdown": 0.3,
+      "consecutive_losses": 2
+    },
+    "EURUSD": {
+      "trades": 7,
+      "win_rate": 0.1,
+      "profit_factor": 0.04,
+      "net_profit": -1772.13,
+      "max_drawdown": 1.8,
+      "consecutive_losses": 6
+    },
+    "GBPUSD": {
+      "trades": 6,
+      "win_rate": 0.5,
+      "profit_factor": 2.37,
+      "net_profit": 1753.04,
+      "max_drawdown": 0.6,
+      "consecutive_losses": 2
+    },
+    "NZDUSD": {
+      "trades": 8,
+      "win_rate": 0.4,
+      "profit_factor": 3.61,
+      "net_profit": 3894.85,
+      "max_drawdown": 0.9,
+      "consecutive_losses": 2
+    },
+    "USDCAD": {
+      "trades": 5,
+      "win_rate": 0.2,
+      "profit_factor": 2.02,
+      "net_profit": 125.2,
+      "max_drawdown": 0.1,
+      "consecutive_losses": 4
+    },
+    "USDCHF": {
+      "trades": 6,
+      "win_rate": 0.3,
+      "profit_factor": 2.93,
+      "net_profit": 568.23,
+      "max_drawdown": 0.2,
+      "consecutive_losses": 3
+    },
+    "USDJPY": {
+      "trades": 9,
+      "win_rate": 0.4,
+      "profit_factor": 0.86,
+      "net_profit": -3.11,
+      "max_drawdown": 0.0,
+      "consecutive_losses": 3
+    },
+    "XAUUSD": {
+      "trades": 760,
+      "win_rate": 0.3,
+      "profit_factor": 0.46,
+      "net_profit": -9608.29,
+      "max_drawdown": 10.6,
+      "consecutive_losses": 13
+    }
+  },
+  "sprint_status": {
+    "items_in_progress": 1,
+    "blockers": 6,
+    "backlog": 0
+  },
+  "deployments": [],
+  "blockers": [
+    {
+      "type": "consecutive_losses",
+      "severity": "critical",
+      "pair": "EURUSD",
+      "message": "6 consecutive losses",
+      "detail": "Pair EURUSD has lost 6 trades in a row. WR=14.3%. Immediate intervention required."
+    },
+    {
+      "type": "consecutive_losses",
+      "severity": "critical",
+      "pair": "XAUUSD",
+      "message": "13 consecutive losses",
+      "detail": "Pair XAUUSD has lost 13 trades in a row. WR=32.6%. Immediate intervention required."
+    },
+    {
+      "type": "low_win_rate",
+      "severity": "warning",
+      "pair": "EURUSD",
+      "message": "Win rate 14.3% below 25% threshold",
+      "detail": "Pair EURUSD WR=14.3% from 7 trades. Needs filter or parameter adjustment."
+    },
+    {
+      "type": "low_win_rate",
+      "severity": "warning",
+      "pair": "USDCAD",
+      "message": "Win rate 20.0% below 25% threshold",
+      "detail": "Pair USDCAD WR=20.0% from 5 trades. Needs filter or parameter adjustment."
+    },
+    {
+      "type": "bot_inactive",
+      "severity": "warning",
+      "pair": "XAUUSD",
+      "message": "No open positions despite active trade history",
+      "detail": "Pair XAUUSD has 760 historical trades but no currently open positions. Bot may be inactive."
+    },
+    {
+      "type": "profit_factor_drop",
+      "severity": "warning",
+      "pair": "XAUUSD",
+      "message": "Profit factor 0.46 suggests strategy degradation",
+      "detail": "Pair XAUUSD PF=0.46 from 760 trades. Winning efficiency has dropped significantly."
+    }
+  ],
+  "standup": "## \ud83e\udd16 Daily Standup \u2014 2026-06-21 00:04 HKT\n\n### \ud83d\udccb Sprint #2\n\n**\u274c Failed:**\n  \u2022 `BL-0004` USDJPY/macd \u2014 Low WR\n\n**Backlog remaining:** 0 item(s)\n\n### \ud83d\udea8 Blockers\n\n**\ud83d\udd34 Critical:**\n  \u2022 EURUSD \u2014 6 consecutive losses\n  \u2022 XAUUSD \u2014 13 consecutive losses\n\n**\ud83d\udfe1 Warnings:**\n  \u2022 EURUSD \u2014 Win rate 14.3% below 25% threshold\n  \u2022 USDCAD \u2014 Win rate 20.0% below 25% threshold\n  \u2022 XAUUSD \u2014 No open positions despite active trade history\n  \u2022 XAUUSD \u2014 Profit factor 0.46 suggests strategy degradation\n\n### \ud83d\udca1 Recommendations\n\n  \u2022 **Immediate action:** Address critical blockers before proceeding with new sprint work.\n  \u2022 **Trading halt:** Consider pausing the affected strategy until root cause is identified.\n  \u2022 **Filter review:** Add or tighten entry filters for low-win-rate pairs.\n\n---\n*Generated at 2026-06-21 00:04 HKT by Research Division Sprint Manager*"
+}

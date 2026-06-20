@@ -1,0 +1,51 @@
+[
+  {
+    "pair": "EURUSD",
+    "strategy": "macd",
+    "variant_name": "macd_cli_044305",
+    "new_params": {
+      "fast": 14,
+      "slow": 30
+    },
+    "sprint_id": "",
+    "timestamp": "2026-06-18T04:43:05.664837+00:00",
+    "backup_file": "C:\\Trading\\backtester\\active_strategies\\EURUSD\\backups\\macd_crossover_20260618_044305_664837.py.bak",
+    "new_file": "C:\\Trading\\backtester\\active_strategies\\EURUSD\\macd_crossover.py",
+    "content_hash": "f8fc973d9a65d67b",
+    "verification": {
+      "valid": true,
+      "message": "Module loaded successfully"
+    },
+    "restart_result": [
+      {
+        "bot_name": "GoldPhoenix_EURUSD",
+        "pair": "EURUSD",
+        "strategy": "goldphoenix",
+        "api_stop": {
+          "name": "GoldPhoenix_EURUSD",
+          "status": "stopped",
+          "pid": 1772
+        },
+        "method": "api",
+        "pid": 7992,
+        "success": true
+      },
+      {
+        "bot_name": "MACD_EURUSD",
+        "pair": "EURUSD",
+        "strategy": "macd",
+        "api_stop": {
+          "name": "MACD_EURUSD",
+          "status": "stopped",
+          "pid": 672
+        },
+        "method": "api",
+        "pid": 14856,
+        "success": true
+      }
+    ],
+    "success": true,
+    "saved_at": "2026-06-18T04:43:18.516287+00:00",
+    "id": "deploy_20260618_044318_516287"
+  }
+]

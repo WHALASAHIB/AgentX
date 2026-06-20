@@ -1,0 +1,30 @@
+{
+  "sprint_number": 2,
+  "created_at": "2026-06-18T12:41:34+00:00",
+  "start_time": "2026-06-18T12:41:34+00:00",
+  "end_time": "",
+  "items": [
+    {
+      "id": "BL-0004",
+      "pair": "USDJPY",
+      "strategy": "macd",
+      "description": "Low WR",
+      "current_value": 0.22,
+      "target_value": 0.55,
+      "status": "failed",
+      "impact_score": 0.15,
+      "category": "change_strategy",
+      "effort_hours": 8,
+      "results": {
+        "score": 0.7023
+      }
+    }
+  ],
+  "backlog": [],
+  "completed": [],
+  "metrics": {
+    "pairs_analyzed": 1,
+    "improvements_deployed": 0,
+    "win_rate_change": 0.0
+  }
+}
