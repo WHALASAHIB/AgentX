@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """
 EURUSD — MACD Crossover Bot
-============================
+⚠️ DISABLED by Council Decision — PF 0.04, 14.3% WR
 """
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from multi_symbol_bot import main
-
-if __name__ == "__main__":
-    sys.argv = [sys.argv[0], "--symbol", "EURUSD", "--strategy", "macd"]
-    main()
+import sys
+print("⚠️  MACD EURUSD DISABLED — see council decision", flush=True)
+sys.exit(0)

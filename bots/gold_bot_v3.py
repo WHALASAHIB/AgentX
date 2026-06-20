@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
+Gold Bot v3
+⚠️ DISABLED by Council Decision — 83% WR but PF 0.34, one loss = 14 wins wiped
+"""
+import sys
+print("⚠️  GOLD BOT DISABLED — catastrophic loss risk, 83% WR but PF 0.34", flush=True)
+sys.exit(0)
+"""
 Gold Bot v3 — Multi-Timeframe Session Range Breakout (XAUUSD)
-=============================================================
+============================================================
 R:R ≥ 1:3 | Multi-TF: H1→M15→M5
 
 Strategy:

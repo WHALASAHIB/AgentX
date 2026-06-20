@@ -40,15 +40,15 @@ class GoldPhoenixStrategy:
     def __init__(self,
                  atr_period: int = 14,
                  adx_period: int = 14,
-                 adx_threshold: float = 26.0,
+                 adx_threshold: float = 28.0,       # Raised from 26 — fewer, higher quality signals
                  ema_fast: int = 21,
                  ema_slow: int = 55,
                  bb_period: int = 20,
                  bb_std: float = 2.0,
-                 bb_squeeze_min: float = 0.40,
+                 bb_squeeze_min: float = 0.35,       # Tightened from 0.40 — only strongest squeezes
                  max_trades_day: int = 2,
-                 session_start_gmt: int = 7,
-                 session_end_gmt: int = 17,
+                 session_start_gmt: int = 8,         # Shifted from 7 — skip Asian open noise
+                 session_end_gmt: int = 16,          # Tightened from 17
                  asian_range_bars: int = 6):
         self.atr_period = atr_period
         self.adx_period = adx_period

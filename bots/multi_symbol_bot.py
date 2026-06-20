@@ -70,16 +70,17 @@ STRATEGY_CLASSES = {
 
 # Default symbol-specific parameters
 # (magic_number, lot_size, risk_percent, max_entries_per_day)
+# FTMO Challenge Mode: risk reduced for 10% max DD limit
 DEFAULT_PARAMS = {
-    "XAUUSD":  {"magic": 780001, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "EURUSD":  {"magic": 780002, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "GBPUSD":  {"magic": 780003, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "USDJPY":  {"magic": 780004, "lot": 0.01, "risk": 0.8, "max_entries": 2},  # Lower risk due to 21.9% DD
-    "USDCHF":  {"magic": 780005, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "USDCAD":  {"magic": 780006, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "AUDUSD":  {"magic": 780007, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "NZDUSD":  {"magic": 780008, "lot": 0.01, "risk": 1.0, "max_entries": 2},
-    "BTCUSD":  {"magic": 780009, "lot": 0.01, "risk": 1.0, "max_entries": 2},
+    "XAUUSD":  {"magic": 780001, "lot": 0.01, "risk": 0.0, "max_entries": 0},  # DISABLED
+    "EURUSD":  {"magic": 780002, "lot": 0.01, "risk": 0.0, "max_entries": 0},  # DISABLED
+    "GBPUSD":  {"magic": 780003, "lot": 0.01, "risk": 0.15, "max_entries": 2},
+    "USDJPY":  {"magic": 780004, "lot": 0.01, "risk": 0.15, "max_entries": 2},
+    "USDCHF":  {"magic": 780005, "lot": 0.01, "risk": 0.15, "max_entries": 2},
+    "USDCAD":  {"magic": 780006, "lot": 0.01, "risk": 0.15, "max_entries": 2},
+    "AUDUSD":  {"magic": 780007, "lot": 0.01, "risk": 0.15, "max_entries": 2},
+    "NZDUSD":  {"magic": 780008, "lot": 0.01, "risk": 0.15, "max_entries": 2},
+    "BTCUSD":  {"magic": 780009, "lot": 0.01, "risk": 0.20, "max_entries": 1},
 }
 
 # Default overrides if not in DEFAULT_PARAMS
@@ -101,8 +102,21 @@ LOOP_SLEEP_SEC = 1
 MT5_RETRY_SEC = 30
 RATES_BARS = 300
 
+# Maximum position size cap (lots) — critical safety limit
+# Prevents M5 ATR position sizing paradox where tiny forex ATR
+# produces absurdly large volumes (e.g., 19.51 lots on $10K)
+MAX_VOLUME_PER_TRADE = 3.0
+
 # Spread filter
 MAX_SPREAD_POINTS = 50
+
+# FTMO Challenge Mode — Daily Risk Limits
+# $10K FTMO: 5% daily loss limit = $500, 10% max drawdown = $1,000
+FTMO_MODE = False                          # Set True when running on prop firm account
+FTMO_ACCOUNT_SIZE = 10000                  # Starting balance on the challenge
+FTMO_MAX_DAILY_LOSS_PCT = 5.0              # 5% max daily loss
+FTMO_MAX_DRAWDOWN_PCT = 10.0               # 10% max total drawdown
+_daily_pnl_start_balance: float = 0.0      # Tracked at first trade of the UTC day
 
 # ============================================================================
 # Module state
@@ -399,10 +413,31 @@ def get_strategy_signal() -> Optional[int]:
 
         latest_signal = result_df["signal"].iloc[-1]
         if latest_signal == 1:
-            return mt5.ORDER_TYPE_BUY
+            signal = mt5.ORDER_TYPE_BUY
         elif latest_signal == -1:
-            return mt5.ORDER_TYPE_SELL
-        return None
+            signal = mt5.ORDER_TYPE_SELL
+        else:
+            return None
+
+        # ── Sentiment filter ──────────────────────────────────────────────
+        # Load sentiment_engine via importlib (fail-open on error)
+        try:
+            import importlib
+            se = importlib.import_module("research.sentiment_engine")
+            sentiment = se.get_sentiment()
+            logger.info("Sentiment score: %+d (%s)", sentiment.score, sentiment.bias)
+            # Threshold: >= +3 allows only BUY, <= -3 allows only SELL
+            if sentiment.score >= 3 and signal == mt5.ORDER_TYPE_SELL:
+                logger.info("Sentiment filter BLOCKED SELL (sentiment=%+d >= +3)", sentiment.score)
+                return None
+            if sentiment.score <= -3 and signal == mt5.ORDER_TYPE_BUY:
+                logger.info("Sentiment filter BLOCKED BUY (sentiment=%+d <= -3)", sentiment.score)
+                return None
+        except Exception as exc:
+            logger.debug("Sentiment filter unavailable (fail-open): %s", exc)
+        # ── End sentiment filter ──────────────────────────────────────────
+
+        return signal
 
     except ImportError:
         logger.warning("pandas not available — using fallback signal logic")
@@ -548,6 +583,7 @@ def place_market_order(order_type: int, atr: float) -> bool:
         volume = _lot_size
 
     volume = normalize_volume(volume)
+    volume = min(volume, MAX_VOLUME_PER_TRADE)
 
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
@@ -707,6 +743,27 @@ def try_execute_entry() -> None:
     """Evaluate strategy, check filters, and place order if conditions met."""
     if _state.get("entries_today", 0) >= _state.get("max_entries_per_day", _max_entries_per_day):
         return
+
+    # FTMO Daily Loss Check
+    if FTMO_MODE:
+        today = datetime.now(timezone.utc).date()
+        if _daily_pnl_start_balance <= 0:
+            acct = mt5.account_info()
+            if acct:
+                _daily_pnl_start_balance = acct.balance
+        else:
+            acct = mt5.account_info()
+            if acct:
+                daily_pnl = acct.balance - _daily_pnl_start_balance
+                daily_loss_limit = -FTMO_ACCOUNT_SIZE * (FTMO_MAX_DAILY_LOSS_PCT / 100.0)
+                # Check current position P&L too
+                pos_pnl = sum(p.profit for p in (mt5.positions_get() or []))
+                if daily_pnl + pos_pnl < daily_loss_limit:
+                    logger.warning(
+                        "FTMO DAILY LOSS LIMIT REACHED: balance=%.2f start=%.2f pnl=%.2f limit=%.2f — PAUSING",
+                        acct.balance, _daily_pnl_start_balance, daily_pnl, daily_loss_limit
+                    )
+                    return
 
     # Check for existing positions
     pos = bot_positions()

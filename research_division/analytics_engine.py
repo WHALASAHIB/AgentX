@@ -76,6 +76,28 @@ def _session_for_hour(hour: int) -> str:
         return "us"
 
 
+def _is_valid_trade(trade: dict) -> bool:
+    """Return True if this is a real trade (not a deposit/credit event).
+
+    Deposit/credit events have magic=0 and no comment. They should be
+    excluded from all KPI computations.
+    """
+    magic = trade.get("magic", 0)
+    if magic is None:
+        magic = 0
+    else:
+        try:
+            magic = int(magic)
+        except (ValueError, TypeError):
+            magic = 0
+    if magic == 0:
+        return False
+    comment = trade.get("comment", "") or ""
+    if not comment.strip():
+        return False
+    return True
+
+
 def _is_win(trade: dict) -> bool:
     """A trade is a 'win' if net_profit > 0. Ties (net_profit == 0) count as losses."""
     np_val = trade.get("net_profit", 0) or 0
@@ -117,6 +139,11 @@ def compute_pair_kpis(pair: str, trades: List[dict], initial_balance: float = 0.
     Returns:
         dict with all KPIs listed in the module spec.
     """
+    if not trades:
+        return _empty_kpis(pair)
+
+    # Filter out deposit/credit events (magic=0)
+    trades = [t for t in trades if _is_valid_trade(t)]
     if not trades:
         return _empty_kpis(pair)
 
@@ -531,6 +558,8 @@ def compute_time_analysis(trades: List[dict]) -> dict:
     by_session: Dict[str, dict] = defaultdict(lambda: {"trades": 0, "wins": 0, "net_profit": 0.0})
 
     for t in trades:
+        if not _is_valid_trade(t):
+            continue
         dt = _utc_to_hkt(t.get("close_time", ""))
         if dt is None:
             continue
@@ -674,6 +703,8 @@ def compute_market_regime_analysis(trades: List[dict],
         # Sort trades by close_time and assign to the regime at that point in equity curve
         trade_times = []
         for t in trades:
+            if not _is_valid_trade(t):
+                continue
             dt = _utc_to_hkt(t.get("close_time", ""))
             if dt:
                 trade_times.append((dt, t))
@@ -777,6 +808,9 @@ def generate_all_reports(trades_cache: List[dict],
         trades_list = trades_cache.get("trades", trades_cache.get("trades_cache", []))
     else:
         trades_list = trades_cache or []
+
+    # Filter out deposit/credit events (magic=0) at the source
+    trades_list = [t for t in trades_list if _is_valid_trade(t)]
 
     by_pair = split_trades_by_pair(trades_list)
 

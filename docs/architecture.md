@@ -153,7 +153,6 @@ Market Data Feeds
 |------------------|------|-----------------|
 | FastAPI Backend  | 8005 | VM 10.10.10.100 |
 | MT5 Bridge       | 5000 | Host 10.10.10.1 |
-| Sentiment Service| 8001 | VM 10.10.10.100 |
 
 ## Network Layout
 

@@ -1,23 +1,13 @@
 #!/usr/bin/env python3
 """
+Streaming Bot v3
+⚠️ DISABLED by Council Decision — PF 0.39, 25% WR, Martingale pattern
+"""
+import sys
+print("⚠️  STREAMING BOT DISABLED — martingale pattern, $8k drawdown risk", flush=True)
+sys.exit(0)
+"""
 Streaming Bot v3 — Multi-Timeframe Consolidation Breakout (XAUUSD)
-===================================================================
-R:R ≥ 1:2.5 | Multi-TF: H1→M15→M5
-
-Strategy:
-  HTF (H1):    EMA50 determines primary trend direction
-  MTF (M15):   Identify consolidation zone (tight range, low relative ATR)
-  LTF (M5):    Breakout of M15 consolidation with 1-candle confirmation
-
-Only trade WITH the higher timeframe trend:
-  - BUY: H1 trend BULLISH + M15 consolidation + M5 upside breakout
-  - SELL: H1 trend BEARISH + M15 consolidation + M5 downside breakout
-
-Risk:
-  SL = 2.0 × M15 ATR(14)
-  TP = 5.0 × M15 ATR(14)  →  R:R = 1:2.5
-  No partial TP — let winners run
-  Trailing stop activates at 2.5×ATR profit
 
 Win rate improvements:
   - Removed body/ATR ratio filter (blocked all trades)
