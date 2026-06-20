@@ -12,6 +12,9 @@ tunnel_token.txt
 cloudflared.exe
 OpenSSH-Win64/
 
+# Knowledge base — belongs in Hermess repo
+rag_knowledge_base/
+
 # Python
 __pycache__/
 *.pyc
