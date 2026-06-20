@@ -29,8 +29,6 @@ Risk:
 Run: python gold_bot_v3.py
 """
 
-from __future__ import annotations
-
 import json
 import logging
 import math

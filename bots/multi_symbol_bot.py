@@ -14,9 +14,9 @@ Arguments:
     --strategy    Strategy name: macd | goldphoenix | bollinger | sma
 
 Architecture:
-    - Strategy logic is loaded from C:\Trading\backtester\active_strategies\<SYMBOL>\<strategy_file>
+    - Strategy logic is loaded from backtester/active_strategies/<SYMBOL>/<strategy_file>
     - MT5 connection via shared utils/mt5_connect.py
-    - Logging to C:\Trading\bots\logs\<symbol>_<strategy>.log
+    - Logging to bots/logs/<symbol>_<strategy>.log
     - Configurable per-symbol parameters (magic number, lot size, risk)
     - Production-ready main loop with reconnection, state persistence,
       trailing stops, and error recovery
