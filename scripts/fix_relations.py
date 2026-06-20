@@ -1,6 +1,6 @@
-import urllib.request, json
+import urllib.request, json, os
 
-TOKEN = "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"
+TOKEN = os.environ.get("NOTION_TOKEN", "")
 D1 = "383c5525-d394-81c4-bd63-dce9890e18e5"
 D2 = "383c5525-d394-8122-94f9-df8d64bb80ff"
 D3 = "383c5525-d394-819b-a7d4-cbe5e95d02e2"

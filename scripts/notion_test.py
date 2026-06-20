@@ -1,6 +1,6 @@
-import urllib.request, json
+import urllib.request, json, os
 
-token = "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"
+token = os.environ.get("NOTION_TOKEN", "")
 
 # Test basic connection
 req = urllib.request.Request(

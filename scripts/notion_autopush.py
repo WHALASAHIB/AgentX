@@ -10,7 +10,7 @@ import urllib.request, json, os, sys, time
 from datetime import datetime, timezone, timedelta
 
 # ── Config ────────────────────────────────────────────────────────────────────
-NOTION_TOKEN = "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"
+NOTION_TOKEN = os.environ.get("NOTION_TOKEN", "")
 MT5_BRIDGE = "http://localhost:5000"
 ACCOUNT_ID = "default"
 

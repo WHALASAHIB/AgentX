@@ -1,6 +1,6 @@
-import urllib.request, json
+import urllib.request, json, os
 
-TOKEN = "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"
+TOKEN = os.environ.get("NOTION_TOKEN", "")
 PARENT_DB = "383c5525-d394-8090-93ef-c530a3791394"
 
 def api(method, path, data=None):

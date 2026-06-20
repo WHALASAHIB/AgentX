@@ -11,7 +11,7 @@ from datetime import datetime, timezone, timedelta
 from collections import Counter, defaultdict
 
 # ── Config ────────────────────────────────────────────────────────────────────
-NOTION_TOKEN="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"
+NOTION_TOKEN=os.environ.get("NOTION_TOKEN", "")
 MT5_BRIDGE = "http://localhost:5000"
 ACCOUNT_ID = "default"
 

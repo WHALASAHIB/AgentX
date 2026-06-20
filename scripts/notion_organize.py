@@ -1,6 +1,6 @@
-import urllib.request, json, uuid
+import urllib.request, json, uuid, os
 
-TOKEN = "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"
+TOKEN = os.environ.get("NOTION_TOKEN", "")
 
 # Database IDs
 D1 = "383c5525-d394-81c4-bd63-dce9890e18e5"  # Monthly
