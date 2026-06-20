@@ -1,24 +1,47 @@
 # 🏗️ AGENTX v3 — Complete System Reference
 
 **Harness Engineering Framework Applied** — All features documented here.
+
 Live tunnel: `https://leader-sega-mit-ottawa.trycloudflare.com`
 Domain: `inventra.website` (DNS propagating at Namecheap)
 
 ---
 
-## 📋 Complete Feature Index
+## 📋 MASTER DOCUMENT
+
+👉 **Start here:** [`VISION-MANIFESTO.md`](./VISION-MANIFESTO.md)
+
+This is **the definitive document** — everything you need to know about the AGENTX project:
+- Full vision & mission ($1M in 12 months via FTMO)
+- The website (`inventra.website`) — every feature, every section, every detail
+- UI/UX Design System — visual identity, layout, design principles
+- Backtesting Lab specs — best backtesting terminal with every insight
+- Trade Journal & Analysis — visualize bot performance
+- Bot Control & Script Editing — full lifecycle management from the browser
+- Account Manager — multi-account, zero tolerance for disconnections
+- FTMO Challenge Manager — track every challenge
+- Analytics — deep metrics and insights
+- Infrastructure — Docker, Kubernetes, CI/CD, self-healing
+- Monitoring & Observability — Prometheus, Grafana, alerts
+- Backup & Recovery
+
+**Read VISION-MANIFESTO.md first. That is the single source of truth.**
+
+---
+
+## 📋 Complete Feature Index (26 Features)
 
 | # | Feature | File | Status |
 |---|---------|------|--------|
 | 1 | **Backend API** (75+ endpoints) | `backend/app.py` | ✅ Live port 8005 |
-| 2 | **Frontend Dashboard** (SPA) | `frontend/public/index.html` | ✅ Live |
+| 2 | **Frontend Dashboard** (SPA, 12 sections) | `frontend/public/index.html` | ✅ Live |
 | 3 | **Multi-Pair Trading Bots** (4 strategies × 9 pairs) | `bots/multi_symbol_bot.py` | ✅ 19 bots running |
 | 4 | **AI Agent Orchestrator** (6 agents) | `agents/orchestrator.py` | ✅ Active |
 | 5 | **Research Division** (5-phase cycle) | `research_division/run.py` | ✅ Cron every 4h |
 | 6 | **Analytics Engine** (KPIs per pair) | `research_division/analytics_engine.py` | ✅ |
 | 7 | **Sprint Manager** (Agile PM) | `research_division/sprint_manager.py` | ✅ |
 | 8 | **Deployment Engine** (canary + rollback) | `research_division/deployment_engine.py` | ✅ |
-| 9 | **SRE Engine** (self-healing) | `devops/sre.py` | ✅ Cron every 2min |
+| 9 | **SRE Engine** (self-healing) | `devops/sre.py` | ✅ Cron every 5min |
 | 10 | **DevSecOps** (credential security) | `devops/credentials.py` | ✅ |
 | 11 | **AgentOps** (decision/failure logging) | `devops/agentops.py` | ✅ |
 | 12 | **AIOps** (anomaly detection) | `devops/aiops.py` | ✅ |
@@ -78,6 +101,26 @@ https://inventra.website        # ⏳ Nameserver propagation at Namecheap
 
 ---
 
+## 📚 Harness File Guide
+
+| File | Read When... |
+|------|-------------|
+| **[VISION-MANIFESTO.md](./VISION-MANIFESTO.md)** | **ALWAYS FIRST** — complete vision, all website features, infrastructure, UI/UX specs |
+| **AGENTS.md** | You are an AI agent starting a session — read before any code changes |
+| **ARCHITECTURE.md** | Understanding system architecture, component diagram, data flow |
+| **PROGRESS.md** | Understanding current state, what's completed, what's blocked |
+| **bot-strategies.md** | Working with bot strategies, per-pair assignments, FTMO protections |
+| **backend-api.md** | Consuming or creating API endpoints |
+| **integrations.md** | Working with external services (MT5, Notion, Cloudflare, etc.) |
+| **devops-pipeline.md** | SRE, CI/CD, DevSecOps, AgentOps, AIOps pipeline details |
+| **security-observability.md** | Authentication, credential storage, anomaly detection |
+| **cron-automation.md** | Scheduled job schedules and task lists |
+| **FEATURES_TEMPLATE.md** | Creating structured feature specs |
+| **clean-state-protocol.md** | End-of-session cleanup checklist |
+| **Makefile** | Available automation targets |
+
+---
+
 ## 🔧 Using the System
 
 ### Bot Management
@@ -95,6 +138,7 @@ Open `http://localhost:8005/` in a browser. Features:
 - 📋 Open positions table
 - 🤖 Bot status panel
 - 📉 Trade history
+- 🧪 Backtesting Lab
 
 ### Backtesting
 ```bash
@@ -159,10 +203,12 @@ make sec-check           # Security posture check
 
 ## 🐛 Known Issues
 
-1. **SRE bot detection** — Grep pattern looks for "multi_symbol_bot" but actual processes use "run_macd", "run_goldphoenix" etc. False 0/8 count.
+1. ~~SRE bot detection — Grep pattern looks for "multi_symbol_bot" but actual processes use "run_macd" etc.~~ ✅ FIXED
 2. **No trades on weekends** — Bots are flat (normal, market closed)
-3. **DNS not propagated** — Namecheap nameservers still resolving
+3. **DNS not propagated** — Namecheap nameservers still resolving at Cloudflare
 4. **Notion autopush log missing** — Log file path mismatch
+5. **Backtesting Lab needs Monte Carlo + Walk-Forward** — Not yet implemented
+6. **Account Manager needs per-account risk limits** — Not yet implemented
 
 ---
 
@@ -188,3 +234,4 @@ make clean       # Remove temp files
 ---
 
 *AGENTX v3 — Last updated 2026-06-20 | Sprint 4: Harness Engineering*
+*👉 **First read:** [`VISION-MANIFESTO.md`](./VISION-MANIFESTO.md) — the complete vision.*
