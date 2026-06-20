@@ -2,7 +2,63 @@
 
 **Entry point for AI agents, automated workflows, and human operators.**
 
-AGENTX v3 is a production trading system running on Windows 11 that manages 23 automated forex/commodity bots across 9 currency pairs via MetaTrader 5. It features a FastAPI backend, real-time bridge to MT5, a 5-phase Research & Innovation Division (collect → analyze → sprint → deploy → report), and a single-page dashboard frontend.
+AGENTX v3 is a production trading system running on Windows 11 that manages automated forex/commodity bots across 9 currency pairs via MetaTrader 5. It features a FastAPI backend, real-time bridge to MT5, a 5-phase Research & Innovation Division, a single-page dashboard frontend, and a full DevOps/SRE pipeline.
+
+## DevOps / MLOps Pipeline
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| SRE Engine | `devops/sre.py` | Self-healing: resource limits, health checks, process governance |
+| Deploy Pipeline | `devops/deploy.py` | CI/CD: git pull → validate → backup → deploy → verify |
+| CI Workflow | `.github/workflows/ci.yml` | GitHub Actions: validates all .py on push |
+| Rules Config | `devops/rules.yaml` | Resource caps (8 max bots, 500MB min free RAM) |
+| Makefile Targets | `Makefile` | `make sre`, `make deploy`, `make validate`, `make rollback` |
+
+### Resource Governance
+- **MAX 8 bot processes** — prevents memory exhaustion
+- **Staggered launches** — 3s gap prevents MT5 IPC congestion  
+- **IPC recovery** — auto restart MT5 session on `symbol_select` failure
+- **Circuit breaker** — auto-pause after 3 consecutive losses
+
+### Cron Jobs (Consolidated — was 29, now 17)
+| Schedule | Job | Purpose |
+|----------|-----|---------|
+| `*/3 min` | SRE Engine | System health + resource governance |
+| `*/5 min` | Notion Auto-Push | Trade journal |
+| `30 min` | HermesMemorySync | Cloud backup |
+| `Hourly` | SentimentRefresh | Update sentiment cache |
+| `Hourly` | GitHub Auto-Sync | Version control |
+| `4 hours` | Research Division | Analytics cycle |
+| `6:00` | Gold Phoenix Report | Strategy iteration |
+| `7:05` | SentimentPipeline | Social sentiment |
+| `7:00` | Daily Algo Intelligence | CEO morning briefing |
+| `Monday 9:00` | Weekly CEO Report | Weekly summary |
+
+## DevSecOps — Credential Security
+- **Manager:** `devops/credentials.py` — Windows Credential Manager + encrypted file
+- **Audit:** Every credential access is logged to `bots/logs/credential_audit.log`
+- **SRE integration:** SRE engine checks for plaintext .env files every cycle
+- **GitGuard:** All `.env.*`, `*.key`, `*_token.txt` now gitignored
+- **Usage:** `make sec-check | sec-migrate | sec-audit | sec-list`
+
+## AgentOps — Agent Observability
+- **Logger:** `devops/agentops.py` — structured JSONL logging for all agent decisions
+- **Decisions:** `bots/logs/agent_decisions.jsonl` — WHY each decision was made
+- **Failures:** `bots/logs/agent_failures.jsonl` — categorized with stack traces
+- **Costs:** `bots/logs/agent_metrics.jsonl` — LLM token cost tracking
+- **Usage:** `make agent-decisions | agent-failures | agent-costs`
+
+## AIOps — Anomaly Detection
+- **Scanner:** `devops/aiops.py` — detects P&L velocity anomalies, bot silence, stale logs
+- **Patterns:** z-score analysis of P&L, silence detection (>6h), error count monitoring
+- **Usage:** `make aiops-scan`
+
+## Rejected Paradigms (Honest Assessment)
+| Paradigm | Verdict | Why |
+|----------|---------|-----|
+| **MLOps** | ❌ SKIP | We don't train ML models. Strategies are deterministic rules. A model registry/feature store would be useless overhead. |
+| **Full AIOps** | ❌ SKIP | Datadog/Splunk is enterprise overkill. Our light anomaly detection in `aiops.py` is sufficient. |
+| **LLMOps platform** | ✅ LITE | Cost tracking is in `agentops.py`. A full prompt management platform would cost more in maintenance than we spend on tokens (~$5/week). |
 
 ## Tech Stack
 

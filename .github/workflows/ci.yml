@@ -1,0 +1,56 @@
+name: AGENTX CI Pipeline
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Validate all Python files
+        shell: pwsh
+        run: |
+          $errors = 0
+          Get-ChildItem -Recurse -Filter "*.py" -Exclude "__pycache__","node_modules" |
+            ForEach-Object {
+              $result = python -m py_compile $_.FullName 2>&1
+              if ($LASTEXITCODE -ne 0) {
+                $errorText = $result | Where-Object { $_ -notmatch "SyntaxWarning" -and $_ -notmatch "invalid escape" }
+                if ($errorText) {
+                  Write-Host "❌ $($_.Name): $errorText"
+                  $errors++
+                }
+              }
+            }
+          if ($errors -gt 0) { throw "$errors file(s) failed validation" }
+          Write-Host "✅ All Python files pass validation"
+      
+      - name: Check for secrets exposure
+        shell: pwsh
+        run: |
+          $patterns = @('.env', '.env.secure', 'api_key', 'secret', 'password', 'token', 'credential')
+          $results = Select-String -Path (Get-ChildItem -Recurse -File -Exclude "*.git*", "__pycache__", ".env*") `
+            -Pattern ($patterns | ForEach-Object { "(?i)$_" }) -SimpleMatch
+          if ($results) {
+            Write-Host "⚠️  Possible secrets leaked:"
+            $results | ForEach-Object { Write-Host "  $($_.Path):$($_.LineNumber)" }
+          } else {
+            Write-Host "✅ No secrets exposed"
+          }
+      
+      - name: Notify on failure
+        if: failure() && github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          Write-Host "🔴 CI FAILED for commit ${{ github.sha }}"
+          # Future: send Telegram notification

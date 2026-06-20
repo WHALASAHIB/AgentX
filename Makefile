@@ -12,7 +12,83 @@ PYTHON          := python
 PIP             := pip
 REQUIREMENTS    := requirements.txt
 
-# ── Help ──────────────────────────────────────────────────────────────
+# ── DevOps / SRE Targets ───────────────────────────────────────────────────
+sre:
+	@echo "=== SRE Engine — System Health === "
+	@$(PYTHON) devops/sre.py --check-only 2>/dev/null || echo "Run from C:\\Trading directory"
+
+sre-daemon:
+	@echo "Starting SRE daemon (Ctrl+C to stop)..."
+	@$(PYTHON) devops/sre.py --daemon
+
+validate:
+	@echo "=== Validating all Python files ==="
+	@$(PYTHON) devops/deploy.py --status 2>/dev/null; \
+	errors=0; \
+	for f in $$(find . -name "*.py" -not -path "*/__pycache__/*" -not -path "*/.git/*"); do \
+		result=$$($(PYTHON) -m py_compile "$$f" 2>&1 | grep -v "SyntaxWarning\|invalid escape"); \
+		if [ -n "$$result" ]; then \
+			echo "❌ $$f"; echo "   $$result"; errors=$$((errors+1)); \
+		fi; \
+	done; \
+	if [ $$errors -eq 0 ]; then echo "✅ All Python files pass"; \
+	else echo "❌ $$errors file(s) failed"; fi
+
+deploy:
+	@echo "=== CI/CD Deploy Pipeline ==="
+	@$(PYTHON) devops/deploy.py
+
+deploy-force:
+	@echo "=== CI/CD Deploy (skip validation) ==="
+	@$(PYTHON) devops/deploy.py --skip-validate
+
+rollback:
+	@echo "=== Rolling back last deployment ==="
+	@$(PYTHON) devops/deploy.py --rollback
+
+deploy-status:
+	@echo "=== Deployment State ==="
+	@$(PYTHON) devops/deploy.py --status
+
+git-sync:
+	@echo "=== Syncing with GitHub ==="
+	@git fetch origin && git pull origin main
+
+# ── DevSecOps Targets ──────────────────────────────────────────────────────
+sec-check:
+	@echo "=== DevSecOps — Security Posture ==="
+	@$(PYTHON) devops/credentials.py --check
+
+sec-migrate:
+	@echo "=== DevSecOps — Migrating .env to secure storage ==="
+	@$(PYTHON) devops/credentials.py --migrate
+
+sec-audit:
+	@echo "=== DevSecOps — Credential Access Log ==="
+	@$(PYTHON) devops/credentials.py --audit
+
+sec-list:
+	@$(PYTHON) devops/credentials.py --list
+
+# ── AgentOps Targets ───────────────────────────────────────────────────────
+agent-decisions:
+	@echo "=== AgentOps — Recent Decisions ==="
+	@$(PYTHON) devops/agentops.py --decisions
+
+agent-failures:
+	@echo "=== AgentOps — Failure Statistics ==="
+	@$(PYTHON) devops/agentops.py --failures
+
+agent-costs:
+	@echo "=== AgentOps — LLM Cost Estimates ==="
+	@$(PYTHON) devops/agentops.py --costs --hours 168
+
+# ── AIOps Targets ──────────────────────────────────────────────────────────
+aiops-scan:
+	@echo "=== AIOps — Anomaly Scan ==="
+	@$(PYTHON) devops/aiops.py
+
+# ── Original Targets ────────────────────────────────────────────────────────
 help:
 	@echo "AGENTX v3 — Makefile"
 	@echo "======================"

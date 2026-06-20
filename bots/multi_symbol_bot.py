@@ -85,7 +85,7 @@ STRATEGY_CLASSES = {
 # risk = 0.0 means DISABLED (bot will skip that symbol)
 # ──────────────────────────────────────────────────────────────────────────────
 DEFAULT_PARAMS = {
-    "XAUUSD":  {"magic": 888222, "risk": 0.15, "max_entries": 2},   # GoldPhoenix
+    "XAUUSD":  {"magic": 888222, "risk": 0.0, "max_entries": 0},   # PAUSED by CEO
     "EURUSD":  {"magic": 888223, "risk": 0.15, "max_entries": 2},   # GoldPhoenix
     "GBPUSD":  {"magic": 780003, "risk": 0.15, "max_entries": 2},
     "USDJPY":  {"magic": 780004, "risk": 0.15, "max_entries": 2},
@@ -334,8 +334,17 @@ def init_mt5() -> bool:
     return False
 
 def ensure_symbol() -> bool:
-    if not mt5.symbol_select(_symbol, True):
-        logger.error("symbol_select failed: %s", mt5.last_error())
+    """Select the trading symbol in MT5. Triggers full reconnect on IPC failure."""
+    success = mt5.symbol_select(_symbol, True)
+    if not success:
+        err = mt5.last_error()
+        logger.error("symbol_select failed: %s", err)
+        # IPC failure (-1 or -10003) means MT5 pipe is congested — full restart needed
+        if err and err[0] in (-1, -10003):
+            logger.warning("🔌 MT5 IPC failure detected — restarting MT5 connection")
+            mt5.shutdown()
+            time.sleep(3)  # Brief cooldown before reconnecting
+            return init_mt5() and ensure_symbol()
         return False
     info = mt5.symbol_info(_symbol)
     if info is None:
@@ -1034,6 +1043,10 @@ def run_loop() -> None:
 
             revalidate_offset_if_needed()
             reset_state_for_new_utc_day()
+            
+            # Ensure symbol is still selected (catches IPC failures between calls)
+            if not ensure_symbol():
+                continue
 
             # Close at end of session
             if at_end_of_session():

@@ -106,9 +106,17 @@ def notion_api(method, path, data=None):
         return None
 
 def mt5_api(path):
+    """Call MT5 Bridge API — always use /api/v1/ prefix."""
+    # Ensure path has /api/v1/ prefix
+    if not path.startswith("/api/v1/"):
+        if path.startswith("/"):
+            path = "/api/v1" + path
+        else:
+            path = "/api/v1/" + path
     req = urllib.request.Request(f"{MT5_BRIDGE}{path}")
     try:
-        return json.loads(urllib.request.urlopen(req, timeout=10).read())
+        resp = urllib.request.urlopen(req, timeout=10)
+        return json.loads(resp.read())
     except Exception as e:
         print(f"  MT5 ERROR {path}: {e}")
         return None
@@ -216,22 +224,40 @@ def push_trade(trade, month_id):
 
 # ── Main Loop ─────────────────────────────────────────────────────────────────
 def main():
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Notion Auto-Push starting...")
+    import sys
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Notion Auto-Push starting...", flush=True)
     
     state = load_state()
     last_id = state.get("last_position_id", 0)
     pushed_ids = set(state.get("pushed_ids", []))
     
     # Fetch trade history (last 7 days to be safe)
+    print(f"  Fetching trades from MT5 bridge (last_id={last_id})...", flush=True)
     trades = mt5_api(f"/api/v1/accounts/{ACCOUNT_ID}/history?days=7")
     if not trades:
-        print("  ❌ Could not fetch trades from MT5 bridge")
+        print("  ❌ Could not fetch trades from MT5 bridge", flush=True)
         return
+    print(f"  ✅ Got {len(trades)} trades from bridge", flush=True)
     
     # Filter valid trades (skip deposits/withdrawals)
     valid_trades = [t for t in trades if is_valid_trade(t)]
     
-    # Filter new trades
+    # Get max position_id
+    max_pos_id = max((t.get("position_id", 0) for t in valid_trades), default=0)
+    
+    # Fresh start: skip all historical trades, just set baseline
+    if last_id == 0 and not pushed_ids:
+        state["last_position_id"] = max_pos_id
+        state["pushed_ids"] = [max_pos_id] if max_pos_id > 0 else []
+        save_state(state)
+        print(f"  📋 First run — set baseline position_id to {max_pos_id}. No trades pushed.", flush=True)
+        return
+    
+    # If last_id is 0 but we have a pushed list from partial state
+    if last_id == 0 and pushed_ids:
+        last_id = max_pos_id
+    
+    # Find new trades (position_id > last_id)
     new_trades = [t for t in valid_trades if t.get("position_id", 0) > last_id and t.get("position_id") not in pushed_ids]
     
     if not new_trades:

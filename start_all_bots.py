@@ -71,13 +71,15 @@ def kill_all():
     print(f"🛑 Killed {killed} bot processes")
 
 def launch_all():
-    """Launch all active bots as background processes."""
+    """Launch all active bots as background processes with staggered timing.
+    Staggering prevents MT5 IPC congestion from 19 simultaneous connections."""
     launched = 0
     failed = 0
     
     os.makedirs(LOGS_DIR, exist_ok=True)
+    print("⏱️  Staggering launches (3s apart) to prevent MT5 IPC congestion...")
     
-    for symbol, strategy, script_path in ACTIVE_BOTS:
+    for i, (symbol, strategy, script_path) in enumerate(ACTIVE_BOTS):
         log_file = os.path.join(LOGS_DIR, f"launch_{symbol}_{strategy}.log")
         python = sys.executable
         
@@ -90,11 +92,15 @@ def launch_all():
                     creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if hasattr(subprocess, 'CREATENEWPROCESSGROUP') else 0,
                     start_new_session=True,
                 )
-            print(f"🚀 {symbol} ({strategy}) → PID {process.pid}")
+            print(f"🚀 {i+1:2d}/{len(ACTIVE_BOTS)} {symbol:8s} ({strategy:12s}) → PID {process.pid}")
             launched += 1
         except Exception as e:
-            print(f"❌ {symbol} ({strategy}) → FAILED: {e}")
+            print(f"❌ {symbol:8s} ({strategy:12s}) → FAILED: {e}")
             failed += 1
+        
+        # Stagger: 3s delay between launches, except for the last one
+        if i < len(ACTIVE_BOTS) - 1:
+            time.sleep(3)
     
     print(f"\n{'='*50}")
     print(f"✅ Launched {launched} bots | ❌ Failed {failed}")
