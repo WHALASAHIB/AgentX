@@ -10,6 +10,7 @@ tunnel_token.txt
 
 # Large binaries
 cloudflared.exe
+OpenSSH-Win64/
 
 # Python
 __pycache__/
