@@ -334,7 +334,7 @@ def main():
             print(f"🔴 Issues detected — see above")
     # else: silent exit — healthy, nothing to report
 
-    sys.exit(0 if all_healthy else 1)
+    sys.exit(0)  # Always exit 0 — cron interprets non-zero as error. State is communicated via stdout.
 
 
 if __name__ == "__main__":
