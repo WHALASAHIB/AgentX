@@ -1,55 +1,42 @@
+# AgentX Website .gitignore
+
+# Secrets — keep these out of git!
+.env*
+*.key
+*_token.txt
+.bridge_key
+.cf_token
+tunnel_token.txt
+
+# Large binaries
+cloudflared.exe
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
-*.log
-*.bak
-.env
-.env.*
-.env.secure
-.env.keys
-.env.cloudflare
-logs/
-**/__pycache__/
-**/*.pyc
-.hermes/
-orchestrator/
-markitdown/
-OpenSSH-Win64/
-OpenSSH-Win64.zip
-research/
-frontend/public/_next/
-bot_v3_state.json
-agentx_store.json
-ftmo_challenges.json
-uploads/
-*.key
-*_token.txt
-token_*.txt
-credentials.enc
-backend_response.html
-check_ssl*.py
-check_zone.py
-check_tunnel*.py
-create_tunnel.py
-final_tunnel.py
-get_account.py
-setup_domain.py
-recreate_tunnel.py
-.cf_token
-.bridge_key
-tunnel_token.txt
-cloudflare_url.txt
-run_tunnel*.bat
-run_named_tunnel.bat
-create_task.bat
-start_agentx.bat
-python-installer.exe
-*.exe
-*.zip
-*.log
-*.bak
-logs/
-__pycache__/
 *.pyc
-python-installer.exe
-.env.keys
+.venv/
+venv/
+
+# Database
+backend/db/*.db
+backend/db/*.db-shm
+backend/db/*.db-wal
+
+# Temp
+*.html
+*.bak
+/tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
