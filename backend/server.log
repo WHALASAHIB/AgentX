@@ -16,3 +16,39 @@ INFO:     10.10.10.100:56416 - "GET /api/bridge/accounts/default/positions HTTP/
 INFO:     10.10.10.100:56418 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:56423 - "GET /favicon.ico HTTP/1.1" 200 OK
 INFO:     127.0.0.1:56447 - "GET /api/health HTTP/1.1" 200 OK
+PostgreSQL unavailable (connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+) — using persistent JSON store
+INFO:     Started server process [17212]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56455 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56461 - "GET / HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56468 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56478 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56480 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56496 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56498 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56502 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56504 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56513 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52165 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52167 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52169 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52171 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52179 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52186 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52188 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     52.167.144.176:0 - "GET / HTTP/1.1" 200 OK
+INFO:     65.55.210.103:0 - "GET /_next/static/css/a08d202340e8bd65.css HTTP/1.1" 200 OK
+INFO:     65.55.210.103:0 - "GET /_next/static/chunks/app/page-0f9a814a60d2d619.js HTTP/1.1" 200 OK
+INFO:     65.55.210.103:0 - "GET /_next/static/chunks/main-app-550217f0393c6365.js HTTP/1.1" 200 OK
+INFO:     65.55.210.103:0 - "GET /_next/static/chunks/app/layout-f45df73bd2cd4c62.js HTTP/1.1" 200 OK
+INFO:     65.55.210.103:0 - "GET /signin HTTP/1.1" 200 OK
+INFO:     2a06:98c0:3600::103:0 - "GET /wp-admin/install.php?step=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52200 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52202 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
