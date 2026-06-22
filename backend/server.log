@@ -1,0 +1,18 @@
+PostgreSQL unavailable (connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+) — using persistent JSON store
+INFO:     Started server process [18096]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56398 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56405 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56407 - "GET / HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56415 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56416 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56418 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56423 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56447 - "GET /api/health HTTP/1.1" 200 OK
