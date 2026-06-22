@@ -279,3 +279,68 @@ INFO:     10.10.10.100:55420 - "GET /api/bridge/accounts/default/positions HTTP/
 INFO:     10.10.10.100:55422 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
 INFO:     10.10.10.100:55424 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
 INFO:     10.10.10.100:55426 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55432 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55444 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55447 - "GET /api/bridge/accounts/default/history?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55449 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55502 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55504 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55507 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55509 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49417 - "GET /api/health HTTP/1.1" 200 OK
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+INFO:     2a06:98c0:3600::103:0 - "GET /wp-admin/install.php?step=1 HTTP/1.1" 200 OK
+Bridge connection failed: 
+Bridge connection failed: 
+INFO:     1.194.63.209:0 - "GET / HTTP/1.1" 200 OK
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
