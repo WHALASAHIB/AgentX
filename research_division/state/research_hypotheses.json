@@ -1,8 +1,10 @@
 {
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
-    "version": "1.0",
-    "total_ideas": 108,
+    "version": "2.0",
+    "total_ideas": 120,
+    "active_count": 8,
+    "archived_count": 112,
     "families_covered": [
       "breakout",
       "cross_asset",
@@ -14,9 +16,11 @@
       "seasonal",
       "volatility"
     ],
-    "last_updated": "2026-06-23T13:36:25Z"
+    "last_updated": "2026-06-23T13:36:25Z",
+    "restructured": "2026-06-23T18:00:00Z",
+    "note": "Top 8 ideas ACTIVE per LLM Council verdict. All others archived. Council verdict: Volatility_Contraction_Breakout and ATR_Regime_Selector as top build; Max_Drawdown_Lock_Protector, Volatility_Parity_Scale, Session_Decay_Exposure_Controller, Statistical_Mean_Reverter, Macro_Regime_Shifter, Slippage_Regime_Sizer as deploy filters."
   },
-  "ideas": [
+  "active": [
     {
       "name": "ATR_Regime_Selector",
       "family": "regime_filter",
@@ -34,27 +38,6 @@
       "failure_mode": "Fails during gradual volatility transitions where ATR percentile oscillates around boundaries (70th and 30th), causing churn as the strategy flips between modes. Also fails when volatility is flat for extended periods (ATR stuck at 50th %ile) and the mid-range scalping gets hit by sudden spikes.",
       "diversification_value": "Unlike fixed-style strategies that only work in their preferred environment, this strategy survives across market conditions by matching style to regime. Most existing bots pick ONE approach and pray for the right environment \u2014 this adapts proactively.",
       "self_grade": "B+",
-      "generated_at": "2026-06-23T03:26:37Z"
-    },
-    {
-      "name": "DXY_Valence_Correlation",
-      "family": "cross_asset",
-      "instruments": [
-        "XAUUSD",
-        "DXY",
-        "US10Y"
-      ],
-      "timeframes": [
-        "H4",
-        "D1"
-      ],
-      "description": "Exploits the inverse correlation between XAUUSD and DXY (USD Index), but only when the correlation is stable. Computes a rolling 40-period Pearson correlation between daily XAUUSD returns and DXY returns. When |correlation| > 0.6, the relationship is reliable and trades are taken based on DXY technical levels. When correlation collapses (< 0.4), XAUUSD is decoupling and this strategy sits out. Also factors in US10Y real yield changes as a secondary confirmatory signal \u2014 rising real yields + strong DXY = strong short signal; falling real yields + weak DXY = strong long signal.",
-      "market_behaviour": "Gold trades as the anti-dollar in normal macro environments. During risk-off events, DXY and gold can both rise (flight to safety into both USD and gold) temporarily breaking the inverse correlation. During QE/unconventional policy, the relationship weakens. The most reliable trading periods are when macro drivers are clear (e.g., rate hike cycles vs. rate cut cycles) and the correlation is > 0.6 in magnitude.",
-      "entry_logic": "1. Compute rolling 40-period Pearson correlation of XAUUSD and DXY daily returns. 2. IF |correlation| < 0.4: no trade (correlation decay). 3. IF correlation < -0.6 (strong inverse): look for DXY hitting a key support/resistance level on the D1. DXY bounce off resistance -> long XAUUSD. DXY bounce off support -> short XAUUSD. 4. IF correlation > 0.6 (positive anomaly, rare, usually risk-off): DXY breaking resistance -> short XAUUSD; DXY breaking support -> long XAUUSD. 5. Secondary filter: US10Y real yield change over past 5 days must align (rising yields -> bearish gold, falling yields -> bullish gold).",
-      "exit_logic": "TP = 2.5 ATR of XAUUSD on H4. SL = 1.5 ATR. Trailing stop at 1 ATR after 1.5 ATR profit. Hard stop-loss: exit immediately if |correlation| drops below 0.4 intraday (relationship broken, get out).",
-      "failure_mode": "Commodity supercycles where gold decouples from USD entirely (e.g., gold as reserve accumulation independent of dollar). Correlation breakdowns during black-swan risk-off events where both DXY and gold rally simultaneously. Also fails if DXY data feed lags or is misaligned.",
-      "diversification_value": "Virtually all gold strategies are price-only or volatility-only. This is fundamentally different \u2014 it trades gold through the lens of its primary macro driver (USD) and even its secondary driver (real yields). It can generate winning trades when gold is range-bound and no price-action signal is present, purely because DXY hit a level.",
-      "self_grade": "A-",
       "generated_at": "2026-06-23T03:26:37Z"
     },
     {
@@ -77,23 +60,6 @@
       "generated_at": "2026-06-23T03:26:37Z"
     },
     {
-      "name": "Momentum_Confluence_Gold",
-      "family": "momentum",
-      "instruments": [
-        "XAUUSD"
-      ],
-      "timeframes": [
-        "H1"
-      ],
-      "description": "High-conviction momentum entries on XAUUSD H1 using triple confluence: ADX trending strength (>25), 20-EMA slope alignment, and RSI(14) momentum zone (50-80 on longs, 20-50 on shorts). Enters only when all three confirm the same direction, filtering out ranging and low-momentum noise that kills single-indicator momentum systems.",
-      "entry_logic": "1. Check ADX(14) > 25 (trending, not ranging). 2. Check 20-EMA slope \u2014 positive for longs, negative for shorts. 3. Check RSI(14) between 50-80 for longs or 20-50 for shorts (momentum zone, not overbought/oversold). 4. Entry on next candle open when all 3 conditions align on H1. Invalidates if any condition breaks within 2 candles.",
-      "exit_logic": "Fixed SL at 1.5\u00d7 ATR(14) below/above entry. TP1 at 1\u00d7 ATR (50% position), TP2 at 2\u00d7 ATR (remaining 50%). Trailing stop activates after TP1 hit, using 0.75\u00d7 ATR trail. Maximum hold time: 12 hours \u2014 exit at market if neither TP reached.",
-      "failure_mode": "Sharp reversals at resistance/support zones despite strong momentum \u2014 momentum traps. Also fails in fast news events where ADX lags. Pairs with weak trending character (low ADX capability) produce false signals.",
-      "diversification_value": "Completely orthogonal to existing volatility-squeeze and regime-switching strategies. Targets sustained directional moves rather than contraction/expansion patterns. Adds momentum edge that existing archive lacks entirely.",
-      "self_grade": "B+",
-      "generated_at": "2026-06-23T03:28:14Z"
-    },
-    {
       "name": "Statistical_Mean_Reverter",
       "family": "mean_reversion",
       "instruments": [
@@ -109,23 +75,6 @@
       "failure_mode": "Strong trending markets where deviations keep expanding (e.g., NFP, rate decisions, geopolitical breakouts). The ATR filter helps but cannot prevent all losses in runaway trends. Works poorly in low-volatility grind-higher markets where z-score rarely crosses 2.0.",
       "diversification_value": "Direct opposite of Momentum_Confluence_Gold \u2014 thrives in ranging/oscillating regimes where momentum fails. Adds mean-reversion exposure that is completely absent from the archive. The volatility-filtered entry is novel \u2014 prevents fading breakouts, a classic mean-reversion killer.",
       "self_grade": "A-",
-      "generated_at": "2026-06-23T03:28:14Z"
-    },
-    {
-      "name": "London_Killzone_Breakout",
-      "family": "breakout",
-      "instruments": [
-        "XAUUSD"
-      ],
-      "timeframes": [
-        "M15"
-      ],
-      "description": "Asian-session tight-range breakout during London open (08:00-09:00 UTC). Gold exhibits the highest directional volatility in the London-Killzone window. This strategy identifies the Asian session range (00:00-08:00 UTC H1 candle high/low), waits for the London open, and enters breakouts of that range with ATR-confirmed momentum. The tight Asian range acts as a compression spring \u2014 the wider the range, the less conviction; the tightest 30% of ranges produce the best R:R.",
-      "entry_logic": "1. Calculate Asian session structure (00:00-08:00 UTC): high, low, and range (high-low). 2. Only trade if Asian range is in bottom 30% of 20-day Asian range history (compression filter). 3. Wait for first 2 London candles (08:00-09:00 UTC). 4. Entry: price closes above Asian high on M15 \u2192 long; closes below Asian low \u2192 short. 5. Volume/ATR confirmation: H1 ATR(14) > 15-day ATR median (elevated vol context). 6. Skip if major economic release within 30 minutes of entry.",
-      "exit_logic": "Initial SL at opposite side of Asian range (full range width). TP1 at 1\u00d7 Asian range width. TP2 at 1.5\u00d7 Asian range width. If TP1 not hit within 4 hours, exit at market. If TP1 hit, move SL to breakeven and trail remaining position with 0.3\u00d7 ATR step. No trade on Friday \u2014 gap risk.",
-      "failure_mode": "False breakouts \u2014 price pierces the Asian range and reverses immediately. The compression filter reduces these but cannot eliminate them. Also fails in low-volatility regimes where breakouts lack follow-through. London session with overlapping news (BOE, ECB) creates whipsaw.",
-      "diversification_value": "Time-specific execution (only London session) differentiates from all existing bots which run continuously. Breakout family is entirely absent. Session-based trading adds temporal diversification \u2014 does not compete for signals in the same hours as momentum or mean-reversion bots. The Asian-range-compression filter is a novel edge not present elsewhere.",
-      "self_grade": "B+",
       "generated_at": "2026-06-23T03:28:14Z"
     },
     {
@@ -146,6 +95,132 @@
       "diversification_value": "ALL existing bots use fixed or percentage-based position sizing. This is the first strategy that makes position sizing the central risk mechanism rather than an afterthought. It can be layered over ANY of the existing strategies without changing their entry logic, giving it unique portfolio value as a meta-overlay rather than a competing signal.",
       "self_grade": "A-",
       "generated_at": "2026-06-23T03:44:54Z"
+    },
+    {
+      "name": "Slippage_Regime_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1 as signal, overlay applies to any entry"
+      ],
+      "description": "Dynamic position sizing overlay that contracts trade size (vs. baseline) in historically slippage-prone conditions: low daily ATR percentile, pre-news window, and non-overlapping session hours. Complements any existing bot by preserving capital when execution quality degrades.",
+      "entry_logic": "This is an overlay, not a standalone entry. Applied on top of any base strategy. 1. Before each trade, sample 3 factors: (a) current ATR as % of 30-day ATR \u2014 if <60th percentile, slippage risk elevated; (b) time until next high-impact event (NFP/FOMC/CPI within 4h) \u2014 scale down linearly 100%\u219250%; (c) session overlap (London-NY = good, Tokyo-alone = bad). 2. Compute composite risk score: 0 (perfect) to 1 (max risk). 3. Scale position size: base_lots * (1 - risk_score * 0.6). Minimum size = 0.1 * base_lots as safety floor.",
+      "exit_logic": "SL and TP defined by the base strategy. The overlay only modifies position size, not exit logic. If the base strategy triggers SL, the loss is smaller because position size was already reduced.",
+      "failure_mode": "In persistently high-slippage regimes (e.g. sustained macro uncertainty), the overlay stays contracted and consistently under-weights winning trades. Needs a reset mechanism when it remains above 0.5 risk score for 30+ consecutive trades \u2014 override to base size with flag.",
+      "diversification_value": "Existing Volatility_Parity_Scale targets constant dollar risk via ATR-based sizing. This targets a different goal \u2014 execution-quality preservation. They can stack (VPS first, then SRS applies its factor), but ideally only one overlay active at a time to avoid compounding tiny sizes.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T04:21:18Z"
+    },
+    {
+      "name": "Macro_Regime_Shifter",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Defines three macro regimes for gold using DXY trend + US10Y yield direction + gold-DXY correlation. Trades differently in each regime: risk-on (gold rallies when USD falls), risk-off (gold rallies when USD rises), and transition (correlation breaking down \u2014 no-trade or tight scalps only).",
+      "entry_logic": "1. Every Sunday/Monday, compute: DXY slope over 20D, US10Y yield slope over 20D, rolling 20D correlation of XAUUSD vs DXY. 2. Classify regime: RISK-ON (DXY down, yields down, gold-DXY corr < -0.5), RISK-OFF (DXY up, yields flat/down, gold-DXY corr > -0.3), TRANSITION (correlation between -0.5 and -0.3 OR yields diverging from DXY). 3. RISK-ON: buy gold on pullbacks to 20 EMA on H4. RISK-OFF: buy gold on dips (flight to safety) \u2014 add size. TRANSITION: flat or 0.5x size scalps only. 4. Re-evaluate regime every 3 days or on any 1% daily move in DXY.",
+      "exit_logic": "Risk-on: trailing stop of 2x ATR(14) from peak. Risk-off: fixed 3:1 RR from entry \u2014 gold tends to mean-revert after safe-haven spikes. Transition: tight 1:1. All trades: hard stop at 2% account risk.",
+      "failure_mode": "Central bank intervention breaks the correlation (BoJ, PBOC unexpected moves). Correlation breakdowns are often the most profitable periods but this model sits them out. Also: false regime classifications during FOMC weeks.",
+      "diversification_value": "Only existing regime_filter (ATR_Regime_Selector) adapts position size to volatility. This one adapts direction and trade style to macro correlation regimes \u2014 completely orthogonal signal source. Acts as a master override for all other bots.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T04:37:10Z"
+    },
+    {
+      "name": "Max_Drawdown_Lock_Protector",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "ANY"
+      ],
+      "description": "A risk overlay that monitors global portfolio drawdown and progressively locks position size as drawdown deepens. Unlike static Kelly or fixed-fraction sizing, this adapts to the equity curve's realized pain, not expected returns.",
+      "entry_logic": "1. At each trade entry signal (from any strategy), compute current portfolio drawdown from trailing 252-bar equity peak. 2. Base position size = Kelly-optimal fraction (computed on 60-bar rolling Sharpe). 3. Apply drawdown lock multiplier: if DD < 5% \u2192 1.0\u00d7 base; DD 5-10% \u2192 0.5\u00d7 base; DD 10-15% \u2192 0.25\u00d7 base; DD >15% \u2192 0 (no new trades). 4. Recovery rule: DD must fall back below 5% for 10 consecutive bars before multiplier resets to 1.0\u00d7 (prevents whipsaw unlock on a single green bar).",
+      "exit_logic": "Not a trade exit \u2014 it is an overlay. It shrinks and halts entries only. Trades already open run to their original SL/TP. However, if DD > 12%, all existing trades go to breakeven stop immediately (capital preservation overrides trade logic).",
+      "failure_mode": "In a prolonged drawdown phase (e.g., 4 months of 8-12% DD), the overlay reduces exposure to near zero, missing the recovery rally because the 10-bar DD < 5% unlock condition is never met. Essentially locks the system out of its own recovery.",
+      "diversification_value": "Risk overlays currently cover volatility parity (static position sizing), slippage regimes, and optimal Kelly. This is the only one that uses realized equity-curve drawdown as its governing variable \u2014 a behavioral/loss-aversion layer that protects the psychological account.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T06:10:16Z"
+    },
+    {
+      "name": "Session_Decay_Exposure_Controller",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "NAS100"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Time-based position sizing overlay that reduces exposure during low-liquidity sessions (Asian, Friday close-to-open) and allows full size during high-liquidity overlap (London-NY). Predictably reduces drawdown during session transitions where slippage is highest.",
+      "entry_logic": "Not a standalone entry \u2014 applies as a multiplier on any base strategy position sizing. 1) At each H1 bar, determine current session: Asian (00:00-08:00 UTC) = 0.5x multiplier, London open (08:00-12:00 UTC) = 0.7x, London-NY overlap (12:00-16:00 UTC) = 1.0x, NY alone (16:00-21:00 UTC) = 0.7x, Pacific (21:00-00:00 UTC) = 0.4x. 2) Special rules: Friday 20:00 UTC through Sunday 23:00 UTC = 0.2x (weekend gap risk). 3) On NFP/FOMC/CPI days, reduce to 0.3x for 2 hours before and 1 hour after the event. 4) Multiply the base strategy lot size by the session multiplier. 5) Re-evaluate every bar.",
+      "exit_logic": "Overlay self-reverts at each session boundary \u2014 no independent SL/TP. If base strategy exits normally, overlay multiplier is 0 (no additional effect). Maximum drawdown protection is implicit: less capital at risk during dangerous hours.",
+      "failure_mode": "1) Misses Asian-session breakouts that run 15-30 pips before London open (e.g., RBA rate decisions, Chinese PMI surprises). 2) Friday afternoons sometimes see sharp directional moves that are front-loaded \u2014 reduced exposure misses these entirely. 3) During 24h trending days, the overlay forces reduced size during the trend most profitable continuation phase if it overlaps with lower-liquidity hours.",
+      "diversification_value": "Completely orthogonal to all 11 existing risk_overlay ideas \u2014 none address time/session-based exposure. Complements Slippage_Regime_Sizer (which handles micro liquidity) and Volatility_Parity_Scale (which handles vol-based sizing) by covering the macro-liquidity time dimension. Adds diversification through a non-statistical, calendar-driven risk rule.",
+      "self_grade": "B+"
+    }
+  ],
+  "archived": [
+    {
+      "name": "DXY_Valence_Correlation",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "DXY",
+        "US10Y"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Exploits the inverse correlation between XAUUSD and DXY (USD Index), but only when the correlation is stable. Computes a rolling 40-period Pearson correlation between daily XAUUSD returns and DXY returns. When |correlation| > 0.6, the relationship is reliable and trades are taken based on DXY technical levels. When correlation collapses (< 0.4), XAUUSD is decoupling and this strategy sits out. Also factors in US10Y real yield changes as a secondary confirmatory signal \u2014 rising real yields + strong DXY = strong short signal; falling real yields + weak DXY = strong long signal.",
+      "market_behaviour": "Gold trades as the anti-dollar in normal macro environments. During risk-off events, DXY and gold can both rise (flight to safety into both USD and gold) temporarily breaking the inverse correlation. During QE/unconventional policy, the relationship weakens. The most reliable trading periods are when macro drivers are clear (e.g., rate hike cycles vs. rate cut cycles) and the correlation is > 0.6 in magnitude.",
+      "entry_logic": "1. Compute rolling 40-period Pearson correlation of XAUUSD and DXY daily returns. 2. IF |correlation| < 0.4: no trade (correlation decay). 3. IF correlation < -0.6 (strong inverse): look for DXY hitting a key support/resistance level on the D1. DXY bounce off resistance -> long XAUUSD. DXY bounce off support -> short XAUUSD. 4. IF correlation > 0.6 (positive anomaly, rare, usually risk-off): DXY breaking resistance -> short XAUUSD; DXY breaking support -> long XAUUSD. 5. Secondary filter: US10Y real yield change over past 5 days must align (rising yields -> bearish gold, falling yields -> bullish gold).",
+      "exit_logic": "TP = 2.5 ATR of XAUUSD on H4. SL = 1.5 ATR. Trailing stop at 1 ATR after 1.5 ATR profit. Hard stop-loss: exit immediately if |correlation| drops below 0.4 intraday (relationship broken, get out).",
+      "failure_mode": "Commodity supercycles where gold decouples from USD entirely (e.g., gold as reserve accumulation independent of dollar). Correlation breakdowns during black-swan risk-off events where both DXY and gold rally simultaneously. Also fails if DXY data feed lags or is misaligned.",
+      "diversification_value": "Virtually all gold strategies are price-only or volatility-only. This is fundamentally different \u2014 it trades gold through the lens of its primary macro driver (USD) and even its secondary driver (real yields). It can generate winning trades when gold is range-bound and no price-action signal is present, purely because DXY hit a level.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T03:26:37Z"
+    },
+    {
+      "name": "Momentum_Confluence_Gold",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "High-conviction momentum entries on XAUUSD H1 using triple confluence: ADX trending strength (>25), 20-EMA slope alignment, and RSI(14) momentum zone (50-80 on longs, 20-50 on shorts). Enters only when all three confirm the same direction, filtering out ranging and low-momentum noise that kills single-indicator momentum systems.",
+      "entry_logic": "1. Check ADX(14) > 25 (trending, not ranging). 2. Check 20-EMA slope \u2014 positive for longs, negative for shorts. 3. Check RSI(14) between 50-80 for longs or 20-50 for shorts (momentum zone, not overbought/oversold). 4. Entry on next candle open when all 3 conditions align on H1. Invalidates if any condition breaks within 2 candles.",
+      "exit_logic": "Fixed SL at 1.5\u00d7 ATR(14) below/above entry. TP1 at 1\u00d7 ATR (50% position), TP2 at 2\u00d7 ATR (remaining 50%). Trailing stop activates after TP1 hit, using 0.75\u00d7 ATR trail. Maximum hold time: 12 hours \u2014 exit at market if neither TP reached.",
+      "failure_mode": "Sharp reversals at resistance/support zones despite strong momentum \u2014 momentum traps. Also fails in fast news events where ADX lags. Pairs with weak trending character (low ADX capability) produce false signals.",
+      "diversification_value": "Completely orthogonal to existing volatility-squeeze and regime-switching strategies. Targets sustained directional moves rather than contraction/expansion patterns. Adds momentum edge that existing archive lacks entirely.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T03:28:14Z"
+    },
+    {
+      "name": "London_Killzone_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15"
+      ],
+      "description": "Asian-session tight-range breakout during London open (08:00-09:00 UTC). Gold exhibits the highest directional volatility in the London-Killzone window. This strategy identifies the Asian session range (00:00-08:00 UTC H1 candle high/low), waits for the London open, and enters breakouts of that range with ATR-confirmed momentum. The tight Asian range acts as a compression spring \u2014 the wider the range, the less conviction; the tightest 30% of ranges produce the best R:R.",
+      "entry_logic": "1. Calculate Asian session structure (00:00-08:00 UTC): high, low, and range (high-low). 2. Only trade if Asian range is in bottom 30% of 20-day Asian range history (compression filter). 3. Wait for first 2 London candles (08:00-09:00 UTC). 4. Entry: price closes above Asian high on M15 \u2192 long; closes below Asian low \u2192 short. 5. Volume/ATR confirmation: H1 ATR(14) > 15-day ATR median (elevated vol context). 6. Skip if major economic release within 30 minutes of entry.",
+      "exit_logic": "Initial SL at opposite side of Asian range (full range width). TP1 at 1\u00d7 Asian range width. TP2 at 1.5\u00d7 Asian range width. If TP1 not hit within 4 hours, exit at market. If TP1 hit, move SL to breakeven and trail remaining position with 0.3\u00d7 ATR step. No trade on Friday \u2014 gap risk.",
+      "failure_mode": "False breakouts \u2014 price pierces the Asian range and reverses immediately. The compression filter reduces these but cannot eliminate them. Also fails in low-volatility regimes where breakouts lack follow-through. London session with overlapping news (BOE, ECB) creates whipsaw.",
+      "diversification_value": "Time-specific execution (only London session) differentiates from all existing bots which run continuously. Breakout family is entirely absent. Session-based trading adds temporal diversification \u2014 does not compete for signals in the same hours as momentum or mean-reversion bots. The Asian-range-compression filter is a novel edge not present elsewhere.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T03:28:14Z"
     },
     {
       "name": "Gold_Seasonal_Cycle",
@@ -257,23 +332,6 @@
       "generated_at": "2026-06-23T04:21:18Z"
     },
     {
-      "name": "Slippage_Regime_Sizer",
-      "family": "risk_overlay",
-      "instruments": [
-        "XAUUSD"
-      ],
-      "timeframes": [
-        "H1 as signal, overlay applies to any entry"
-      ],
-      "description": "Dynamic position sizing overlay that contracts trade size (vs. baseline) in historically slippage-prone conditions: low daily ATR percentile, pre-news window, and non-overlapping session hours. Complements any existing bot by preserving capital when execution quality degrades.",
-      "entry_logic": "This is an overlay, not a standalone entry. Applied on top of any base strategy. 1. Before each trade, sample 3 factors: (a) current ATR as % of 30-day ATR \u2014 if <60th percentile, slippage risk elevated; (b) time until next high-impact event (NFP/FOMC/CPI within 4h) \u2014 scale down linearly 100%\u219250%; (c) session overlap (London-NY = good, Tokyo-alone = bad). 2. Compute composite risk score: 0 (perfect) to 1 (max risk). 3. Scale position size: base_lots * (1 - risk_score * 0.6). Minimum size = 0.1 * base_lots as safety floor.",
-      "exit_logic": "SL and TP defined by the base strategy. The overlay only modifies position size, not exit logic. If the base strategy triggers SL, the loss is smaller because position size was already reduced.",
-      "failure_mode": "In persistently high-slippage regimes (e.g. sustained macro uncertainty), the overlay stays contracted and consistently under-weights winning trades. Needs a reset mechanism when it remains above 0.5 risk score for 30+ consecutive trades \u2014 override to base size with flag.",
-      "diversification_value": "Existing Volatility_Parity_Scale targets constant dollar risk via ATR-based sizing. This targets a different goal \u2014 execution-quality preservation. They can stack (VPS first, then SRS applies its factor), but ideally only one overlay active at a time to avoid compounding tiny sizes.",
-      "self_grade": "B",
-      "generated_at": "2026-06-23T04:21:18Z"
-    },
-    {
       "name": "Wick_Exhaustion_Reverter",
       "family": "mean_reversion",
       "instruments": [
@@ -307,24 +365,6 @@
       "failure_mode": "Extended trend continuation after a volatility spike (gap-and-go moves, NFP blowouts). The confirming narrow bar may simply be a brief pause before the next leg. Also fails in low-volatility environments where ATR% never reaches 90.",
       "diversification_value": "Existing volatility idea (Volatility_Contraction_Breakout) trades expansion. This trades contraction \u2014 opposite logic, decorrelated entries, works in different market regimes. Adds a short-vol scalping layer.",
       "self_grade": "B+",
-      "generated_at": "2026-06-23T04:37:10Z"
-    },
-    {
-      "name": "Macro_Regime_Shifter",
-      "family": "regime_filter",
-      "instruments": [
-        "XAUUSD"
-      ],
-      "timeframes": [
-        "D1",
-        "H4"
-      ],
-      "description": "Defines three macro regimes for gold using DXY trend + US10Y yield direction + gold-DXY correlation. Trades differently in each regime: risk-on (gold rallies when USD falls), risk-off (gold rallies when USD rises), and transition (correlation breaking down \u2014 no-trade or tight scalps only).",
-      "entry_logic": "1. Every Sunday/Monday, compute: DXY slope over 20D, US10Y yield slope over 20D, rolling 20D correlation of XAUUSD vs DXY. 2. Classify regime: RISK-ON (DXY down, yields down, gold-DXY corr < -0.5), RISK-OFF (DXY up, yields flat/down, gold-DXY corr > -0.3), TRANSITION (correlation between -0.5 and -0.3 OR yields diverging from DXY). 3. RISK-ON: buy gold on pullbacks to 20 EMA on H4. RISK-OFF: buy gold on dips (flight to safety) \u2014 add size. TRANSITION: flat or 0.5x size scalps only. 4. Re-evaluate regime every 3 days or on any 1% daily move in DXY.",
-      "exit_logic": "Risk-on: trailing stop of 2x ATR(14) from peak. Risk-off: fixed 3:1 RR from entry \u2014 gold tends to mean-revert after safe-haven spikes. Transition: tight 1:1. All trades: hard stop at 2% account risk.",
-      "failure_mode": "Central bank intervention breaks the correlation (BoJ, PBOC unexpected moves). Correlation breakdowns are often the most profitable periods but this model sits them out. Also: false regime classifications during FOMC weeks.",
-      "diversification_value": "Only existing regime_filter (ATR_Regime_Selector) adapts position size to volatility. This one adapts direction and trade style to macro correlation regimes \u2014 completely orthogonal signal source. Acts as a master override for all other bots.",
-      "self_grade": "A-",
       "generated_at": "2026-06-23T04:37:10Z"
     },
     {
@@ -603,23 +643,6 @@
       "failure_mode": "Central bank interventions or unexpected macro events (rate decisions, NFP) during the 5-day window overwhelm the seasonal edge. Also, some quarters see no roll activity if open interest shifts early \u2014 the window is empty.",
       "diversification_value": "Existing seasonal ideas cover annual gold cycles, intraweek drift, and turn-of-month. This is the only idea tied to futures contract mechanics and institutional rebalancing flows \u2014 a completely different seasonal driver.",
       "self_grade": "B",
-      "generated_at": "2026-06-23T06:10:16Z"
-    },
-    {
-      "name": "Max_Drawdown_Lock_Protector",
-      "family": "risk_overlay",
-      "instruments": [
-        "XAUUSD"
-      ],
-      "timeframes": [
-        "ANY"
-      ],
-      "description": "A risk overlay that monitors global portfolio drawdown and progressively locks position size as drawdown deepens. Unlike static Kelly or fixed-fraction sizing, this adapts to the equity curve's realized pain, not expected returns.",
-      "entry_logic": "1. At each trade entry signal (from any strategy), compute current portfolio drawdown from trailing 252-bar equity peak. 2. Base position size = Kelly-optimal fraction (computed on 60-bar rolling Sharpe). 3. Apply drawdown lock multiplier: if DD < 5% \u2192 1.0\u00d7 base; DD 5-10% \u2192 0.5\u00d7 base; DD 10-15% \u2192 0.25\u00d7 base; DD >15% \u2192 0 (no new trades). 4. Recovery rule: DD must fall back below 5% for 10 consecutive bars before multiplier resets to 1.0\u00d7 (prevents whipsaw unlock on a single green bar).",
-      "exit_logic": "Not a trade exit \u2014 it is an overlay. It shrinks and halts entries only. Trades already open run to their original SL/TP. However, if DD > 12%, all existing trades go to breakeven stop immediately (capital preservation overrides trade logic).",
-      "failure_mode": "In a prolonged drawdown phase (e.g., 4 months of 8-12% DD), the overlay reduces exposure to near zero, missing the recovery rally because the 10-bar DD < 5% unlock condition is never met. Essentially locks the system out of its own recovery.",
-      "diversification_value": "Risk overlays currently cover volatility parity (static position sizing), slippage regimes, and optimal Kelly. This is the only one that uses realized equity-curve drawdown as its governing variable \u2014 a behavioral/loss-aversion layer that protects the psychological account.",
-      "self_grade": "A-",
       "generated_at": "2026-06-23T06:10:16Z"
     },
     {
@@ -1995,6 +2018,202 @@
       "diversification_value": "Completely uncorrelated with technical or volatility-based strategies - this is pure seasonality-driven alpha. Unlike Gold_Seasonal_Cycle (which trades generic monthly patterns) and Monsoon_India_Demand_Frontrun (which ties to monsoon-driven rural income), this targets specific calendar-locked mega-events with defined pre/post windows. It generates only 2-4 trades per year with high win-rate potential, providing stable PnL smoothing that offsets choppy periods from other strategies.",
       "self_grade": "B+",
       "generated_at": "2026-06-23T13:36:25Z"
+    },
+    {
+      "name": "Entropy_Regime_Contingency_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Measures market entropy (randomness of price directional changes) over 20 periods and reduces position size in high-entropy (choppy, directionless) regimes while allowing full size in low-entropy (strong trending) regimes. Prevents equity curves from suffering during range-bound whipsaw markets.",
+      "entry_logic": "Overlay applied on top of any base strategy. 1) Encode each H1 bar direction as: +1 (close > open with range > 10% of ATR), -1 (close < open with range > 10% of ATR), 0 (doji / inside bar / low-range). 2) Compute Shannon entropy over the 20-bar sequence: H = -sum(p(x) * log2(p(x))) where p(x) is frequency of each state. 3) Normalize: if H > 0.75 (high randomness -> ranging/choppy) -> multiplier = 0.5x. If 0.4 < H < 0.75 -> multiplier = 0.75x. If H < 0.4 (low randomness -> strong trend) -> multiplier = 1.0x. 4) Apply multiplier to base strategy position size. 5) Re-evaluate every 5 bars to avoid noise.",
+      "exit_logic": "No independent SL/TP. Overlay self-updates every 5 bars. If entropy drops mid-trade, sizing increases \u2014 effectively adding to winning positions during trend confirmation. If entropy spikes, sizing decreases \u2014 reducing exposure during uncertainty without closing the trade outright.",
+      "failure_mode": "1) Shannon entropy is a lagging measure \u2014 the regime may have already broken before entropy catches up, causing delayed size adjustments. 2) High-volatility trending markets (e.g., news-driven breaks) produce high entropy in the first 5-10 bars and get penalized despite being strong directional moves. 3) Short lookbacks (20) make entropy noisy; long lookbacks (50+) make it too slow. The 20-bar balance is a compromise that may not suit all instruments.",
+      "diversification_value": "Novel measurement approach \u2014 none of the 11 existing risk_overlay ideas use entropy or randomness measurement. Completely orthogonal to VaR-based (VaR_Trailing_Stop_Overlay), volatility-based (Volatility_Parity_Scale, Multi_TF_Vol_Convexity_Sizer), and drawdown-based (Max_Drawdown_Lock_Protector) methods. The entropy signal captures a fundamentally different dimension of market risk \u2014 structural randomness rather than magnitude of movement.",
+      "self_grade": "B+"
+    },
+    {
+      "name": "Skew_Asymmetry_Insurer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4"
+      ],
+      "description": "Adjusts position size based on the asymmetry (skewness) of recent returns. When skew is heavily negative (left-tail heavy), downside risk exceeds upside potential \u2014 reduces long positions. When skew is heavily positive (right-tail heavy), reduces short positions. Standard deviation-based methods miss this asymmetry entirely.",
+      "entry_logic": "Overlay applied on any base strategy. 1) Compute daily return skewness over 30 periods using Fisher-Pearson standardized moment coefficient. 2) Classify regime: Highly negative skew (< -0.5) = left-tail risk elevated; Neutral skew (-0.5 to +0.5) = symmetric risk; Highly positive skew (> +0.5) = right-tail risk elevated. 3) For long-only base strategies: if skew < -0.5 -> 0.5x multiplier (downside risk), if skew > +0.5 -> 1.0x multiplier (upside bias). 4) For short-only base strategies: if skew > +0.5 -> 0.5x multiplier, if skew < -0.5 -> 1.0x multiplier. 5) For directional strategies: 0.75x multiplier for either high-skew regime, 1.0x for neutral. 6) Re-evaluate daily.",
+      "exit_logic": "No independent SL/TP. Updates daily at H4 close. Skewness changes slowly (30-period window), so the overlay provides stable, non-chattering adjustments. If a sudden skew event occurs (e.g., flash crash), the 30-period window ensures the adjustment persists for several days \u2014 preventing re-entry into a still-dangerous regime.",
+      "failure_mode": "1) Skewness requires 30+ data points to be statistically meaningful \u2014 cannot adapt quickly to sudden regime changes. 2) During low-volatility periods, skewness estimates become noisy and unreliable (tiny returns produce division-by-near-zero issues). 3) XAUUSD skew is often near-zero due to its symmetric nature \u2014 the overlay may rarely trigger, making it low-utility on gold compared to equity indices. 4) Rolling skewness produces autocorrelated signals that can lead to persistent over- or under-sizing during multi-day trending regimes that happen to have asymmetric volatility.",
+      "diversification_value": "Addresses a blind spot \u2014 no existing risk_overlay idea considers return skew asymmetry. All existing methods (VaR, ATR, drawdown-based) treat upside and downside risk symmetrically. This is the first idea to explicitly differentiate directional risk premium. Works best in combination with Volatility_Parity_Scale and Multi_TF_Vol_Convexity_Sizer to cover both magnitude and asymmetry of risk.",
+      "self_grade": "B"
+    },
+    {
+      "name": "VIX_Gold_Regime_Divergence",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Gold's correlation with the VIX (CBOE Volatility Index) is regime-dependent. During geopolitical/localized fear regimes, gold and VIX rally together (positive correlation, safe-haven bid). During systemic liquidation regimes (2008, March 2020), gold sells off alongside equities despite VIX spiking (negative or zero correlation). This strategy detects which regime is active by measuring the rolling 20-period correlation between XAUUSD returns and VIX changes, then trades the divergence accordingly.",
+      "entry_logic": "1. Compute rolling 20-period Pearson correlation between XAUUSD H1 returns and VIX (VIX1D index) H1 returns. 2. If correlation > +0.5 (gold and VIX moving together) AND VIX is above its 50-period median (elevated fear): regime = 'safe-haven bid' \u2014 BUY gold on pullbacks to VWAP. 3. If correlation < -0.5 (gold and VIX moving opposite) BUT VIX is above 30 (extreme fear): regime = 'liquidation' \u2014 WAIT/FLAT, no long entries until correlation normalizes. 4. If correlation is near zero and VIX is below its 20-period median: regime = 'risk-on' \u2014 momentum/trend entries only. 5. Entry trigger: 1-hour candle closes above/below the 10-period EMA in the direction dictated by the regime, with VIX confirming.",
+      "exit_logic": "Stop loss: 1.5x ATR(14) from entry. Take profit: 2.5x ATR(14) or trailing stop activated after 1x ATR in profit. Regime shift exit: if rolling correlation crosses below +0.3 (in safe-haven regime) or VIX drops below its 14-period median, exit immediately \u2014 the regime is degrading.",
+      "failure_mode": "1) Regime shifts faster than the 20-period correlation can capture (e.g. flash crash). 2) VIX data lag or mismatch with XAUUSD tick precision on lower timeframes. 3) Central bank intervention (BoJ, SNB) artificially suppresses VIX, masking true regime. 4) Long periods of correlation drift near zero where the strategy produces no signals.",
+      "diversification_value": "Only cross-asset idea that uses VIX directly as a regime classifier rather than DXY or bonds. Completely decorrelated from existing DXY_Valence_Correlation, Real_Yield_Gold, and Cross_Asset_Gamma_Flip because it treats gold as a fear hedge rather than a currency or real-asset play.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T15:22:10Z"
+    },
+    {
+      "name": "Intraday_Volatility_Reversal_Oscillator",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "M30"
+      ],
+      "description": "Gold intraday volatility follows a predictable multi-peak pattern driven by global session transitions: first volatility spike at Asian open (00:00 GMT), dip into London pre-open (06:00-07:00 GMT), major spike at London open (08:00 GMT), secondary spike at NY open (13:30-14:30 GMT), then decay into late NY. After each volatility spike, gold price tends to revert toward its pre-spike mean as the aggressive order flow exhausts. This strategy measures localized 'volatility pulse' using a fast ATR(5) on M15 vs its 20-period mean, entering mean-reversion trades after the pulse subsides.",
+      "entry_logic": "1. Define session windows based on gold trading hours: Asian session (00:00-09:00 GMT), London session (08:00-17:00 GMT), NY session (13:00-22:00 GMT). 2. Within each session, compute a 'volatility pulse ratio' = current ATR(5) / SMA(ATR(5), 20) on M15. 3. When pulse ratio spikes above 2.0 (localized volatility at 2x normal) AND price has moved 0.8x ATR(5) in one direction within the last 3 candles: a volatility pulse is detected. 4. Wait for the pulse to exhaust: a candle with a wick at least 50% of the pulse move's range AND closing back inside the middle 60% of the pulse range. 5. Enter mean-reversion trade in the opposite direction of the pulse. Confirmation: RSI(7) crosses back from overbought (>70) or oversold (<30).",
+      "exit_logic": "Stop loss: 1.0x ATR(14) from entry. Take profit: 2.0x ATR(14) OR when the next session open occurs (whichever comes first \u2014 session transitions can override the pattern). If price reaches 0.5x ATR(14) in profit, tighten SL to breakeven. Hard timeout: exit all positions 15 minutes before the next scheduled high-impact economic event (FOMC, NFP, CPI) regardless of P&L \u2014 event volatility invalidates the pattern.",
+      "failure_mode": "1) High-impact news events during a session spike cause sustained directional moves instead of reversion. 2) Periods of extremely low volatility (holiday season) where pulses never reach 2.0x threshold. 3) Central bank intervention during Asian session. 4) The pattern works best in normal market conditions and degrades during macro shock weeks.",
+      "diversification_value": "Only volatility idea in the archive that explicitly models intraday session-pulse dynamics rather than daily/weekly ATR or option-implied measures. Completely different timescale and mechanism from Volatility_Contraction_Breakout (which waits for contraction) and Volatility_Skew_Mean_Reverter (which fades extreme ATR percentiles on higher TFs). This catches micro-reversions that all other volatility ideas miss.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T15:22:10Z"
+    },
+    {
+      "name": "Session_Boundary_Mean_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Gold exhibits a structural mean-reversion tendency at session transition boundaries (Asian\u2192London, London\u2192NY, NY\u2192close). During the final 60-90 minutes of a session, order flow often becomes directional as session-specific participants exit positions. When that directional push extends into the first 30 minutes of the next session, new session liquidity often reverses the move back toward the prior session's closing range. This strategy exploits the institutional order flow exhaustion at session boundaries.",
+      "entry_logic": "1. Define three session boundaries on XAUUSD: Asian\u2192London (07:00-09:00 GMT transition), London\u2192NY (12:00-14:00 GMT transition), NY\u2192Close (20:00-22:00 GMT transition). 2. In the last 90 minutes of the preceding session, measure the net directional move (close of last candle - open of first candle in the window). 3. If move > 0.6x ATR(14) in one direction, flag it as an 'extended close'. 4. During the first 30 minutes of the new session, if price extends further by >0.3x ATR(14) in the same direction as the prior close, enter a mean-reversion trade opposite to the direction. 5. Confirmation: the new session candle must show a rejection wick (upper wick >50% of candle range on a bullish extension, lower wick >50% on a bearish extension) OR a bearish/bullish engulfing candle at the boundary. 6. Entry is at market on the close of the confirmation candle.",
+      "exit_logic": "Stop loss: 0.8x ATR(14) from entry \u2014 tight because the reversion must happen quickly. Take profit 1: 1.0x ATR(14) (scalp). Take profit 2: revert to the pre-boundary price (the midpoint of the preceding session's closing range) for a full reversion. Maximum hold time: 2 hours from entry \u2014 if the reversion hasn't materialized, the pattern has failed. Trailing stop activated at 0.5x ATR(14) profit.",
+      "failure_mode": "1) Trending days with strong macro catalyst override session boundary dynamics entirely. 2) The reversion window is narrow (typically 15-45 minutes) \u2014 missed entries ruin the risk-reward. 3) Works poorly during NFP/FOMC weeks when boundaries straddle event times. 4) Requires precise session definition which shifts during daylight saving transitions \u2014 misaligned clocks cause systematic losses.",
+      "diversification_value": "Unlike existing mean-reversion ideas which trade price vs statistical metrics (ZScore_ATR, VWAP_Entropy) or candle structures (Wick_Exhaustion, FVG_Imbalance, Liquidity_Grab), this is the only idea that trades session-transition mechanics. It's also the shortest-duration mean-reversion idea (2-hour max hold), making it decorrelated from higher-TF mean reversion and valuable for intraday portfolio diversification.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T15:22:10Z"
+    },
+    {
+      "name": "Markov_Switching_Momentum_Regime",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Two-state Hidden Markov Model classifies gold as trending (regime 1) or ranging/mean-reverting (regime 2) using daily returns and realized volatility. Momentum entries enabled only in regime 1. Completely absent from existing archive \u2014 all 12 regime_filter ideas use ATR, ADX, liquidity, yield curve, or macro proxies, not statistical HMM.",
+      "entry_logic": "1. Fit a 2-state Gaussian HMM on 60-day rolling window of (daily log returns, 14-day realized vol). 2. Use Viterbi to decode current state. 3. IF regime=1 (trending): compute 20-period ROC (rate of change) on H1, enter long if ROC > 0.5% and price > 50-EMA, short if ROC < -0.5% and price < 50-EMA. 4. IF regime=2 (mean-reverting): skip all momentum entries. 5. Confirm with ADF test p-value < 0.05 on 50-bar returns (stationarity check for regime 2 exclusion).",
+      "exit_logic": "Stop loss: 1.5x ATR(14) from entry. Take profit: 3.0x ATR for momentum trades. Trailing stop: 1x ATR chandelier after price moves 2x ATR in profit. Regime switch exit: if Viterbi decodes regime change back to mean-reverting while in a momentum trade, flatten 50% of position immediately.",
+      "failure_mode": "HMM can overfit regime boundaries on noisy gold data. Regime persistence bias \u2014 once in trending state, slow to switch, causing drawdowns at trend exhaustion. The 60-day rolling window creates lag in regime detection during rapid macro shifts (e.g., surprise rate decisions).",
+      "diversification_value": "Only HMM-based regime filter in the archive. Completely decorrelated from all existing ADX/ATR/macro regime approaches \u2014 captures statistical regime structure rather than deterministic threshold-based regimes. Would have near-zero correlation with any existing bot.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T15:39:11Z"
+    },
+    {
+      "name": "Gold_Bitcoin_Divergence_Rotator",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "BTCUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Gold and Bitcoin increasingly compete as store-of-value / safe-haven assets, but trade on different liquidity channels (gold: institutional, CB reserves; BTC: retail/ETF flows, digital-native). When rolling 30-day correlation exceeds +0.65 (regime of convergence) or drops below -0.20 (divergence), fade the move back toward the 90-day mean correlation of ~0.25. No existing cross_asset idea uses BTC correlation at all.",
+      "entry_logic": "1. Compute 30-day Pearson correlation of daily returns (XAUUSD vs BTCUSD). 2. Compute 90-day rolling mean and std of that correlation. 3. IF z-score of current 30-day correlation > 2.0 (unusually high convergence) \u2014 expect mean reversion in correlation. Short the stronger asset, long the weaker. 4. IF z-score < -1.5 (unusual divergence) \u2014 expect convergence. Long the lagging asset, short the leading. 5. Entry only when both assets have >$50 daily range (avoid low-vol noise). 6. Check DXY direction: if DXY > 20-day EMA, prefer short gold side. 7. Position size: equal notional, 0.5% risk per leg.",
+      "exit_logic": "Stop loss: 1.5x ATR(14) on each leg, or correlation z-score moves another 1.0 in same direction (stop out if divergence continues). Take profit: correlation z-score returns to 0 (neutral). Time stop: exit after 10 bars if not triggered, as correlation regimes have limited persistence. Rebalance daily.",
+      "failure_mode": "Structural breakdown: if gold and BTC permanently decouple (e.g., CBDCs displace BTC as digital gold), the historical correlation anchor drifts. BTC can gap 10%+ on crypto-native events (exchange hacks, regulatory bans) that leave gold unchanged \u2014 the pair correlation becomes meaningless noise during crypto-specific shocks.",
+      "diversification_value": "Only strategy in the archive using BTC correlation with gold. Cross-asset ideas currently cover DXY, US10Y, TIPS, SPX, XAGUSD, USOIL, GDX, CRB indexes \u2014 but zero crypto exposure. This adds a completely orthogonal asset class dimension. Also distinct from pair-trade mean reversion (which is intra-asset-class); this is inter-asset-class correlation rotator.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T15:39:11Z"
+    },
+    {
+      "name": "Kalman_Filter_Dynamic_Mean_Reversion",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Uses a Kalman filter to estimate the dynamic, time-varying mean of gold prices \u2014 rather than a fixed moving average or fixed Bollinger band center. When price deviates >1.5x the Kalman prediction error (innovation) on M15, fade aggressively. The Kalman filter adapts to changing volatility and trend components automatically, unlike static Bollinger/MA mean reversion. No existing mean_reversion idea uses Kalman filtering.",
+      "entry_logic": "1. State vector: [price_level, trend_slope]. Observation: H1 close. Process noise covariance Q and observation noise R estimated via 5-day rolling MLE. 2. Kalman predict-update cycle yields: predicted price (k_t|t-1), innovation (residual between actual and predicted), and innovation variance S_t. 3. ENTRY CONDITION: |innovation| > 1.5 * sqrt(S_t) AND the innovation is in the opposite direction of the last 3 consecutive 15-min candle direction (divergence confirmation). 4. For long: price significantly below Kalman estimate AND last 3 M15 candles are bearish (exhaustion). 5. For short: symmetric. 6. Filter out entries when Kalman trend_slope > 0.3 ATR/day (too strong trend, don't fade). 7. Enter at market, 0.75% risk.",
+      "exit_logic": "Stop loss: 0.8x ATR(14) from entry (tight \u2014 Kalman reversion tends to be sharp). Take profit 1: 50% at innovation returns to 0 (price re-meets Kalman estimate). Take profit 2: 50% at 1.0x innovation in opposite direction (overshoot the other side). Fail-safe: if Kalman re-estimates such that current price becomes the new mean (innovation shrinks below 0.5x S_t while still in loss), exit at breakeven or -0.3 ATR max loss \u2014 the filter is saying the mean has moved.",
+      "failure_mode": "Kalman filter can take time to converge after structural breaks (gap openings, NFP spikes). During high-vol news events, the innovation threshold is too tight \u2014 gets stopped out repeatedly. Process noise parameters chosen by rolling MLE can produce unstable estimates during low-liquidity Asian session. Most dangerous failure: Kalman diverges (filter becomes overconfident in wrong state) during sustained trending moves, causing repeated fade losses.",
+      "diversification_value": "First Kalman filter-based strategy in the archive. Completely different mathematical foundation from existing mean reversion ideas (which use: z-score of EMA, Bollinger distance, VWAP entropy, FVG fills, order flow exhaustion, COT extremes). Kalman provides a dynamic state-space approach that adapts faster than fixed-period oscillators and handles non-stationary price processes naturally. Should show very low correlation with all 13 existing mean reversion strategies.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T15:39:11Z"
+    },
+    {
+      "name": "Breakout_Volume_Climax_Fade",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades breakouts when price reaches a prior resistance-turned-support zone with volume climax divergence. Unlike existing fade strategies that fade failed breakouts generally, this waits for the breakout to actually reach a historical resistance level and then identifies exhaustion via volume spike + delta divergence on that specific candle.",
+      "entry_logic": "1) Identify a structural resistance level (at least 2 touches on H1). 2) Price breaks above it cleanly. 3) Price returns to retest the old resistance as new support. 4) On the retest candle, volume spikes 1.8x above 20-period average AND cumulative delta shows divergence (weaker bullish delta on the retest than on the initial breakout). 5) Enter short at the close of the retest candle. 6) Stop loss 1.5x ATR above retest high. Take profit at next structural support below. Trailing stop after 1:1 R:R.",
+      "exit_logic": "Initial SL: 1.5x ATR above retest high. TP1: next structural support below (50% position, 1:1 R:R). TP2: move SL to breakeven and trail with ATR chandelier stop on remaining 50%. Breach of entry zone after 3 candles invalidates.",
+      "failure_mode": "Strong trending markets where resistance is continuously overcome (no exhaustion). Delta divergence false positives during news events. Works poorly during high-impact news where volume spikes are non-structural.",
+      "diversification_value": "Only breakout strategy that specifically fades breakouts REACHING historical levels with volume climax. Complementary to False_Breakout_Trap_Fade (which fades immediate break failures) and Structural_Level_Breakout_With_Retest (which rides the breakout retest long).",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T15:56:04Z"
+    },
+    {
+      "name": "Fiscal_Year_End_Cross_Border_Demand",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Capitalises on predictable gold demand surges tied to fiscal year-ends of the three largest gold-consuming nations: India (Mar 31), China (Dec 31), and USA (Sep 30 fiscal, Dec 31 tax). Each creates a distinct 2-4 week window of physical buying pressure as institutions adjust balance sheets.",
+      "entry_logic": "1) For each fiscal year-end date, define a 15-day pre-window and 5-day post-window. 2) India (Mar): enter long at Mar 15 close. 3) China (Dec): enter long at Dec 10 close. 4) USA (Sep): enter Sep 15 close. 5) USA (Dec): enter Dec 10 close. 6) Scale position size by historical average return for each window. 7) Use 50-period SMA as trend filter - only go long if price is above SMA.",
+      "exit_logic": "Fixed exit on window end date. India: exit Apr 5. China: exit Jan 5. USA Sep: exit Oct 5. USA Dec: exit Jan 5. Hard stop at 1.5x ATR below entry. If a major central bank rate decision falls within the window, exit half before the event.",
+      "failure_mode": "Macro shocks override seasonal patterns entirely. USD strength during India/China windows can negate gold gains. Calendar effects drift as cultural buying habits change.",
+      "diversification_value": "Only seasonal strategy targeting fiscal year-end institutional flows. Uncorrelated with Diwali_Chinese_New_Year_Physical_Demand_Frontrun (different time windows) and Gold_Seasonal_Cycle (broad annual cycle).",
+      "self_grade": "B-",
+      "generated_at": "2026-06-23T15:56:04Z"
+    },
+    {
+      "name": "Gamma_Exposure_Floor_Ceiling_Liquidity",
+      "family": "other",
+      "instruments": [
+        "XAUUSD",
+        "GLD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Uses options market gamma exposure data to identify dealer long-gamma zones (stability/mean reversion) vs short-gamma zones (momentum acceleration). When gamma flips at a key level, the market becomes unstable and prone to directional runs. When gamma is strongly positive, price reverts toward max pain.",
+      "entry_logic": "1) Load daily GLD/XAUUSD options gamma profile (or proxy via VIX term structure + put/call ratio). 2) Identify high-gamma strike zone (dealers long gamma, expect mean reversion). 3) Identify low/negative gamma zones (dealers short gamma, expect acceleration). 4) When price approaches a high-gamma zone from above: enter long. 5) From below: enter short. 6) If price breaks through a high-gamma zone with speed (1.5x ATR in 2 candles) + delta confirms: abandon mean reversion and enter in breakout direction (gamma flip signal). 7) Scale by gamma concentration.",
+      "exit_logic": "Mean-reversion mode: exit at high-gamma strike center or after 2:1 R:R with trailing stop. Gamma-flip breakout mode: trail with ATR chandelier (3x ATR). Hard stop at 1x ATR below/above gamma flip candle. If gamma profile shifts significantly intraday, flatten all positions.",
+      "failure_mode": "Requires reliable options data - not available to all retail traders. Gamma profiles update daily at best. Low-options-volume environments degrade signals. Weekend gaps can violate gamma zones.",
+      "diversification_value": "Only hypothesis in archive directly using options gamma positioning for spot gold. Complements Gamma_Flip_Regime_Divergence (regime_filter) but at discrete trade entry level. Differs from Swap_Dealer_Gamma_Speed_Trap (expiry-focused).",
+      "self_grade": "C+",
+      "generated_at": "2026-06-23T15:56:04Z"
     }
   ],
   "coverage_map": {
@@ -2025,7 +2244,9 @@
       "VWAP_Entropy_Mean_Drift",
       "Mean_Reversion_OrderFlow_Exhaustion",
       "ZScore_ATR_Mean_Reverter",
-      "Intraday_Volume_Profile_Mean_Reverter"
+      "Intraday_Volume_Profile_Mean_Reverter",
+      "Session_Boundary_Mean_Reverter",
+      "Kalman_Filter_Dynamic_Mean_Reversion"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -2039,7 +2260,8 @@
       "False_Breakout_Trap_Fade",
       "Session_Initial_Balance_Breakout",
       "Index_Structural_Breakout",
-      "MultiTimeframe_Liquidity_Stacked_Breakout"
+      "MultiTimeframe_Liquidity_Stacked_Breakout",
+      "Breakout_Volume_Climax_Fade"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
@@ -2053,7 +2275,8 @@
       "VWAP_Vol_Channel_Mean_Drift",
       "Volatility_Momentum_Inflection",
       "Forex_Carry_Volatility_Compression",
-      "Liquidity_Tier_Volatility_Contraction_Pinball"
+      "Liquidity_Tier_Volatility_Contraction_Pinball",
+      "Intraday_Volatility_Reversal_Oscillator"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -2067,7 +2290,8 @@
       "Cluster_Consensus_Regime_Detector",
       "Liquidity_Regime_Filter",
       "Macro_Minsky_Moment_Regime_Shift",
-      "ADX_Volatility_Regime_Composite"
+      "ADX_Volatility_Regime_Composite",
+      "Markov_Switching_Momentum_Regime"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
@@ -2080,7 +2304,10 @@
       "Intraday_VaR_Regime_Adaptive_Sizer",
       "Sharpe_Ratio_Rotator",
       "Conviction_Variance_Contractor",
-      "Multi_TF_Vol_Convexity_Sizer"
+      "Multi_TF_Vol_Convexity_Sizer",
+      "Session_Decay_Exposure_Controller",
+      "Entropy_Regime_Contingency_Sizer",
+      "Skew_Asymmetry_Insurer"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
@@ -2094,7 +2321,9 @@
       "Futures_Spot_Convergence_Arbitrage",
       "Cross_Asset_Basis_Divergence",
       "USD_Liquidity_Tide_Index",
-      "Gold_USD_Cross_Rate_Carry_Trade_Proxy"
+      "Gold_USD_Cross_Rate_Carry_Trade_Proxy",
+      "VIX_Gold_Regime_Divergence",
+      "Gold_Bitcoin_Divergence_Rotator"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
@@ -2108,7 +2337,8 @@
       "Central_Bank_Calendar_Dovish_Hawkish_Window",
       "Monsoon_India_Demand_Frontrun",
       "Cross_Commodity_Seasonal_Rotation",
-      "Diwali_Chinese_New_Year_Physical_Demand_Frontrun"
+      "Diwali_Chinese_New_Year_Physical_Demand_Frontrun",
+      "Fiscal_Year_End_Cross_Border_Demand"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
@@ -2122,7 +2352,8 @@
       "Interbank_Fixing_Flow_Reversal",
       "Swap_Dealer_Gamma_Speed_Trap",
       "News_Absorption_Continuation",
-      "Central_Bank_Jawbone_Volatility_Capture"
+      "Central_Bank_Jawbone_Volatility_Capture",
+      "Gamma_Exposure_Floor_Ceiling_Liquidity"
     ]
   }
 }

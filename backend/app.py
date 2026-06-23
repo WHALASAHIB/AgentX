@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -84,6 +84,7 @@ _STRATEGY_DISPLAY_MAP: dict[str, str] = {
     "goldphoenix": "GoldPhoenix",
     "bollinger": "Bollinger",
     "sma": "SMA",
+    "volatility_breakout": "VolatilityBreakout",
 }
 
 
@@ -344,6 +345,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Block scanner traffic (WordPress exploitation probes) ────────────────
+
+@app.middleware("http")
+async def block_scanners(request: Request, call_next):
+    path = request.url.path
+    if path.endswith(".php") or "/wp-" in path or "/xmlrpc" in path:
+        return JSONResponse(status_code=404, content={"detail": "Not found"})
+    response = await call_next(request)
+    return response
+
 # ── Auth Routes ───────────────────────────────────────────────────────────────
 
 @app.get("/api/auth/login")
@@ -435,6 +446,113 @@ async def redeem_access_code(code: str = "", label: str = "", request: Request =
         samesite="lax",
     )
     return response
+
+# ── Dev-mode Auth Endpoints (for frontend SPA compatibility) ─────────────
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    """Return current user from session or dev default."""
+    session = request.cookies.get(SESSION_COOKIE)
+    if session:
+        return {"email": session, "name": session, "sub": session}
+    # Dev mode: return default owner
+    return {"email": OWNER_EMAIL, "name": "Commander", "sub": "dev-user"}
+
+@app.post("/api/auth/signin")
+async def auth_signin(request: Request):
+    """Dev-mode signin — accepts any credentials."""
+    try:
+        body = await request.json()
+        email = body.get("email", OWNER_EMAIL)
+    except Exception:
+        email = OWNER_EMAIL
+    response = JSONResponse({"email": email, "status": "authenticated", "name": email.split("@")[0]})
+    response.set_cookie(
+        key=SESSION_COOKIE,
+        value=email,
+        max_age=86400 * 7,
+        httponly=True,
+        samesite="lax",
+    )
+    return response
+
+@app.post("/api/auth/signup")
+async def auth_signup(request: Request):
+    """Dev-mode signup — accepts any credentials."""
+    try:
+        body = await request.json()
+        email = body.get("email", "user@agentx.trade")
+    except Exception:
+        email = "user@agentx.trade"
+    response = JSONResponse({"email": email, "status": "created", "name": email.split("@")[0]})
+    response.set_cookie(
+        key=SESSION_COOKIE,
+        value=email,
+        max_age=86400 * 7,
+        httponly=True,
+        samesite="lax",
+    )
+    return response
+
+# ── WebSocket Proxy ──────────────────────────────────────────────────────────
+
+@app.websocket("/api/ws/{path:path}")
+async def ws_proxy(websocket: WebSocket, path: str):
+    """Proxy WebSocket connections to the MT5 Bridge."""
+    import asyncio
+    import httpx
+    import json as json_module
+
+    await websocket.accept()
+    bridge_ws_url = f"ws://127.0.0.1:5000/{path}"
+
+    try:
+        async with websockets.connect(bridge_ws_url) as bridge_ws:
+            # Bidirectional relay
+            async def relay_to_client():
+                try:
+                    async for message in bridge_ws:
+                        await websocket.send_text(message)
+                except Exception:
+                    pass
+
+            async def relay_to_bridge():
+                try:
+                    while True:
+                        data = await websocket.receive_text()
+                        await bridge_ws.send(data)
+                except Exception:
+                    pass
+
+            await asyncio.gather(
+                relay_to_client(),
+                relay_to_bridge(),
+            )
+    except websockets.exceptions.WebSocketException as e:
+        # If bridge websocket fails, fall back to HTTP polling data
+        try:
+            # Send a one-time health/tick snapshot via JSON
+            if path == "system":
+                bridge = get_bridge()
+                health = await bridge.health()
+                await websocket.send_json({
+                    "type": "health",
+                    "data": health,
+                    "fallback": True,
+                    "message": "Bridge WebSocket unavailable, using polling"
+                })
+            else:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": f"Cannot connect to bridge WebSocket: {e}"
+                })
+        except Exception:
+            pass
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 # ── Health ────────────────────────────────────────────────────────────────────
 

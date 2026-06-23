@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""
+EURUSD — MACD Crossover Bot
+============================
+RE-ENABLED 2026-06-21 — switching from Gold Phoenix (7.1% WR, -$1,772 over 14 trades)
+to MACD which performs better on forex pairs (validated on GBPUSD, AUDUSD, USDJPY).
+
+Gold Phoenix is tuned for XAUUSD (high volatility, Asian breakout, tight sessions).
+EURUSD has ~1/10th of gold's volatility — needs a trend-following forex strategy.
+"""
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from multi_symbol_bot import main
+
+if __name__ == "__main__":
+    sys.argv = [sys.argv[0], "--symbol", "EURUSD", "--strategy", "macd"]
+    main()

@@ -1,19 +1,19 @@
 {
-  "iteration": 34,
-  "last_run": "2026-06-23T21:20:00",
-  "best_strategy": "iter_28_macd_ichimoku_rsi_tp1.2_24h.pine",
+  "iteration": 38,
+  "last_run": "2026-06-23T23:51:00",
+  "best_strategy": "iter_36_longonly_macd_ichimoku_rsi.pine",
   "best_metrics": {
-    "pf": 1.30915355,
-    "sharpe": -0.28533025,
-    "wr": 61.53846154,
-    "dd": 1.20821231,
-    "trades": 13,
-    "net_profit": -19.43,
+    "pf": 2.03124515,
+    "sharpe": 1.02296549,
+    "wr": 75.0,
+    "dd": 6.33820684,
+    "trades": 8,
+    "net_profit": 187.299743171368,
     "symbol": "XAUUSD",
     "timeframe": "1h",
-    "iteration": 28
+    "iteration": 36
   },
-  "current_hypothesis": "WR=35.9% < 40% is the weakest metric. Tighten TP/SL ratio from 1.2:1 to ~1:1.5 (TP=67, SL=100 in points). A tighter take-profit target should capture more small wins and boost win rate towards 40%+. The MACD(8,17,5)+Ichimoku cloud (no TK cross)+RSI(14) triple-filter showed 39 trades with PF 1.117 — best trade count in recent iterations. Improving WR while maintaining trade count could push PF above 1.3.",
+  "current_hypothesis": "Trades=8 is the weakest metric (target >20). Reduce MACD fast length from 8 to 5 to generate more crossovers while keeping RSI>50 and Ichimoku cloud filters. More crossovers = more entry opportunities = higher trade count. Keep RSI filter re-added from iter 38 (proved essential for PF>2.0).",
   "evolution_log": [
     {
       "iteration": 28,
@@ -47,22 +47,50 @@
       "iteration": 32,
       "hypothesis": "Reduce ADX(14) threshold from 25 to 20 on iter 31's MACD+Ichimoku+RSI+ADX structure. ADX>20 captures moderate trends while still filtering chop.",
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — ADX>20 still too restrictive with 4-filter stack. 0 trades over 886 bars. ADX at any threshold (>15 tested) blocks all entries with MACD+Ichimoku+TK+RSI. Removing ADX entirely.",
+      "verdict": "invalid (no trades) — ADX>20 still too restrictive with 4-filter stack. 0 trades over 886 bars.",
       "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:40:00"
     },
     {
       "iteration": 33,
       "hypothesis": "Remove ADX filter entirely from iter 32's structure. Go back to iter 30's triple-filter: MACD(8,17,5) + Ichimoku (cloud+TK cross) + RSI(14). Instead of ADX, add a VWAP trend filter: long only if price > VWAP, short only if price < VWAP.",
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 5.50012296, "trades": 0, "net_profit": -4},
-      "verdict": "invalid (no trades) — VWAP filter added to MACD+Ichimoku+TK+RSI quadruple stack produced 0 trades. VWAP is as restrictive as ADX. Filter stack with 5 conditions too restrictive for XAUUSD H1. Removing VWAP next.",
+      "verdict": "invalid (no trades) — VWAP filter produced 0 trades. Filter stack with 5 conditions too restrictive.",
       "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:05:00"
     },
     {
       "iteration": 34,
       "hypothesis": "Remove VWAP filter entirely from iter 33's structure. Keep MACD(8,17,5) cross + Ichimoku cloud (price above/below, no TK cross) + RSI(14) >50/<50. Triple-filter (no TK cross) should give 20+ trades with improved PF.",
       "metrics": {"pf": 1.11695372, "sharpe": -3.53085458, "wr": 35.8974359, "dd": 4.30342437, "trades": 39, "net_profit": -256.59},
-      "verdict": "rejected (PF=1.117 < 1.3) — Removing TK cross boosted trades to 39 (best count in 6 iterations) with PF 1.117 (up from 0.981 in iter 30). WR dropped to 35.9%. Next: tighten TP/SL to improve WR.",
+      "verdict": "rejected (PF=1.117 < 1.3) — 39 trades, best count, but WR 35.9%.",
       "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:20:00"
+    },
+    {
+      "iteration": 35,
+      "hypothesis": "WR=35.9% < 40% is the weakest metric. Tighten TP/SL ratio from 1.2:1 to ~1:1.5 (TP=67, SL=100 in points). A tighter take-profit target should capture more small wins and boost win rate.",
+      "metrics": {"pf": 1.13299684, "sharpe": -3.43901277, "wr": 35.8974359, "dd": 4.23513239, "trades": 39, "net_profit": -249.64},
+      "verdict": "rejected (PF=1.133 < 1.3) — TP tightening had no effect on WR (still 35.9%). Shorts lost -$297 vs longs +$47. Next: switch to LONG-only.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:40:00"
+    },
+    {
+      "iteration": 36,
+      "hypothesis": "Switch to LONG-only trading. Remove short entries entirely. Keep MACD(8,17,5) cross + Ichimoku cloud (price above cloud) + RSI(14) > 50. This directly addresses the data from iter 35 where shorts lost -$297 (24 trades) vs longs +$47 (15 trades).",
+      "metrics": {"pf": 2.03124515, "sharpe": 1.02296549, "wr": 75.0, "dd": 6.33820684, "trades": 8, "net_profit": 187.299743171368},
+      "verdict": "invalid (low sample, 8 trades) — NEW BEST PF 2.03, Sharpe 1.02, WR 75%, +$187 P&L! First profitable strategy. But only 8 trades needs more data. Next: remove RSI filter to increase trade count.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T23:21:00"
+    },
+    {
+      "iteration": 37,
+      "hypothesis": "Remove RSI(14)>50 filter from iter 36's LONG-only MACD(8,17,5)+Ichimoku cloud structure to increase trade count from 8 to 20+. Removing the most restrictive filter should roughly double entries while maintaining trend bias from Ichimoku.",
+      "metrics": {"pf": 0.61670629, "sharpe": -2.46709213, "wr": 55.55555556, "dd": 10.09667466, "trades": 9, "net_profit": -624.859636765059},
+      "verdict": "rejected (PF=0.617 < 1.3) — Removing RSI only increased trades 8→9 while PF collapsed from 2.03→0.617. Largest loss -$436.06 sank the P&L. RSI filter was essential for avoiding bad entries.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T23:36:00"
+    },
+    {
+      "iteration": 38,
+      "hypothesis": "Re-add RSI(14)>50 filter to LONG-only MACD(8,17,5)+Ichimoku cloud structure. This reverses iter 37's change — the RSI filter was essential for avoiding bad entries despite reducing trade count.",
+      "metrics": {"pf": 2.03124515, "sharpe": 1.02296549, "wr": 75.0, "dd": 6.33820684, "trades": 8, "net_profit": 187.299743171368},
+      "verdict": "invalid (low sample, 8 trades) — RSI filter restored successfully. Metrics identical to best (iter 36): PF 2.03, Sharpe 1.02, WR 75%. Trade count stuck at 8 — filter stack too restrictive. Next: reduce MACD fast length to generate more crossovers.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T23:51:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

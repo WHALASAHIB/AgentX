@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="Iter 36 - LONG Only MACD+Ichimoku+RSI", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen  = input.int(8,   "MACD Fast Length",  minval=2, maxval=50, step=1)   // sweep: 5-20 step 1
+slowLen  = input.int(17,  "MACD Slow Length",  minval=5, maxval=50, step=1)   // sweep: 10-30 step 2
+signalLen = input.int(5,  "MACD Signal Length", minval=1, maxval=20, step=1)  // sweep: 3-12 step 1
+
+// Ichimoku parameters
+tenkan   = input.int(9,   "Tenkan-sen Period",  minval=5, maxval=30, step=1)  // sweep: 7-20 step 2
+kijun    = input.int(26,  "Kijun-sen Period",   minval=10, maxval=50, step=2) // sweep: 15-40 step 5
+senkouB  = input.int(52,  "Senkou Span B Period", minval=20, maxval=80, step=5) // sweep: 30-70 step 10
+
+// RSI parameters
+rsiLen   = input.int(14,  "RSI Length",         minval=5, maxval=30, step=1)  // sweep: 7-21 step 2
+rsiThresh= input.int(50,  "RSI Long Threshold (> this)", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+
+// TP/SL parameters
+tpPoints = input.int(100, "Take Profit (points)", minval=10, maxval=500, step=10) // sweep: 50-200 step 25
+slPoints = input.int(150, "Stop Loss (points)",  minval=10, maxval=500, step=10) // sweep: 75-300 step 25
+
+//--- calc MACD
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, signalLen)
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+//--- calc Ichimoku
+donchianHigh(n) => ta.highest(high, n)
+donchianLow(n)  => ta.lowest(low, n)
+tenkanLine  = (donchianHigh(tenkan) + donchianLow(tenkan)) / 2
+kijunLine   = (donchianHigh(kijun) + donchianLow(kijun)) / 2
+senkouA     = (tenkanLine + kijunLine) / 2
+senkouBVal  = (donchianHigh(senkouB) + donchianLow(senkouB)) / 2
+
+// Ichimoku conditions
+priceAboveCloud = close > math.max(senkouA[26], senkouBVal[26])
+priceBelowCloud = close < math.min(senkouA[26], senkouBVal[26])
+tkCrossAbove    = ta.crossover(tenkanLine, kijunLine)
+tkCrossBelow    = ta.crossunder(tenkanLine, kijunLine)
+
+//--- calc RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry logic
+// LONG-ONLY — no short entries. Eliminates the short leg which lost -$297 across 24 trades.
+longCondition = macdCrossOver and priceAboveCloud and rsiVal > rsiThresh
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    // Note: strategy.exit with fixed TP/SL in points, using syminfo.mintick conversion
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints)
+
+//--- exit management
+// Trailing stop not used — keeping it simple for LONG-only first test
+// No strategy.close on every bar — only exit via TP/SL

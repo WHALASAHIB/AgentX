@@ -1,6 +1,10 @@
 {
-    "login": 5051185832,
-    "password": "YyEd*j7w",
-    "server": "MetaQuotes-Demo",
-    "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
+    "login": 1513767391,
+    "password": "X$W5359Ni5qL",
+    "server": "FTMO-Demo",
+    "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+    "symbols": [
+        "XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF",
+        "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"
+    ]
 }

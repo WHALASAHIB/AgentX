@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""
+EURUSD — Bollinger Bands Bot
+============================
+Added 2026-06-23 — MSB_BOLLINGER is the strongest active strategy.
+EURUSD is MACD's weakest pair (18% WR) — switching to Bollinger.
+"""
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from multi_symbol_bot import main
+
+if __name__ == "__main__":
+    sys.argv = [sys.argv[0], "--symbol", "EURUSD", "--strategy", "bollinger"]
+    main()

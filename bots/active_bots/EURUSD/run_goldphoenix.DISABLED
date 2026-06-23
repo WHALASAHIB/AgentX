@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+"""
+EURUSD — Gold Phoenix Bot
+==========================
+⚠️ DISABLED 2026-06-21 — Gold Phoenix is tuned for XAUUSD (gold).
+On EURUSD it produced 7.1% WR / -$1,772 over 14 trades.
+Switched to MACD — see run_macd.py.
+"""
+import sys
+print("⚠️  Gold Phoenix EURUSD DISABLED — Gold Phoenix is a gold (XAUUSD) strategy, not suitable for EURUSD.", flush=True)
+print("   Use run_macd.py instead (MACD crossover, validated on forex pairs).", flush=True)
+sys.exit(0)
