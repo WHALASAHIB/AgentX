@@ -1,19 +1,19 @@
 {
-  "iteration": 10,
-  "last_run": "2026-06-23T13:55:00",
-  "best_strategy": "iter_8_macd_crossover.pine",
+  "iteration": 13,
+  "last_run": "2026-06-23T14:30:00",
+  "best_strategy": "iter_10_macd_adx18.pine",
   "best_metrics": {
-    "pf": 1.02763635,
-    "sharpe": -1.03326432,
-    "wr": 42.85714286,
-    "dd": 5.23090596,
-    "trades": 21,
-    "net_profit": -141.00,
+    "pf": 1.29686066,
+    "sharpe": 0.49470013,
+    "wr": 47.05882353,
+    "dd": 3.37785617,
+    "trades": 17,
+    "net_profit": 53.81,
     "symbol": "XAUUSD",
     "timeframe": "1h",
-    "iteration": 8
+    "iteration": 10
   },
-  "current_hypothesis": "Reduce ADX threshold from 25 to 18 on MACD crossover strategy. ADX>25 produced only 9 trades (below 20 minimum) over 893 bars on XAUUSD H1. Lowering threshold to 18 should allow more entries while still filtering the most range-bound periods. Keep ATR(14)-based 1:1.5 TP/SL, session filter 8-16 UTC. Goal: reach 20+ trades with PF above 1.3.",
+  "current_hypothesis": "Add RSI(14) momentum filter to MACD+ADX18 24h strategy. Enter long only when MACD crosses above signal line AND ADX(14)>18 AND RSI(14)>50. Enter short only when MACD crosses below signal line AND ADX(14)>18 AND RSI(14)<50. Keep 24h trading (no session filter), ATR-based 1:1.5 TP/SL unchanged. Goal: improve PF from 0.968 and WR from 33.33% by filtering out entries against prevailing momentum — the session filter removal let in 51 trades but many were during Asian/low-volatility hours when RSI won't confirm MACD momentum.",
   "evolution_log": [
     {
       "iteration": 0,
@@ -170,10 +170,58 @@
         "trades": 9,
         "net_profit": -44.03
       },
-      "verdict": "invalid (low sample, 9 trades) — ADX>25 too restrictive on MACD signals, only 9 entries over 893 bars. Cascade ratio: 1.0 (perfect). Short trades profitable (+$191.61), longs losing (-$235.64).",
+      "verdict": "invalid (low sample, 9 trades) — ADX>25 too restrictive on MACD signals, only 9 entries over 892 bars. Cascade ratio: 1.0 (perfect). Short trades profitable (+$191.61), longs losing (-$235.64).",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T13:55:00"
+    },
+    {
+      "iteration": 10,
+      "hypothesis": "Reduce ADX threshold from 25 to 18 on MACD crossover strategy. ADX>25 produced only 9 trades (below 20 minimum) over 892 bars on XAUUSD H1. Lowering threshold to 18 should allow more entries while still filtering the most range-bound periods. Keep ATR(14)-based 1:1.5 TP/SL, session filter 8-16 UTC. Goal: reach 20+ trades with PF above 1.3.",
+      "metrics": {
+        "pf": 1.29686066,
+        "sharpe": 0.49470013,
+        "wr": 47.05882353,
+        "dd": 3.37785617,
+        "trades": 17,
+        "net_profit": 53.81
+      },
+      "verdict": "invalid (low sample, 17 trades) — NEW BEST STRATEGY (PF 1.028→1.297, Sharpe -1.033→0.495, WR 42.9%→47.1%, NetProfit -$141→+$54, DD 5.23%→3.38%). ADX>18 allowed nearly double the trades (9→17) while dramatically improving all metrics. First iteration with positive net profit.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T14:10:00"
+    },
+    {
+      "iteration": 11,
+      "hypothesis": "Further reduce ADX threshold from 18 to 15 on MACD crossover strategy. ADX>18 produced 17 trades (still below 20 minimum). Lowering to 15 should allow a few more entries to cross the 20-trade threshold. Keep ATR(14)-based 1:1.5 TP/SL, session filter 8-16 UTC. Goal: reach 20+ trades to achieve statistical significance.",
+      "metrics": {
+        "pf": 1.29686066,
+        "sharpe": 0.49470013,
+        "wr": 47.05882353,
+        "dd": 3.37785617,
+        "trades": 17,
+        "net_profit": 53.81
+      },
+      "verdict": "invalid (low sample, 17 trades) — ADX>15 produced IDENTICAL results to ADX>18. No MACD crossover occurred when ADX was between 15-18 on XAUUSD H1 data window. ADX threshold reduction had zero effect — same 17 trades, same metrics.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T14:25:00"
+    },
+    {
+      "iteration": 12,
+      "hypothesis": "Remove session filter (trade 24h) on MACD+ADX18 strategy. Keep ADX>18 trending filter, ATR(14)-based 1:1.5 TP/SL, MACD(12,26,9) crossover. The session filter (8-16 UTC) was the bottleneck limiting trade count to 17. Removing it should allow MACD crossovers at any hour to trigger entries. Goal: increase trades from 17 to 30+, maintaining PF above 1.2.",
+      "metrics": {
+        "pf": 0.96797284,
+        "sharpe": -2.12969157,
+        "wr": 33.33333333,
+        "dd": 7.89613706,
+        "trades": 51,
+        "net_profit": -384.52
+      },
+      "verdict": "rejected (PF=0.968 < 1.3) — trade count tripled (17→51, goal achieved) but PF collapsed from 1.297→0.968, Sharpe from 0.495→-2.13, WR from 47.1%→33.3%. Removing session filter let in many bad entries during non-London hours (Asian session low-volatility chop). Cascade ratio 1.0625 fine. Time to add a quality filter to replace the session guard.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T14:30:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
