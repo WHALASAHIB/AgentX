@@ -1,6 +1,6 @@
 {
-  "iteration": 17,
-  "last_run": "2026-06-23T15:37:00",
+  "iteration": 20,
+  "last_run": "2026-06-23T16:48:00",
   "best_strategy": "iter_10_macd_adx18.pine",
   "best_metrics": {
     "pf": 1.29686066,
@@ -13,7 +13,7 @@
     "timeframe": "1h",
     "iteration": 10
   },
-  "current_hypothesis": "Add RSI(14) trend filter to MACD+SMA50+TP2.0 24h strategy: long only when RSI > 50, short only when RSI < 50. PF dropped further from 0.574 (iter 15, TP:SL 1.5) to 0.359 (iter 16, TP:SL 2.0) — the wider TP/SL made losses worse without improving win rate (24% WR). Avg win $69 vs avg loss $61, ratio 1.13:1 — far below the 2:1 target because the market reverses before TP is hit. Adding RSI momentum filter should filter out counter-trend entries and improve quality of signals. Goal: PF > 1.0. If RSI kills all trades (as happened in iters 13-14, but those had ADX too), next iteration will try wider RSI thresholds.",
+  "current_hypothesis": "Add ADX(14) trend strength filter with threshold 20 to MACD+RSI14+24h+TP1.5 strategy. Sharpe ratio of -4.39 indicates MACD entries are occurring in choppy/sideways markets. ADX > 20 will filter out non-trending periods where MACD whipsaws. Using threshold 20 (between previously tested 18 and 25) — ADX>18 gave best results historically (PF=1.297 on iter 10) but was combined with session filter. With 24h+RSI, ADX>20 should produce enough trades while avoiding chop.",
   "evolution_log": [
     {
       "iteration": 0,
@@ -250,7 +250,7 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades — ADX>12 + RSI>40/<60 still produces 0 trades on XAUUSD H1. MACD crossovers and RSI-ADX conditions never overlap. RSI is the blocking filter — MACD crossovers on XAUUSD H1 never occur when RSI is >40 for longs or <60 for shorts.)",
+      "verdict": "invalid (no trades — ADX>12 + RSI>40/<60 still produces 0 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T15:03:00"
@@ -273,7 +273,7 @@
     },
     {
       "iteration": 16,
-      "hypothesis": "Increase TP:SL ratio from 1.5 to 2.0 on MACD + SMA50 24h strategy. With 30 trades and WR 33%, the current 1.5:1 only delivers avg win/loss ratio of 1.15:1 — insufficient. A 2:1 ratio allows winners to run further; at 33% WR, 2:1 gives breakeven expected value. Goal: get PF > 1.0.",
+      "hypothesis": "Increase TP:SL ratio from 1.5 to 2.0 on MACD + SMA50 24h strategy.",
       "metrics": {
         "pf": 0.35933773,
         "sharpe": -6.79231114,
@@ -282,10 +282,58 @@
         "trades": 29,
         "net_profit": -1060.20
       },
-      "verdict": "rejected (PF=0.359 < 1.3) — TP:SL 2.0 made PF worse (0.574→0.359). Wider TP/SL means more trades hit SL before reaching TP. WR dropped from 33% to 24%.",
+      "verdict": "rejected (PF=0.359 < 1.3) — TP:SL 2.0 made PF worse",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T15:37:00"
+    },
+    {
+      "iteration": 17,
+      "hypothesis": "Add RSI(14) momentum filter to MACD+SMA50+TP2.0 24h strategy.",
+      "metrics": {
+        "pf": 0.35935373,
+        "sharpe": -6.7959643,
+        "wr": 24.13793103,
+        "dd": 13.32234052,
+        "trades": 29,
+        "net_profit": -1060.18
+      },
+      "verdict": "rejected (PF=0.359 < 1.3) — RSI filter redundant with SMA50",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T15:54:00"
+    },
+    {
+      "iteration": 18,
+      "hypothesis": "Revert TP:SL from 2.0 to 1.5 on MACD + SMA50 + 24h strategy (drop redundant RSI filter).",
+      "metrics": {
+        "pf": 0.57446146,
+        "sharpe": -5.48194864,
+        "wr": 33.33333333,
+        "dd": 9.2028144,
+        "trades": 30,
+        "net_profit": -743.13
+      },
+      "verdict": "rejected (PF=0.574 < 1.3) — identical to iter 15, confirming TP:SL 1.5 is baseline for MACD+SMA50",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T16:12:00"
+    },
+    {
+      "iteration": 19,
+      "hypothesis": "Replace SMA(50) trend filter with RSI(14) momentum filter on MACD crossover strategy, 24h trading, TP:SL 1.5. RSI(14) adapts faster than SMA(50) on H1, aiming for better-timed entries.",
+      "metrics": {
+        "pf": 0.7317164,
+        "sharpe": -4.38886216,
+        "wr": 30.55555556,
+        "dd": 8.44928512,
+        "trades": 36,
+        "net_profit": -614.02
+      },
+      "verdict": "rejected (PF=0.732 < 1.3) — PF improved 0.574→0.732 (+27.5%) vs SMA50, but still unprofitable. RSI filter outperforms SMA50 filter.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T16:48:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

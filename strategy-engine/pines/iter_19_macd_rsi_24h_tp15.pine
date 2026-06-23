@@ -1,0 +1,89 @@
+//@version=5
+strategy(title="MACD + RSI14 XAUUSD H1 (24h, TP1.5)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//====================================================================
+//--- inputs
+//====================================================================
+
+// MACD parameters
+macdFastLen   = input.int(12,  "MACD Fast Length",  minval=2, maxval=50, tooltip="Fast EMA length for MACD")        // sweep: 8-20 step 2
+macdSlowLen   = input.int(26,  "MACD Slow Length",  minval=5, maxval=100, tooltip="Slow EMA length for MACD")      // sweep: 18-34 step 2
+macdSignalLen = input.int(9,   "MACD Signal Length", minval=2, maxval=30, tooltip="Signal line smoothing")          // sweep: 5-15 step 2
+
+// RSI momentum filter — replaces SMA(50) trend filter from iter 15-18
+rsiLen        = input.int(14,  "RSI Length",         minval=5, maxval=30, tooltip="RSI period for momentum filter") // sweep: 10-20 step 2
+rsiThreshold  = input.int(50,  "RSI Threshold",      minval=30, maxval=70, tooltip="RSI level for long/short bias") // sweep: 40-60 step 5
+
+// TP/SL parameters
+tpSlRatio     = input.float(1.5, "TP:SL Ratio",      minval=0.5, maxval=5.0, step=0.1, tooltip="Take-profit to stop-loss ratio")   // sweep: 1.0-3.0 step 0.25
+atrLen        = input.int(14,   "ATR Length for SL",  minval=5, maxval=50, tooltip="ATR period for dynamic stops")                 // sweep: 10-20 step 2
+atrMult       = input.float(1.5, "ATR Multiplier",    minval=0.5, maxval=5.0, step=0.1, tooltip="ATR multiplier for stop distance") // sweep: 1.0-3.0 step 0.25
+
+// Display
+showSignals   = input.bool(true, "Show Signal Labels", tooltip="Display buy/sell labels on chart")
+
+//====================================================================
+//--- calculations
+//====================================================================
+
+// MACD
+[macdLine, signalLine, _hist] = ta.macd(close, macdFastLen, macdSlowLen, macdSignalLen)
+
+// RSI momentum filter — RSI > threshold = bullish momentum, RSI < threshold = bearish momentum
+// RSI provides faster, more adaptive filtering than SMA(50) on XAUUSD H1
+rsiVal = ta.rsi(close, rsiLen)
+rsiBullish = rsiVal > rsiThreshold
+rsiBearish = rsiVal < rsiThreshold
+
+// ATR for dynamic stop placement
+atrVal = ta.atr(atrLen)
+
+// MACD crossover conditions
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+//====================================================================
+//--- entry logic — 24h trading with RSI(14) momentum filter
+//====================================================================
+
+// Long entry: MACD crosses above signal line AND RSI > threshold (bullish momentum)
+// No session filter — trade 24h for more entries
+// RSI filter replaced SMA(50) which was too slow on H1 — RSI(14) adapts faster
+longCondition = macdCrossOver and rsiBullish
+
+// Short entry: MACD crosses below signal line AND RSI < threshold (bearish momentum)
+shortCondition = macdCrossUnder and rsiBearish
+
+// Entries
+if longCondition
+    strategy.entry("Long", strategy.long)
+    if showSignals
+        label.new(bar_index, low, "BUY MACD+RSI", style=label.style_label_up, color=color.green, size=size.small, textcolor=color.white)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    if showSignals
+        label.new(bar_index, high, "SELL MACD+RSI", style=label.style_label_down, color=color.red, size=size.small, textcolor=color.white)
+
+//====================================================================
+//--- exit management
+//====================================================================
+
+// Dynamic stop-loss and take-profit distances based on ATR
+stopDist   = atrVal * atrMult
+profitDist = stopDist * tpSlRatio
+
+// Convert to ticks
+stopTicks   = int(stopDist / syminfo.mintick)
+profitTicks = int(profitDist / syminfo.mintick)
+
+// Exit orders — placed on every bar after entry to maintain stops
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=stopTicks, profit=profitTicks)
+
+if strategy.position_size < 0
+    strategy.exit("Short Exit", "Short", loss=stopTicks, profit=profitTicks)
+
+//====================================================================
+//--- end
+//====================================================================
