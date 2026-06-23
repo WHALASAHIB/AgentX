@@ -1,0 +1,63 @@
+//@version=5
+strategy(title="MACD + Ichimoku + RSI14 + TP1.2 XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(12, "MACD Fast Length", minval=5, maxval=30)  // sweep: 8-20 step 2
+slow_len = input.int(26, "MACD Slow Length", minval=15, maxval=50)  // sweep: 18-34 step 4
+signal_len = input.int(9, "MACD Signal Length", minval=3, maxval=20)  // sweep: 5-15 step 2
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21)  // sweep: 10-20 step 2
+rsi_oversold = input.int(40, "RSI Oversold Threshold (short)", minval=30, maxval=50)  // sweep: 30-50 step 5
+rsi_overbought = input.int(60, "RSI Overbought Threshold (long)", minval=50, maxval=70)  // sweep: 50-70 step 5
+
+// TP/SL parameters
+tp_sl_ratio = input.float(1.2, "Take Profit / Stop Loss Ratio", minval=0.5, maxval=4.0, step=0.1)  // sweep: 0.8-2.0 step 0.2
+atr_len = input.int(14, "ATR Length for Stop", minval=7, maxval=21)  // sweep: 10-20 step 2
+atr_mult = input.float(1.5, "ATR Multiplier for SL", minval=0.5, maxval=3.0, step=0.1)  // sweep: 1.0-2.5 step 0.25
+
+//--- indicator calculations
+// MACD
+[macd_line, signal_line, hist] = ta.macd(close, fast_len, slow_len, signal_len)
+macd_crossover = ta.crossover(macd_line, signal_line)
+macd_crossunder = ta.crossunder(macd_line, signal_line)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+// Ichimoku Cloud
+tenkan_period = 9
+kijun_period = 26
+senkou_b_period = 52
+displacement = 26
+
+tenkan = (ta.highest(high, tenkan_period) + ta.lowest(low, tenkan_period)) / 2
+kijun = (ta.highest(high, kijun_period) + ta.lowest(low, kijun_period)) / 2
+senkou_a = (tenkan + kijun) / 2
+senkou_b = (ta.highest(high, senkou_b_period) + ta.lowest(low, senkou_b_period)) / 2
+
+// Cloud: future-displaced values for current bar
+cloud_top = math.max(senkou_a[displacement-1], senkou_b[displacement-1])
+cloud_bottom = math.min(senkou_a[displacement-1], senkou_b[displacement-1])
+
+//--- entry logic
+// Long condition: MACD crossover + RSI > 50 threshold + price above cloud
+long_condition = macd_crossover and rsi_val > rsi_overbought and close > cloud_top
+
+// Short condition: MACD crossunder + RSI < 50 threshold + price below cloud
+short_condition = macd_crossunder and rsi_val < rsi_oversold and close < cloud_bottom
+
+// Calculate ATR-based stop distance
+atr_val = ta.atr(atr_len)
+sl_distance = atr_val * atr_mult
+tp_distance = sl_distance * tp_sl_ratio
+
+//--- entry
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=sl_distance / syminfo.mintick, profit=tp_distance / syminfo.mintick)
+
+if short_condition and strategy.position_size == 0
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", loss=sl_distance / syminfo.mintick, profit=tp_distance / syminfo.mintick)

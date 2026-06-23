@@ -1,0 +1,72 @@
+//@version=5
+strategy(title="MACD + Ichimoku + RSI XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast Length", minval=1)    // sweep: 8-16 step 2
+slowLen = input.int(26, "MACD Slow Length", minval=1)    // sweep: 20-32 step 4
+sigLen  = input.int(9,  "MACD Signal Length", minval=1)  // sweep: 5-13 step 2
+
+// RSI parameters
+rsiLen  = input.int(14, "RSI Length", minval=1)          // sweep: 10-20 step 2
+rsiTh   = input.int(50, "RSI Threshold", minval=1)       // sweep: 45-55 step 5
+
+// Ichimoku parameters
+tenkanLen = input.int(9,  "Tenkan-sen (Conversion)", minval=1)   // sweep: 7-13 step 2
+kijunLen  = input.int(26, "Kijun-sen (Base)", minval=1)         // sweep: 20-34 step 4
+senkouBLen = input.int(52, "Senkou Span B (Leading B)", minval=1) // sweep: 44-62 step 4
+
+// ATR-based TP/SL
+atrLen  = input.int(14, "ATR Length", minval=1)          // sweep: 10-20 step 2
+atrMult = input.float(1.5, "ATR Multiplier", step=0.25)  // sweep: 1.0-2.5 step 0.25
+tpRatio = input.float(1.5, "TP:SL Ratio", step=0.25)     // sweep: 1.0-2.5 step 0.25
+
+//--- indicator calculations
+// MACD
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, sigLen)
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+rsiBull = rsiVal > rsiTh   // long if RSI above threshold (default 50)
+rsiBear = rsiVal < 100 - rsiTh  // short if RSI below symmetric threshold (default 50)
+
+// Ichimoku Cloud (standard formula: highest+lowest / 2)
+tenkanLine  = (ta.highest(high, tenkanLen) + ta.lowest(low, tenkanLen)) / 2
+kijunLine   = (ta.highest(high, kijunLen) + ta.lowest(low, kijunLen)) / 2
+senkouSpanA = (tenkanLine + kijunLine) / 2
+senkouSpanB = (ta.highest(high, senkouBLen) + ta.lowest(low, senkouBLen)) / 2
+
+// Price relative to cloud (using current raw values, not future-shifted)
+priceAboveCloud = close > math.max(senkouSpanA, senkouSpanB)
+priceBelowCloud = close < math.min(senkouSpanA, senkouSpanB)
+
+// ATR for stop/target sizing
+atrVal = ta.atr(atrLen)
+stopPts   = int(atrVal * atrMult / syminfo.mintick)
+takePts   = int(stopPts * tpRatio)
+
+//--- entry logic
+// Long: MACD crossover + RSI bullish + price above Ichimoku cloud
+longCondition  = macdCrossOver  and rsiBull and priceAboveCloud
+// Short: MACD crossunder + RSI bearish + price below Ichimoku cloud
+shortCondition = macdCrossUnder and rsiBear and priceBelowCloud
+
+// Track previous position size to detect new entries
+var posSide = strategy.position_size
+
+// Fire entries on conditions
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Place exit orders on new positions only (no cascade-close on every bar)
+if strategy.position_size > 0 and strategy.position_size != posSide[1]
+    strategy.exit("XL", "Long", loss=stopPts, profit=takePts, comment="LongExit")
+
+if strategy.position_size < 0 and strategy.position_size != posSide[1]
+    strategy.exit("XS", "Short", loss=stopPts, profit=takePts, comment="ShortExit")
