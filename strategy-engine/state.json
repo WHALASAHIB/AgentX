@@ -1,262 +1,51 @@
 {
-  "iteration": 27,
-  "last_run": "2026-06-23T18:45:00",
-  "best_strategy": "iter_10_macd_adx18.pine",
+  "iteration": 29,
+  "last_run": "2026-06-23T19:52:00",
+  "best_strategy": "iter_28_macd_ichimoku_rsi_tp1.2_24h.pine",
   "best_metrics": {
-    "pf": 1.29686066,
-    "sharpe": 0.49470013,
-    "wr": 47.05882353,
-    "dd": 3.37785617,
-    "trades": 17,
-    "net_profit": 53.81,
+    "pf": 1.30915355,
+    "sharpe": -0.28533025,
+    "wr": 61.53846154,
+    "dd": 1.20821231,
+    "trades": 13,
+    "net_profit": -19.43,
     "symbol": "XAUUSD",
     "timeframe": "1h",
-    "iteration": 10
+    "iteration": 28
   },
-  "current_hypothesis": "Slightly widen TP:SL ratio from 0.667 (1:1.5) to 0.833 (1:1.2) on MACD+RSI14+24h strategy. Iter 26 (TP:SL 1:1.5) gave WR 55% (highest ever!) but PF 0.869 because avg loss ($46.43) is 1.4x avg win ($33.02) — breakeven WR is 58.4% but achieved WR is 55%. Widen TP:SL to 1:1.2 (ratio=0.833) to improve avg win/loss ratio. At 1:1.2, breakeven WR is 54.5%. Expect WR ~50-52%, with avg win/loss ~0.80, yielding PF > 1.0. Only TP:SL ratio changes; MACD+RSI14+24h stays.",
+  "current_hypothesis": "Keep TK cross requirement from iter 28 (best PF 1.309, WR 61.54%) but reduce MACD parameters from (12,26,9) to (8,17,5) to generate more frequent crossover signals. Faster MACD produces more signals → more that survive the Ichimoku cloud + TK cross + RSI triple filter. Target: 22-35 trades while maintaining PF > 1.2. Iter 29 proved removing TK cross kills PF (0.838) despite boosting trades to 28 — TK cross is not redundant with RSI, it provides orthogonal signal quality filtering.",
   "evolution_log": [
     {
-      "iteration": 0,
-      "hypothesis": "Dual EMA crossover on XAUUSD H1. EMA12 crosses above EMA26 = long, crosses below = short. Fixed 2:1 TP/SL using close-based percentage stops. Trade only during London/NY session overlap (8-16 UTC).",
-      "metrics": { "pf": 0.53, "sharpe": -6.5, "wr": 24.24, "dd": 10.13, "trades": 33, "net_profit": -903.49 },
-      "verdict": "rejected (PF=0.53 < 1.3)",
+      "iteration": 28,
+      "hypothesis": "Add Ichimoku Cloud trend filter (price above/below cloud + TK cross) to MACD+RSI14+24h+TP1:1.2 strategy. Triple filter should improve entry quality.",
+      "metrics": {
+        "pf": 1.30915355,
+        "sharpe": -0.28533025,
+        "wr": 61.53846154,
+        "dd": 1.20821231,
+        "trades": 13,
+        "net_profit": -19.43
+      },
+      "verdict": "invalid (low sample, 13 trades) — NEW BEST PF 1.309 (previous best 1.297), WR 61.54%, DD 1.21%, Net P&L -$19.43. Ichimoku dramatically improved all metrics but trade count dropped to 13 — triple filter too restrictive.",
       "symbol": "XAUUSD",
       "timeframe": "1h",
-      "time": "2026-06-23T11:23:00"
+      "time": "2026-06-23T19:36:56"
     },
     {
-      "iteration": 1,
-      "hypothesis": "Add RSI(14) filter to EMA crossover: enter long only when RSI > 50 and EMA12 crosses above EMA26; enter short only when RSI < 50 and EMA12 crosses below EMA26.",
-      "metrics": { "pf": 0.53, "sharpe": -6.5, "wr": 24.24, "dd": 10.13, "trades": 33, "net_profit": -903.49 },
-      "verdict": "rejected (PF=0.53 unchanged — RSI filter filtered 0 signals)",
+      "iteration": 29,
+      "hypothesis": "Remove Tenkan>Kijun (TK cross) requirement from Ichimoku filter — use only price above/below cloud as trend filter. TK cross is redundant with RSI>50/<50 directionality. Expect 20-30 trades with PF > 1.2.",
+      "metrics": {
+        "pf": 0.83773343,
+        "sharpe": -4.16290442,
+        "wr": 50.0,
+        "dd": 4.27810049,
+        "trades": 28,
+        "net_profit": -324.91
+      },
+      "verdict": "rejected (PF=0.838 < 1.3) — Removing TK cross boosted trades 13→28 but PF collapsed 1.309→0.838. TK cross is NOT redundant — it provides orthogonal signal quality filtering beyond RSI. Cloud-only Ichimoku filter too permissive.",
       "symbol": "XAUUSD",
       "timeframe": "1h",
-      "time": "2026-06-23T11:38:00"
-    },
-    {
-      "iteration": 2,
-      "hypothesis": "Tighten TP:SL ratio from 2:1 to 1:1.5 to improve win rate.",
-      "metrics": { "pf": 0.63764364, "sharpe": -5.94826274, "wr": 30.3030303, "dd": 7.50750318, "trades": 33, "net_profit": -671.90 },
-      "verdict": "rejected (PF=0.638 < 1.3) — but new best (PF improved 0.53→0.638, WR improved 24.24%→30.30%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T11:50:00"
-    },
-    {
-      "iteration": 3,
-      "hypothesis": "Add ADX(14) filter requiring ADX > 25 for any entry.",
-      "metrics": { "pf": 0, "sharpe": 0.351, "wr": 0, "dd": 8.37, "trades": 0, "net_profit": -4.00 },
-      "verdict": "invalid (no trades — ADX>25 too restrictive on XAUUSD H1)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T12:07:00"
-    },
-    {
-      "iteration": 4,
-      "hypothesis": "Reduce ADX threshold from 25 to 15 to allow more entries.",
-      "metrics": { "pf": 0, "sharpe": 0, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades — ADX>15 still too restrictive)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T12:25:00"
-    },
-    {
-      "iteration": 5,
-      "hypothesis": "Bollinger Bands(20,2) breakout on XAUUSD H1.",
-      "metrics": { "pf": 0.59501614, "sharpe": -4.92946687, "wr": 31.57894737, "dd": 4.3061475, "trades": 19, "net_profit": -410.39 },
-      "verdict": "invalid (low sample, 19 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T12:44:30"
-    },
-    {
-      "iteration": 6,
-      "hypothesis": "Reduce BB StdDev from 2.0 to 1.5: narrower bands generate more breakout signals.",
-      "metrics": { "pf": 0.55002875, "sharpe": -7.32234772, "wr": 26.47058824, "dd": 8.28757765, "trades": 34, "net_profit": -805.89 },
-      "verdict": "rejected (PF=0.55 < 1.3)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T12:59:30"
-    },
-    {
-      "iteration": 7,
-      "hypothesis": "Add RSI(14) filter to BB breakout strategy.",
-      "metrics": { "pf": 0.55002875, "sharpe": -7.32234772, "wr": 26.47058824, "dd": 8.28757765, "trades": 34, "net_profit": -805.89 },
-      "verdict": "rejected (PF=0.55 < 1.3) — RSI filter filtered 0 signals",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T13:02:00"
-    },
-    {
-      "iteration": 8,
-      "hypothesis": "MACD(12,26,9) crossover strategy on XAUUSD H1.",
-      "metrics": { "pf": 1.02763635, "sharpe": -1.03326432, "wr": 42.85714286, "dd": 5.23090596, "trades": 21, "net_profit": -141.00 },
-      "verdict": "rejected (PF=1.028 < 1.3) — NEW BEST STRATEGY",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T13:35:00"
-    },
-    {
-      "iteration": 9,
-      "hypothesis": "Add ADX(14) > 25 trending filter to MACD crossover.",
-      "metrics": { "pf": 1.06990325, "sharpe": -0.35759812, "wr": 44.44444444, "dd": 3.41265165, "trades": 9, "net_profit": -44.03 },
-      "verdict": "invalid (low sample, 9 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T13:55:00"
-    },
-    {
-      "iteration": 10,
-      "hypothesis": "Reduce ADX threshold from 25 to 18 on MACD crossover strategy.",
-      "metrics": { "pf": 1.29686066, "sharpe": 0.49470013, "wr": 47.05882353, "dd": 3.37785617, "trades": 17, "net_profit": 53.81 },
-      "verdict": "invalid (low sample, 17 trades) — NEW BEST STRATEGY",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T14:10:00"
-    },
-    {
-      "iteration": 11,
-      "hypothesis": "Further reduce ADX threshold from 18 to 15 on MACD crossover strategy.",
-      "metrics": { "pf": 1.29686066, "sharpe": 0.49470013, "wr": 47.05882353, "dd": 3.37785617, "trades": 17, "net_profit": 53.81 },
-      "verdict": "invalid (low sample, 17 trades) — ADX>15 identical to ADX>18",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T14:25:00"
-    },
-    {
-      "iteration": 12,
-      "hypothesis": "Remove session filter (trade 24h) on MACD+ADX18 strategy.",
-      "metrics": { "pf": 0.96797284, "sharpe": -2.12969157, "wr": 33.33333333, "dd": 7.89613706, "trades": 51, "net_profit": -384.52 },
-      "verdict": "rejected (PF=0.968 < 1.3)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T14:30:00"
-    },
-    {
-      "iteration": 13,
-      "hypothesis": "Add RSI(14) momentum filter to MACD+ADX18 24h strategy (RSI>50 long, RSI<50 short).",
-      "metrics": { "pf": 0, "sharpe": 0, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades — triple filter killed all signals)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T14:45:00"
-    },
-    {
-      "iteration": 14,
-      "hypothesis": "Relax ADX from >18 to >12 AND relax RSI from >50/<50 to >40/<60 on MACD crossover + 24h + ATR 1:1.5 TP/SL.",
-      "metrics": { "pf": 0, "sharpe": 0, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades — ADX>12 + RSI>40/<60 still produces 0 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T15:03:00"
-    },
-    {
-      "iteration": 15,
-      "hypothesis": "Remove both ADX and RSI filters from MACD crossover. Keep 24h trading and ATR 1:1.5 TP/SL. Add simple SMA(50) trend filter: long only when close > SMA(50), short only when close < SMA(50).",
-      "metrics": { "pf": 0.57446146, "sharpe": -5.47885745, "wr": 33.33333333, "dd": 9.2028144, "trades": 30, "net_profit": -743.13 },
-      "verdict": "rejected (PF=0.574 < 1.3) — 30 trades, adequate sample but poor profitability.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T15:20:00"
-    },
-    {
-      "iteration": 16,
-      "hypothesis": "Increase TP:SL ratio from 1.5 to 2.0 on MACD + SMA50 24h strategy.",
-      "metrics": { "pf": 0.35933773, "sharpe": -6.79231114, "wr": 24.13793103, "dd": 13.32234052, "trades": 29, "net_profit": -1060.20 },
-      "verdict": "rejected (PF=0.359 < 1.3) — TP:SL 2.0 made PF worse",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T15:37:00"
-    },
-    {
-      "iteration": 17,
-      "hypothesis": "Add RSI(14) momentum filter to MACD+SMA50+TP2.0 24h strategy.",
-      "metrics": { "pf": 0.35935373, "sharpe": -6.7959643, "wr": 24.13793103, "dd": 13.32234052, "trades": 29, "net_profit": -1060.18 },
-      "verdict": "rejected (PF=0.359 < 1.3) — RSI filter redundant with SMA50",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T15:54:00"
-    },
-    {
-      "iteration": 18,
-      "hypothesis": "Revert TP:SL from 2.0 to 1.5 on MACD + SMA50 + 24h strategy (drop redundant RSI filter).",
-      "metrics": { "pf": 0.57446146, "sharpe": -5.48194864, "wr": 33.33333333, "dd": 9.2028144, "trades": 30, "net_profit": -743.13 },
-      "verdict": "rejected (PF=0.574 < 1.3) — identical to iter 15, confirming TP:SL 1.5 is baseline for MACD+SMA50",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T16:12:00"
-    },
-    {
-      "iteration": 19,
-      "hypothesis": "Replace SMA(50) trend filter with RSI(14) momentum filter on MACD crossover strategy, 24h trading, TP:SL 1.5. RSI(14) adapts faster than SMA(50) on H1, aiming for better-timed entries.",
-      "metrics": { "pf": 0.7317164, "sharpe": -4.38886216, "wr": 30.55555556, "dd": 8.44928512, "trades": 36, "net_profit": -614.02 },
-      "verdict": "rejected (PF=0.732 < 1.3) — PF improved 0.574→0.732 (+27.5%) vs SMA50, but still unprofitable. RSI filter outperforms SMA50 filter.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T16:48:00"
-    },
-    {
-      "iteration": 20,
-      "hypothesis": "Add ADX(14) trend strength filter with threshold 20 to MACD+RSI14+24h+TP1.5 strategy. Sharpe ratio of -4.39 indicates MACD entries are occurring in choppy/sideways markets. ADX > 20 will filter out non-trending periods where MACD whipsaws.",
-      "metrics": { "pf": 0, "sharpe": 0, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades — triple filter ADX>20 + RSI>50/<50 + MACD crossover killed all signals on 889 bars)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T17:04:00"
-    },
-    {
-      "iteration": 21,
-      "hypothesis": "Remove ADX filter entirely. Keep MACD + RSI14 + 24h + TP1.5 baseline from iter 19. Add Ichimoku Cloud filter: long entry requires price above cloud AND MACD crossover; short entry requires price below cloud AND MACD crossunder. Ichimoku provides a dynamic trend filter that adapts to volatility unlike ADX's fixed threshold.",
-      "metrics": { "pf": 0.8234, "sharpe": -2.9336, "wr": 33.33, "dd": 7.65, "trades": 27, "net_profit": -407.92 },
-      "verdict": "rejected (PF=0.823 < 1.3) — Ichimoku improved PF 0.732→0.823 (+12.4%) with valid 27-trade sample, but still unprofitable",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T17:19:00"
-    },
-    {
-      "iteration": 22,
-      "hypothesis": "Tighten TP:SL ratio from 1.5:1 to 1:1 (equal TP/SL) so more trades reach take profit before hitting stop loss. Ichimoku + MACD + RSI14 combination stays, only the TP/SL ratio changes.",
-      "metrics": { "pf": 1.01287544, "sharpe": -2.62094158, "wr": 48.27586207, "dd": 4.20572884, "trades": 29, "net_profit": -227.01 },
-      "verdict": "rejected (PF=1.013 < 1.3) — TP:SL 1:1 dramatically improved WR 33.33%→48.28% (+45%) and PF 0.823→1.013 (+23%), strategy is borderline profitable before $235.70 commission",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T17:34:00"
-    },
-    {
-      "iteration": 23,
-      "hypothesis": "Increase TP:SL ratio from 1:1 to 1.2:1. WR is now 48.28% (above 40% target) after TP:SL 1:1 tightened win rate dramatically (+45% improvement). Strategy is borderline profitable before commissions ($8.69 gross profit on $235.70 commission). Slightly wider TP:SL (1.2:1) should let winners run longer, boosting gross profit above commission costs. MACD + Ichimoku + RSI14 combination stays, only TP:SL changes.",
-      "metrics": { "pf": 1.01189746, "sharpe": -2.2858113, "wr": 44.82758621, "dd": 4.72720098, "trades": 29, "net_profit": -226.44 },
-      "verdict": "rejected (PF=1.012 < 1.3) — TP:SL 1.2:1 improved Sharpe (-2.62→-2.29) and net profit (-$227→-$226) marginally but reduced WR (48.28%→44.83%). Strategy flat vs iter 22. Next: remove redundant Ichimoku filter.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T17:49:00"
-    },
-    {
-      "iteration": 24,
-      "hypothesis": "Remove Ichimoku Cloud filter (redundant with RSI) from MACD+RSI14+24h+TP1:1 strategy. Keep MACD(12,26,9) crossover + RSI(14) >50/<50 filter + TP:SL 1:1 + 24h trading. Ichimoku and RSI both act as trend filters — redundant. Removing Ichimoku should increase trade count to ~36 (iter 19 had 36 trades with MACD+RSI14 alone) while maintaining WR near 48% from TP:SL 1:1. More trades = better sampling and improved net profit if WR holds.",
-      "metrics": { "pf": 0.87701975, "sharpe": -4.34507809, "wr": 46.15384615, "dd": 5.43512755, "trades": 39, "net_profit": -429.03 },
-      "verdict": "rejected (PF=0.877 < 1.3) — Removing Ichimoku increased trades 29→39 but PF dropped 1.012→0.877. WR at 46.15% not enough to overcome commissions at TP:SL 1:1 (breakeven WR is 50%). Ichimoku was actually adding value as trend filter.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T18:04:00"
-    },
-    {
-      "iteration": 25,
-      "hypothesis": "Increase TP:SL ratio from 1:1 to 1.5:1 on MACD+RSI14+24h strategy. Iter 24: 39 trades, 46.15% WR, PF 0.877 (negative after commissions). Removing Ichimoku increased trades to 39 but PF dropped because WR 46.15% is below breakeven of 50% at TP:SL 1:1. With TP:SL 1.5:1, breakeven WR is 40%. WR was 44.83% at TP:SL 1.2:1 (iter 23, with Ichimoku). Expect WR ~42-44% at TP:SL 1.5:1, yielding positive PF.",
-      "metrics": { "pf": 0.9954282, "sharpe": -2.57541205, "wr": 37.83783784, "dd": 5.30310052, "trades": 37, "net_profit": -294.14 },
-      "verdict": "rejected (PF=0.995 < 1.3) — TP:SL 1.5:1 dropped WR from 46.15% to 37.84%. Breakeven at 1.5:1 is 40% — 37.84% is below breakeven. WR declines as TP:SL widens, confirming tighter TP:SL is needed.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T18:25:00"
-    },
-    {
-      "iteration": 26,
-      "hypothesis": "Tighten TP:SL ratio from 1.5:1 to 1:1.5 (ratio=0.667) on MACD+RSI14+24h strategy. Iter 25 (TP:SL 1.5:1) showed WR dropped to 37.84% (PF 0.995). Trend: tighter TP:SL = higher WR. At TP:SL 1:1.5, breakeven WR is 40%. Given WR 46.15% at 1:1 (iter 24), expect WR ~48-50% at 1:1.5, yielding positive net profit.",
-      "metrics": { "pf": 0.86925144, "sharpe": -4.71971076, "wr": 55.0, "dd": 5.09301279, "trades": 40, "net_profit": -421.92 },
-      "verdict": "rejected (PF=0.869 < 1.3) — WR hit 55% (highest ever!) but avg loss ($46.43) is 1.4x avg win ($33.02). Breakeven WR at TP:SL 1:1.5 is 58.4% — 55% is close but below. TP:SL 1:1.5 too aggressive on win size.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T18:45:00"
+      "time": "2026-06-23T19:52:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
