@@ -494,3 +494,139 @@ Bridge connection failed:
 Bridge connection failed: 
 Bridge connection failed: 
 Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+Bridge connection failed: 
+INFO:     127.0.0.1:52359 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52360 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52386 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52389 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52391 - "GET /api/bridge/accounts/default/history?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52405 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52450 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52463 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52465 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52474 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52477 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52485 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     170.106.15.3:0 - "GET / HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52499 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52501 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     2a06:98c0:3600::103:0 - "GET /wp-admin/install.php?step=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52505 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52507 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52518 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52520 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52522 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64141 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64143 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64145 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64153 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64154 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64157 - "GET /api/bridge/accounts/default/history?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64167 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64169 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64217 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:64219 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     49.234.192.248:0 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64247 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET / HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/css/a08d202340e8bd65.css HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/webpack-e08da262b32814b6.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/fd9d1056-8fb6bfb5a9bc068a.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/main-app-550217f0393c6365.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/117-1c437cd316aa766d.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/305-2c8761611c0666fe.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/app/page-0f9a814a60d2d619.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/481-a259bebaf063267c.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /_next/static/chunks/app/layout-f45df73bd2cd4c62.js HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin HTTP/1.1" 200 OK
+INFO:     10.10.10.100:50382 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:50384 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /backtesting.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /backtesting HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /bots.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /bots HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /settings.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /settings HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /backtesting.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /backtesting HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /bots.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /bots HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /ai.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /ai HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /scripts.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /scripts HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /ai.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /ai HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /accounts.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /accounts HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /analytics.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /analytics HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /settings.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /settings HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /trades HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /portfolio HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin.txt?_rsc=8kzk2 HTTP/1.1" 200 OK
+INFO:     61.238.0.77:0 - "GET /signin HTTP/1.1" 200 OK
+INFO:     10.10.10.100:51323 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:51325 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:57902 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:57904 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57912 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:51900 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:51902 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:58463 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:58465 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61428 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:54549 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:54551 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:62621 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:62623 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55717 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:55719 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55728 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:59905 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:59907 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:62409 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:62411 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54066 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:58205 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:58207 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:59582 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:59584 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK

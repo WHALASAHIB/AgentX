@@ -588,6 +588,24 @@ if __name__ == "__main__":
         print(json.dumps(sprint_result, indent=2, default=str))
         sys.exit(0)
 
+    if "--simulate" in args:
+        try:
+            from gym_mtsim_adapter import run_simulation, save_report
+            symbol = "XAUUSD"
+            days = 60
+            for i, a in enumerate(args):
+                if a == "--symbol" and i + 1 < len(args):
+                    symbol = args[i + 1]
+                if a == "--days" and i + 1 < len(args):
+                    days = int(args[i + 1])
+            result = run_simulation(symbol=symbol, days=days)
+            report_path = save_report(result)
+            print(json.dumps(result, indent=2, default=str))
+            print(f"\nReport: {report_path}")
+        except Exception as e:
+            print(json.dumps({"status": "error", "error": str(e)}, indent=2))
+        sys.exit(0)
+
     # Default: run full cycle
     print("Running full Research Division cycle...")
     result = run_full_cycle()
