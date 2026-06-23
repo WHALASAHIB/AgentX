@@ -1,0 +1,124 @@
+//@version=5
+strategy(title="MACD(8,17,5) + Ichimoku + RSI14 XAUUSD H1 (24h, TP1:1.2)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//====================================================================
+//--- inputs
+//====================================================================
+
+// MACD parameters — FASTER than iter 28 (was 12,26,9 → now 8,17,5)
+// Faster MACD generates more crossover signals → more trades that survive triple filter
+// Iter 28 triple filter only produced 13 trades — too restrictive
+macdFastLen   = input.int(8,  "MACD Fast Length",  minval=2, maxval=50, tooltip="Fast EMA length for MACD")        // sweep: 6-14 step 2
+macdSlowLen   = input.int(17, "MACD Slow Length",  minval=5, maxval=100, tooltip="Slow EMA length for MACD")      // sweep: 13-22 step 2
+macdSignalLen = input.int(5,  "MACD Signal Length", minval=2, maxval=30, tooltip="Signal line smoothing")          // sweep: 3-9 step 2
+
+// RSI momentum filter
+rsiLen        = input.int(14,  "RSI Length",         minval=5, maxval=30, tooltip="RSI period for momentum filter") // sweep: 10-20 step 2
+rsiThreshold  = input.int(50,  "RSI Threshold",      minval=30, maxval=70, tooltip="RSI level for long/short bias") // sweep: 40-60 step 5
+
+// Ichimoku parameters
+ichimokuConversionPeriod = input.int(9,  "Ichimoku Conversion Period", minval=5, maxval=30, tooltip="Tenkan-sen period")    // sweep: 7-12 step 1
+ichimokuBasePeriod       = input.int(26, "Ichimoku Base Period",       minval=10, maxval=50, tooltip="Kijun-sen period")    // sweep: 20-32 step 2
+ichimokuLaggingSpan2     = input.int(52, "Ichimoku Lagging Span 2",   minval=20, maxval=80, tooltip="Senkou Span B period") // sweep: 44-60 step 4
+ichimokuDisplacement     = input.int(26, "Ichimoku Displacement",     minval=10, maxval=40, tooltip="Displacement period")   // sweep: 20-32 step 2
+
+// TP/SL parameters — TP:SL = 1:1.2 (from iter 23, best proven ratio)
+tpSlRatio     = input.float(0.833, "TP:SL Ratio",    minval=0.2, maxval=5.0, step=0.05, tooltip="Take-profit to stop-loss ratio (1:1.2 = 0.833)")   // sweep: 0.6-1.0 step 0.1
+atrLen        = input.int(14,   "ATR Length for SL",  minval=5, maxval=50, tooltip="ATR period for dynamic stops")                 // sweep: 10-20 step 2
+atrMult       = input.float(1.0, "ATR Multiplier",    minval=0.5, maxval=5.0, step=0.1, tooltip="ATR multiplier for stop distance") // sweep: 0.5-2.0 step 0.25
+
+// Display
+showSignals   = input.bool(true, "Show Signal Labels", tooltip="Display buy/sell labels on chart")
+
+//====================================================================
+//--- calculations
+//====================================================================
+
+// MACD — faster params: 8,17,5 (was 12,26,9 in iter 28)
+[macdLine, signalLine, _hist] = ta.macd(close, macdFastLen, macdSlowLen, macdSignalLen)
+
+// RSI momentum filter — RSI > threshold = bullish momentum, RSI < threshold = bearish momentum
+rsiVal = ta.rsi(close, rsiLen)
+rsiBullish = rsiVal > rsiThreshold
+rsiBearish = rsiVal < rsiThreshold
+
+// Ichimoku Cloud components
+tenkanSen = (ta.highest(high, ichimokuConversionPeriod) + ta.lowest(low, ichimokuConversionPeriod)) / 2
+kijunSen  = (ta.highest(high, ichimokuBasePeriod) + ta.lowest(low, ichimokuBasePeriod)) / 2
+senkouSpanA = (tenkanSen + kijunSen) / 2
+senkouSpanB = (ta.highest(high, ichimokuLaggingSpan2) + ta.lowest(low, ichimokuLaggingSpan2)) / 2
+
+// Future cloud values (displaced forward)
+senkouSpanA_future = senkouSpanA[ichimokuDisplacement]
+senkouSpanB_future = senkouSpanB[ichimokuDisplacement]
+
+// Ichimoku trend filter
+cloudTop    = math.max(senkouSpanA_future, senkouSpanB_future)
+cloudBottom = math.min(senkouSpanA_future, senkouSpanB_future)
+
+// Triple filter (same as iter 28 — proven structure)
+priceAboveCloud = close > cloudTop
+priceBelowCloud = close < cloudBottom
+tkCrossBullish  = tenkanSen > kijunSen
+tkCrossBearish  = tenkanSen < kijunSen
+
+ichimokuBullish = priceAboveCloud and tkCrossBullish
+ichimokuBearish = priceBelowCloud and tkCrossBearish
+
+// ATR for dynamic stop placement
+atrVal = ta.atr(atrLen)
+
+// MACD crossover conditions
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+//====================================================================
+//--- entry logic — 24h trading with Ichimoku + RSI(14) dual trend filter
+//====================================================================
+// Triple confirmation: MACD crossover + RSI momentum + Ichimoku cloud trend + TK cross
+// Same structure as iter 28 but MACD(8,17,5) for more frequent signals
+// Target: 22-35 trades with PF > 1.2
+
+// Long entry
+longCondition = macdCrossOver and rsiBullish and ichimokuBullish
+
+// Short entry
+shortCondition = macdCrossUnder and rsiBearish and ichimokuBearish
+
+// Track previous position size to detect new entries (prevents cascade-close)
+var posSide = strategy.position_size
+
+// Entries
+if longCondition
+    strategy.entry("Long", strategy.long)
+    if showSignals
+        label.new(bar_index, low, "BUY M8+ICHIMOKU", style=label.style_label_up, color=color.green, size=size.small, textcolor=color.white)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    if showSignals
+        label.new(bar_index, high, "SELL M8+ICHIMOKU", style=label.style_label_down, color=color.red, size=size.small, textcolor=color.white)
+
+//====================================================================
+//--- exit management — only on new positions (no cascade-close)
+//====================================================================
+
+// Dynamic stop-loss and take-profit distances based on ATR
+stopDist   = atrVal * atrMult
+profitDist = stopDist * tpSlRatio
+
+// Convert to ticks
+stopTicks   = int(stopDist / syminfo.mintick)
+profitTicks = int(profitDist / syminfo.mintick)
+
+// Exit orders — placed only when position size changes (new entry)
+// This avoids cascade-close pattern which invalidates backtests
+if strategy.position_size > 0 and strategy.position_size != posSide[1]
+    strategy.exit("XL", "Long", loss=stopTicks, profit=profitTicks, comment="LongExit")
+
+if strategy.position_size < 0 and strategy.position_size != posSide[1]
+    strategy.exit("XS", "Short", loss=stopTicks, profit=profitTicks, comment="ShortExit")
+
+//====================================================================
+//--- end
+//====================================================================

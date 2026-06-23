@@ -1,6 +1,6 @@
 {
-  "iteration": 29,
-  "last_run": "2026-06-23T19:52:00",
+  "iteration": 32,
+  "last_run": "2026-06-23T20:40:00",
   "best_strategy": "iter_28_macd_ichimoku_rsi_tp1.2_24h.pine",
   "best_metrics": {
     "pf": 1.30915355,
@@ -13,39 +13,42 @@
     "timeframe": "1h",
     "iteration": 28
   },
-  "current_hypothesis": "Keep TK cross requirement from iter 28 (best PF 1.309, WR 61.54%) but reduce MACD parameters from (12,26,9) to (8,17,5) to generate more frequent crossover signals. Faster MACD produces more signals → more that survive the Ichimoku cloud + TK cross + RSI triple filter. Target: 22-35 trades while maintaining PF > 1.2. Iter 29 proved removing TK cross kills PF (0.838) despite boosting trades to 28 — TK cross is not redundant with RSI, it provides orthogonal signal quality filtering.",
+  "current_hypothesis": "Remove ADX filter entirely from iter 32's structure (ADX is too restrictive). Go back to iter 30's triple-filter: MACD(8,17,5) + Ichimoku (cloud+TK cross) + RSI(14). Instead of ADX, add a VWAP trend filter: long only if price > VWAP, short only if price < VWAP. VWAP is less restrictive than ADX and provides a different type of trend confirmation through volume-weighted price. Target: 15-20 trades with PF > 1.2.",
   "evolution_log": [
     {
       "iteration": 28,
       "hypothesis": "Add Ichimoku Cloud trend filter (price above/below cloud + TK cross) to MACD+RSI14+24h+TP1:1.2 strategy. Triple filter should improve entry quality.",
-      "metrics": {
-        "pf": 1.30915355,
-        "sharpe": -0.28533025,
-        "wr": 61.53846154,
-        "dd": 1.20821231,
-        "trades": 13,
-        "net_profit": -19.43
-      },
-      "verdict": "invalid (low sample, 13 trades) — NEW BEST PF 1.309 (previous best 1.297), WR 61.54%, DD 1.21%, Net P&L -$19.43. Ichimoku dramatically improved all metrics but trade count dropped to 13 — triple filter too restrictive.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T19:36:56"
+      "metrics": {"pf": 1.30915355, "sharpe": -0.28533025, "wr": 61.53846154, "dd": 1.20821231, "trades": 13, "net_profit": -19.43},
+      "verdict": "invalid (low sample, 13 trades) — NEW BEST PF 1.309, WR 61.54%, DD 1.21%, Net P&L -$19.43. Ichimoku improved all metrics but trade count dropped to 13.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T19:36:56"
     },
     {
       "iteration": 29,
-      "hypothesis": "Remove Tenkan>Kijun (TK cross) requirement from Ichimoku filter — use only price above/below cloud as trend filter. TK cross is redundant with RSI>50/<50 directionality. Expect 20-30 trades with PF > 1.2.",
-      "metrics": {
-        "pf": 0.83773343,
-        "sharpe": -4.16290442,
-        "wr": 50.0,
-        "dd": 4.27810049,
-        "trades": 28,
-        "net_profit": -324.91
-      },
-      "verdict": "rejected (PF=0.838 < 1.3) — Removing TK cross boosted trades 13→28 but PF collapsed 1.309→0.838. TK cross is NOT redundant — it provides orthogonal signal quality filtering beyond RSI. Cloud-only Ichimoku filter too permissive.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-23T19:52:00"
+      "hypothesis": "Remove TK cross requirement from Ichimoku filter — use only price above/below cloud as trend filter.",
+      "metrics": {"pf": 0.83773343, "sharpe": -4.16290442, "wr": 50.0, "dd": 4.27810049, "trades": 28, "net_profit": -324.91},
+      "verdict": "rejected (PF=0.838 < 1.3) — Removing TK cross boosted trades 13→28 but PF collapsed.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T19:52:00"
+    },
+    {
+      "iteration": 30,
+      "hypothesis": "Keep TK cross from iter 28 but reduce MACD (12,26,9)→(8,17,5) for more frequent signals.",
+      "metrics": {"pf": 0.98139626, "sharpe": -2.55092957, "wr": 48.0, "dd": 4.26139309, "trades": 25, "net_profit": -212.63},
+      "verdict": "rejected (PF=0.981 < 1.3) — 25 trades but shorts lost -$316.89 vs longs +$104.26.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:10:00"
+    },
+    {
+      "iteration": 31,
+      "hypothesis": "Add ADX(14) > 25 filter to iter 30's MACD(8,17,5)+Ichimoku+RSI+TK cross structure. ADX eliminates entries in non-trending markets where shorts were failing.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — ADX>25 on top of MACD+Ichimoku+TK+RSI quadruple filter produced 0 trades. Filter stack too restrictive.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:25:00"
+    },
+    {
+      "iteration": 32,
+      "hypothesis": "Reduce ADX(14) threshold from 25 to 20 on iter 31's MACD+Ichimoku+RSI+ADX structure. ADX>20 captures moderate trends while still filtering chop.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — ADX>20 still too restrictive with 4-filter stack. 0 trades over 886 bars. ADX at any threshold (>15 tested) blocks all entries with MACD+Ichimoku+TK+RSI. Removing ADX entirely.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:40:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

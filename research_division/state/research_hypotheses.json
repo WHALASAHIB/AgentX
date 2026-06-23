@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "1.0",
-    "total_ideas": 93,
+    "total_ideas": 102,
     "families_covered": [
       "breakout",
       "cross_asset",
@@ -1713,6 +1713,170 @@
       "diversification_value": "First forex-pair volatility idea in the archive \u2014 all 10 existing volatility ideas are XAUUSD-only. First carry-related volatility compression model. Low correlation to gold vol strategies. Opens the volatility family to major forex pairs.",
       "self_grade": "B+",
       "generated_at": "2026-06-23T11:56:00Z"
+    },
+    {
+      "name": "Momentum_Exhaustion_Entropy_Decay",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades momentum at exhaustion point by detecting entropy divergence \u2014 when Chaikin Money Flow (CMF) diverges bearishly from price while volume distribution entropy spikes, it signals momentum is running out of fuel and a snap-back is imminent. Unlike pure trend-following momentum strategies, this catches the inflection BEFORE the reversal gains steam.",
+      "entry_logic": "1. Calculate 20-period CMF and 14-period RSI on H1. 2. Track whether price made a higher high (uptrend) or lower low (downtrend) in the last 3 bars. 3. DIVERGENCE CHECK: price made higher high but CMF made lower high (bearish divergence) AND RSI < 70 (not overbought) \u2192 prepares for SHORT. Inverse for longs. 4. ENTROPY CHECK: Calculate volume distribution entropy over last 20 periods using Shannon entropy on normalized volume buckets (H = -sum(p_i * log2(p_i))). Entropy > 3.2 (top quartile of 200-period history) confirms disorder \u2014 smart money distribution is fragmenting. 5. ENTRY: On M15, wait for a failed breakout candle (long wick > 60% of candle range in direction opposite to the prior trend) in the divergence zone. Enter 1 pip inside the wick tip. 6. Tiered sizing: base 0.5% risk, double to 1% if entropy is in top decile (strongest exhaustion signal).",
+      "exit_logic": "SL: Below the divergence swing low (longs) or above swing high (shorts) PLUS 0.5\u00d7 H1 ATR buffer. TP1: 1.5\u00d7 H1 ATR (50% position). TP2: Next structural swing level identified from 48-hour range (30% position). TP3: Trail remaining 20% with 1\u00d7 H1 ATR chandelier stop. Time-stop: if TP1 not hit within 6 hours, close remaining at market. If profit exceeds 2\u00d7 ATR before TP1, move SL to breakeven on all positions.",
+      "failure_mode": "Fails hardest during trending news events (NFP, FOMC, CPI) where momentum is fundamental and sustained \u2014 CMF divergence persists for days before any reversal, entropy stays high without mean-reverting. Also fails in extreme trend-strength regimes (ADX > 45) where exhaustion signals are premature and get steamrolled. The entropy threshold needs recalibration during holiday low-volume periods when entropy is naturally elevated.",
+      "diversification_value": "Radically different from all 10 existing momentum ideas \u2014 those are pure trend-following/continuation strategies (MSS_Continuation, Donchian_Breakout, ADX_Trend_Momentum, Vanna_Flow). This is the FIRST anti-momentum momentum idea: it exploits momentum EXHAUSTION rather than momentum PERSISTENCE. It is the momentum equivalent of fade/countertrend \u2014 orthogonal to the entire momentum category. It pairs naturally with Momentum_Confluence_Gold (which enters early trend) as a complementary exit signal.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T12:13:29Z"
+    },
+    {
+      "name": "Liquidity_Tier_Volatility_Contraction_Pinball",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5",
+        "M15"
+      ],
+      "description": "Exploits the pattern where price pinballs between pre-identified liquidity tiers (key levels from volume profile high-node areas) while volatility contracts sequentially on each touch. As volatility contracts, the eventual break becomes explosive. This is fundamentally different from standard volatility contraction setups (Bollinger squeeze) because it incorporates structural liquidity zone geometry.",
+      "entry_logic": "1. BUILD LIQUIDITY TIERS: On H1, identify volume profile high-volume nodes (HVN) \u2014 price levels where >1.5\u00d7 average volume traded over last 5 days. Mark the 3 nearest HVNs above and below current price. These are the \"liquidity pinball walls.\" 2. MEASURE SESSION VOLATILITY: Calculate 20-period ATR on M15. Compute the ratio: current 15-bar ATR / 100-bar ATR (volatility contraction ratio, VCR). 3. PINBALL STATE: Price must have touched at least TWO liquidity tiers in alternating direction within the last 8 hours (e.g., hit HVN_Upper, then HVN_Lower, then back toward HVN_Upper). 4. CONTRACTION FILTER: VCR must be < 0.70 (volatility is contracting compared to medium-term). 5. ENTRY: On the THIRD touch of any liquidity tier, if VCR < 0.65 (further contracted), enter 1 pip beyond that tier in the direction of the bounce. If VCR is 0.65-0.70, wait for a confirming M5 candle close outside the tier. 6. SCALING: If VCR < 0.55 (extreme contraction), double position size \u2014 break is expected to be violent.",
+      "exit_logic": "SL: Opposite side of the originating liquidity tier (if entered at HVN_Upper bounce, SL is 1 pip below HVN_Lower). This gives the pinball pattern room to reverse. TP1: 1\u00d7 the distance between the two most recent liquidity tiers (the \"pinball range\"), measured from entry. TP2: 2\u00d7 pinball range. Move SL to breakeven when TP1 is hit and price is still moving in direction. If price fails to reach TP1 within 3 hours, exit at market \u2014 the pinball pattern has decayed into a range.",
+      "failure_mode": "Fails in directional trending markets where price blows through liquidity tiers without bouncing (no pinball behavior). Fails in ultra-low-volatility environments (Asian session) where VCR < 0.50 is common but the subsequent break has no follow-through. Most critically, fails when new liquidity tiers are being formed (breaking price discovery) \u2014 the HVN levels become obsolete. Heavy data dependency: the volume profile calculation window (5 days) can lag into regime changes.",
+      "diversification_value": "Entirely different from all 11 existing volatility ideas. Those cover: volatility expansion breakout, volatility skew mean reversion, term structure fade, momentum ride, implied/realized spread, event straddle, risk premium decay, put/call skew, VWAP vol channel, vol momentum inflection, and carry compression. NONE of them incorporate structural liquidity zone geometry or pinball-tier mechanics. This is the first volatility strategy that combines level geometry with contraction dynamics \u2014 it sits at the intersection of volatility, market microstructure, and volume profile analysis.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T12:13:29Z"
+    },
+    {
+      "name": "Macro_Minsky_Moment_Regime_Shift",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Detects impending regime shifts using the Minsky Moment framework \u2014 when leverage/debt metrics across intermarket proxies reach extreme levels, a sudden deleveraging event (Minsky Moment) is imminent, flipping gold from risk-on to risk-off dynamics (or vice versa). Unlike conventional regime filters that react to vol/Hurst/yield-curve changes, this PREDICTS the regime shift before price reflects it.",
+      "entry_logic": "1. BUILD MINKSY STRESS INDEX (MSI): Combine three normalized proxies tracked daily: (a) HY-IG credit spread percentile over 2 years, (b) 3-month LIBOR-OIS spread or equivalent (SOFR-OIS) percentile over 2 years, (c) Gold leasing rate (GOFO backwardation) intensity over 2 years. MSI = average of the three percentiles (0-100). 2. REGIME STATE: Baseline = Normal (MSI < 60). Elevated Stress (MSI 60-80). Minsky Zone (MSI > 80). 3. SHIFT DETECTION: A Minsky Moment is signaled when MSI crosses from Elevated Stress into Minsky Zone (>80) AND gold has rallied >5% in the prior 30 days (risk-on positioning is vulnerable). This predicts a FLIGHT-TO-CASH deleveraging \u2192 gold sells off even though it is a traditional safe haven. INVERSE: When MSI drops from Minsky Zone below 60 AND gold has sold off >5% in the prior 30 days, predicts regime shift back to normal \u2192 gold rebounds as liquidity returns. 4. ENTRY: On H4, enter at market open of the first 4-hour candle after the MSI cross is confirmed at daily close (30 min after New York close). 5. CONFIRMATION: Require that H4 RSI(14) is not extreme (>75 for short, <25 for long) \u2014 if extreme, wait for a pullback to the 20 EMA before entering.",
+      "exit_logic": "SL: 3\u00d7 H4 ATR(20). TP: Hold until MSI drops below 60 (for deleveraging shorts) or MSI rises above 80 (for liquidity-recovery longs), OR 14 days have passed \u2014 whichever comes first. If profit exceeds 5\u00d7 ATR within 48 hours, take 50% profit and move SL to entry on remainder. This is a macro swing trade, not a scalp \u2014 wide stops are intentional.",
+      "failure_mode": "Most critical failure: central bank intervention (Fed QE, swap lines, gold price caps) can suppress the deleveraging signal \u2014 MSI spikes but gold does not sell off because liquidity is injected artificially. The 2008 GFC and 2020 COVID examples worked, but 2023 SVB failure did NOT produce gold deleveraging (gold rallied instead due to rate-cut expectations). Also fails in extended periods of financial repression where credit spreads stay artificially low. The 2-year lookback window on percentiles creates lag \u2014 if a new stress regime is structurally different from past 2 years, percentiles mislead.",
+      "diversification_value": "Fundamentally different from all 10 existing regime filters. Those are: ATR percentile regimes, macro-regime shifter (GDP/CPI based), Hurst exponent, volatility clusters, fractal phase transitions, yield curve regime switch, intermarket vol breakdown, gamma flip, cluster consensus, and liquidity regime filter. NONE of them use a Minsky/crisis-prediction framework. This is the ONLY predictive (vs reactive) regime filter \u2014 it anticipates the regime shift rather than confirming it after price has already reacted. It operates on a D1 cadence whereas all others are intraday or daily. It also uniquely treats regime transitions as TRADEABLE EVENTS (direction entry) rather than as filters applied to other strategies.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T12:13:29Z"
+    },
+    {
+      "name": "Momentum_ROC_Acceleration_Confluence",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Captures trending breakouts by detecting acceleration in Rate-of-Change (ROC) slopes across 3 lookback periods (5, 13, 34), confirmed by volume impulse and ATR-scaled price position above VWAP. Aims to catch momentum just as it inflects higher, before the move is obvious to lagging indicators.",
+      "entry_logic": "1) Calculate ROC(5), ROC(13), ROC(34) \u2014 all three must be rising (monotonic acceleration). 2) Price must be > VWAP by at least 0.5 ATR (long) or < VWAP by 0.5 ATR (short). 3) Volume tick-count spike > 1.5x MA(20) volume. 4) M15 pullback must not violate the 34-period SMA. Enter on H1 close.",
+      "exit_logic": "Trailing stop at 1.5 ATR from H1 high/low. Take partial at 2:1 RR (50% position). Remaining trails via parabolic SAR. Hard stop-loss at 2 ATR. No counter-trend add.",
+      "failure_mode": "Choppy trendless markets where ROC fluctuates at random \u2014 false acceleration signals followed by immediate reversal. Best with a regime filter (ADX > 25) to gate entries.",
+      "diversification_value": "Uses ROC slope acceleration rather than ADX or Donchian. Captures the inflection point rather than the established trend, reducing lag vs. Momentum_Confluence_Gold and MultiTimeframe_ADX_Trend_Momentum.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T12:30:34Z"
+    },
+    {
+      "name": "ZScore_ATR_Mean_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M30",
+        "H1"
+      ],
+      "description": "Exploits statistical over-extension in gold by entering when price deviates >2.0 standard deviations from its 50-period SMA (Z-score), with confirmation that the deviation is ATR-proportional and order flow is decelerating. Targets reversion to the mean without catching a falling knife.",
+      "entry_logic": "1) Z-score of close vs SMA(50) exceeds +2.0 (short) or -2.0 (long). 2) ATR(14) must be in the 40-70th percentile of its 50-day range (not panic-mode). 3) Volume tick-count on the deviation bar must be declining vs prior 3 bars (exhaustion signature). 4) M15 RSI(14) must be > 70 (short) or < 30 (long). Enter on first bar where Z-score drops below 1.8 on the opposite side.",
+      "exit_logic": "Target: SMA(50) (Z-score = 0). Hard stop at Z-score > 3.0 (short) or < -3.0 (long). If price closes beyond 3.0 Z-score, exit immediately as statistical breakdown. Time stop: exit if not hit target within 24 bars.",
+      "failure_mode": "Strong trending breakouts that blow through the 3-sigma band (e.g. NFP surprises, war events). The 3.0 hard stop limits losses but catches the full spike. Also, Z-score oscillates around 1.5-2.0 range frequently in high-vol regimes without reverting.",
+      "diversification_value": "Statistically-grounded Z-score approach differs from the RSI divergence, VWAP, or order-flow-only reversion ideas. Explicitly guards against catching strong trends with the 3-sigma breakdown exit. No other idea uses Z-score as the primary trigger.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T12:30:34Z"
+    },
+    {
+      "name": "ADX_Volatility_Regime_Composite",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Classifies the market into 4 regimes using a 2D matrix of ADX(14) strength (< 25 = ranging, >= 25 = trending) and volatility percentile (ATR percentile of 50-day range: < 40th = compressing, > 60th = expanding, else neutral). Each quadrant assigns a dedicated sub-strategy to match conditions: ranging/compressing = squeeze breakout, ranging/expanding = mean reversion, trending/compressing = continuation, trending/expanding = momentum ride.",
+      "entry_logic": "1) Calculate ADX(14) and ATR(14) percentile over last 50 bars. 2) Classify quadrant: Ranging+Compressing = Bollinger squeeze breakout on M15; Ranging+Expanding = Z-score mean reversion on H1; Trending+Compressing = pullback-to-20-EMA on H1; Trending+Expanding = momentum continue with trailing stop. 3) Entries only when regime has been stable for 3+ bars (no flip-flop).",
+      "exit_logic": "Exit when regime quadrant changes (regime overlay exits the position). Each sub-strategy uses its own SL/TP (1.5-2 ATR range). No pegging to a single take-profit \u2014 regime change is the exit signal.",
+      "failure_mode": "Regime misclassification at regime boundaries (ADX=24 vs 26, ATR percentile=39 vs 41). Frequent flip-flopping between quadrants causes whipsaw entries and exits. Requires a 3-bar stabilisation filter but that adds lag.",
+      "diversification_value": "No existing regime filter in the archive proposes multiple sub-strategies selected by regime quadrant. Most detect regime then apply one strategy. This is an adaptive meta-strategy. Distinct from Hurst_Exponent_Regime_Detector (fractal), Gamma_Flip (options), Macro_Regime_Shifter (macro data), and Volatility_Cluster_Regime_Map (vol-only clustering).",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T12:30:34Z"
+    },
+    {
+      "name": "Multi_TF_Vol_Convexity_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1",
+        "H4"
+      ],
+      "description": "Position sizing overlay that detects volatility convexity divergence across timeframes \u2014 when short-term vol is compressing while long-term vol is expanding, the market is in a pre-breakout coil and standard sizing overexposes. Sizes down logarithmically when convexity inverts.",
+      "entry_logic": "1. Calculate ATR(14) on M15, H1, H4 separately. 2. Compute the ratio of each to its 50-period median. 3. Define convexity = (H4_ratio / M15_ratio). 4. If convexity > 1.8 (long-term vol expanding faster than short-term vol is compressing \u2014 coil scenario), reduce base position by 60%. 5. If convexity < 0.6 (short-term vol far above long-term \u2014 panic spike scenario), reduce by 40% and tighten stop. 6. Normal convexity (0.8-1.2): use standard Kelly fraction.",
+      "exit_logic": "Dynamic: position size is computed pre-trade as a fraction of the base Kelly amount. Trail stop using H1 ATR/2 when in profit > 1x H1 ATR. No hard TP \u2014 exit on convexity normalization or reversal signal from underlying strategy.",
+      "failure_mode": "Fails in sustained trending markets where vol convexity stays extreme for days \u2014 would keep sizing down during the best part of a trend. Also relies on accurate ATR median baseline; a regime shift (e.g., COVID vol) makes the median stale instantly.",
+      "diversification_value": "All existing risk_overlay entries manage static risk (fixed fraction, Kelly, VaR stop). This is the only one that reads vol STRUCTURE (short vs long timeframe divergence) rather than vol LEVEL. Adds orthogonal protection against pre-breakout whipsaw and post-spike stop-outs.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T12:50:30Z"
+    },
+    {
+      "name": "USD_Liquidity_Tide_Index",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "DXY",
+        "US10Y"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Liquidity-regime overlay using the US Dollar funding cycle as the primary driver of gold trend bias. Tracks reverse repo facility (RRP) drawdown, SOFR-IORB spread, and the DXY/BTC correlation regime to classify the market into Liquidity Flood, Neutral Drain, and Liquidity Crisis phases. Each phase flips the directional bias for XAUUSD entries.",
+      "entry_logic": "1. Compute RRP Flow: (RRP_7d_ago - RRP_today) / RRP_7d_ago \u2014 positive means liquidity draining from system. 2. Compute SOFR Stress: SOFR - IORB spread, smoothed 3-day. 3. Compute DXY/BTC 20-day rolling correlation. 4. Classify regime: FLOOD (RRP flowing out > 20%, SOFR < 5bps, DXY/BTC corr < -0.5) \u2192 gold bullish, bias long. DRAIN (RRP stable, SOFR 5-15bps, DXY/BTC corr -0.5 to 0) \u2192 neutral, rely on primary strat. CRISIS (RRP drained < 10B remaining, SOFR > 20bps, DXY/BTC corr > 0) \u2192 dollar liquidity crisis, gold can crash WITH dollar \u2014 no entries allowed. 5. Only take XAUUSD trades aligned with FLOOD/DRAIN bias.",
+      "exit_logic": "Exit when regime classification changes. If FLOOD \u2192 DRAIN, close 50% and trail rest. If any \u2192 CRISIS, close all immediately. No price-based TP \u2014 regime-based exits only.",
+      "failure_mode": "Lagging indicator problem: RRP and SOFR data print with 1-2 day delay. Regime transition can happen intraday (a surprise Fed announcement flips everything). Also depends on continued RRP relevance \u2014 if the Fed changes facility terms, the indicator breaks.",
+      "diversification_value": "All existing cross_asset ideas (DXY corr, gold/silver ratio, real yield) use price or yield data. This is the only one incorporating actual liquidity plumbing (RRP, SOFR) \u2014 the FUNDING side of the equation, not the pricing side. Orthogonal signal source.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T12:50:30Z"
+    },
+    {
+      "name": "News_Absorption_Continuation",
+      "family": "other",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD"
+      ],
+      "timeframes": [
+        "M15"
+      ],
+      "description": "Captures the directional continuation after high-impact news events (NFP, FOMC, CPI, PPI, Non-Farm Payrolls) by detecting the absorption pattern. After the initial 1-minute spike/kick, the market retraces into a consolidation zone. The side that successfully absorbs the retracement and breaks the initial spike high/low is the true direction.",
+      "entry_logic": "1. Detect high-impact news event from economic calendar (filter: impact=high). 2. Let the 1-minute candle following the news print. Record its HIGH and LOW as spike bounds. 3. Wait for 3 full M15 candles after the news candle. 4. Plot a 20-EMA on M15. 5. If price breaks above spike high AND 20-EMA is sloping up \u2192 enter long. If breaks below spike low AND 20-EMA sloping down \u2192 enter short. 6. If after 5 M15 candles neither bound is broken, cancel \u2014 market is directionless after news. 7. Minimum ATR(14) on M15 > 15 pips to avoid low-vol events.",
+      "exit_logic": "Hard SL at the opposite side of the initial spike bounds (e.g., long SL at spike low). TP1 at 1.5x initial spike range (close 50%). Remainder trails with 20-EMA on M15. Hard time stop: exit all at market close or 4 hours after entry, whichever comes first.",
+      "failure_mode": "Fakeouts: price breaks spike high, triggers long, then reverses and pierces the other side. Most damaging during FOMC where multiple reversals happen within minutes. Also suffers from low sample rate \u2014 high-impact news is only ~8-12 events per month, making backtest statistical significance poor.",
+      "diversification_value": "All existing other ideas (orderflow, session scalps, COT, pivot points) trade on structure/flow. This is the only event-driven idea tied to the macroeconomic calendar. It also explicitly waits for the retracement to absorb rather than chasing the initial spike \u2014 completely different risk profile from the existing scalpers.",
+      "self_grade": "B-",
+      "generated_at": "2026-06-23T12:50:30Z"
     }
   ],
   "coverage_map": {
@@ -1726,7 +1890,9 @@
       "Donchian_Breakout_Momentum_Acceleration",
       "MultiDecile_Momentum_Ensemble",
       "Open_Interest_Divergence_Trend_Decay",
-      "Momentum_Carry_Volatility_Filter"
+      "Momentum_Carry_Volatility_Filter",
+      "Momentum_Exhaustion_Entropy_Decay",
+      "Momentum_ROC_Acceleration_Confluence"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -1738,7 +1904,8 @@
       "RSI_Stochastic_Divergence_Reversal",
       "Liquidity_Grab_Mean_Reverter",
       "VWAP_Entropy_Mean_Drift",
-      "Mean_Reversion_OrderFlow_Exhaustion"
+      "Mean_Reversion_OrderFlow_Exhaustion",
+      "ZScore_ATR_Mean_Reverter"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -1764,7 +1931,8 @@
       "Gld_Put_Call_Skew_Reversal",
       "VWAP_Vol_Channel_Mean_Drift",
       "Volatility_Momentum_Inflection",
-      "Forex_Carry_Volatility_Compression"
+      "Forex_Carry_Volatility_Compression",
+      "Liquidity_Tier_Volatility_Contraction_Pinball"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -1776,7 +1944,9 @@
       "Intermarket_Vol_Regime_Breakdown",
       "Gamma_Flip_Regime_Divergence",
       "Cluster_Consensus_Regime_Detector",
-      "Liquidity_Regime_Filter"
+      "Liquidity_Regime_Filter",
+      "Macro_Minsky_Moment_Regime_Shift",
+      "ADX_Volatility_Regime_Composite"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
@@ -1788,7 +1958,8 @@
       "VaR_Trailing_Stop_Overlay",
       "Intraday_VaR_Regime_Adaptive_Sizer",
       "Sharpe_Ratio_Rotator",
-      "Conviction_Variance_Contractor"
+      "Conviction_Variance_Contractor",
+      "Multi_TF_Vol_Convexity_Sizer"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
@@ -1800,7 +1971,8 @@
       "CRB_Gold_Momentum_Spread",
       "Gold_Mining_Equity_Leading_Index",
       "Futures_Spot_Convergence_Arbitrage",
-      "Cross_Asset_Basis_Divergence"
+      "Cross_Asset_Basis_Divergence",
+      "USD_Liquidity_Tide_Index"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
@@ -1825,7 +1997,8 @@
       "Gap_Exhaustion_Fade_Reverter",
       "Central_Bank_Reserve_Trend_Flow",
       "Interbank_Fixing_Flow_Reversal",
-      "Swap_Dealer_Gamma_Speed_Trap"
+      "Swap_Dealer_Gamma_Speed_Trap",
+      "News_Absorption_Continuation"
     ]
   }
 }
