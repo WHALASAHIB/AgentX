@@ -1,0 +1,88 @@
+//@version=5
+strategy(title="BB RSI Breakout XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//====================================================================
+//--- inputs: Bollinger Bands parameters
+//====================================================================
+bb_length   = input.int(20,   "BB Length",    minval=5,  maxval=100, step=1)   // sweep: 10-30 step 2
+bb_mult     = input.float(1.5, "BB StdDev",    minval=0.5, maxval=4.0, step=0.5) // sweep: 1.0-2.0 step 0.5
+atr_length  = input.int(14,   "ATR Length",   minval=5,  maxval=50,  step=1)   // sweep: 10-20 step 2
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio",  minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-2.0 step 0.2
+
+//--- inputs: RSI filter parameters
+rsi_length  = input.int(14,   "RSI Length",   minval=5,  maxval=30,  step=1)   // sweep: 7-21 step 2
+rsi_long_min= input.int(50,   "RSI Min (Long)", minval=20, maxval=80, step=5)  // sweep: 40-60 step 5
+rsi_short_max=input.int(50,   "RSI Max (Short)",minval=20, maxval=80, step=5)  // sweep: 40-60 step 5
+
+//--- inputs: session filter
+session_start = input.int(8,  "Session Start (UTC)", minval=0, maxval=23, step=1) // sweep: 6-10 step 1
+session_end   = input.int(16, "Session End (UTC)",   minval=1, maxval=23, step=1) // sweep: 14-20 step 1
+
+//--- inputs: entry and exit management
+use_session_filter = input.bool(true, "Filter by Session (UTC)")
+use_rsi_filter     = input.bool(true, "Filter by RSI (momentum)")
+
+//====================================================================
+//--- indicator calculations
+//====================================================================
+[bb_mid, bb_upper, bb_lower] = ta.bb(close, bb_length, bb_mult)
+atr_val = ta.atr(atr_length)
+rsi_val = ta.rsi(close, rsi_length)
+
+//--- session check (UTC hour)
+in_session = not use_session_filter or (hour >= session_start and hour < session_end)
+
+//--- RSI filter: long only if RSI > threshold (bullish momentum)
+//---              short only if RSI < threshold (bearish momentum)
+rsi_ok_long  = not use_rsi_filter or rsi_val > rsi_long_min
+rsi_ok_short = not use_rsi_filter or rsi_val < rsi_short_max
+
+//--- breakout conditions with RSI filter
+long_entry  = in_session and rsi_ok_long  and ta.crossover(close, bb_upper)
+short_entry = in_session and rsi_ok_short and ta.crossunder(close, bb_lower)
+
+//--- exit price levels (ATR-based)
+long_sl  = close - atr_val
+long_tp  = close + atr_val * tp_sl_ratio
+short_sl = close + atr_val
+short_tp = close - atr_val * tp_sl_ratio
+
+//====================================================================
+//--- entry logic
+//====================================================================
+if long_entry
+    strategy.entry("BB RSI Long", strategy.long, comment="BB_RSI_Long")
+
+if short_entry
+    strategy.entry("BB RSI Short", strategy.short, comment="BB_RSI_Short")
+
+//====================================================================
+//--- exit management: fixed TP/SL via strategy.exit
+//====================================================================
+//--- Long exits
+if strategy.position_size > 0
+    strategy.exit("BB RSI Long X", "BB RSI Long",
+     loss=int(atr_val / syminfo.mintick),
+     profit=int(atr_val * tp_sl_ratio / syminfo.mintick),
+     comment="BB_RSI_Long_Exit")
+
+//--- Short exits
+if strategy.position_size < 0
+    strategy.exit("BB RSI Short X", "BB RSI Short",
+     loss=int(atr_val / syminfo.mintick),
+     profit=int(atr_val * tp_sl_ratio / syminfo.mintick),
+     comment="BB_RSI_Short_Exit")
+
+//====================================================================
+//--- plotting
+//====================================================================
+plot(bb_mid,   "BB Mid",   color=color.new(color.blue, 50))
+plot(bb_upper, "BB Upper", color=color.new(color.green, 50))
+plot(bb_lower, "BB Lower", color=color.new(color.red, 50))
+
+hline(rsi_long_min, "RSI Min", color=color.new(color.green, 60), linestyle=hline.style_dashed)
+hline(rsi_short_max, "RSI Max", color=color.new(color.red, 60), linestyle=hline.style_dashed)
+
+//--- entry markers
+plotshape(long_entry,  "Long Entry",  style=shape.triangleup,   location=location.belowbar, color=color.green,  size=size.small)
+plotshape(short_entry, "Short Entry", style=shape.triangledown, location=location.abovebar, color=color.red,    size=size.small)

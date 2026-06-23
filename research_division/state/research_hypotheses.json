@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "1.0",
-    "total_ideas": 21,
+    "total_ideas": 30,
     "families_covered": [
       "breakout",
       "cross_asset",
@@ -399,24 +399,198 @@
       "diversification_value": "Existing risk_overlay ideas use volatility parity (Volatility_Parity_Scale) and slippage regimes (Slippage_Regime_Sizer). Neither uses the strategy's own performance statistics to size bets. Kelly optimal f is a mathematically grounded approach that maximizes long-term geometric growth \u2014 different philosophy from fixed-fraction or volatility-adjusted sizing. Complements rather than replaces existing overlays.",
       "self_grade": "B",
       "generated_at": "2026-06-23T04:53:17Z"
+    },
+    {
+      "name": "Momentum_Volume_Convergence",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "M30",
+        "H1"
+      ],
+      "description": "Volume-weighted momentum strategy that enters longs/shorts only when price momentum and volume momentum converge (both rising or both falling), filtering out low-volume breakouts and fading high-volume reversals. Uses a rolling 20-period correlation between volume % change and price % change.",
+      "entry_logic": "1. Compute 14-period RSI on close. 2. Compute 14-period volume RSI (rank volume bars). 3. LONG if: price RSI > 55 AND volume RSI > 55 AND price above 20 EMA AND current bar volume > 20-period median volume. 4. SHORT if: price RSI < 45 AND volume RSI < 45 AND price below 20 EMA AND current bar volume > 20-period median volume. 5. Skip if price RSI and volume RSI diverge (one above 50, other below 50) \u2014 conflicting signals.",
+      "exit_logic": "Stop loss: 1.5x ATR(14) from entry. Take profit: 3x ATR(14) or 3:1 risk-reward. Trail stop: activate at 1x ATR profit, trail at 0.5x ATR. Time stop: close after 48 bars if not in profit.",
+      "failure_mode": "Low-volume trending markets where momentum is real but volume never confirms \u2014 strategy stays flat and misses the move. Also fails in high-volume chop where volume RSI oscillates noisily around 50, generating whipsaw entries.",
+      "diversification_value": "Unlike Momentum_Confluence_Gold (H1 trend/MACD) and NFP_Volatility_Momentum (M5 event-driven), this uses volume momentum as a required confirmation gate \u2014 it only trades when two independent momentum axes agree. Completely different signal source.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T05:09:24Z"
+    },
+    {
+      "name": "Bollinger_Squeeze_Momentum_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "M30"
+      ],
+      "description": "Captures explosive directional moves following Bollinger Band squeeze contractions. When BB width contracts below its 20-period percentile (squeeze), ADX below 20 confirms low volatility. The strategy goes long/short on the first bar to close outside the bands with ADX > 25 and rising \u2014 the squeeze release.",
+      "entry_logic": "1. Compute BB(20,2) and BB width = (upper-lower)/middle. 2. Compute ADX(14). 3. Identify squeeze: BB width < 20th percentile of its 20-period range AND ADX < 20. 4. LONG entry when: close > upper band AND ADX > 25 AND ADX rising from prior bar AND current close = bar high (bullish close). 5. SHORT entry when: close < lower band AND ADX > 25 AND ADX rising AND current close = bar low (bearish close). 6. Cancel if BB width was not in squeeze zone within prior 5 bars.",
+      "exit_logic": "Stop loss: below the squeeze low (for longs) or above squeeze high (for shorts) \u2014 structural invalidation level. Take profit: 2x ATR(14) fixed target. Alternative: exit when BB width re-expands above its 50th percentile (volatility regime shift complete).",
+      "failure_mode": "Fakeouts \u2014 price pierces the band then immediately reverses. The ADX gate reduces but does not eliminate these. Also fails in strongly trending markets that never squeeze (permanently wide bands) \u2014 strategy has extended flat periods.",
+      "diversification_value": "London_Killzone_Breakout trades time-based Asian/London breaks; Accumulation_Distribution_Breakout trades volume accumulation patterns. This is purely volatility-based: it waits for a volatility contraction (squeeze) followed by an expansion breakout. Completely different trigger mechanism \u2014 market microstructure timing vs. volatility regime timing.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T05:09:24Z"
+    },
+    {
+      "name": "Turn_Of_Month_Gold",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Exploits the institutional turn-of-month (TOM) effect in gold \u2014 the tendency for systematic rebalancing, option expiry, and fund flows concentrated in the first 3 and last 3 trading days of each month. Combines with VIX/XAU correlation regime to directional-bias entries.",
+      "entry_logic": "1. Identify TOM window = last 3 AND first 3 trading days of each calendar month (excluding weekends/holidays). 2. Within TOM window, compute 5-day rate of change (ROC). 3. LONG if ROC < -1% (oversold within window) AND DXY is falling (DXY close < DXY 10 SMA). 4. SHORT if ROC > +1% (overbought within window) AND DXY is rising. 5. If TOM window and no clear ROC signal, trade the previous month-end closing direction: long if last day of prior month closed green, short if red. 6. OUTSIDE TOM window: stay flat.",
+      "exit_logic": "Time stop: exit at TOM window close (end of last day). Profit target: 2.5% of entry or 2x ATR(14) whichever is smaller. Stop loss: 1x ATR(14). No trailing \u2014 strict time-bound exit.",
+      "failure_mode": "TOM effect may be weak or reversed in strongly trending months \u2014 the strategy fights the dominant trend. If gold is in a sustained bull run, shorting a +1% within-TOM spike against the trend is catastrophic. The DXY filter helps but is not foolproof.",
+      "diversification_value": "Gold_Seasonal_Cycle trades broad annual/monthly seasonal composites on D1. Intraweek_Session_Drift trades day-of-week intraday tendencies. This targets a completely different calendar effect \u2014 the precise 6-day window around month-end driven by institutional cash flows, option expiry, and portfolio rebalancing. Higher frequency seasonal (monthly vs yearly) with a defined structural rationale.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T05:09:24Z"
+    },
+    {
+      "name": "Volume_Weighted_Mean_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Mean reversion at VWAP envelope extremes with participation-volume confirmation. Uses multi-session VWAP (1H, 4H, daily) to create zones of expected value. Entries only when price deviates >1 standard deviation from the anchor VWAP AND the current 5-minute candle has at least 1.5x typical volume. Exit when price returns to VWAP mean or volume dries up.",
+      "market_behaviour": "Gold oscillates around its volume-weighted average price during low-volatility sessions (Asian/London overlap) as institutional order flow provides mean-reverting pressure. When volume spikes coincide with extreme VWAP deviations, price almost always snaps back within 5-12 bars on M15 as market-makers and algorithms fade the dislocation.",
+      "entry_logic": "1. Calculate VWAP for Daily, H4, and H1 sessions independently. 2. Compute VWAP std deviation bands (1.0, 1.5, 2.0) for each timeframe. 3. When price touches or exceeds the 1.5-std band on any anchor timeframe, wait for the next 5-minute candle to confirm. 4. Confirmation requires: (a) candle volume >= 1.5x the 20-period median volume, (b) candle closes within the 1.0-std band. 5. Enter 2 ticks inside the band on M15 close.",
+      "exit_logic": "SL: 1.2x ATR(14) from entry (8-12 pips typical on H1). Primary TP: return to VWAP anchor line. Secondary TP: if price reaches VWAP and continues through, tighten to 1:1 risk and exit on H1 close through VWAP. Hard exit at London session end (16:00 UTC).",
+      "failure_mode": "Fails during strong trend days when VWAP deviations are structural (breakaway gaps, FOMC runs) rather than mean-reverting dislocations. Also fails during ultra-low-volume holiday sessions where the volume confirmation is never met.",
+      "diversification_value": "Fills mean_reversion with a volume-centric approach distinct from the existing z-score (Statistical_Mean_Reverter) and candle-structure (Wick_Exhaustion_Reverter) strategies.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T05:27:01Z"
+    },
+    {
+      "name": "Volatility_Term_Structure_Fade",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Trades volatility mean-reversion by comparing short-term (10-period) ATR to its medium-term (50-period) and long-term (200-period) history. When the short-term vol ratio exceeds 2.0, volatility is statistically extended and likely to contract. Unlike Volatility_Skew_Mean_Reverter (which fades fixed-percentile extremes), this uses a dynamic term-structure ratio adaptive to the current vol baseline.",
+      "market_behaviour": "Gold volatility exhibits mean-reverting term structure: a sharp short-term vol spike (from a news event or liquidity shock) is typically followed by a vol contraction over 6-12 hours. The ratio of short-term to long-term ATR is stationary around 1.0, with excursions beyond 2.0 being rare (~8% of hours) and almost always followed by a snap-back below 1.5 within 48 hours.",
+      "entry_logic": "1. Calculate ATR(10), median ATR(50), and median ATR(200) on H1. 2. Compute VolRatio_short = ATR(10)/median ATR(50) and VolRatio_long = ATR(10)/median ATR(200). 3. Signal when BOTH ratios exceed 2.0 simultaneously. 4. Entry direction: if next H1 close is >70% of spike body in same direction, trade continuation fade. If close <30%, fade fully against spike. 5. Split entry: 50% market, 50% if price retraces 30% of spike range.",
+      "exit_logic": "SL: 1.5x ATR(10) of entry candle (15-25 pips). TP1 (50%): when ATR(10) drops below 1.5x median ATR(50). TP2 (50%): when ATR(10) drops below 1.2x median ATR(50). Hard stop on new vol spike or after 48 hours.",
+      "failure_mode": "Fails during cascading volatility events (consecutive news shocks, war escalations) where short-term vol stays extended for days. Also fails in ultra-quiet markets where ratio never triggers.",
+      "diversification_value": "Third angle in volatility family: Volatility_Contraction_Breakout (vol expansion), Volatility_Skew_Mean_Reverter (fixed-percentile fade), this (term-structure ratio). Complementary coverage.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T05:27:01Z"
+    },
+    {
+      "name": "Session_Liquidity_Sweep_Scalper",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5"
+      ],
+      "description": "Exploits programmed stop-loss hunting at session high/low levels. Each major session establishes initial extremes in the first 30 minutes. These levels act as magnetic liquidity zones \u2014 algorithms push price through them to trigger stops, then reverse. Enters on the reversal candle after a clean sweep of a session-established extreme.",
+      "market_behaviour": "Gold exhibits repeatable liquidity-sweep behaviour at session boundaries. First 30 min of each session (Asian 00:00, London 07:00, NY 12:30 GMT) set initial high/low. Price oscillates, then pushes through one extreme to hunt stops, then reverses within 1-3 M5 candles. Cleanest during overlap sessions.",
+      "entry_logic": "1. Identify current session and its first 30-min high/low. 2. Mark the 10-pip zone beyond each extreme (stop-hunt zone). 3. When price breaks INTO the stop-hunt zone (3+ consecutive M5 closes beyond the extreme), wait for next M5 candle to close BACK inside original range. 4. Enter on reversal candle close \u2014 long on downward sweep, short on upward sweep. 5. Minimum volume: entry candle >= 1.0x 20-period median M5 volume.",
+      "exit_logic": "SL: 5 pips beyond sweep extreme (10 pips from entry). TP1 (60%): at session midpoint. TP2 (40%): at opposite extreme of initial 30-min range, or session end, whichever first. No trailing.",
+      "failure_mode": "Fails in strong trend sessions where the sweep is genuine absorption (trend continuation through stop zone) rather than a reversal sweep. Also fails during high-impact news within the first 30 minutes contaminating the initial range.",
+      "diversification_value": "Fills \"other\" family with level-based microstructure scalping \u2014 entirely different from OrderFlow_Imbalance_Scalper (tick-level imbalance) and Session_Flow_Exhaustion (cumulative directional bias).",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T05:27:01Z"
+    },
+    {
+      "name": "MultiTimeframe_ADX_Trend_Momentum",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4",
+        "D1"
+      ],
+      "description": "Trend-following momentum strategy using multi-timeframe ADX alignment. Enters when ADX is trending (>25) on H4 AND D1, and short-term pullback on H1 gives a re-entry in the trend direction. Captures sustained directional moves and avoids choppy sideways markets through ADX trending threshold filtering.",
+      "entry_logic": "1) H4 and D1 both show ADX(14) > 25 (trending regime). 2) H1 ADX > 20 but < 40 to avoid exhaustion. 3) For longs: H4 and D1 DI+ > DI- (bullish trend). 4) H1 price pulls back to 20EMA or H1 VWAP (pullback entry). 5) H1 candle closes back above VWAP/EMA with bullish momentum (MACD histogram turning up). 6) For shorts: opposite conditions with DI- dominance.",
+      "exit_logic": "Stop Loss: 1.5x ATR(14) below/above entry. Take Profit: 1st TP at 2x ATR (50% position), 2nd TP at 4x ATR (remaining 50%). Trail remaining position with 1x ATR chandelier stop once 2nd TP is hit. If H1 ADX drops below 20, exit remaining position immediately (trend fading).",
+      "failure_mode": "Fails in ranging markets where ADX spikes briefly from noise before reversing. Also fails in very strong trends where pullbacks are shallow or do not reach the EMA - may miss the best entries. Whipsaws when three timeframes are not aligned.",
+      "diversification_value": "Existing momentum ideas focus on confluence (Momentum_Confluence_Gold), news events (NFP_Volatility_Momentum), and volume (Momentum_Volume_Convergence). None use pure multi-timeframe ADX alignment for trend-following. This fills the directional trend-following gap in the momentum family.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T05:53:34Z"
+    },
+    {
+      "name": "Real_Yield_Gold_Inverse_Corr",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "US10Y.TIPS",
+        "DXY"
+      ],
+      "timeframes": [
+        "D1",
+        "W1"
+      ],
+      "description": "Exploits the well-documented inverse correlation between US real yields (TIPS yields) and gold prices. When real yields fall, gold typically rises (lower opportunity cost of holding gold). When real yields rise, gold falls. Uses weekly TIPS yield data as the primary signal with DXY as a secondary confirmation filter.",
+      "entry_logic": "1) Track US 10-year TIPS real yield on weekly timeframe. 2) LONG gold when: Real yield drops >15bp over a rolling 2-week window AND DXY is not in a strong uptrend (below 20-week SMA). 3) SHORT gold when: Real yield rises >15bp over a rolling 2-week window AND DXY confirms (above 20-week SMA). 4) Enter on D1 at market open Monday after weekly signal triggers, using limit orders. 5) Confirm with daily candle close in the signal direction.",
+      "exit_logic": "Stop Loss: 3x weekly ATR(14) from entry (wide - macro swing). Take Profit: Exit when real yield move reverses by >10bp or after holding 4 weeks (time-stop). If DXY crosses the 20-week SMA against the position, exit immediately (correlation break). Trailing stop: 1.5x weekly ATR once profit exceeds 2x weekly ATR.",
+      "failure_mode": "Correlation breaks during risk-off flights (e.g., March 2020 when both gold and real yields fell - liquidity crush trumped fundamentals). Slow to react in fast markets due to weekly data. Central bank rate surprises cause violent reversals within days.",
+      "diversification_value": "Existing cross_asset ideas use DXY correlation (DXY_Valence_Correlation), gold/silver ratio (Gold_Silver_Ratio_Rotation), and multi-asset gamma (Cross_Asset_Gamma_Flip). None target the real yield / gold inverse relationship - the most fundamental gold driver. This is pure macro driver approach complementing the technically-focused existing set.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T05:53:34Z"
+    },
+    {
+      "name": "Structural_Level_Breakout_With_Retest",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Breakout strategy built on market structure levels - swing highs/lows, trendlines, and order blocks. Unlike indicator-based or session-based breakouts, this uses naked price structure: a confirmed swing point (3+ candles with higher highs on each side for resistance, lower lows for support) defines the level. The strategy waits for a clean break AND retest before committing, filtering out trap breakouts.",
+      "entry_logic": "1) Identify structural swing high/low on H1: 3+ consecutive candles with higher highs left and right of peak (resistance) or lower lows (support). 2) Price breaks the level by >0.5 ATR(14) on H1 (clean break). 3) No entry on break - wait for retest. 4) LONG: price breaks above resistance, retests it as new support (wick touches or closes within 0.3 ATR of broken level). 5) Entry on retest candle close back above the level. 6) SHORT: opposite for broken support retested as resistance. 7) M15 confirmation: RSI(14) >50 for longs, <50 for shorts on retest candle close.",
+      "exit_logic": "Stop Loss: 1x ATR(14) below/above the retested structural level. Take Profit: 1st TP at 1.5x ATR (60% position). 2nd TP at 3x ATR (40% position). If next structural swing point is within 3x ATR, use that as TP instead. No trailing - let structure define exits.",
+      "failure_mode": "Fails in strong trends where price never retests - just runs. Fails in fakeout scenarios where break + retest trigger but price reverses (common at round numbers). High subjectivity in defining \"structural\" levels.",
+      "diversification_value": "Existing breakout ideas use session timing (London_Killzone_Breakout), accumulation patterns (Accumulation_Distribution_Breakout), and Bollinger squeeze (Bollinger_Squeeze_Momentum_Breakout). None use pure price structure breakouts with retest - the classic S/R breakout approach. Strategically catches breakouts confirmed as \"real\" by retest, unlike the others that enter on initial break which can be traps.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T05:53:34Z"
     }
   ],
   "coverage_map": {
     "momentum": [
       "Momentum_Confluence_Gold",
-      "NFP_Volatility_Momentum"
+      "NFP_Volatility_Momentum",
+      "Momentum_Volume_Convergence",
+      "MultiTimeframe_ADX_Trend_Momentum"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
-      "Wick_Exhaustion_Reverter"
+      "Wick_Exhaustion_Reverter",
+      "Volume_Weighted_Mean_Reverter"
     ],
     "breakout": [
       "London_Killzone_Breakout",
-      "Accumulation_Distribution_Breakout"
+      "Accumulation_Distribution_Breakout",
+      "Bollinger_Squeeze_Momentum_Breakout",
+      "Structural_Level_Breakout_With_Retest"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
-      "Volatility_Skew_Mean_Reverter"
+      "Volatility_Skew_Mean_Reverter",
+      "Volatility_Term_Structure_Fade"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -431,15 +605,18 @@
     "cross_asset": [
       "DXY_Valence_Correlation",
       "Gold_Silver_Ratio_Rotation",
-      "Cross_Asset_Gamma_Flip"
+      "Cross_Asset_Gamma_Flip",
+      "Real_Yield_Gold_Inverse_Corr"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
-      "Intraweek_Session_Drift"
+      "Intraweek_Session_Drift",
+      "Turn_Of_Month_Gold"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
-      "Session_Flow_Exhaustion"
+      "Session_Flow_Exhaustion",
+      "Session_Liquidity_Sweep_Scalper"
     ]
   }
 }
