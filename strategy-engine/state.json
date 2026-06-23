@@ -1,6 +1,6 @@
 {
-  "iteration": 13,
-  "last_run": "2026-06-23T14:30:00",
+  "iteration": 17,
+  "last_run": "2026-06-23T15:37:00",
   "best_strategy": "iter_10_macd_adx18.pine",
   "best_metrics": {
     "pf": 1.29686066,
@@ -13,7 +13,7 @@
     "timeframe": "1h",
     "iteration": 10
   },
-  "current_hypothesis": "Add RSI(14) momentum filter to MACD+ADX18 24h strategy. Enter long only when MACD crosses above signal line AND ADX(14)>18 AND RSI(14)>50. Enter short only when MACD crosses below signal line AND ADX(14)>18 AND RSI(14)<50. Keep 24h trading (no session filter), ATR-based 1:1.5 TP/SL unchanged. Goal: improve PF from 0.968 and WR from 33.33% by filtering out entries against prevailing momentum — the session filter removal let in 51 trades but many were during Asian/low-volatility hours when RSI won't confirm MACD momentum.",
+  "current_hypothesis": "Add RSI(14) trend filter to MACD+SMA50+TP2.0 24h strategy: long only when RSI > 50, short only when RSI < 50. PF dropped further from 0.574 (iter 15, TP:SL 1.5) to 0.359 (iter 16, TP:SL 2.0) — the wider TP/SL made losses worse without improving win rate (24% WR). Avg win $69 vs avg loss $61, ratio 1.13:1 — far below the 2:1 target because the market reverses before TP is hit. Adding RSI momentum filter should filter out counter-trend entries and improve quality of signals. Goal: PF > 1.0. If RSI kills all trades (as happened in iters 13-14, but those had ADX too), next iteration will try wider RSI thresholds.",
   "evolution_log": [
     {
       "iteration": 0,
@@ -33,7 +33,7 @@
     },
     {
       "iteration": 1,
-      "hypothesis": "Add RSI(14) filter to EMA crossover: enter long only when RSI > 50 and EMA12 crosses above EMA26; enter short only when RSI < 50 and EMA12 crosses below EMA26. Goal: improve PF from 0.53 to >1.3 by filtering out low-conviction entries during sideways/overextended price action.",
+      "hypothesis": "Add RSI(14) filter to EMA crossover: enter long only when RSI > 50 and EMA12 crosses above EMA26; enter short only when RSI < 50 and EMA12 crosses below EMA26.",
       "metrics": {
         "pf": 0.53,
         "sharpe": -6.5,
@@ -42,14 +42,14 @@
         "trades": 33,
         "net_profit": -903.49
       },
-      "verdict": "rejected (PF=0.53 unchanged — RSI filter filtered 0 signals; all crossovers already satisfy RSI>50/R<50 on XAUUSD H1)",
+      "verdict": "rejected (PF=0.53 unchanged — RSI filter filtered 0 signals)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T11:38:00"
     },
     {
       "iteration": 2,
-      "hypothesis": "Tighten TP:SL ratio from 2:1 to 1:1.5 to improve win rate. With smaller profit targets, more trades will reach TP before price reverses. Combined with existing RSI(14) filter to avoid counter-trend entries. Goal: improve win rate from 24% to >40%, improving PF above 1.3.",
+      "hypothesis": "Tighten TP:SL ratio from 2:1 to 1:1.5 to improve win rate.",
       "metrics": {
         "pf": 0.63764364,
         "sharpe": -5.94826274,
@@ -65,7 +65,7 @@
     },
     {
       "iteration": 3,
-      "hypothesis": "Add ADX(14) filter requiring ADX > 25 for any entry. Retain RSI(14) filter and 1:1.5 TP:SL ratio. Goal: improve PF from 0.638 to >1.3 by filtering out choppy/range-bound markets where EMA crossovers generate false signals.",
+      "hypothesis": "Add ADX(14) filter requiring ADX > 25 for any entry.",
       "metrics": {
         "pf": 0,
         "sharpe": 0.351,
@@ -81,7 +81,7 @@
     },
     {
       "iteration": 4,
-      "hypothesis": "Reduce ADX threshold from 25 to 15 to allow more entries. Keep EMA12/26 crossover, RSI(14) filter (>50 long, <50 short), and 1:1.5 TP/SL ratio. Goal: get at least 20 trades while still filtering weak signals.",
+      "hypothesis": "Reduce ADX threshold from 25 to 15 to allow more entries.",
       "metrics": {
         "pf": 0,
         "sharpe": 0,
@@ -90,14 +90,14 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades — ADX>15 still too restrictive; ta.dmi() ADX values never exceed 15 on XAUUSD H1 data window)",
+      "verdict": "invalid (no trades — ADX>15 still too restrictive)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T12:25:00"
     },
     {
       "iteration": 5,
-      "hypothesis": "Bollinger Bands(20,2) breakout on XAUUSD H1. Long when close crosses above upper band (volatility breakout). Short when close crosses below lower band. ATR(14)-based 1:1.5 TP/SL. No RSI/ADX filters. London/NY session filter (8-16 UTC).",
+      "hypothesis": "Bollinger Bands(20,2) breakout on XAUUSD H1.",
       "metrics": {
         "pf": 0.59501614,
         "sharpe": -4.92946687,
@@ -113,7 +113,7 @@
     },
     {
       "iteration": 6,
-      "hypothesis": "Reduce BB StdDev from 2.0 to 1.5: narrower bands generate more breakout signals. ATR(14)-based 1:1.5 TP/SL. London/NY session filter (8-16 UTC). Goal: get past the 20-trade minimum threshold (iter 5 had only 19 trades).",
+      "hypothesis": "Reduce BB StdDev from 2.0 to 1.5: narrower bands generate more breakout signals.",
       "metrics": {
         "pf": 0.55002875,
         "sharpe": -7.32234772,
@@ -122,14 +122,14 @@
         "trades": 34,
         "net_profit": -805.89
       },
-      "verdict": "rejected (PF=0.55 < 1.3) — trade count improved (19→34) but PF and WR worsened from best",
+      "verdict": "rejected (PF=0.55 < 1.3)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T12:59:30"
     },
     {
       "iteration": 7,
-      "hypothesis": "Add RSI(14) filter to BB breakout strategy: enter long only when close crosses above upper band and RSI > 50 (momentum-confirmed breakout), enter short only when close crosses below lower band and RSI < 50 (momentum-confirmed breakdown). StdDev 1.5 bands. ATR(14)-based 1:1.5 TP/SL. Session filter 8-16 UTC. Goal: improve PF from 0.55 and WR from 26.47% by filtering out fade entries.",
+      "hypothesis": "Add RSI(14) filter to BB breakout strategy.",
       "metrics": {
         "pf": 0.55002875,
         "sharpe": -7.32234772,
@@ -138,14 +138,14 @@
         "trades": 34,
         "net_profit": -805.89
       },
-      "verdict": "rejected (PF=0.55 < 1.3) — RSI filter filtered 0 signals; all BB breakouts on XAUUSD H1 already satisfy RSI>50/R<50",
+      "verdict": "rejected (PF=0.55 < 1.3) — RSI filter filtered 0 signals",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T13:02:00"
     },
     {
       "iteration": 8,
-      "hypothesis": "MACD(12,26,9) crossover strategy on XAUUSD H1. Long on MACD line crossing above signal line, short on crossing below signal line. ATR(14)-based 1:1.5 TP/SL ratio (retaining best-performing exit structure from iter 2). Session filter 8-16 UTC. All previous EMA and BB strategies lose money (PF 0.53-0.64). MACD is a completely different momentum framework — MACD crossovers often precede strong directional moves and may yield better signal quality on XAUUSD H1 than EMA crossovers or BB breakouts.",
+      "hypothesis": "MACD(12,26,9) crossover strategy on XAUUSD H1.",
       "metrics": {
         "pf": 1.02763635,
         "sharpe": -1.03326432,
@@ -154,14 +154,14 @@
         "trades": 21,
         "net_profit": -141.00
       },
-      "verdict": "rejected (PF=1.028 < 1.3) — NEW BEST STRATEGY (PF 0.638→1.028, WR 30.3%→42.9%, DD 7.5%→5.2%)",
+      "verdict": "rejected (PF=1.028 < 1.3) — NEW BEST STRATEGY",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T13:35:00"
     },
     {
       "iteration": 9,
-      "hypothesis": "Add ADX(14) trending market filter to MACD(12,26,9) crossover on XAUUSD H1. Enter long when MACD crosses above signal line AND ADX(14) > 25. Enter short when MACD crosses below signal line AND ADX(14) > 25. ATR(14)-based 1:1.5 TP/SL, session filter 8-16 UTC. Goal: improve PF from 1.028 and Sharpe from -1.033 by restricting entries to strongly trending markets only.",
+      "hypothesis": "Add ADX(14) > 25 trending filter to MACD crossover.",
       "metrics": {
         "pf": 1.06990325,
         "sharpe": -0.35759812,
@@ -170,14 +170,14 @@
         "trades": 9,
         "net_profit": -44.03
       },
-      "verdict": "invalid (low sample, 9 trades) — ADX>25 too restrictive on MACD signals, only 9 entries over 892 bars. Cascade ratio: 1.0 (perfect). Short trades profitable (+$191.61), longs losing (-$235.64).",
+      "verdict": "invalid (low sample, 9 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T13:55:00"
     },
     {
       "iteration": 10,
-      "hypothesis": "Reduce ADX threshold from 25 to 18 on MACD crossover strategy. ADX>25 produced only 9 trades (below 20 minimum) over 892 bars on XAUUSD H1. Lowering threshold to 18 should allow more entries while still filtering the most range-bound periods. Keep ATR(14)-based 1:1.5 TP/SL, session filter 8-16 UTC. Goal: reach 20+ trades with PF above 1.3.",
+      "hypothesis": "Reduce ADX threshold from 25 to 18 on MACD crossover strategy.",
       "metrics": {
         "pf": 1.29686066,
         "sharpe": 0.49470013,
@@ -186,14 +186,14 @@
         "trades": 17,
         "net_profit": 53.81
       },
-      "verdict": "invalid (low sample, 17 trades) — NEW BEST STRATEGY (PF 1.028→1.297, Sharpe -1.033→0.495, WR 42.9%→47.1%, NetProfit -$141→+$54, DD 5.23%→3.38%). ADX>18 allowed nearly double the trades (9→17) while dramatically improving all metrics. First iteration with positive net profit.",
+      "verdict": "invalid (low sample, 17 trades) — NEW BEST STRATEGY",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T14:10:00"
     },
     {
       "iteration": 11,
-      "hypothesis": "Further reduce ADX threshold from 18 to 15 on MACD crossover strategy. ADX>18 produced 17 trades (still below 20 minimum). Lowering to 15 should allow a few more entries to cross the 20-trade threshold. Keep ATR(14)-based 1:1.5 TP/SL, session filter 8-16 UTC. Goal: reach 20+ trades to achieve statistical significance.",
+      "hypothesis": "Further reduce ADX threshold from 18 to 15 on MACD crossover strategy.",
       "metrics": {
         "pf": 1.29686066,
         "sharpe": 0.49470013,
@@ -202,14 +202,14 @@
         "trades": 17,
         "net_profit": 53.81
       },
-      "verdict": "invalid (low sample, 17 trades) — ADX>15 produced IDENTICAL results to ADX>18. No MACD crossover occurred when ADX was between 15-18 on XAUUSD H1 data window. ADX threshold reduction had zero effect — same 17 trades, same metrics.",
+      "verdict": "invalid (low sample, 17 trades) — ADX>15 identical to ADX>18",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T14:25:00"
     },
     {
       "iteration": 12,
-      "hypothesis": "Remove session filter (trade 24h) on MACD+ADX18 strategy. Keep ADX>18 trending filter, ATR(14)-based 1:1.5 TP/SL, MACD(12,26,9) crossover. The session filter (8-16 UTC) was the bottleneck limiting trade count to 17. Removing it should allow MACD crossovers at any hour to trigger entries. Goal: increase trades from 17 to 30+, maintaining PF above 1.2.",
+      "hypothesis": "Remove session filter (trade 24h) on MACD+ADX18 strategy.",
       "metrics": {
         "pf": 0.96797284,
         "sharpe": -2.12969157,
@@ -218,10 +218,74 @@
         "trades": 51,
         "net_profit": -384.52
       },
-      "verdict": "rejected (PF=0.968 < 1.3) — trade count tripled (17→51, goal achieved) but PF collapsed from 1.297→0.968, Sharpe from 0.495→-2.13, WR from 47.1%→33.3%. Removing session filter let in many bad entries during non-London hours (Asian session low-volatility chop). Cascade ratio 1.0625 fine. Time to add a quality filter to replace the session guard.",
+      "verdict": "rejected (PF=0.968 < 1.3)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-23T14:30:00"
+    },
+    {
+      "iteration": 13,
+      "hypothesis": "Add RSI(14) momentum filter to MACD+ADX18 24h strategy (RSI>50 long, RSI<50 short).",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades — triple filter killed all signals)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T14:45:00"
+    },
+    {
+      "iteration": 14,
+      "hypothesis": "Relax ADX from >18 to >12 AND relax RSI from >50/<50 to >40/<60 on MACD crossover + 24h + ATR 1:1.5 TP/SL.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades — ADX>12 + RSI>40/<60 still produces 0 trades on XAUUSD H1. MACD crossovers and RSI-ADX conditions never overlap. RSI is the blocking filter — MACD crossovers on XAUUSD H1 never occur when RSI is >40 for longs or <60 for shorts.)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T15:03:00"
+    },
+    {
+      "iteration": 15,
+      "hypothesis": "Remove both ADX and RSI filters from MACD crossover. Keep 24h trading and ATR 1:1.5 TP/SL. Add simple SMA(50) trend filter: long only when close > SMA(50), short only when close < SMA(50).",
+      "metrics": {
+        "pf": 0.57446146,
+        "sharpe": -5.47885745,
+        "wr": 33.33333333,
+        "dd": 9.2028144,
+        "trades": 30,
+        "net_profit": -743.13
+      },
+      "verdict": "rejected (PF=0.574 < 1.3) — 30 trades, adequate sample but poor profitability.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T15:20:00"
+    },
+    {
+      "iteration": 16,
+      "hypothesis": "Increase TP:SL ratio from 1.5 to 2.0 on MACD + SMA50 24h strategy. With 30 trades and WR 33%, the current 1.5:1 only delivers avg win/loss ratio of 1.15:1 — insufficient. A 2:1 ratio allows winners to run further; at 33% WR, 2:1 gives breakeven expected value. Goal: get PF > 1.0.",
+      "metrics": {
+        "pf": 0.35933773,
+        "sharpe": -6.79231114,
+        "wr": 24.13793103,
+        "dd": 13.32234052,
+        "trades": 29,
+        "net_profit": -1060.20
+      },
+      "verdict": "rejected (PF=0.359 < 1.3) — TP:SL 2.0 made PF worse (0.574→0.359). Wider TP/SL means more trades hit SL before reaching TP. WR dropped from 33% to 24%.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-23T15:37:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

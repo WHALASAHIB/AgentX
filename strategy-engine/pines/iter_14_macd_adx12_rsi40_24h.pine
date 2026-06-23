@@ -1,0 +1,75 @@
+//@version=5
+strategy(title="MACD+ADX12+RSI40 24h XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macd_fast = input.int(12, "MACD Fast Length", minval=5, maxval=50)     // sweep: 8-20 step 2
+macd_slow = input.int(26, "MACD Slow Length", minval=10, maxval=100)    // sweep: 20-40 step 5
+macd_signal = input.int(9, "MACD Signal Length", minval=3, maxval=20)   // sweep: 5-15 step 2
+
+// ADX filter
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)             // sweep: 10-20 step 2
+adx_threshold = input.int(12, "ADX Threshold", minval=5, maxval=30)     // sweep: 8-18 step 2
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21)             // sweep: 10-18 step 2
+rsi_long_min = input.int(40, "RSI Long Min", minval=30, maxval=60)     // sweep: 35-50 step 5
+rsi_short_max = input.int(60, "RSI Short Max", minval=40, maxval=70)   // sweep: 50-65 step 5
+
+// ATR-based TP/SL
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)             // sweep: 10-20 step 2
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+
+// Management
+trade_size_pct = input.float(100, "Position Size %", minval=10, maxval=100, step=10)  // sweep: 50-100 step 25
+
+//--- indicator calculations
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+macd_bullish = ta.crossover(macd_line, signal_line)
+macd_bearish = ta.crossunder(macd_line, signal_line)
+
+// ADX — trending market filter
+[di_plus, di_minus, adx] = ta.dmi(high, low, close, adx_len)
+adx_trending = adx > adx_threshold
+
+// RSI — momentum confirmation
+rsi_val = ta.rsi(close, rsi_len)
+rsi_bullish = rsi_val > rsi_long_min
+rsi_bearish = rsi_val < rsi_short_max
+
+// ATR — dynamic stop/target
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// Long entry: MACD bullish crossover AND trending market (ADX) AND RSI not oversold
+long_condition = macd_bullish and adx_trending and rsi_bullish
+
+// Short entry: MACD bearish crossunder AND trending market (ADX) AND RSI not overbought
+short_condition = macd_bearish and adx_trending and rsi_bearish
+
+// Enter positions
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Dynamic stops/targets based on ATR
+long_sl_atr = atr_val * 1.0
+long_tp_atr = atr_val * tp_sl_ratio
+
+short_sl_atr = atr_val * 1.0
+short_tp_atr = atr_val * tp_sl_ratio
+
+// Apply exits for open positions
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long",
+         loss=int(long_sl_atr / syminfo.mintick),
+         profit=int(long_tp_atr / syminfo.mintick))
+
+if (strategy.position_size < 0)
+    strategy.exit("Short Exit", "Short",
+         loss=int(short_sl_atr / syminfo.mintick),
+         profit=int(short_tp_atr / syminfo.mintick))
