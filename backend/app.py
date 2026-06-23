@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 🔒 AGENTX BACKEND — INFRASTRUCTURE BASELINE
+# ═══════════════════════════════════════════════════════════════════════════
+# This file is the IMMUTABLE FOUNDATION of the entire platform.
+# DO NOT CHANGE:
+#   - Ports (8005 HTTP / 8443 HTTPS)
+#   - Route structure (/api/*, /_next/*, /* catch-all)
+#   - CORS configuration
+#   - serve_frontend() routing logic (path→.html→index.html fallback)
+#   - WebSocket proxy (/api/ws/*)
+#   - Scanner blocker middleware
+#   - Auth endpoint signatures (/api/auth/me, signin, signup)
+# Without explicit Commander approval.
+#
+# 🏛️ Reference: /c/Trading/BASELINE.md — the single source of truth.
+# ═══════════════════════════════════════════════════════════════════════════
+
 import asyncio
 import json
 import logging
@@ -2190,10 +2207,26 @@ async def serve_frontend(path: str):
     # Don't intercept API routes
     if path.startswith("api/") or path.startswith("_next/"):
         raise HTTPException(status_code=404)
+    
+    # Try exact file match first (e.g., favicon.svg)
     file_path = os.path.join(FRONTEND_DIR, path)
     if os.path.isfile(file_path):
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
+    
+    # Try with .html extension (pre-rendered pages like portfolio.html, trades.html)
+    html_path = os.path.join(FRONTEND_DIR, path + ".html")
+    if os.path.isfile(html_path):
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+    
+    # Try without trailing slash
+    if path.endswith("/"):
+        no_slash_path = os.path.join(FRONTEND_DIR, path.rstrip("/") + ".html")
+        if os.path.isfile(no_slash_path):
+            with open(no_slash_path, "r", encoding="utf-8") as f:
+                return f.read()
+    
     # SPA fallback: serve index.html for client-side routes
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_path):
