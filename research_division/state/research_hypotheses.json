@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "1.0",
-    "total_ideas": 72,
+    "total_ideas": 81,
     "families_covered": [
       "breakout",
       "cross_asset",
@@ -1330,6 +1330,169 @@
       "diversification_value": "Unlike Event_Window_Seasonal_Compression (trades the BREAKOUT during compression) and Holiday_Liquidity_Vacuum_Rebound (holiday-specific), this specifically trades the POST-EVENT mean reversion with a fixed 6h entry delay and 24h hard exit. It is a pure contrarian macro play with no directional bias, complementing directional event-driven strategies.",
       "self_grade": "B",
       "generated_at": "2026-06-23T09:53:59Z"
+    },
+    {
+      "name": "Futures_Spot_Convergence_Arbitrage",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "XAUUSD_futures"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Trades the mean-reverting spread between gold spot (XAUUSD) and the active gold futures contract. During high-volatility events or liquidity dislocations, the futures basis widens far beyond fair carry cost. The strategy fades extreme basis deviations when the spread exceeds 2 standard deviations of its 20-period rolling mean, targeting convergence at the next fixing window or session close.",
+      "entry_logic": "1. Compute basis = futures_price - spot_price (normalized by contract multiplier). 2. Calculate rolling 20-period z-score of basis on H1. 3. When z-score > +2.0 (futures overpriced relative to spot): SHORT futures / LONG spot (via synthetic spread). 4. When z-score < -2.0 (futures underpriced): LONG futures / SHORT spot. 5. Confirmation: basis must have diverged for at least 3 consecutive bars (rejects flash spikes). 6. Enter at market only during London or NY session (highest liquidity, tightest spread execution).",
+      "exit_logic": "SL: 1.5x ATR(14) of the basis spread itself. TP: z-score returns to 0 (fair value). Trail: if z-score crosses back within +/-1.0, trail at 50% of remaining convergence. Max hold: 24 hours - forced flat at next London fix if unconverged.",
+      "failure_mode": "Structural regime change in gold market (e.g., backwardation during physical delivery squeeze, or contango blowout during a liquidity crisis). The basis may not converge for weeks during such events. Also: execution slippage on the synthetic spread can destroy the thin edge.",
+      "diversification_value": "Solely focuses on the futures-spot basis, a pure microstructure/arbitrage dimension untouched by all 8 existing cross_asset ideas (which cover DXY, silver ratio, real yields, gamma, Vanna, CRB, and mining equities). Zero beta to gold directional moves - profit from convergence alone. Near-market-neutral.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T10:13:53Z"
+    },
+    {
+      "name": "Interbank_Fixing_Flow_Reversal",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5",
+        "M15"
+      ],
+      "description": "Exploits the well-documented gold fixing effect: in the 30-minute window before the London AM Fix (10:30 UTC) and PM Fix (15:00 UTC), order flow builds as dealers and central banks queue fix orders. This creates directional pressure that peaks at the fix print. In the 30 minutes post-fix, the artificial flow exhausts and price reverts partially or fully. The strategy enters a fade trade 5 minutes after the fix timestamp, targeting the pre-fix origin.",
+      "entry_logic": "1. Identify fix windows: London AM Fix (10:30 UTC), London PM Fix (15:00 UTC). 2. Monitor M5 price action 60 min pre-fix. Measure total bar-to-bar excursion (High-Low sum). 3. Record fix-price at the exact fix minute (timestamp from LBMA or ICE benchmark). 4. Wait 5 minutes after fix for initial volatility to settle. 5. If pre-fix net move >0.3% of spot price: enter counter-directional trade at market. 6. If pre-fix move <0.3%: skip (no significant flow to fade). 7. Check: no high-impact news within +/-15 min of fix (reject if NFP, FOMC, CPI).",
+      "exit_logic": "SL: pre-fix excursion distance + 0.1% buffer. TP1 (50%): 50% of pre-fix excursion retraced. TP2 (50%): full retrace to pre-fix opening price. Hard stop: London session close - carry no position across NY open. If pre-fix move continues post-fix for 3 consecutive M15 bars, exit at breakeven (flow was sustained, not artificial).",
+      "failure_mode": "Central bank intervention or large real-money fix orders that overwhelm the fade (e.g., reserve rebalancing at month-end). During extreme macro events, the fix window flow is directional and does not reverse. Low-volatility days produce insufficient excursion to trade.",
+      "diversification_value": "Existing other-category ideas cover orderflow imbalance, session exhaustion, pivot bounces, COT fades, gap fills, and central bank reserve trends - but none specifically target the gold fixing window microstructure. This is a pure calendar-based event arbitrage that thrives in normal-volatility conditions when other strategies are flat.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T10:13:53Z"
+    },
+    {
+      "name": "Open_Interest_Divergence_Trend_Decay",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD",
+        "GC_futures"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Tracks daily Open Interest (OI) changes in gold futures alongside price action to detect structural trend health. Healthy trends see rising OI + rising price (new money entering). Exhausting trends see falling OI + rising price (short covering / distribution). When price makes a new swing high but OI declines vs its 10-day smoothed rate of change, the trend is structurally weak and due for a reversal or sharp pullback. The strategy enters anti-trend on this divergence signal, unlike existing momentum ideas that follow momentum.",
+      "entry_logic": "1. Fetch daily GC futures OI data (from CFTC or exchange). 2. Compute OI_ROC = 10-day rate of change of OI. 3. Compute price_ROC = 10-day rate of change of spot price. 4. On H4 chart, identify a swing high (closing price > previous 10 bars). 5. CONFIRMING SIGNAL: price_ROC > +3% AND OI_ROC < -2% (bearish divergence - price up, OI down). 6. OR: swing low with price_ROC < -3% AND OI_ROC > +2% (bullish divergence - price down, OI up). 7. Enter at the close of the H4 bar that prints the divergence. 8. Skip if ATR(14) > 2x its 50-day average (extreme volatility regime pollutes OI signal).",
+      "exit_logic": "SL: 1.5x ATR(14) on H4 beyond the swing point. TP1 (33%): 1:1 risk/reward. TP2 (33%): OI_ROC crosses back through zero. TP3 (34%): trail at 25-bar EMA on H4. Max hold: 14 calendar days - OI data inherently slow, signal decays after 2 weeks.",
+      "failure_mode": "Lag: OI data is released with 1-3 day delay (CFTC weekly commitments). For daily exchange OI (CME), still end-of-day only. Intra-week reversals cannot use this. Also: OI divergence can persist for weeks during parabolic blow-off tops - early entry gets crushed.",
+      "diversification_value": "All 8 existing momentum ideas use price/volume/momentum oscillators (ADX, Donchian, Vanna flow, MSS, decile ensembles). None use Open Interest divergence as a primary signal. This is a structural, slow-frequency momentum-exhaustion detector that complements fast intraday momentum bots. It signals WHEN momentum is about to die, not when to ride it.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T10:13:53Z"
+    },
+    {
+      "name": "Central_Bank_Calendar_Dovish_Hawkish_Window",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Captures the 48-hour directional drift following major central bank rate decisions (FOMC, ECB, BOE, BOJ, SNB). Gold trends sharply in the direction of the real-yield delta for ~2 sessions post-announcement, then mean-reverts. Entry at the first H1 close after the announcement, exit before the 48-hour window closes.",
+      "entry_logic": "Track upcoming central bank events via economic calendar. At the first H1 candle close after the rate decision (or statement), compute real-yield delta (prevailing yield vs pre-announcement). Enter long if real yields dropped more than 5bps vs expectation; short if real yields rose more than 5bps. Use a 1.5x ATR trailing stop from entry.",
+      "exit_logic": "Hard exit at 47 hours post-announcement (before reversion sets in). Trailing stop 1.5x ATR. If price reaches 2.5x ATR profit, take 50% partial and move stop to breakeven.",
+      "failure_mode": "Non-taper-tantrum macro regime where real-yield moves are noisy (e.g., yield curve control, quantitative easing with forward guidance). Also fails in zero-volatility environments where the delta is too small to trade above spread.",
+      "diversification_value": "No existing seasonal idea targets the 48-hour central-bank decision window specifically \u2014 most focus on lunar/calendar/turn-of-month effects. This is event-driven seasonality rather than date-driven seasonality.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-23T10:30:25Z"
+    },
+    {
+      "name": "Sharpe_Ratio_Rotator",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Dynamic capital allocation overlay that rotates risk budget between all active strategies based on trailing 20-period Sharpe ratios. If a strategy's Sharpe drops below 0.3, its allocation is halved and redistributed to the highest-Sharpe strategy. Prevents capital from sitting in decaying strategies while overweighting regimes where a particular strategy excels.",
+      "entry_logic": "No direct entry \u2014 this is an overlay. At each H1 close, compute rolling 20-period Sharpe ratio for every active bot strategy. Rank strategies by Sharpe. Top-ranked gets +30% of freed capital, 2nd gets +20%, rest split proportionally. Any strategy trailing Sharpe < 0.3 for 40 consecutive periods gets zeroed out until it recovers above 0.5.",
+      "exit_logic": "Not applicable \u2014 permanent overlay. Rebalances every H1 candle. Full rebalance triggered if any strategy hits a trailing 40-period drawdown > 15%.",
+      "failure_mode": "False signal in strongly trending markets where mean-reversion strategies have negative Sharpe for legitimate reasons (they should be disabled, which is correct behavioral \u2014 but catching the re-entry point is noisy). Also suffers from look-ahead bias if backward-looking Sharpe doesn't anticipate regime change.",
+      "diversification_value": "All existing risk overlays (Kelly, VaR, volatility parity, drawdown lock) are static sizing rules. This is the first dynamic inter-strategy capital allocator in the archive \u2014 it treats the strategy suite as a portfolio and optimizes weightings online.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T10:30:25Z"
+    },
+    {
+      "name": "VWAP_Vol_Channel_Mean_Drift",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Price oscillates within VWAP-based volatility channels that expand and contract with ATR. When the channel width (upper VWAP+2\u03c3 - lower VWAP-2\u03c3) contracts below its 14-period minimum (a volatility squeeze), the subsequent expansion produces a high-probability directional drift. Entry is in the pre-squeeze trend direction, measured by VWAP slope over the squeeze duration.",
+      "entry_logic": "Compute VWAP(20) plus dynamic bands: band_width = VWAP \u00b1 (2 * ATR(14)). Track channel_width = upper_band - lower_band. When channel_width drops below its 14-period lowest value (squeeze detection), record VWAP slope over the last 5 bars. On the candle that breaks the upper band (if VWAP slope > 0) or lower band (if slope < 0), enter long/short with 0.5% risk of account.",
+      "exit_logic": "Take profit: 1.5x the pre-squeeze channel width projected upward/downward. Stop loss: 0.75x the pre-squeeze channel width on the opposite side. Trail after price reaches 1x channel width in profit.",
+      "failure_mode": "Fails in sideways congestion with repeated false squeezes (channel compresses, breaks, then immediately fades). Also fails in high-frequency whip around VWAP during low-liquidity sessions where the squeeze metric oscillates rapidly.",
+      "diversification_value": "Existing volatility ideas focus on volatility contraction-breakout, skew, term structure, and implied-realized spread. None use VWAP-anchored dynamic band compression as a volatility squeeze trigger. This bridges volatility and trend-following in a unique way.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T10:30:25Z"
+    },
+    {
+      "name": "Monsoon_India_Demand_Frontrun",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "Weekly",
+        "Daily"
+      ],
+      "description": "Uses real-time Indian monsoon rainfall deviation (IMD cumulative rainfall index vs 50-year normal) as a 2-3 month leading indicator of rural physical gold demand. Poor monsoon (rainfall deficit >10% by mid-season) forces rural India (60%+ of total gold demand) to increase gold buying as an inflation hedge 8-12 weeks ahead of the Oct-Feb wedding season peak. The strategy builds a long position in July-September when monsoon data confirms deficit, targets the seasonal rally Oct-Feb, and closes ahead of March post-wedding lull.",
+      "entry_logic": "1. Track IMD cumulative monsoon rainfall index vs 1961-2010 normal daily from June 1 through September 30. 2. At the midpoint of monsoon season (July 31), compute aggregate deviation %. 3. If deviation < -10% (deficit monsoon): initiate a long position at first weekly close >20-week SMA in August, targeting Oct-Feb rally. 4. If deviation > +5% (normal/surplus): no position; skip the season. 5. If DXY is in a confirmed uptrend (above 200-day SMA), reduce position size by 50% to account for USD strength headwind. 6. Re-evaluate at Diwali (Oct-Nov) on weekly close: if position is in profit and DXY has NOT broken above 200-day SMA, hold through Feb. 7. Full exit by end of February.",
+      "exit_logic": "Stop loss: 5% below entry on weekly close basis. Take profit: exit by end of February regardless of P&L. Trail stop at 20-week SMA once 3%+ in profit. Position size: base 2% risk per trade, halved if DXY > 200-SMA.",
+      "failure_mode": "Fails if DXY rallies strongly throughout the period (USD strength overwhelms Indian demand). Fails if global recession suppresses all commodity demand despite poor monsoon (2020-style). Fails in years where RBI intervenes with gold import restrictions or duty hikes. The 2-month entry delay between monsoon signal and seasonal window creates gap risk (geopolitical shocks before position opens).",
+      "diversification_value": "Only seasonal idea in the archive that uses real-time fundamental data (rainfall index) as a leading indicator rather than just historical price composites. Uncorrelated with volatility/breakout/trend strategies because the trigger is agro-climatic, not market structure. 2-3 month hold means it does not compete with short-term bot rotation. Also provides a fundamental anchor during news-event chaos that blinds other strategies.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T10:47:29Z"
+    },
+    {
+      "name": "Swap_Dealer_Gamma_Speed_Trap",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "Daily"
+      ],
+      "description": "Tracks the rate-of-change of swap dealer (commercial) net positioning in COMEX gold futures, normalized by the velocity of spot gold price. The key insight: swap dealers accumulate short hedges at specific structural resistance levels (prior cycle highs, 200-WMA, round numbers). When the weekly delta of dealer net short positioning accelerates sharply (>1 std dev above its 26-week mean) while gold approaches a structural level at slowing speed (decelerating price), it signals dealer hedging clustering at a known ceiling - a market structure top. Exits when dealers rapidly cover (de-shorten) which confirms the top has triggered.",
+      "entry_logic": "1. Weekly: Load CFTC COT data for Gold futures, extract Swap Dealer net positions (short minus long). 2. Compute 4-week delta of positions and normalize by 26-week rolling mean and std dev. 3. Compute 4-week price velocity = % change in gold weekly close. 4. ENTRY (SHORT) when: (a) dealer delta z-score > +1.0 (rapidly adding shorts), (b) price is within 2% of a structural level (prior 52-week high, 200-WMA, or round number), AND (c) price velocity < +5% (slowing/decelerating). 5. ENTRY (LONG) when: swap dealers rapidly cover shorts (delta z-score < -1.0), gold is within 2% of a structural support, and downside price velocity is decelerating. 6. Enter at Monday Asian open after COT release.",
+      "exit_logic": "Stop loss: 1.5x ATR(14) on Daily from entry. Take profit: 3 levels (1:1, 2:1, 3:1 risk-reward) with 40/30/30% allocation. Hard exit at dealers reversing their delta direction (next COT confirms hedge removal). Time stop: exit after 21 calendar days if not hit.",
+      "failure_mode": "Fails during structural regime breaks (central bank gold buying programs, war premiums, rate cutting cycles) where dealers add hedges rationally higher as the trend extends rather than at a ceiling. COT data 3-day weekend disclosure lag means the position snapshot is stale by Monday - a flash crash Friday can invalidate the setup before entry Monday. Low trade frequency (4-8 signals/year depending on level proximity).",
+      "diversification_value": "Completely different signal chain from COT_Positioning_Extreme_Fade: that strategy uses managed money positioning at percentile extremes (90th+) as a pure fade. This uses swap dealer delta normalization + price deceleration proximity to known levels - institutional hedging behavior rather than speculative positioning. Also unique in the 'other' category as the only idea that cross-references COT with price velocity vs structural level distance, rather than pure delta or order flow.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T10:47:29Z"
+    },
+    {
+      "name": "VWAP_Entropy_Mean_Drift",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Mean reversion via the divergence between VWAP drift and price-entropy exhaustion. Instead of trading distance from VWAP (a common approach), this strategy measures the rate at which price pulls away from multi-session VWAP and compares it to the Shannon entropy of price-level frequency over the same window. When VWAP drift accelerates (>1.5 std devs above 20-bar mean) but price entropy drops sharply (price keeps revisiting only 2-3 levels rather than 8-12 unique levels per window), it indicates a mechanical, non-organic move that is statistically likely to revert. The entropy collapse signals that market microstructure is exhausted - large players have already filled at the few liquidity levels and new orders at the extreme are from retail chasing, not institutional flow.",
+      "entry_logic": "1. Compute VWAP over daily, H4, and H1 sessions simultaneously. 2. Compute VWAP drift = (H1 close - H4 VWAP) / ATR(14) on H4 - normalized unitless. 3. Compute price entropy over last 20 H1 candles: bin prices into 10-pip buckets, calculate probability of price landing in each bucket, Shannon entropy = -sum(p*log2(p)). Normalize by log2(10) to get 0-1 range. 4. ENTRY (SHORT) when: (a) VWAP drift > +1.5 (price far above H4 VWAP), (b) price entropy < 0.4 (price clustered in few levels), AND (c) H1 RSI(14) > 70 (overshoot confirmation). 5. ENTRY (LONG) when: VWAP drift < -1.5, entropy < 0.4, RSI < 30. 6. Only take trades during London or NY session liquidity (08:00-20:00 UTC). Skip within 30 minutes of high-impact news events.",
+      "exit_logic": "Stop loss: 0.75x ATR(14) on H1 (tight - entropy collapse is a short-lived phenomenon). Take profit 1: at H4 VWAP (50% position, 1:1 risk-reward). Take profit 2: at VWAP -1.0 drift level (remaining 50%). Time stop: exit after 24 H1 candles if no TP hit. Do not hold across daily session close.",
+      "failure_mode": "Fails in news-driven gap-and-go moves (NFP, FOMC) where entropy stays low but VWAP drift keeps accelerating for 3-4+ bars - the tight 0.75x ATR stop gets taken out before the eventual reversion. Fails in strong single-direction days (e.g., consecutive 1.5+ drift readings where entropy never recovers). Entropy calculation requires clean 20-candle window - gap opens mess with the binning. Low hit rate (maybe 2-3 signals/week, 55-60% win rate) needs strong RR to be profitable.",
+      "diversification_value": "All existing mean_reversion ideas in the archive trade on price distance (z-score), divergence (RSI/candle patterns), or volume delta. None use Shannon entropy of price-level clustering as the exhaustion signal. This provides a genuinely orthogonal signal to Statistical_Mean_Reverter (z-score), Wick_Exhaustion_Reverter (candle structure), and FVG_Imbalance_Fill (gap filling). The entropy metric could also be adapted as a regime filter for other strategies.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T10:47:29Z"
     }
   ],
   "coverage_map": {
@@ -1341,7 +1504,8 @@
       "Structural_MSS_Continuation",
       "Vanna_Flow_Momentum_Capture",
       "Donchian_Breakout_Momentum_Acceleration",
-      "MultiDecile_Momentum_Ensemble"
+      "MultiDecile_Momentum_Ensemble",
+      "Open_Interest_Divergence_Trend_Decay"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -1351,7 +1515,8 @@
       "Volume_Delta_Exhaustion_Reverter",
       "Gold_Oil_Ratio_Extreme_Reverter",
       "RSI_Stochastic_Divergence_Reversal",
-      "Liquidity_Grab_Mean_Reverter"
+      "Liquidity_Grab_Mean_Reverter",
+      "VWAP_Entropy_Mean_Drift"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -1371,7 +1536,8 @@
       "Implied_Realized_Spread_Compression",
       "Event_Volatility_Straddle_Reversal",
       "Volatility_Risk_Premium_Decay",
-      "Gld_Put_Call_Skew_Reversal"
+      "Gld_Put_Call_Skew_Reversal",
+      "VWAP_Vol_Channel_Mean_Drift"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -1391,7 +1557,8 @@
       "Risk_Premium_Chase_Decay",
       "Correlation_Collapse_Protector",
       "VaR_Trailing_Stop_Overlay",
-      "Intraday_VaR_Regime_Adaptive_Sizer"
+      "Intraday_VaR_Regime_Adaptive_Sizer",
+      "Sharpe_Ratio_Rotator"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
@@ -1401,7 +1568,8 @@
       "Cross_Asset_Vanna_Flow_Proxy",
       "DXY_Deviation_Regime_Scalp",
       "CRB_Gold_Momentum_Spread",
-      "Gold_Mining_Equity_Leading_Index"
+      "Gold_Mining_Equity_Leading_Index",
+      "Futures_Spot_Convergence_Arbitrage"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
@@ -1411,7 +1579,9 @@
       "Lunar_Phase_Gold_Cycle",
       "Event_Window_Seasonal_Compression",
       "Holiday_Liquidity_Vacuum_Rebound",
-      "NFP_Week_Mean_Reversion_Bias"
+      "NFP_Week_Mean_Reversion_Bias",
+      "Central_Bank_Calendar_Dovish_Hawkish_Window",
+      "Monsoon_India_Demand_Frontrun"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
@@ -1421,7 +1591,9 @@
       "COT_Positioning_Extreme_Fade",
       "Structural_Break_Momentum_Flux",
       "Gap_Exhaustion_Fade_Reverter",
-      "Central_Bank_Reserve_Trend_Flow"
+      "Central_Bank_Reserve_Trend_Flow",
+      "Interbank_Fixing_Flow_Reversal",
+      "Swap_Dealer_Gamma_Speed_Trap"
     ]
   }
 }
