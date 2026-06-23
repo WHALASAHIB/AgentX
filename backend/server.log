@@ -630,3 +630,37 @@ INFO:     10.10.10.100:58205 - "GET /api/bridge/accounts/default/positions HTTP/
 INFO:     10.10.10.100:58207 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
 INFO:     10.10.10.100:59582 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
 INFO:     10.10.10.100:59584 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:54360 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:54364 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55585 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:50790 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:50792 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:60756 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:60758 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57753 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52604 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:52606 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:65048 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:65050 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:51121 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:51123 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51137 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56136 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56138 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     10.10.10.100:54990 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:54992 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61306 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56239 - "GET /api/bridge/accounts/default/positions HTTP/1.1" 200 OK
+INFO:     10.10.10.100:56241 - "GET /api/bridge/accounts/default/stats?days=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63126 - "GET /api/health HTTP/1.1" 200 OK
+Bridge connection failed: 
+Bridge connection failed: 
+INFO:     127.0.0.1:54073 - "GET /api/health HTTP/1.1" 200 OK
+Bridge connection failed: 
+INFO:     10.10.10.100:54077 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65496 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49200 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49303 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49376 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49555 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49656 - "GET /api/health HTTP/1.1" 200 OK

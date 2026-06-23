@@ -1903,6 +1903,51 @@ async def ftmo_profiles(auth=Depends(require_auth)):
     return {"error": "FTMO profiles not found"}
 
 
+# ── AI Decision Log ──────────────────────────────────────────────────────────
+
+_DECISION_LOG_PATH = Path(__file__).resolve().parent.parent / "scripts" / "decision_log.py"
+
+def _load_decision_log():
+    sys.path.insert(0, str(_DECISION_LOG_PATH.parent))
+    import importlib
+    dl = importlib.import_module("decision_log")
+    importlib.reload(dl)
+    return dl
+
+class LogDecisionRequest(PydanticBaseModel):
+    agent_id: str
+    agent_name: str
+    action: str
+    detail: str = ""
+    outcome: str = "pending"
+    metadata: dict = {}
+
+@app.get("/api/decisions")
+async def get_decisions(days: int = 7, limit: int = 100, agent_id: str = None):
+    dl = _load_decision_log()
+    entries = dl.get_decisions(days=days, limit=limit, agent_id=agent_id)
+    return {"decisions": entries, "count": len(entries)}
+
+@app.post("/api/decisions")
+async def log_decision(req: LogDecisionRequest):
+    dl = _load_decision_log()
+    entry = dl.log_decision(
+        agent_id=req.agent_id,
+        agent_name=req.agent_name,
+        action=req.action,
+        detail=req.detail,
+        outcome=req.outcome,
+        metadata=req.metadata,
+    )
+    return {"status": "logged", "entry": entry}
+
+@app.get("/api/decisions/summary")
+async def decisions_summary(days: int = 7):
+    dl = _load_decision_log()
+    summary = dl.get_summary(days=days)
+    return summary
+
+
 # ── Sentiment API ───────────────────────────────────────────────────────────
 
 @app.get("/api/sentiment/score")
