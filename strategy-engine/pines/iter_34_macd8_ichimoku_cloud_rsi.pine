@@ -1,0 +1,86 @@
+//@version=5
+strategy(title="MACD8 Ichimoku Cloud RSI [iter_34]", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50)    // sweep: 5-12 step 1
+slowLen = input.int(17, "MACD Slow Length", minval=5, maxval=100)  // sweep: 13-26 step 2
+signalLen = input.int(5, "MACD Signal Length", minval=2, maxval=30) // sweep: 3-9 step 1
+
+// Ichimoku parameters
+tenkanPeriod = input.int(9, "Tenkan-sen Period", minval=1, maxval=50)     // sweep: 7-12 step 1
+kijunPeriod = input.int(26, "Kijun-sen Period", minval=10, maxval=60)    // sweep: 20-30 step 2
+senkouSpanBPeriod = input.int(52, "Senkou Span B Period", minval=20, maxval=120) // sweep: 40-60 step 5
+displacement = input.int(26, "Displacement", minval=10, maxval=60)       // sweep: 20-30 step 2
+
+// RSI
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)      // sweep: 7-21 step 1
+rsiLongThresh = input.int(50, "RSI Long Threshold", minval=30, maxval=70)  // sweep: 45-55 step 5
+rsiShortThresh = input.int(50, "RSI Short Threshold", minval=30, maxval=70) // sweep: 45-55 step 5
+
+// TP/SL
+tpPoints = input.int(120, "Take Profit (points)", minval=20, maxval=500)    // sweep: 60-200 step 20
+slPoints = input.int(100, "Stop Loss (points)", minval=20, maxval=500)     // sweep: 60-200 step 20
+
+// Trade settings
+tradeDirection = input.string("BOTH", "Trade Direction", options=["LONG", "SHORT", "BOTH"])
+
+//--- indicator calculations
+// MACD
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, signalLen)
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// Ichimoku Cloud
+tenkan = ta.sma(hl2, tenkanPeriod)
+kijun = ta.sma(hl2, kijunPeriod)
+senkouSpanA = math.avg(tenkan, kijun)
+senkouSpanB = ta.sma(hl2, senkouSpanBPeriod)
+// Future cloud values
+senkouSpanA_future = senkouSpanA[displacement - 1]
+senkouSpanB_future = senkouSpanB[displacement - 1]
+// Cloud is between Span A and Span B
+cloudTop = math.max(senkouSpanA_future, senkouSpanB_future)
+cloudBottom = math.min(senkouSpanA_future, senkouSpanB_future)
+// Price relative to cloud
+priceAboveCloud = close > cloudTop
+priceBelowCloud = close < cloudBottom
+// Cloud color (bullish/bearish)
+cloudBullish = senkouSpanA_future > senkouSpanB_future
+
+// RSI
+rsiValue = ta.rsi(close, rsiLen)
+rsiLongOk = rsiValue > rsiLongThresh
+rsiShortOk = rsiValue < rsiShortThresh
+
+//--- entry logic
+// Long conditions: MACD cross over + price above cloud + RSI > 50
+longCondition = macdCrossOver and priceAboveCloud and rsiLongOk
+
+// Short conditions: MACD cross under + price below cloud + RSI < 50
+shortCondition = macdCrossUnder and priceBelowCloud and rsiShortOk
+
+// Entry: one position open at a time — use strategy.entry (not strategy.close on every bar)
+if (longCondition and (tradeDirection == "LONG" or tradeDirection == "BOTH"))
+    strategy.entry("Long", strategy.long, comment="MACD+ICHIMOKU+L")
+
+if (shortCondition and (tradeDirection == "SHORT" or tradeDirection == "BOTH"))
+    strategy.entry("Short", strategy.short, comment="MACD+ICHIMOKU+S")
+
+//--- exit management
+// Exit with fixed TP/SL in ticks
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints, comment="LX")
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=slPoints, profit=tpPoints, comment="SX")
+
+//--- plot indicators (for visual reference)
+plot(tenkan, "Tenkan-sen", color=color.red, linewidth=1)
+plot(kijun, "Kijun-sen", color=color.blue, linewidth=1)
+p1 = plot(senkouSpanA_future, "Senkou Span A", color=color.new(#4CAF50, 90), editable=false)
+p2 = plot(senkouSpanB_future, "Senkou Span B", color=color.new(#F44336, 90), editable=false)
+fill(p1, p2, color=cloudBullish ? color.new(#4CAF50, 90) : color.new(#F44336, 90))
+
+hline(rsiLongThresh, "RSI Long Threshold", color=color.gray, linestyle=hline.style_dashed)
+hline(rsiShortThresh, "RSI Short Threshold", color=color.gray, linestyle=hline.style_dashed)

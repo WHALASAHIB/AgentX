@@ -1,6 +1,6 @@
 {
-  "iteration": 32,
-  "last_run": "2026-06-23T20:40:00",
+  "iteration": 34,
+  "last_run": "2026-06-23T21:20:00",
   "best_strategy": "iter_28_macd_ichimoku_rsi_tp1.2_24h.pine",
   "best_metrics": {
     "pf": 1.30915355,
@@ -13,7 +13,7 @@
     "timeframe": "1h",
     "iteration": 28
   },
-  "current_hypothesis": "Remove ADX filter entirely from iter 32's structure (ADX is too restrictive). Go back to iter 30's triple-filter: MACD(8,17,5) + Ichimoku (cloud+TK cross) + RSI(14). Instead of ADX, add a VWAP trend filter: long only if price > VWAP, short only if price < VWAP. VWAP is less restrictive than ADX and provides a different type of trend confirmation through volume-weighted price. Target: 15-20 trades with PF > 1.2.",
+  "current_hypothesis": "WR=35.9% < 40% is the weakest metric. Tighten TP/SL ratio from 1.2:1 to ~1:1.5 (TP=67, SL=100 in points). A tighter take-profit target should capture more small wins and boost win rate towards 40%+. The MACD(8,17,5)+Ichimoku cloud (no TK cross)+RSI(14) triple-filter showed 39 trades with PF 1.117 — best trade count in recent iterations. Improving WR while maintaining trade count could push PF above 1.3.",
   "evolution_log": [
     {
       "iteration": 28,
@@ -49,6 +49,20 @@
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
       "verdict": "invalid (no trades) — ADX>20 still too restrictive with 4-filter stack. 0 trades over 886 bars. ADX at any threshold (>15 tested) blocks all entries with MACD+Ichimoku+TK+RSI. Removing ADX entirely.",
       "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:40:00"
+    },
+    {
+      "iteration": 33,
+      "hypothesis": "Remove ADX filter entirely from iter 32's structure. Go back to iter 30's triple-filter: MACD(8,17,5) + Ichimoku (cloud+TK cross) + RSI(14). Instead of ADX, add a VWAP trend filter: long only if price > VWAP, short only if price < VWAP.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 5.50012296, "trades": 0, "net_profit": -4},
+      "verdict": "invalid (no trades) — VWAP filter added to MACD+Ichimoku+TK+RSI quadruple stack produced 0 trades. VWAP is as restrictive as ADX. Filter stack with 5 conditions too restrictive for XAUUSD H1. Removing VWAP next.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:05:00"
+    },
+    {
+      "iteration": 34,
+      "hypothesis": "Remove VWAP filter entirely from iter 33's structure. Keep MACD(8,17,5) cross + Ichimoku cloud (price above/below, no TK cross) + RSI(14) >50/<50. Triple-filter (no TK cross) should give 20+ trades with improved PF.",
+      "metrics": {"pf": 1.11695372, "sharpe": -3.53085458, "wr": 35.8974359, "dd": 4.30342437, "trades": 39, "net_profit": -256.59},
+      "verdict": "rejected (PF=1.117 < 1.3) — Removing TK cross boosted trades to 39 (best count in 6 iterations) with PF 1.117 (up from 0.981 in iter 30). WR dropped to 35.9%. Next: tighten TP/SL to improve WR.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:20:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

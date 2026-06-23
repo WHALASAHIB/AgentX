@@ -1,0 +1,76 @@
+//@version=5
+strategy(title="MACD+Ichimoku+RSI+VWAP XAUUSD H1", overlay=true, initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+     commission_type=strategy.commission.percent, commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(8, "MACD Fast Length", minval=2, maxval=50)   // sweep: 6-12 step 2
+slow_len = input.int(17, "MACD Slow Length", minval=5, maxval=100) // sweep: 14-26 step 3
+sig_len  = input.int(5, "MACD Signal Length", minval=2, maxval=20) // sweep: 3-9 step 2
+
+// Ichimoku parameters
+tenkan_period = input.int(9, "Tenkan-sen Period", minval=5, maxval=30)   // sweep: 7-20 step 2
+kijun_period  = input.int(26, "Kijun-sen Period", minval=10, maxval=60)  // sweep: 20-40 step 5
+senkou_span_b = input.int(52, "Senkou Span B Period", minval=25, maxval=120) // sweep: 40-80 step 10
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)  // sweep: 10-20 step 2
+
+// TP/SL parameters
+sl_pct = input.float(0.5, "Stop Loss %", step=0.1, minval=0.1, maxval=5.0)  // sweep: 0.3-1.0 step 0.1
+tp_ratio = input.float(1.2, "TP:SL Ratio", step=0.1, minval=0.5, maxval=5.0) // sweep: 1.0-2.0 step 0.2
+
+//--- indicator calculations
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, sig_len)
+macd_bullish = ta.crossover(macd_line, signal_line)
+macd_bearish = ta.crossunder(macd_line, signal_line)
+
+// Ichimoku Cloud
+tenkan = (ta.highest(high, tenkan_period) + ta.lowest(low, tenkan_period)) / 2
+kijun  = (ta.highest(high, kijun_period) + ta.lowest(low, kijun_period)) / 2
+senkou_a = (tenkan + kijun) / 2
+senkou_b = (ta.highest(high, senkou_span_b) + ta.lowest(low, senkou_span_b)) / 2
+// Cloud value (future shifted, use current span values for real-time)
+cloud_upper = math.max(senkou_a, senkou_b)
+cloud_lower = math.min(senkou_a, senkou_b)
+price_above_cloud = close > cloud_upper
+price_below_cloud = close < cloud_lower
+price_in_cloud = not price_above_cloud and not price_below_cloud
+tk_cross_bull = ta.crossover(tenkan, kijun)
+tk_cross_bear = ta.crossunder(tenkan, kijun)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+rsi_bull = rsi_val > 50
+rsi_bear = rsi_val < 50
+
+// VWAP
+vwap_val = ta.vwap(hlc3)
+price_above_vwap = close > vwap_val
+price_below_vwap = close < vwap_val
+
+//--- entry logic
+// Long: MACD bull cross + price above cloud + TK cross bull + RSI > 50 + price > VWAP
+long_condition = macd_bullish and price_above_cloud and tk_cross_bull and rsi_bull and price_above_vwap
+
+// Short: MACD bear cross + price below cloud + TK cross bear + RSI < 50 + price < VWAP
+short_condition = macd_bearish and price_below_cloud and tk_cross_bear and rsi_bear and price_below_vwap
+
+//--- exit management
+// Calculate SL/TP levels in ticks
+sl_ticks_long  = math.round((close * sl_pct / 100) / syminfo.mintick)
+tp_ticks_long  = math.round(sl_ticks_long * tp_ratio)
+sl_ticks_short = math.round((close * sl_pct / 100) / syminfo.mintick)
+tp_ticks_short = math.round(sl_ticks_short * tp_ratio)
+
+// Entry conditions — only one position at a time
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks_long, profit=tp_ticks_long)
+
+if (short_condition and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks_short, profit=tp_ticks_short)
