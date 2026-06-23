@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="EMA+RSI+ADX15 TP1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period — sweep: 8-15 step 1
+fastLen = input.int(12, "Fast EMA Length", minval=5, maxval=30)
+// EMA slow period — sweep: 20-30 step 1
+slowLen = input.int(26, "Slow EMA Length", minval=15, maxval=50)
+// RSI period — sweep: 10-20 step 2
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)
+// ADX period — sweep: 10-20 step 2
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30)
+// ADX threshold (lowered from 25 to 15 to allow more entries) — sweep: 10-25 step 5
+adxThreshold = input.int(15, "ADX Threshold (min)", minval=5, maxval=40)
+// TP ratio (risk:reward) — sweep: 1.0-3.0 step 0.5
+tpRatio = input.float(1.5, "Take Profit (R multiple)", minval=0.5, maxval=5.0, step=0.5)
+// SL ratio (fixed at 1)
+slRatio = input.float(1.0, "Stop Loss (R multiple)", minval=0.5, maxval=5.0, step=0.5)
+// Position size % — sweep: 50-100 step 10
+posSize = input.int(100, "Position Size (%)", minval=10, maxval=100)
+
+//--- indicators
+fastEma = ta.ema(close, fastLen)
+slowEma = ta.ema(close, slowLen)
+rsi = ta.rsi(close, rsiLen)
+[adxVal, plusDI, minusDI] = ta.dmi(high, low, close, adxLen)
+
+//--- crossover detection
+emaCrossOver = ta.crossover(fastEma, slowEma)
+emaCrossUnder = ta.crossunder(fastEma, slowEma)
+
+//--- entry logic
+longCondition = emaCrossOver and rsi > 50 and adxVal > adxThreshold
+shortCondition = emaCrossUnder and rsi < 50 and adxVal > adxThreshold
+
+if longCondition
+    strategy.entry("Long", strategy.long, qty=strategy.equity * posSize / 100 / close)
+
+if shortCondition
+    strategy.entry("Short", strategy.short, qty=strategy.equity * posSize / 100 / close)
+
+//--- exit management (fixed TP/SL based on entry price)
+// TP and SL are set per-entry using strategy.exit with loss/profit in ticks
+// profit = ticks_to_target (positive value)
+// loss = ticks_to_stop (negative value is actually positive in strategy.exit)
+// Using close-based ATR approximation for volatility-adjusted stops
+atr = ta.atr(14)
+if strategy.position_size > 0
+    slTicks = int((atr * slRatio) / syminfo.mintick)
+    tpTicks = int((atr * tpRatio) / syminfo.mintick)
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+if strategy.position_size < 0
+    slTicks = int((atr * slRatio) / syminfo.mintick)
+    tpTicks = int((atr * tpRatio) / syminfo.mintick)
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)

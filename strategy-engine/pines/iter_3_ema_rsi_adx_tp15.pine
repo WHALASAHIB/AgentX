@@ -1,0 +1,100 @@
+//@version=5
+strategy(title="EMA+RSI+ADX TP1.5 XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaLength1 = input.int(12, "Fast EMA Length", minval=1)       // sweep: 8-20 step 2
+emaLength2 = input.int(26, "Slow EMA Length", minval=1)       // sweep: 20-50 step 5
+
+// RSI parameters
+rsiLength = input.int(14, "RSI Length", minval=1)             // sweep: 7-21 step 2
+rsiLongThreshold = input.int(50, "RSI Long Min", minval=1)    // sweep: 40-60 step 5
+rsiShortThreshold = input.int(50, "RSI Short Max", minval=1)  // sweep: 40-60 step 5
+
+// ADX parameters
+adxLength = input.int(14, "ADX Length", minval=1)             // sweep: 7-21 step 2
+adxThreshold = input.int(25, "ADX Min Threshold", minval=1)   // sweep: 20-35 step 5
+
+// TP/SL parameters
+tpRatio = input.float(1.5, "Take Profit (x ATR)", step=0.1)   // sweep: 1.0-3.0 step 0.5
+slRatio = input.float(1.0, "Stop Loss (x ATR)", step=0.1)    // sweep: 1.0-2.0 step 0.5
+atrLength = input.int(14, "ATR Length", minval=1)             // sweep: 7-21 step 2
+
+// Session filter
+sessionStart = input.int(8, "Session Start (UTC hour)", minval=0, maxval=23)   // sweep: 6-12 step 1
+sessionEnd = input.int(16, "Session End (UTC hour)", minval=0, maxval=23)      // sweep: 12-20 step 1
+
+//--- indicator calculations
+
+// EMAs
+emaFast = ta.ema(close, emaLength1)
+emaSlow = ta.ema(close, emaLength2)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLength)
+
+// --- Manual ADX calculation (ta.adx not available on Trader Dev) ---
+// True range
+trueRange = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+// Directional movement
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = math.max(upMove, 0) > math.max(downMove, 0) ? math.max(upMove, 0) : 0
+minusDM = math.max(downMove, 0) > math.max(upMove, 0) ? math.max(downMove, 0) : 0
+// Smoothed with RMA (Wilder's smoothing)
+trSmoothed = ta.rma(trueRange, adxLength)
+plusDMSmoothed = ta.rma(plusDM, adxLength)
+minusDMSmoothed = ta.rma(minusDM, adxLength)
+// Directional indicators
+plusDI = 100 * plusDMSmoothed / trSmoothed
+minusDI = 100 * minusDMSmoothed / trSmoothed
+// Directional Movement Index (DX)
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+// ADX = RMA of DX
+adxVal = ta.rma(dx, adxLength)
+
+// ATR for dynamic TP/SL sizing
+atrVal = ta.atr(atrLength)
+
+//--- entry logic
+
+// Crossover / crossunder conditions
+emaCrossLong = ta.crossover(emaFast, emaSlow)
+emaCrossShort = ta.crossunder(emaFast, emaSlow)
+
+// RSI filter — avoid counter-trend entries
+rsiLongOk = rsiVal > rsiLongThreshold
+rsiShortOk = rsiVal < rsiShortThreshold
+
+// ADX filter — only enter in trending (non-choppy) markets
+adxOk = adxVal > adxThreshold
+
+// Session filter — trade during London/NY overlap
+currentHourUTC = hour(time)
+sessionOk = currentHourUTC >= sessionStart and currentHourUTC <= sessionEnd
+
+// Combined entry conditions
+longCondition = emaCrossLong and rsiLongOk and adxOk and sessionOk
+shortCondition = emaCrossShort and rsiShortOk and adxOk and sessionOk
+
+//--- entry management
+
+// Enter long — use ATR-based stops
+if (longCondition and strategy.position_size == 0)
+    stopLossPrice = close - (atrVal * slRatio)
+    takeProfitPrice = close + (atrVal * tpRatio)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XLong", "Long", loss=slRatio * syminfo.mintick, profit=tpRatio * syminfo.mintick)
+
+// Enter short — use ATR-based stops  
+if (shortCondition and strategy.position_size == 0)
+    stopLossPrice = close + (atrVal * slRatio)
+    takeProfitPrice = close - (atrVal * tpRatio)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XShort", "Short", loss=slRatio * syminfo.mintick, profit=tpRatio * syminfo.mintick)
+
+//--- visual overlays
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsiLongThreshold, "RSI Lvl", color=color.gray, linestyle=hline.style_dotted)
