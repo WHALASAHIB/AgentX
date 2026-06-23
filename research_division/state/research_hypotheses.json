@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 120,
+    "total_ideas": 123,
     "active_count": 8,
     "archived_count": 112,
     "families_covered": [
@@ -18,7 +18,8 @@
     ],
     "last_updated": "2026-06-23T13:36:25Z",
     "restructured": "2026-06-23T18:00:00Z",
-    "note": "Top 8 ideas ACTIVE per LLM Council verdict. All others archived. Council verdict: Volatility_Contraction_Breakout and ATR_Regime_Selector as top build; Max_Drawdown_Lock_Protector, Volatility_Parity_Scale, Session_Decay_Exposure_Controller, Statistical_Mean_Reverter, Macro_Regime_Shifter, Slippage_Regime_Sizer as deploy filters."
+    "note": "Top 8 ideas ACTIVE per LLM Council verdict. All others archived. Council verdict: Volatility_Contraction_Breakout and ATR_Regime_Selector as top build; Max_Drawdown_Lock_Protector, Volatility_Parity_Scale, Session_Decay_Exposure_Controller, Statistical_Mean_Reverter, Macro_Regime_Shifter, Slippage_Regime_Sizer as deploy filters.",
+    "last_generation": "Head Research cron - 2025-06-24"
   },
   "active": [
     {
@@ -164,6 +165,64 @@
       "failure_mode": "1) Misses Asian-session breakouts that run 15-30 pips before London open (e.g., RBA rate decisions, Chinese PMI surprises). 2) Friday afternoons sometimes see sharp directional moves that are front-loaded \u2014 reduced exposure misses these entirely. 3) During 24h trending days, the overlay forces reduced size during the trend most profitable continuation phase if it overlaps with lower-liquidity hours.",
       "diversification_value": "Completely orthogonal to all 11 existing risk_overlay ideas \u2014 none address time/session-based exposure. Complements Slippage_Regime_Sizer (which handles micro liquidity) and Volatility_Parity_Scale (which handles vol-based sizing) by covering the macro-liquidity time dimension. Adds diversification through a non-statistical, calendar-driven risk rule.",
       "self_grade": "B+"
+    },
+    {
+      "name": "Market_Microstructure_Depth_Reversal",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5",
+        "M15"
+      ],
+      "description": "Uses limit order book (LOB) depth imbalance at top 3-5 levels to detect hidden buying/selling pressure absorbing visible liquidity walls, then fades the absorbing side.",
+      "market_behaviour": "In liquid markets like XAUUSD, large visible limit orders (walls) act as magnets or traps. When a heavy ask wall at a key level gets gradually consumed by aggressive market orders yet price refuses to break lower, it signals hidden buying interest absorbing supply. The imbalance between visible depth and actual trade absorption reveals the true directional bias before price moves. This microstructure signal precedes price moves by 3-15 candles on M5-M15.",
+      "entry_logic": "1) Monitor top 3 levels of limit order book for a wall of >=3x average level size. 2) Track cumulative market order flow consuming that wall tick-by-tick. 3) If the wall is >70% consumed but price has NOT broken below the wall's price level (buying absorbing sell wall) OR above it (selling absorbing buy wall), flag absorption. 4) Wait for a micro-retrace (1-2 pips) into the wall zone for entry. 5) Enter in direction opposite the original wall (fading the absorbed side). 6) Filter: only trade during London or NY liquid sessions when spread < 0.20.",
+      "exit_logic": "Stop loss: beyond the opposite side of the absorption zone (1.5x ATR of M5). Take profit: 2:1 risk-reward, or trail once 1R is reached using a 0.5 ATR trailing stop. Max holding period: 60 minutes (microstructure signals decay fast).",
+      "failure_mode": "KILLED BY: algorithmic liquidity detection \u2014 large players can bait microstructure signals by posting and canceling walls deliberately to trap scalpers. Also killed during high-impact news where order book noise overwhelms signal. Widening spreads collapse the edge.",
+      "diversification_value": "Completely uncorrelated with all 120 existing ideas \u2014 no other strategy uses limit order book depth as its primary signal. Operates on lower timeframes (M5-M15) than most archive strategies. Pure microstructure alpha independent of macro regime.",
+      "self_grade": "B",
+      "generated_at": "2026-06-23T16:13:43Z"
+    },
+    {
+      "name": "News_Impact_Volatility_Decay",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Captures volatility risk premium by selling implied vol immediately after major macro events (NFP, CPI, FOMC, FOMC minutes, GDP) and buying it back as post-event vol collapses, exploiting the systematic volatility decay pattern.",
+      "market_behaviour": "Major macroeconomic events create a spike in implied and realized volatility in the 15-60 minutes around the release. This spike exhibits a characteristic decay pattern: volatility peaks 5-15 minutes post-event, then decays exponentially over the next 2-4 hours back to pre-event levels (or below). The vol-of-vol is asymmetric \u2014 the crash is faster and more violent than the ramp-up. This creates a systematic opportunity: sell the vol spike when it peaks, benefit from the vol crush as markets stabilize. Non-directional \u2014 works whether the event outcome is bullish or bearish.",
+      "entry_logic": "1) Screen for upcoming high-impact events (NFP, CPI, FOMC, FOMC minutes, GDP: all rated 3+ on ForexFactory impact scale). 2) 15 minutes before event, enter the market in a volatility-selling structure (e.g., iron condor, short straddle, or short VIX-like synthetic on gold \u2014 use put credit spreads + call credit spreads ATM). 3) DO NOT enter before event \u2014 only enter AFTER the initial spike (15 minutes post-release) when vol peaks. Confirm peak via 5-minute ATR contraction (3 consecutive M5 candles with shrinking range vs. the initial event candle). 4) Enter vol-selling position targeting the vol decay. 5) Exit when realized vol drops below pre-event 1-hour ATR, or at 4 hours post-event, whichever comes first.",
+      "exit_logic": "Stop loss: if implied vol sustains above peak +20% for >30 minutes (rare \u2014 means event caused structural uncertainty shift). Take profit: 50% of maximum theoretical profit on the options structure, OR exit when 1-hour realized ATR drops below pre-event baseline. Hard cutoff at 4 hours post-event (decay is complete by then).",
+      "failure_mode": "KILLED BY: black swan event cascades where the initial release triggers chain reactions (e.g., NFP miss leads to FOMC emergency meeting rumors). Fed jawboning or geopolitical events during the decay window can re-spike vol. Also killed by period of sustained low-vol regime where the pre-event baseline is so low that the spike barely registers.",
+      "diversification_value": "Purely non-directional volatility trade \u2014 unique among the 13 volatility ideas (others trade price direction using vol context, or trade the term structure). This isolates the volatility risk premium decay pattern itself. Zero correlation with trend-following or mean-reversion strategies. Natural hedge against event risk.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-23T16:13:43Z"
+    },
+    {
+      "name": "ML_Regime_Ensemble_Switch",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "A stacked ensemble of 6 ML classifiers (XGBoost, Random Forest, Logistic Regression, SVM, kNN, Shallow Neural Net) each trained on different feature sets \u2014 volatility, correlation, trend, volume, microstructure \u2014 whose outputs feed a meta-classifier that learns which base model performs best in each market context.",
+      "market_behaviour": "No single regime detection method works in all market conditions. Hurst exponent shines in trending markets but lags during regime transitions. Markov switching captures regimes well but overfits in low-vol environments. ADX works in strong trends but fails in ranging markets. By ensembling 6 fundamentally different classifiers and letting a meta-learner decide which model's output to weight most heavily based on recent prediction accuracy, the combined system adapts to changing market character faster than any single model. Each base model consumes different feature sets.",
+      "entry_logic": "1) Train all 6 base models on rolling 6-month window of H4/D1 XAUUSD data. Feature computation: volatility cluster stats, intermarket correlations (DXY, US10Y, SPX), ADX/RSI/MACD momentum, volume profile, tick-level microstructure features. 2) Each model outputs a regime classification: trending_up / trending_down / ranging / volatile_range. 3) Meta-classifier (logistic regression trained on last 3 months of model accuracy) weights each base model. 4) Final ensemble regime = weighted majority vote. 5) Downstream strategy selectors consume regime label to enable/disable bots. 6) Retrain meta-classifier weekly, base models monthly.",
+      "exit_logic": "Not applicable \u2014 regime filter, not trade executer. Quality gate: if ensemble vote entropy > 0.6 or meta-classifier accuracy < 65% on last 50 predictions, pause downstream bots and flag retraining.",
+      "failure_mode": "KILLED BY: unprecedented regime change with no precedent in training window (vote entropy ~1.0). Training data staleness during structural shifts (e.g., post-COVID changes). Computational overhead of running 6 models live + weekly retrains.",
+      "diversification_value": "Radically different from all 13 existing regime filter ideas \u2014 none uses ML ensembling or supervised learning. Existing ideas use single statistical methods (Hurst, Markov, ADX, ATR) or clustering. This is a meta-detector that learns which detector to trust when, with calibrated confidence scores. Serves as the intelligence layer for the entire strategy factory.",
+      "self_grade": "A",
+      "generated_at": "2026-06-23T16:13:43Z"
     }
   ],
   "archived": [
@@ -2276,7 +2335,8 @@
       "Volatility_Momentum_Inflection",
       "Forex_Carry_Volatility_Compression",
       "Liquidity_Tier_Volatility_Contraction_Pinball",
-      "Intraday_Volatility_Reversal_Oscillator"
+      "Intraday_Volatility_Reversal_Oscillator",
+      "News_Impact_Volatility_Decay"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -2291,7 +2351,8 @@
       "Liquidity_Regime_Filter",
       "Macro_Minsky_Moment_Regime_Shift",
       "ADX_Volatility_Regime_Composite",
-      "Markov_Switching_Momentum_Regime"
+      "Markov_Switching_Momentum_Regime",
+      "ML_Regime_Ensemble_Switch"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
@@ -2353,7 +2414,8 @@
       "Swap_Dealer_Gamma_Speed_Trap",
       "News_Absorption_Continuation",
       "Central_Bank_Jawbone_Volatility_Capture",
-      "Gamma_Exposure_Floor_Ceiling_Liquidity"
+      "Gamma_Exposure_Floor_Ceiling_Liquidity",
+      "Market_Microstructure_Depth_Reversal"
     ]
   }
 }

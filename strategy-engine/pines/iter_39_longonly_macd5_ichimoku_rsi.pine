@@ -1,0 +1,57 @@
+//@version=5
+strategy(title="iter_39 Long-Only MACD5 Ichimoku RSI", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== INPUTS ===
+
+// --- MACD inputs ---
+fastLength = input.int(5, "MACD Fast Length", minval=2, maxval=30)       // sweep: 2-16 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=50)      // sweep: 10-26 step 2
+signalLength = input.int(5, "MACD Signal Length", minval=1, maxval=20)   // sweep: 3-12 step 1
+
+// --- Ichimoku inputs ---
+tenkanPeriod = input.int(9, "Tenkan-sen Period", minval=5, maxval=30)     // sweep: 5-20 step 1
+kijunPeriod  = input.int(26, "Kijun-sen Period", minval=10, maxval=40)    // sweep: 9-30 step 2
+senkouPeriod = input.int(52, "Senkou Span B Period", minval=20, maxval=80)// sweep: 20-80 step 5
+
+// --- RSI inputs ---
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=28)             // sweep: 7-21 step 1
+rsiThreshold = input.int(50, "RSI Threshold (Min for Long)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// --- TP/SL inputs ---
+tpPoints = input.int(80, "Take Profit (points)", minval=10, maxval=500)   // sweep: 40-200 step 10
+slPoints = input.int(100, "Stop Loss (points)", minval=10, maxval=500)    // sweep: 40-200 step 10
+
+//--- ENTRY LOGIC ---
+
+// MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// Ichimoku Cloud
+tenkan = (ta.highest(high, tenkanPeriod) + ta.lowest(low, tenkanPeriod)) / 2
+kijun  = (ta.highest(high, kijunPeriod) + ta.lowest(low, kijunPeriod)) / 2
+senkouA = (tenkan + kijun) / 2
+senkouB = (ta.highest(high, senkouPeriod) + ta.lowest(low, senkouPeriod)) / 2
+// Cloud is the area between Senkou A and B, shifted 26 bars forward
+priceAboveCloud = close > math.max(senkouA, senkouB)
+
+// RSI
+rsiValue = ta.rsi(close, rsiLength)
+rsiAboveThreshold = rsiValue > rsiThreshold
+
+// Entry conditions (LONG only)
+longCondition = macdCrossOver and priceAboveCloud and rsiAboveThreshold
+
+//--- EXIT MANAGEMENT ---
+
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
+
+// Plotting for visual reference
+plot(tenkan, "Tenkan-sen", color=color.red, linewidth=1)
+plot(kijun, "Kijun-sen", color=color.blue, linewidth=1)
+plot(senkouA, "Senkou A", color=color.green, linewidth=1, style=plot.style_circles)
+plot(senkouB, "Senkou B", color=color.maroon, linewidth=1, style=plot.style_circles)
+hline(rsiThreshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)

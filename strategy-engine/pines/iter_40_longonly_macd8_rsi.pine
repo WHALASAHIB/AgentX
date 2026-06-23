@@ -1,0 +1,36 @@
+//@version=5
+strategy(title="iter_40 Long-Only MACD8 RSI", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== INPUTS ===
+
+// --- MACD inputs ---
+fastLength = input.int(8, "MACD Fast Length", minval=2, maxval=30)       // sweep: 2-16 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=50)      // sweep: 10-26 step 2
+signalLength = input.int(5, "MACD Signal Length", minval=1, maxval=20)   // sweep: 3-12 step 1
+
+// --- RSI inputs ---
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=28)             // sweep: 7-21 step 1
+rsiThreshold = input.int(50, "RSI Threshold (Min for Long)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// --- TP/SL inputs ---
+tpPoints = input.int(80, "Take Profit (points)", minval=10, maxval=500)   // sweep: 40-200 step 10
+slPoints = input.int(100, "Stop Loss (points)", minval=10, maxval=500)    // sweep: 40-200 step 10
+
+//--- ENTRY LOGIC ---
+
+// MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+
+// RSI
+rsiValue = ta.rsi(close, rsiLength)
+rsiAboveThreshold = rsiValue > rsiThreshold
+
+// Entry conditions (LONG only — MACD crossover + RSI > threshold)
+longCondition = macdCrossOver and rsiAboveThreshold
+
+//--- EXIT MANAGEMENT ---
+
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
