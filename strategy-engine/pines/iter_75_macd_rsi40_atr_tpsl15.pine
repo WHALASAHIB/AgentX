@@ -1,0 +1,44 @@
+//@version=5
+strategy(title="iter_75 MACD+RSI(40) 1.5:1 TP/SL H1 LONG-only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macdFast = input.int(12, "MACD Fast Length", minval=2, maxval=50, tooltip="MACD fast EMA length")  // sweep: 8-20 step 2
+macdSlow = input.int(26, "MACD Slow Length", minval=5, maxval=100, tooltip="MACD slow EMA length") // sweep: 18-40 step 4
+macdSignal = input.int(9, "MACD Signal Length", minval=2, maxval=30, tooltip="MACD signal line length") // sweep: 5-15 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30, tooltip="RSI lookback period")  // sweep: 7-21 step 2
+rsiThresh = input.int(40, "RSI Threshold (long)", minval=20, maxval=60, tooltip="RSI must be above this for LONG entries")  // sweep: 30-50 step 5
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length", minval=7, maxval=30, tooltip="ATR period for stop/target calculation")  // sweep: 10-20 step 2
+slMultiplier = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.25, tooltip="Stop loss = ATR * multiplier")  // sweep: 0.5-2.0 step 0.25
+tpMultiplier = input.float(1.5, "TP Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.25, tooltip="Take profit = ATR * multiplier")  // sweep: 1.0-3.0 step 0.25
+
+//--- indicator calculations
+[macdLine, signalLine, _] = ta.macd(close, macdFast, macdSlow, macdSignal)
+rsiValue = ta.rsi(close, rsiLen)
+atrValue = ta.atr(atrLen)
+
+//--- entry logic
+// LONG: MACD line crosses above Signal line AND RSI above threshold
+longEntry = ta.crossover(macdLine, signalLine) and rsiValue > rsiThresh
+
+//--- exit logic
+// No signal-based exit — pure ATR TP/SL only
+// strategy.exit with profit= and loss= handles exits via ATR-based targets
+
+//--- strategy execution
+if (longEntry)
+    stopLoss = slMultiplier * atrValue / syminfo.mintick
+    takeProfit = tpMultiplier * atrValue / syminfo.mintick
+    strategy.entry("LONG", strategy.long)
+    strategy.exit("X_LONG", from_entry="LONG", loss=math.round(stopLoss), profit=math.round(takeProfit))
+
+//--- plot indicators for visual reference
+hline(0, "MACD Zero Line", color=color.gray)
+plot(macdLine, "MACD Line", color=color.blue)
+plot(signalLine, "Signal Line", color=color.orange)
+plot(rsiValue, "RSI", color=color.purple)
+hline(rsiThresh, "RSI Threshold", color=color.green, linestyle=hline.style_dashed)

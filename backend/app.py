@@ -26,7 +26,7 @@ import subprocess
 import sys
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -928,6 +928,60 @@ async def position_detail(ticket: int, auth=Depends(require_auth)):
             return pos
     raise HTTPException(status_code=404, detail=f"Position ticket {ticket} not found")
 
+# ── Test Bot Endpoints ──────────────────────────────────────────────────────────
+
+_test_bot_proc: Optional[subprocess.Popen] = None
+
+@app.post("/api/bots/test/start")
+async def test_bot_start():
+    """Start the test bot (opens 0.01 BUY XAUUSD, holds 20s, closes)."""
+    global _test_bot_proc
+
+    if _test_bot_proc is not None and _test_bot_proc.poll() is None:
+        raise HTTPException(status_code=409, detail="Test bot is already running")
+
+    script = _BOTS_DIR / "test_bot.py"
+    if not script.exists():
+        raise HTTPException(status_code=404, detail=f"test_bot.py not found at {script}")
+
+    try:
+        # Use pythonw for headless execution on Windows
+        pythonw = sys.executable.replace("python.exe", "pythonw.exe")
+        if not os.path.exists(pythonw):
+            pythonw = sys.executable  # fall back to python if pythonw not found
+
+        proc = subprocess.Popen(
+            [pythonw, str(script)],
+            cwd=str(_BOTS_DIR),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.DETACHED_PROCESS if hasattr(subprocess, 'DETACHED_PROCESS') else 0,
+        )
+        _test_bot_proc = proc
+        logger.info("Test bot started (PID %d)", proc.pid)
+        return {"name": "test_bot", "status": "running", "pid": proc.pid}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start test bot: {e}")
+
+
+@app.get("/api/bots/test/status")
+async def test_bot_status():
+    """Check if the test bot is currently running."""
+    global _test_bot_proc
+
+    if _test_bot_proc is None:
+        return {"name": "test_bot", "running": False, "pid": None}
+
+    poll = _test_bot_proc.poll()
+    running = poll is None
+    return {
+        "name": "test_bot",
+        "running": running,
+        "pid": _test_bot_proc.pid if running else None,
+        "exit_code": poll if not running else None,
+    }
+
+
 # ── Bot Endpoints ─────────────────────────────────────────────────────────────
 
 @app.get("/api/bots")
@@ -1131,9 +1185,9 @@ async def list_backtest_strategies(auth=Depends(require_auth)):
 
 class RunBacktestRequest(PydanticBaseModel):
     symbol: str
-    timeframe: str
-    date_from: str
-    date_to: str
+    timeframe: str = "H1"
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
     capital: float = 10000
     lot_size: float = 0.01
     strategy_key: str = ""
@@ -1156,11 +1210,22 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
     if not instrument:
         raise HTTPException(status_code=400, detail=f"Unknown symbol: {req.symbol}")
 
-    data = fetch(instrument["ticker"], req.date_from, req.date_to, interval=req.timeframe)
+    # Default date range: last 7 days if not provided
+    if req.date_from is None:
+        date_from = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+    else:
+        date_from = req.date_from
+    if req.date_to is None:
+        date_to = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    else:
+        date_to = req.date_to
+    timeframe = req.timeframe
+
+    data = fetch(instrument["ticker"], date_from, date_to, interval=timeframe)
     if data is None or len(data) < 20:
         raise HTTPException(
             status_code=400,
-            detail=f"Not enough data for {req.symbol} {req.timeframe} from {req.date_from} to {req.date_to}. "
+            detail=f"Not enough data for {req.symbol} {timeframe} from {date_from} to {date_to}. "
                    f"Try a shorter range (e.g. 1-3 months) or different symbol. "
                    f"Got {len(data) if data is not None else 0} bars."
         )
@@ -2106,7 +2171,7 @@ async def decisions_summary(days: int = 7):
 @app.get("/api/sentiment/score")
 async def get_sentiment_score():
     """Return the current gold market sentiment score (-10 to +10)."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "research"))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "research_division"))
     from sentiment_engine import get_sentiment
     score = get_sentiment()
     return {
@@ -2122,7 +2187,7 @@ async def get_sentiment_score():
 @app.post("/api/sentiment/refresh")
 async def refresh_sentiment():
     """Force-refresh sentiment data from all sources."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "research"))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "research_division"))
     from sentiment_engine import get_sentiment
     score = get_sentiment(force_refresh=True)
     return {

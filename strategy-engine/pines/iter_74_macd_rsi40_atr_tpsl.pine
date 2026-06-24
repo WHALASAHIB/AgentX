@@ -1,0 +1,53 @@
+//@version=5
+strategy(title="MACD+RSI(40) ATR TP/SL XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// MACD parameters
+macd_fast = input.int(12, "MACD Fast Length", minval=2, maxval=50)      // sweep: 8-20 step 2
+macd_slow = input.int(26, "MACD Slow Length", minval=5, maxval=100)     // sweep: 20-40 step 5
+macd_signal = input.int(9, "MACD Signal Smoothing", minval=2, maxval=30) // sweep: 5-15 step 2
+
+// RSI filter
+rsi_length = input.int(14, "RSI Length", minval=2, maxval=50)            // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Minimum (LONG)", minval=20, maxval=80) // sweep: 30-60 step 5
+
+// ATR-based TP/SL
+atr_length = input.int(14, "ATR Length", minval=5, maxval=50)            // sweep: 7-21 step 7
+sl_mult = input.float(1.0, "Stop Loss (x ATR)", minval=0.5, maxval=3.0, step=0.1)   // sweep: 0.8-1.5 step 0.1
+tp_mult = input.float(2.0, "Take Profit (x ATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.5-3.0 step 0.25
+
+// Trade management
+use_rsi_filter = input.bool(true, "Use RSI Filter")                      // toggle on/off
+
+//--- indicator calculations
+
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+
+// RSI for filter
+rsi_val = ta.rsi(close, rsi_length)
+
+// ATR for TP/SL
+atr_val = ta.atr(atr_length)
+
+//--- entry logic
+
+// LONG condition: MACD crosses above Signal AND RSI > threshold
+long_entry = ta.crossover(macd_line, signal_line)
+long_filter_ok = use_rsi_filter ? (rsi_val > rsi_threshold) : true
+long_ok = long_entry and long_filter_ok
+
+//--- trade execution
+
+// Entry on MACD crossover + RSI filter
+if long_ok
+    strategy.entry("LONG", strategy.long)
+
+// Exit: ATR-based TP and SL. No crossunder exit — pure TP/SL management
+// strategy.exit with loss=SL_in_ticks, profit=TP_in_ticks
+// Convert ATR dollar value to ticks: sl_in_ticks = atr_val * sl_mult / syminfo.mintick
+if strategy.position_size > 0
+    sl_ticks = math.round(atr_val * sl_mult / syminfo.mintick)
+    tp_ticks = math.round(atr_val * tp_mult / syminfo.mintick)
+    strategy.exit("LONG_EXIT", "LONG", loss=sl_ticks, profit=tp_ticks)
