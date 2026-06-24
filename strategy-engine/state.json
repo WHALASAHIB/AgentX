@@ -1,6 +1,6 @@
 {
-  "iteration": 49,
-  "last_run": "2026-06-24T09:38:00",
+  "iteration": 53,
+  "last_run": "2026-06-24T10:53:16",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,154 +13,42 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Supertrend(7,3) breakout on XAUUSD H30. Supertrend flips long when close above band → buy, flips short when close below band → sell. Add ADX(14)>20 trend filter (wider than usual since Supertrend is already trend-following). RSI(14) filter: >50 for long, <50 for short. ATR-based TP/SL at 2:1. Supertrend is a different indicator family from EMAs. Factor: ATR=3 (sweep 1-5 step 1), Period=7 (sweep 5-14 step 2).",
+  "current_hypothesis": "Add RSI(14) filter to EMA crossover strategy — only enter LONG when RSI(14) > 50. This filters out weak crossover signals during low-momentum/bearish periods. The crossover exit mechanism worked (69 trades vs 1 before), so keep that. Target: improve PF from 1.12 to >1.5 and WR from 26% to >40%.",
   "evolution_log": [
     {
-      "iteration": 29,
-      "hypothesis": "Remove TK cross requirement from Ichimoku filter — use only price above/below cloud as trend filter.",
-      "metrics": {"pf": 0.83773343, "sharpe": -4.16290442, "wr": 50.0, "dd": 4.27810049, "trades": 28, "net_profit": -324.91},
-      "verdict": "rejected (PF=0.838 < 1.3) — Removing TK cross boosted trades 13→28 but PF collapsed.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T19:52:00"
-    },
-    {
-      "iteration": 30,
-      "hypothesis": "Keep TK cross from iter 28 but reduce MACD (12,26,9)→(8,17,5) for more frequent signals.",
-      "metrics": {"pf": 0.98139626, "sharpe": -2.55092957, "wr": 48.0, "dd": 4.26139309, "trades": 25, "net_profit": -212.63},
-      "verdict": "rejected (PF=0.981 < 1.3) — 25 trades but shorts lost -$316.89 vs longs +$104.26.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:10:00"
-    },
-    {
-      "iteration": 31,
-      "hypothesis": "Add ADX(14) > 25 filter to iter 30's MACD(8,17,5)+Ichimoku+RSI+TK cross structure.",
-      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — ADX>25 on top of MACD+Ichimoku+TK+RSI quadruple filter produced 0 trades.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:25:00"
-    },
-    {
-      "iteration": 32,
-      "hypothesis": "Reduce ADX(14) threshold from 25 to 20 on iter 31's MACD+Ichimoku+RSI+ADX structure.",
-      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — ADX>20 still too restrictive with 4-filter stack.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T20:40:00"
-    },
-    {
-      "iteration": 33,
-      "hypothesis": "Remove ADX, add VWAP trend filter to MACD+Ichimoku+RSI structure.",
-      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 5.50012296, "trades": 0, "net_profit": -4},
-      "verdict": "invalid (no trades) — VWAP filter produced 0 trades. Filter stack with 5 conditions too restrictive.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:05:00"
-    },
-    {
-      "iteration": 34,
-      "hypothesis": "Remove VWAP, keep MACD(8,17,5) cross + Ichimoku cloud + RSI(14) >50/<50, no TK cross.",
-      "metrics": {"pf": 1.11695372, "sharpe": -3.53085458, "wr": 35.8974359, "dd": 4.30342437, "trades": 39, "net_profit": -256.59},
-      "verdict": "rejected (PF=1.117 < 1.3) — 39 trades, best count, but WR 35.9%.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:20:00"
-    },
-    {
-      "iteration": 35,
-      "hypothesis": "Tighten TP/SL from 1.2:1 to 1:1.5 (TP=67/SL=100) to boost WR.",
-      "metrics": {"pf": 1.13299684, "sharpe": -3.43901277, "wr": 35.8974359, "dd": 4.23513239, "trades": 39, "net_profit": -249.64},
-      "verdict": "rejected (PF=1.133 < 1.3) — TP tightening had no effect on WR. Next: LONG-only.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T21:40:00"
-    },
-    {
-      "iteration": 36,
-      "hypothesis": "Switch to LONG-only. Remove shorts. Keep MACD(8,17,5)+Ichimoku cloud+RSI(14)>50.",
-      "metrics": {"pf": 2.03124515, "sharpe": 1.02296549, "wr": 75.0, "dd": 6.33820684, "trades": 8, "net_profit": 187.299743171368},
-      "verdict": "invalid (low sample, 8 trades) — NEW BEST PF 2.03, Sharpe 1.02, WR 75%, +$187 P&L!",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T23:21:00"
-    },
-    {
-      "iteration": 37,
-      "hypothesis": "Remove RSI(14)>50 filter — increase trade count from 8 to 20+.",
-      "metrics": {"pf": 0.61670629, "sharpe": -2.46709213, "wr": 55.55555556, "dd": 10.09667466, "trades": 9, "net_profit": -624.859636765059},
-      "verdict": "rejected (PF=0.617 < 1.3) — Removing RSI only increased trades 8→9 while PF collapsed.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T23:36:00"
-    },
-    {
-      "iteration": 38,
-      "hypothesis": "Re-add RSI(14)>50 filter. Reverses iter 37.",
-      "metrics": {"pf": 2.03124515, "sharpe": 1.02296549, "wr": 75.0, "dd": 6.33820684, "trades": 8, "net_profit": 187.299743171368},
-      "verdict": "invalid (low sample, 8 trades) — RSI restored. Metrics identical to best. Trade count stuck at 8.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T23:51:00"
-    },
-    {
-      "iteration": 39,
-      "hypothesis": "Reduce MACD fast from 8 to 5 — more crossovers.",
-      "metrics": {"pf": 0, "sharpe": 0.4631143, "wr": 100.0, "dd": 8.36521735, "trades": 1, "net_profit": 92.076629954821},
-      "verdict": "invalid (low sample, 1 trade) — MACD(5,17,5) too erratic.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-24T00:51:00"
-    },
-    {
-      "iteration": 40,
-      "hypothesis": "Remove Ichimoku cloud. Keep MACD(8,17,5)+RSI>50+LONG-only.",
-      "metrics": {"pf": 0, "sharpe": 0.45249023, "wr": 100.0, "dd": 8.36521829, "trades": 1, "net_profit": 89.000707178981},
-      "verdict": "invalid (low sample, 1 trade) — Still only 1 trade. MACD(8,17)+RSI(14) H1 triggers ~1 per 882 bars.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-24T01:50:00"
-    },
-    {
-      "iteration": 41,
-      "hypothesis": "Reduce RSI(14) threshold from 50 to 40 on MACD(8,17,5)+RSI LONG-only.",
-      "metrics": {"pf": 0, "sharpe": 1.09096757, "wr": 100.0, "dd": 8.36515934, "trades": 1, "net_profit": 286.025937278944},
-      "verdict": "invalid (low sample, 1 trade) — RSI>40 still 1 trade in 882 bars. MACD crossovers inherently rare on H1 regardless of RSI threshold.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-24T02:00:00"
-    },
-    {
-      "iteration": 42,
-      "hypothesis": "Switch to H30 timeframe from H1. Same MACD(8,17,5)+RSI(14)>40 LONG-only script.",
-      "metrics": {"pf": 0, "sharpe": 1.16826617, "wr": 100.0, "dd": 8.36515465, "trades": 1, "net_profit": 301.305203018308},
-      "verdict": "invalid (low sample, 1 trade) — H30 still only 1 MACD(8,17)+RSI>40 signal in 1709 bars (~36 days). MACD crossovers are inherently rare on XAUUSD at any timeframe.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T02:20:00"
-    },
-    {
-      "iteration": 43,
-      "hypothesis": "Switch from MACD(8,17,5) to EMA(5,13) crossover on H30 timeframe. Short EMAs should produce far more crossovers than MACD on XAUUSD. Keep LONG-only + RSI(14)>50 filter.",
-      "metrics": {"pf": 1.38967505, "sharpe": -3.63417176, "wr": 39.28571429, "dd": 4.56904784, "trades": 56, "net_profit": -249.717902491429},
-      "verdict": "rejected (PF=1.3897 Sharpe=-3.6342 DD=4.57%) — 56 trades solves sample issue! EMA crossover generates 10x more signals than MACD. PF 1.39 close to 1.5 target, DD 4.6% excellent. Next: add ADX>25 trend filter.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T02:50:00"
-    },
-    {
-      "iteration": 44,
-      "hypothesis": "Add ADX(14)>25 trend filter to EMA(5,13)+RSI(14)>50 LONG-only on H30.",
-      "metrics": {"pf": 3.60569209, "sharpe": 2.86708508, "wr": 54.54545455, "dd": 0.76280566, "trades": 33, "net_profit": 162.045741378948},
-      "verdict": "NEW BEST STRATEGY — PF 3.61  Sharpe 2.87  WR 54.5%  DD 0.76%  33 trades!",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T02:55:00"
-    },
-    {
-      "iteration": 45,
-      "hypothesis": "Bollinger Bands squeeze/breakout on H30. 20-period SMA midline, 2.5 std dev bands. Squeeze detection, breakout above upper/lower bands, pullback to midline entry, RSI(14) confirmation. Fixed TP/SL.",
-      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — 4-condition filter stack (squeeze + breakout + pullback + RSI) produced 0 trades on XAUUSD H30. Same overfiltering problem as iters 31-33. Next: simplify BB to straight reversion-to-mean (no squeeze, no pullback).",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T03:10:00"
-    },
-    {
-      "iteration": 46,
-      "hypothesis": "Bollinger Bands reversion-to-mean on XAUUSD H30. Entry: close crosses below lower band = long, close crosses above upper band = short. RSI(14)>30 for longs, RSI(14)<70 for shorts. ATR-based SL (1.5×ATR) and 2:1 TP. BB stddev 2.0, BB length 20.",
-      "metrics": {"pf": 0, "sharpe": -0.61598797, "wr": 0, "dd": 10.8871488, "trades": 1, "net_profit": -248.17},
-      "verdict": "invalid (low sample, 1 trade) — BB reversion produced only 1 short trade in 1707 bars. RSI filter likely blocking long entries. Lower band was rarely touched with 2.0 stddev on XAUUSD H30.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T03:25:00"
-    },
-    {
-      "iteration": 47,
-      "hypothesis": "Tighten BB stddev from 2.0 to 1.5 for more band touches. Remove RSI filter entirely. Straight reversion entry: close below lower band = long, close above upper band = short. ATR-based TP/SL at 2:1 ratio.",
-      "metrics": {"pf": 0.91835794, "sharpe": -8.59289846, "wr": 35.86206897, "dd": 14.04715597, "trades": 145, "net_profit": -1284.84},
-      "verdict": "rejected (PF=0.918 < 1.3, Sharpe=-8.593). Stddev 1.5 solved the sample problem (145 trades vs 1), but without RSI filter PF collapsed. Tightened BB produced many more band touches but every reversion entry was low quality.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:23:00"
-    },
-    {
-      "iteration": 48,
-      "hypothesis": "Add RSI(14) filter back to BB reversion stddev 1.5: long only if RSI(14) > 50, short only if RSI(14) < 50.",
-      "metrics": {"pf": 0, "sharpe": -4.07237614, "wr": 0, "dd": 0.66570783, "trades": 2, "net_profit": -66.57},
-      "verdict": "invalid (low sample, 2 trades) — RSI(14)>50 filter dropped 145 band touches to just 2 trades. Both lost. RSI filter too restrictive for this BB approach.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:23:00"
-    },
-    {
       "iteration": 49,
-      "hypothesis": "Enable SHORTS on best strategy: EMA(5,13)+ADX(25)+RSI(50) H30. Short entry: EMA5 crosses below EMA13 with ADX(14)>25 and RSI(14)<50. Same ATR-based 2:1 TP/SL. This enables both directions on the proven filter structure.",
+      "hypothesis": "Enable SHORTS on best strategy: EMA(5,13)+ADX(25)+RSI(50) H30.",
       "metrics": {"pf": 1.90416222, "sharpe": 3.69255604, "wr": 46.26865672, "dd": 4.77558481, "trades": 67, "net_profit": 534.805325132576},
-      "verdict": "accepted (incremental) — PF 1.90 Sharpe 3.69 WR 46.27% DD 4.78% 67 trades +$534.81. Shorts contributed only $20.85 vs longs $514.0 — shorts are dead weight. Not beating best (iter 44 PF 3.61). Next: try Supertrend as a different indicator family.",
+      "verdict": "accepted (incremental) — PF 1.90 Sharpe 3.69 WR 46.27% DD 4.78% 67 trades +$534.81. Shorts contributed only $20.85 vs longs $514.0 — shorts are dead weight. Not beating best (iter 44 PF 3.61).",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:38:00"
+    },
+    {
+      "iteration": 50,
+      "hypothesis": "Supertrend(7,3) LONG-only H30. Entry: st_trend flips to uptrend. ADX(14)>20 trend filter. RSI(14)>50 momentum filter. ATR-based TP/SL at 2:1.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — Triple filter (Supertrend flip + ADX>20 + RSI>50) produced 0 signals in 1705 bars. Same over-filtering pattern as BB iterations 45-48.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:10:00"
+    },
+    {
+      "iteration": 51,
+      "hypothesis": "Simplify Supertrend to bare signal only — remove ADX>20 and RSI>50 filters. Supertrend(7,3) flip to uptrend = long entry. ATR(14)-based TP/SL at 2:1 ratio.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — Bare Supertrend(7,3) direction signal produced 0 entries in 1705 bars on XAUUSD 30m. Supertrend indicator doesn't generate tradeable signals on this data. Pivoting to EMA crossover — proven signal generator from best strategy.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:22:00"
+    },
+    {
+      "iteration": 52,
+      "hypothesis": "EMA(5,13) crossover XAUUSD 30m. Entry LONG when EMA5 crosses above EMA13. ATR(14)-based SL at 0.5% with 2:1 TP. No additional filters.",
+      "metrics": {"pf": 0, "sharpe": 0.69, "wr": 100, "dd": 8.37, "trades": 1, "net_profit": 160.46},
+      "verdict": "invalid (low sample, 1 trades) — Only 1 trade in 1704 bars. The fixed TP/SL never triggered (avg bars held = 1680). EMA crossover held a single position for 35 days. Need crossover-based exit so trades close and new signals fire.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:40:00"
+    },
+    {
+      "iteration": 53,
+      "hypothesis": "Add crossover-based EXIT to EMA(5,13) XAUUSD 30m. Entry LONG on EMA5 > EMA13 crossover. Exit on EMA5 < EMA13 crossunder. ATR(14)-based SL at 0.5% as emergency stop.",
+      "metrics": {"pf": 1.12121789, "sharpe": -1.85671774, "wr": 26.08695652, "dd": 7.25419914, "trades": 69, "net_profit": -379.414267078932},
+      "verdict": "rejected (PF=1.12, Sharpe=-1.86, WR=26.09%) — Crossover exit WORKS (69 trades vs 1), but the strategy loses money. PF 1.12 and Sharpe -1.86 unacceptable. Adding RSI(14)>50 filter next to filter weak signals.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:53:16"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

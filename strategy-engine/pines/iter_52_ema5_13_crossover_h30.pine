@@ -1,0 +1,58 @@
+//@version=5
+strategy(
+  title="EMA(5,13) Crossover — XAUUSD 30m",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(5, "Fast EMA Length", minval=2, maxval=30, step=1)      // sweep: 2-20 step 1
+emaSlowLen = input.int(13, "Slow EMA Length", minval=5, maxval=100, step=1)     // sweep: 8-50 step 2
+
+// ATR-based stop loss parameters
+atrLen = input.int(14, "ATR Length", minval=5, maxval=50, step=1)              // sweep: 5-30 step 5
+slPct = input.float(0.5, "Stop Loss %", minval=0.1, maxval=3.0, step=0.1)      // sweep: 0.2-2.0 step 0.2
+tpRatio = input.float(2.0, "TP/SL Ratio", minval=1.0, maxval=5.0, step=0.5)    // sweep: 1.0-4.0 step 0.5
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+atrVal  = ta.atr(atrLen)
+
+//--- entry logic
+crossAbove = ta.crossover(emaFast, emaSlow)
+crossBelow = ta.crossunder(emaFast, emaSlow)
+
+// Calculate stop distance as percentage of entry price
+// SL in ticks: (entryPrice * slPct / 100) / syminfo.mintick
+// TP in ticks: SL_ticks * tpRatio
+
+var float entryPrice = na
+var int   slTicks = na
+var int   tpTicks = na
+
+// Entry: EMA5 crosses above EMA13
+if (crossAbove and strategy.position_size == 0)
+    entryPrice = close
+    slTicks = math.round((entryPrice * slPct / 100) / syminfo.mintick)
+    tpTicks = math.round(slTicks * tpRatio)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+// Entry: EMA5 crosses below EMA13
+if (crossBelow and strategy.position_size == 0)
+    entryPrice = close
+    slTicks = math.round((entryPrice * slPct / 100) / syminfo.mintick)
+    tpTicks = math.round(slTicks * tpRatio)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)
+
+//--- visual
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=2)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=2)
