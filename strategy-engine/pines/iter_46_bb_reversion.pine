@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="BB Reversion H30 XAUUSD", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)           // sweep: 10-30 step 5
+bb_mult   = input.float(2.0, "BB Std Dev", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.5-3.0 step 0.5
+rsi_len   = input.int(14, "RSI Length", minval=5, maxval=30)          // sweep: 7-21 step 7
+rsi_long_min = input.int(30, "RSI Min for Long", minval=10, maxval=60)  // sweep: 20-50 step 10
+rsi_short_max = input.int(70, "RSI Max for Short", minval=40, maxval=90) // sweep: 50-80 step 10
+tp_ratio  = input.float(2.0, "TP/SL Ratio", minval=0.5, maxval=4.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+sl_atr    = input.int(14, "SL ATR Length", minval=5, maxval=30)       // sweep: 7-21 step 7
+sl_mult   = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=4.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//--- Bollinger Bands
+basis = ta.sma(close, bb_length)
+dev   = ta.stdev(close, bb_length) * bb_mult
+upper = basis + dev
+lower = basis - dev
+
+//--- RSI
+rsi = ta.rsi(close, rsi_len)
+
+//--- ATR for dynamic SL
+atr_val = ta.atr(sl_atr)
+
+//--- Entry conditions
+// LONG: price closes below lower band (oversold/reversion) AND RSI not in extreme oversold
+long_entry  = close < lower and rsi > rsi_long_min
+// SHORT: price closes above upper band (overbought/reversion) AND RSI not in extreme overbought
+short_entry = close > upper and rsi < rsi_short_max
+
+//--- Entry management
+var int long_trade_id  = 0
+var int short_trade_id = 0
+
+if long_entry and strategy.position_size == 0
+    long_trade_id := long_trade_id + 1
+    strategy.entry("LE" + str.tostring(long_trade_id), strategy.long)
+    sl_ticks = int(atr_val * sl_mult / syminfo.mintick)
+    tp_ticks = int(sl_ticks * tp_ratio)
+    strategy.exit("LX" + str.tostring(long_trade_id), "LE" + str.tostring(long_trade_id), loss=sl_ticks, profit=tp_ticks)
+
+if short_entry and strategy.position_size == 0
+    short_trade_id := short_trade_id + 1
+    strategy.entry("SE" + str.tostring(short_trade_id), strategy.short)
+    sl_ticks = int(atr_val * sl_mult / syminfo.mintick)
+    tp_ticks = int(sl_ticks * tp_ratio)
+    strategy.exit("SX" + str.tostring(short_trade_id), "SE" + str.tostring(short_trade_id), loss=sl_ticks, profit=tp_ticks)
+
+//--- Plotting
+plot(basis, "BB Mid", color=color.blue)
+plot(upper, "BB Upper", color=color.red)
+plot(lower, "BB Lower", color=color.green)
+fill(plot(upper), plot(lower), color=color.new(color.gray, 95))

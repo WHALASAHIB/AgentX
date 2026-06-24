@@ -1,6 +1,6 @@
 {
-  "iteration": 45,
-  "last_run": "2026-06-24T03:10:00",
+  "iteration": 49,
+  "last_run": "2026-06-24T09:38:00",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,15 +13,8 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "The Bollinger squeeze+breakout+pullback+RSI stack produced 0 trades — too restrictive. Next: simplify Bollinger Bands to just price closing outside the bands (no squeeze, no pullback). Entry: close crosses above upper band = short (reversion), close crosses below lower band = long (reversion). RSI(14) > 30 for longs, < 70 for shorts (anti-extreme). Fixed TP/SL. This tests straight BB reversion-to-mean.",
+  "current_hypothesis": "Supertrend(7,3) breakout on XAUUSD H30. Supertrend flips long when close above band → buy, flips short when close below band → sell. Add ADX(14)>20 trend filter (wider than usual since Supertrend is already trend-following). RSI(14) filter: >50 for long, <50 for short. ATR-based TP/SL at 2:1. Supertrend is a different indicator family from EMAs. Factor: ATR=3 (sweep 1-5 step 1), Period=7 (sweep 5-14 step 2).",
   "evolution_log": [
-    {
-      "iteration": 28,
-      "hypothesis": "Add Ichimoku Cloud trend filter (price above/below cloud + TK cross) to MACD+RSI14+24h+TP1:1.2 strategy.",
-      "metrics": {"pf": 1.30915355, "sharpe": -0.28533025, "wr": 61.53846154, "dd": 1.20821231, "trades": 13, "net_profit": -19.43},
-      "verdict": "invalid (low sample, 13 trades) — NEW BEST PF 1.309, WR 61.54%, DD 1.21%, Net P&L -$19.43. Ichimoku improved all metrics but trade count dropped to 13.",
-      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-23T19:36:56"
-    },
     {
       "iteration": 29,
       "hypothesis": "Remove TK cross requirement from Ichimoku filter — use only price above/below cloud as trend filter.",
@@ -140,6 +133,34 @@
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
       "verdict": "invalid (no trades) — 4-condition filter stack (squeeze + breakout + pullback + RSI) produced 0 trades on XAUUSD H30. Same overfiltering problem as iters 31-33. Next: simplify BB to straight reversion-to-mean (no squeeze, no pullback).",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T03:10:00"
+    },
+    {
+      "iteration": 46,
+      "hypothesis": "Bollinger Bands reversion-to-mean on XAUUSD H30. Entry: close crosses below lower band = long, close crosses above upper band = short. RSI(14)>30 for longs, RSI(14)<70 for shorts. ATR-based SL (1.5×ATR) and 2:1 TP. BB stddev 2.0, BB length 20.",
+      "metrics": {"pf": 0, "sharpe": -0.61598797, "wr": 0, "dd": 10.8871488, "trades": 1, "net_profit": -248.17},
+      "verdict": "invalid (low sample, 1 trade) — BB reversion produced only 1 short trade in 1707 bars. RSI filter likely blocking long entries. Lower band was rarely touched with 2.0 stddev on XAUUSD H30.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T03:25:00"
+    },
+    {
+      "iteration": 47,
+      "hypothesis": "Tighten BB stddev from 2.0 to 1.5 for more band touches. Remove RSI filter entirely. Straight reversion entry: close below lower band = long, close above upper band = short. ATR-based TP/SL at 2:1 ratio.",
+      "metrics": {"pf": 0.91835794, "sharpe": -8.59289846, "wr": 35.86206897, "dd": 14.04715597, "trades": 145, "net_profit": -1284.84},
+      "verdict": "rejected (PF=0.918 < 1.3, Sharpe=-8.593). Stddev 1.5 solved the sample problem (145 trades vs 1), but without RSI filter PF collapsed. Tightened BB produced many more band touches but every reversion entry was low quality.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:23:00"
+    },
+    {
+      "iteration": 48,
+      "hypothesis": "Add RSI(14) filter back to BB reversion stddev 1.5: long only if RSI(14) > 50, short only if RSI(14) < 50.",
+      "metrics": {"pf": 0, "sharpe": -4.07237614, "wr": 0, "dd": 0.66570783, "trades": 2, "net_profit": -66.57},
+      "verdict": "invalid (low sample, 2 trades) — RSI(14)>50 filter dropped 145 band touches to just 2 trades. Both lost. RSI filter too restrictive for this BB approach.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:23:00"
+    },
+    {
+      "iteration": 49,
+      "hypothesis": "Enable SHORTS on best strategy: EMA(5,13)+ADX(25)+RSI(50) H30. Short entry: EMA5 crosses below EMA13 with ADX(14)>25 and RSI(14)<50. Same ATR-based 2:1 TP/SL. This enables both directions on the proven filter structure.",
+      "metrics": {"pf": 1.90416222, "sharpe": 3.69255604, "wr": 46.26865672, "dd": 4.77558481, "trades": 67, "net_profit": 534.805325132576},
+      "verdict": "accepted (incremental) — PF 1.90 Sharpe 3.69 WR 46.27% DD 4.78% 67 trades +$534.81. Shorts contributed only $20.85 vs longs $514.0 — shorts are dead weight. Not beating best (iter 44 PF 3.61). Next: try Supertrend as a different indicator family.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:38:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

@@ -1,0 +1,52 @@
+//@version=5
+strategy(title="BB Reversion StdDev 1.5 No RSI - XAUUSD H30", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+// --- inputs
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)     // sweep: 10-30 step 5
+bb_mult   = input.float(1.5, "BB StdDev", minval=1.0, maxval=3.0, step=0.5)  // sweep: 1.0-2.5 step 0.5
+atr_period = input.int(14, "ATR Period", minval=7, maxval=28)   // sweep: 7-21 step 7
+tp_sl_ratio = input.float(2.0, "TP:SL Ratio", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+use_long  = input.bool(true, "Enable Longs")
+use_short = input.bool(true, "Enable Shorts")
+trade_hour_start = input.int(0, "Trade Start Hour (UTC)", minval=0, maxval=23)  // 24h market
+trade_hour_end   = input.int(23, "Trade End Hour (UTC)", minval=0, maxval=23)
+
+// --- BB calculations
+[basis, upper, lower] = ta.bb(close, bb_length, bb_mult)
+atr_val = ta.atr(atr_period)
+sl_atr_mult = input.float(0.75, "SL ATR Multiplier", minval=0.5, maxval=2.0, step=0.25)  // sweep: 0.5-1.5 step 0.25
+
+// --- entry conditions
+is_trade_hour = (hour >= trade_hour_start and hour <= trade_hour_end)
+
+// LONG: close crosses below lower band (reversion entry)
+long_entry = use_long and is_trade_hour and ta.crossunder(close, lower)
+
+// SHORT: close crosses above upper band (reversion entry)
+short_entry = use_short and is_trade_hour and ta.crossover(close, upper)
+
+// --- exit management with ATR-based stops
+// SL at ATR_mult * ATR below entry for longs, above entry for shorts
+// TP at tp_sl_ratio * SL distance
+sl_pips = sl_atr_mult * atr_val / syminfo.mintick
+tp_pips = sl_pips * tp_sl_ratio
+
+// --- entry/exit logic
+if (long_entry)
+    strategy.entry("BB_Long", strategy.long)
+
+if (short_entry)
+    strategy.entry("BB_Short", strategy.short)
+
+// Manage exits with stop-loss and take-profit
+if (strategy.position_size > 0)
+    strategy.exit("BB_Long_Exit", "BB_Long", loss=int(sl_pips), profit=int(tp_pips))
+
+if (strategy.position_size < 0)
+    strategy.exit("BB_Short_Exit", "BB_Short", loss=int(sl_pips), profit=int(tp_pips))
+
+// --- plot bands
+plot(basis, "BB Mid", color=color.blue)
+p_upper = plot(upper, "BB Upper", color=color.red, linewidth=2)
+p_lower = plot(lower, "BB Lower", color=color.green, linewidth=2)
+fill(p_upper, p_lower, color=color.new(color.gray, 90), title="BB Fill")
