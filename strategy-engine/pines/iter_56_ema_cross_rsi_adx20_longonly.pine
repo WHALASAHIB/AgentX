@@ -1,0 +1,37 @@
+//@version=5
+strategy(title="EMA(5,13) Crossover + RSI(50) + DMI-ADX(20) Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50)    // sweep: 2-20 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=100)  // sweep: 8-30 step 2
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)             // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=30, maxval=70)  // sweep: 40-60 step 5
+dmi_len = input.int(14, "DMI/ADX Length", minval=5, maxval=30)         // sweep: 7-21 step 2
+adx_threshold = input.int(20, "ADX Trending Threshold", minval=10, maxval=40) // sweep: 15-25 step 5 — lowered from 25 to 20
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)             // sweep: 10-20 step 2
+atr_sl_mult = input.float(1.5, "ATR SL Multiplier", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+[dplus, dminus, adx_val] = ta.dmi(high, low, close, dmi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic — LONG only
+long_entry = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold and adx_val > adx_threshold
+long_exit = ta.crossunder(ema_fast, ema_slow)
+
+//--- exit management — ATR-based SL + fixed 2:1 TP
+if (long_entry and strategy.position_size == 0)
+    strategy.entry("EL", strategy.long)
+    strategy.exit("XL", "EL", limit=close + (atr_val * atr_sl_mult * 2), stop=close - (atr_val * atr_sl_mult))
+
+// Close on crossover exit signal
+if (long_exit and strategy.position_size > 0)
+    strategy.close("EL")
+
+//--- visual
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)
+hline(adx_threshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)

@@ -1099,24 +1099,35 @@ async def filter_trades(
         trades = [t for t in trades if t.get("magic") == magic]
     return trades
 
+# ── Pine Script strategies directory ─────────────────────────────────────
+PINES_DIR = Path(__file__).resolve().parent.parent / "strategy-engine" / "pines"
+if not PINES_DIR.is_dir():
+    PINES_DIR = Path("C:\\Trading\\strategy-engine\\pines")
+
+def _list_pine_strategies() -> list[dict]:
+    """List all .pine files from the pines directory."""
+    if not PINES_DIR.is_dir():
+        logger.warning("Pine scripts directory not found: %s", PINES_DIR)
+        return []
+    try:
+        result = []
+        for f in sorted(PINES_DIR.iterdir()):
+            if f.suffix.lower() == ".pine":
+                result.append({
+                    "name": f.stem,
+                    "path": str(f.resolve()),
+                })
+        return result
+    except Exception as e:
+        logger.error("Failed to list pine strategies: %s", e)
+        return []
+
 # ── Backtesting Endpoints ────────────────────────────────────────────────
 
 @app.get("/api/backtest/strategies")
 async def list_backtest_strategies(auth=Depends(require_auth)):
-    import sys as _sys
-    from pathlib import Path as _Path
-    _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "backtester"))
-    try:
-        from loader import list_strategies, get_default_params
-        strats = list_strategies()
-        result = []
-        for key, cls in strats.items():
-            params = get_default_params(cls)
-            result.append({"key": key, "name": key, "params": params})
-        return result
-    except Exception as e:
-        logger.error("Failed to load strategies: %s", e)
-        return []
+    """List all available Pine Script strategies from strategy-engine/pines/."""
+    return _list_pine_strategies()
 
 class RunBacktestRequest(PydanticBaseModel):
     symbol: str
@@ -1126,6 +1137,7 @@ class RunBacktestRequest(PydanticBaseModel):
     capital: float = 10000
     lot_size: float = 0.01
     strategy_key: str = ""
+    strategy_name: str = ""
     strategy_params: dict = {}
     ftmo_mode: bool = True
 
@@ -1154,10 +1166,16 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
         )
 
     strategies = list_strategies()
-    if req.strategy_key not in strategies:
-        raise HTTPException(status_code=400, detail=f"Unknown strategy: {req.strategy_key}")
 
-    strategy_cls = strategies[req.strategy_key]
+    # Resolve strategy: prefer strategy_key, fall back to strategy_name
+    effective_key = req.strategy_key or req.strategy_name
+    if not effective_key:
+        raise HTTPException(status_code=400, detail="Either strategy_key or strategy_name is required")
+
+    if effective_key not in strategies:
+        raise HTTPException(status_code=400, detail=f"Unknown strategy: {effective_key}")
+
+    strategy_cls = strategies[effective_key]
     result = bt_run(
         strategy_class=strategy_cls,
         data=data,
@@ -2181,6 +2199,47 @@ async def sse_events():
                 continue
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# ── Prices Endpoint ───────────────────────────────────────────────────────────
+
+@app.get("/api/prices")
+async def get_prices():
+    """Return current bid/ask prices for all tracked symbols.
+
+    Reads tracked_symbols from mt5_config.json, queries the bridge for each,
+    and returns a JSON dict keyed by symbol. Bridge errors for individual
+    symbols are reported as null instead of failing the whole request.
+    """
+    config_path = Path(__file__).resolve().parent.parent / "mt5_config.json"
+    try:
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        symbols = config.get("tracked_symbols") or config.get("symbols", [])
+    except Exception as e:
+        logger.warning("Could not read mt5_config.json: %s", e)
+        symbols = []
+
+    bridge = get_bridge()
+    prices: dict[str, Any] = {}
+
+    async def fetch_one(symbol: str) -> None:
+        try:
+            tick = await bridge.get_tick("default", symbol)
+            prices[symbol] = {
+                "bid": tick.get("bid"),
+                "ask": tick.get("ask"),
+                "timestamp": tick.get("time") or tick.get("timestamp"),
+            }
+        except HTTPException as e:
+            logger.warning("Bridge error for %s: %s", symbol, e.detail)
+            prices[symbol] = {"bid": None, "ask": None, "timestamp": None, "error": e.detail}
+        except Exception as e:
+            logger.warning("Unexpected error for %s: %s", symbol, e)
+            prices[symbol] = {"bid": None, "ask": None, "timestamp": None, "error": str(e)}
+
+    await asyncio.gather(*(fetch_one(sym) for sym in symbols))
+    return prices
 
 
 # ── Frontend (static files from AGENTX dashboard) ──────────────────────────

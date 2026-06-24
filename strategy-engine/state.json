@@ -1,6 +1,6 @@
 {
-  "iteration": 53,
-  "last_run": "2026-06-24T10:53:16",
+  "iteration": 57,
+  "last_run": "2026-06-24T11:55:00",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,42 +13,70 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add RSI(14) filter to EMA crossover strategy — only enter LONG when RSI(14) > 50. This filters out weak crossover signals during low-momentum/bearish periods. The crossover exit mechanism worked (69 trades vs 1 before), so keep that. Target: improve PF from 1.12 to >1.5 and WR from 26% to >40%.",
+  "current_hypothesis": "H1 triple filter (EMA crossover + RSI>50 + ADX>25) only produced 7 all-losing trades — ADX trending filter is too restrictive even on H1. Next: remove ADX filter entirely. Try EMA(5,13) crossover + RSI(50) LONG-only on H1 with no ADX restriction. This should produce more signals and the RSI>50 momentum filter alone may be sufficient.",
   "evolution_log": [
     {
       "iteration": 49,
       "hypothesis": "Enable SHORTS on best strategy: EMA(5,13)+ADX(25)+RSI(50) H30.",
       "metrics": {"pf": 1.90416222, "sharpe": 3.69255604, "wr": 46.26865672, "dd": 4.77558481, "trades": 67, "net_profit": 534.805325132576},
-      "verdict": "accepted (incremental) — PF 1.90 Sharpe 3.69 WR 46.27% DD 4.78% 67 trades +$534.81. Shorts contributed only $20.85 vs longs $514.0 — shorts are dead weight. Not beating best (iter 44 PF 3.61).",
+      "verdict": "accepted (incremental)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T09:38:00"
     },
     {
       "iteration": 50,
       "hypothesis": "Supertrend(7,3) LONG-only H30. Entry: st_trend flips to uptrend. ADX(14)>20 trend filter. RSI(14)>50 momentum filter. ATR-based TP/SL at 2:1.",
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — Triple filter (Supertrend flip + ADX>20 + RSI>50) produced 0 signals in 1705 bars. Same over-filtering pattern as BB iterations 45-48.",
+      "verdict": "invalid (no trades)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:10:00"
     },
     {
       "iteration": 51,
-      "hypothesis": "Simplify Supertrend to bare signal only — remove ADX>20 and RSI>50 filters. Supertrend(7,3) flip to uptrend = long entry. ATR(14)-based TP/SL at 2:1 ratio.",
+      "hypothesis": "Simplify Supertrend to bare signal only — remove ADX>20 and RSI>50 filters.",
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — Bare Supertrend(7,3) direction signal produced 0 entries in 1705 bars on XAUUSD 30m. Supertrend indicator doesn't generate tradeable signals on this data. Pivoting to EMA crossover — proven signal generator from best strategy.",
+      "verdict": "invalid (no trades)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:22:00"
     },
     {
       "iteration": 52,
       "hypothesis": "EMA(5,13) crossover XAUUSD 30m. Entry LONG when EMA5 crosses above EMA13. ATR(14)-based SL at 0.5% with 2:1 TP. No additional filters.",
       "metrics": {"pf": 0, "sharpe": 0.69, "wr": 100, "dd": 8.37, "trades": 1, "net_profit": 160.46},
-      "verdict": "invalid (low sample, 1 trades) — Only 1 trade in 1704 bars. The fixed TP/SL never triggered (avg bars held = 1680). EMA crossover held a single position for 35 days. Need crossover-based exit so trades close and new signals fire.",
+      "verdict": "invalid (low sample, 1 trades)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:40:00"
     },
     {
       "iteration": 53,
-      "hypothesis": "Add crossover-based EXIT to EMA(5,13) XAUUSD 30m. Entry LONG on EMA5 > EMA13 crossover. Exit on EMA5 < EMA13 crossunder. ATR(14)-based SL at 0.5% as emergency stop.",
+      "hypothesis": "Add crossover-based EXIT to EMA(5,13) XAUUSD 30m. Exit on EMA5 < EMA13 crossunder.",
       "metrics": {"pf": 1.12121789, "sharpe": -1.85671774, "wr": 26.08695652, "dd": 7.25419914, "trades": 69, "net_profit": -379.414267078932},
-      "verdict": "rejected (PF=1.12, Sharpe=-1.86, WR=26.09%) — Crossover exit WORKS (69 trades vs 1), but the strategy loses money. PF 1.12 and Sharpe -1.86 unacceptable. Adding RSI(14)>50 filter next to filter weak signals.",
+      "verdict": "rejected (PF=1.12, Sharpe=-1.86, WR=26.09%)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:53:16"
+    },
+    {
+      "iteration": 54,
+      "hypothesis": "Add RSI(14)>50 filter to EMA(5,13) crossover LONG-only. Exit on EMA5<EMA13 crossunder. ATR(14)*1.5 emergency stop.",
+      "metrics": {"pf": 1.07017916, "sharpe": -1.95665592, "wr": 26.78571429, "dd": 8.09955902, "trades": 56, "net_profit": -388.600262647818},
+      "verdict": "rejected (PF=1.07, Sharpe=-1.96, WR=26.79%)",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T10:58:00"
+    },
+    {
+      "iteration": 55,
+      "hypothesis": "Add DMI-ADX(14)>25 trending filter to EMA(5,13) crossover + RSI(50) LONG-only XAUUSD 30m. ATR-based TP/SL at 2:1.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T11:05:00"
+    },
+    {
+      "iteration": 56,
+      "hypothesis": "Lower ADX threshold to 20 instead of 25 on EMA(5,13)+RSI(50)+ADX LONG-only XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — ADX>20 still blocks all entries in 1702 bars. Triple filter (EMA crossover + RSI>50 + ADX>20) produces zero signals on XAUUSD 30m Polygon data.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-24T11:25:00"
+    },
+    {
+      "iteration": 57,
+      "hypothesis": "EMA(5,13)+RSI(50)+ADX(25) LONG-only on H1. Switch to H1 timeframe where best strategy (iter_44) succeeded — H1 data may have better trending characteristics.",
+      "metrics": {"pf": 0, "sharpe": -7.97, "wr": 0, "dd": 4.86, "trades": 7, "net_profit": -462.67},
+      "verdict": "invalid (low sample, 7 trades) — H1 triple filter produced only 7 trades, all losing. ADX>25 trending filter still too restrictive even on H1. Next: remove ADX entirely on H1.",
+      "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-06-24T11:55:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
