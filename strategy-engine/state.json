@@ -1,6 +1,6 @@
 {
-  "iteration": 81,
-  "last_run": "2026-06-24T17:47:00",
+  "iteration": 85,
+  "last_run": "2026-06-24T18:53:00",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add RSI(14)>50 momentum filter to MACD(8,17,7) crossover LONG-only XAUUSD H1. Entry: MACD line crosses above Signal line AND RSI(14)>50. Exit: ATR-based SL at 1.0x ATR, TP at 2.0x ATR. PF=0.707 is the weakest metric — well below 1.5 target. Iter 80 tried ADX(DMI)>25 trending filter but it made PF worse (0.707 vs 1.23 in iter 79 without filters) and Sharpe collapsed to -3.48. Adding RSI>50 filter ensures entries only occur when short-term momentum is positive, filtering out MACD crossovers during bearish/oversold conditions. Risk: RSI>50 may reduce trade count (iter 78 with RSI>50 had only 1 trade on MACD(8,17,7)), but iter 79 had 21 trades without it, so there are enough signals that even a 50%+ reduction should still yield >10 trades.",
+  "current_hypothesis": "Switch XAUUSD from H1 to 30m timeframe, MACD(8,17,7) crossover LONG-only, no RSI filter, ATR-based TP/SL at 1.5:1. The H1 timeframe with MACD has underperformed over 8 iterations — best PF was 1.50 (iter 77), degrading to 0.76 (iter 84) without RSI filter. The best strategy (iter 44, PF=3.61) was on 30m with EMAs. Switching timeframe to 30m may capture better entry timing for MACD crossovers while keeping the no-RSI approach that produced highest trade counts.",
   "evolution_log": [
     {
       "iteration": 49,
@@ -48,7 +48,7 @@
       "time": "2026-06-24T10:10:00"
     },
     {
-      "iteration": 50,
+      "iteration": 51,
       "hypothesis": "Simplify Supertrend to bare signal only — remove ADX>20 and RSI>50 filters.",
       "metrics": {
         "pf": 0,
@@ -483,10 +483,10 @@
       "iteration": 78,
       "hypothesis": "Add RSI(14)>50 momentum filter to MACD(8,17,7) crossover LONG-only XAUUSD H1.",
       "metrics": {
-        "pf": 0,
+        "pf": 0.0,
         "sharpe": 0.357,
-        "wr": 100,
-        "dd": 8.37,
+        "wr": 100.0,
+        "dd": 8.365,
         "trades": 1,
         "net_profit": 60.89
       },
@@ -526,14 +526,73 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T17:47:00"
+    },
+    {
+      "iteration": 81,
+      "hypothesis": "Add RSI(14)>50 momentum filter to MACD(8,17,7) crossover LONG-only XAUUSD H1. Entry: MACD line crosses above Signal line AND RSI(14)>50. Exit: ATR-based SL at 1.0x ATR, TP at 2.0x ATR. PF=0.707 from iter 80 was the weakest metric — RSI>50 filter ensures entries only occur when short-term momentum is positive.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": 0.357,
+        "wr": 100.0,
+        "dd": 8.365,
+        "trades": 1,
+        "net_profit": 60.89
+      },
+      "verdict": "invalid (low sample, 1 trades) — RSI(14)>50 killed trade count (1 trade). Same issue as iter 78. Need lower RSI threshold.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T17:47:00"
+    },
+    {
+      "iteration": 82,
+      "hypothesis": "Lower RSI threshold from 50 to 40 on MACD(8,17,7)+RSI(14) LONG-only XAUUSD H1. RSI(14)>50 in iter 81 produced only 1 trade over 864 bars — too restrictive for MACD crossover signals. Lowering to RSI>40 relaxes the momentum requirement: MACD line crosses above Signal line AND RSI(14)>40. Exit: ATR-based SL at 1.0x ATR, TP at 2.0x ATR.",
+      "metrics": {
+        "pf": 0.96487572,
+        "sharpe": -3.13550691,
+        "wr": 38.46153846,
+        "dd": 4.96556919,
+        "trades": 39,
+        "net_profit": -339.163324508038
+      },
+      "verdict": "rejected (PF=0.96<1.3, Sharpe=-3.14<0.5, WR=38.46%<40%)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T18:22:00"
+    },
+    {
+      "iteration": 83,
+      "hypothesis": "Tighten TP/SL ratio from 2:1 to 1.5:1 on MACD(8,17,7)+RSI(40) LONG-only XAUUSD H1. Current iter 82 had PF=0.96, Sharpe=-3.14, WR=38.46% with 39 trades. Tightening TP/SL from 2.0x ATR to 1.5x ATR (SL stays at 1.0x ATR) should improve WR by taking profits sooner — smaller wins but more of them.",
+      "metrics": {
+        "pf": 1.07244657,
+        "sharpe": -0.6943461,
+        "wr": 40.0,
+        "dd": 9.29968057,
+        "trades": 20,
+        "net_profit": -154.901596924234
+      },
+      "verdict": "rejected (PF=1.07, Sharpe=-0.69, DD=9.30%)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T18:42:00"
+    },
+    {
+      "iteration": 84,
+      "hypothesis": "MACD(8,17,7) LONG-only XAUUSD H1 with tight TP/SL (1.5x ATR TP, 1.0x ATR SL) but NO RSI filter. Iter 83 had PF=1.07, Sharpe=-0.69, WR=40% with 20 trades — RSI(40) filter limited trade count. Removing RSI entirely lets MACD crossovers fire freely.",
+      "metrics": {
+        "pf": 0.76068237,
+        "sharpe": -4.66579197,
+        "wr": 31.70731707,
+        "dd": 7.14562095,
+        "trades": 41,
+        "net_profit": -613.093221248881
+      },
+      "verdict": "rejected (PF=0.76<1.3, Sharpe=-4.67<0.5, WR=31.71%<40%)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T18:53:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": [
-    "XAUUSD"
-  ],
-  "timeframes_explored": [
-    "1h",
-    "30m"
-  ]
+  "pairs_explored": ["XAUUSD"],
+  "timeframes_explored": ["1h", "30m"]
 }

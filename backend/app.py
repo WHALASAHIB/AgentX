@@ -335,10 +335,32 @@ def _get_bot_status(name: str) -> dict:
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
+def _seed_accounts_from_store():
+    """Ensure mt5-demo and ftmo-demo accounts exist in the DB store."""
+    store_path = Path(__file__).resolve().parent / "db" / "agentx_store.json"
+    if not store_path.exists():
+        logger.warning("agentx_store.json not found at %s", store_path)
+        return
+    try:
+        with open(store_path, "r") as f:
+            data = json.load(f)
+        accounts = data.get("accounts", [])
+        db = get_db()
+        existing = {a["id"] for a in db.get_accounts()}
+        for acct in accounts:
+            if acct["id"] not in existing:
+                db.save_account(acct)
+                logger.info("Seeded account '%s' (%s) from agentx_store.json", acct["id"], acct.get("name", ""))
+        logger.info("Account seeding complete: %d in store, %d already in DB", len(accounts), len(existing))
+    except Exception as e:
+        logger.error("Failed to seed accounts from agentx_store.json: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AGENTX Backend starting (v%s)", __version__)
     _seed_users()
+    _seed_accounts_from_store()
     _scan_running_bots()
 
     # Refresh bot scripts to catch any new multi-pair bots
@@ -1034,6 +1056,30 @@ async def test_bot_status():
     }
 
 
+@app.post("/api/bots/test/stop")
+async def test_bot_stop():
+    """Stop the test bot."""
+    global _test_bot_proc
+
+    if _test_bot_proc is None or _test_bot_proc.poll() is not None:
+        _test_bot_proc = None
+        raise HTTPException(status_code=404, detail="Test bot is not running")
+
+    try:
+        _test_bot_proc.terminate()
+        try:
+            await asyncio.wait_for(_test_bot_proc.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            _test_bot_proc.kill()
+            await _test_bot_proc.wait()
+        pid = _test_bot_proc.pid
+        _test_bot_proc = None
+        logger.info("Test bot stopped (PID %d)", pid)
+        return {"name": "test_bot", "status": "stopped", "pid": pid}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to stop test bot: {e}")
+
+
 # ── Bot Endpoints ─────────────────────────────────────────────────────────────
 
 @app.get("/api/bots")
@@ -1084,6 +1130,8 @@ async def bot_config(auth=Depends(require_auth)):
 
 @app.post("/api/bots/{name}/start")
 async def start_bot(name: str, req: StartBotRequest = None, auth=Depends(require_auth)):
+    if name == "test":
+        return await test_bot_start()
     script = _get_bot_script(name)
     result = await _start_bot_process(name, script)
     asyncio.create_task(_publish_async(f"bots:{name}", {"type": "bot_status", "status": "started"}))
@@ -1091,12 +1139,16 @@ async def start_bot(name: str, req: StartBotRequest = None, auth=Depends(require
 
 @app.post("/api/bots/{name}/stop")
 async def stop_bot(name: str, auth=Depends(require_auth)):
+    if name == "test":
+        return await test_bot_stop()
     result = await _stop_bot_process(name)
     asyncio.create_task(_publish_async(f"bots:{name}", {"type": "bot_status", "status": "stopped"}))
     return result
 
 @app.get("/api/bots/{name}/status")
 async def bot_status(name: str, auth=Depends(require_auth)):
+    if name == "test":
+        return await test_bot_status()
     if name not in BOT_SCRIPTS:
         raise HTTPException(status_code=404, detail=f"Unknown bot: {name}")
     return _get_bot_status(name)
@@ -1289,6 +1341,32 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
     if not effective_key:
         raise HTTPException(status_code=400, detail="Either strategy_key or strategy_name is required")
 
+    # ── Pine Script (iter_*) strategies → route to trader.dev MCP ──────
+    if effective_key.startswith("iter_"):
+        try:
+            from scripts.trader_dev_bridge import run_pine_backtest
+            mcp_result = await run_pine_backtest(
+                strategy_name=effective_key,
+                symbol=req.symbol,
+                timeframe=req.timeframe,
+                capital=req.capital,
+                date_from=date_from,
+                date_to=date_to,
+            )
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Trader.dev MCP is not available or unreachable: {e}. "
+                       f"Pine Script backtests ({effective_key}) require a connection "
+                       f"to https://mcp.trader.dev/sse. Please verify the service is running."
+            )
+
+        # Return MCP result directly (already in standardized format)
+        return mcp_result
+
+    # ── Local backtester for built-in strategies ────────────────────────
     if effective_key not in strategies:
         raise HTTPException(status_code=400, detail=f"Unknown strategy: {effective_key}")
 
@@ -1353,8 +1431,8 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
 class OptimizeRequest(PydanticBaseModel):
     symbol: str
     timeframe: str
-    date_from: str
-    date_to: str
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
     capital: float = 10000
     strategy_key: str
     param_ranges: dict = {}
@@ -1417,8 +1495,8 @@ class CustomBacktestRequest(PydanticBaseModel):
     code: str
     symbol: str
     timeframe: str
-    date_from: str
-    date_to: str
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
     capital: float = 10000
     ftmo_mode: bool = True
 
@@ -1426,8 +1504,8 @@ class CompareBacktestRequest(PydanticBaseModel):
     strategy_keys: list[str]
     symbol: str
     timeframe: str
-    date_from: str
-    date_to: str
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
     capital: float = 10000
 
 class SaveStrategyRequest(PydanticBaseModel):

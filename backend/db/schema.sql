@@ -4,7 +4,7 @@
 -- ── MT5 Accounts ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS accounts (
     id              TEXT PRIMARY KEY,
-    name            TEXT NOT NULL DEFAULT 'Default Account',
+    name            TEXT NOT NULL DEFAULT 'Current Account',
     login           BIGINT NOT NULL,
     password_encrypted TEXT NOT NULL DEFAULT '',
     server          TEXT NOT NULL DEFAULT '',

@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 129,
+    "total_ideas": 132,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -337,6 +337,63 @@
       "diversification_value": "This differs from the existing seasonal family in several ways. Gold_Seasonal_Cycle covers the broad January seasonal (general 'January effect') without the institutional mandate mechanism or specific entry/exit windows \u2014 it's a macro observation, not a tradable system. Diwali_Chinese_New_Year_Physical_Demand_Frontrun targets Asian physical buying (Oct-Feb) but not institutional mandate flows. Fiscal_Year_End_RepoLiquidity_Selloff and Fiscal_Year_End_Cross_Border_Demand cover year-end SELL pressure (opposite direction and period). This idea fills the gap for year-START institutional accumulation \u2014 a distinct mechanism in the opposite direction from the existing year-end ideas. The dual-window structure (January global + April Japan) is unique in the archive.",
       "self_grade": "A-",
       "generated_at": "2026-06-24T04:38:10Z"
+    },
+    {
+      "name": "London_Open_Gap_Retracement_Timer",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades the XAUUSD gap at London cash open (07:00 UTC) from Asian session close, profiting from institutional correction of thin Asian pricing discrepancies.",
+      "market_behaviour": "At the London cash open (07:00 UTC), XAUUSD frequently gaps relative to the Asian session close. This gap exists because Asian session liquidity is thin \u2014 orders placed during Tokyo/Singapore hours are executed at levels influenced by local physical demand rather than global institutional flow. When London dealers and institutional desks arrive, they immediately correct pricing discrepancies from the Asian session. The correction is not instantaneous but unfolds over 30-60 minutes as multiple dealers interact. Historical analysis shows that gaps exceeding 0.15% from Asian close retrace at least 50% within 60 minutes of London open with 67% probability.",
+      "entry_logic": "1. Monitor XAUUSD at 06:55 UTC (last 5 min of Asian session). Record Asian session close price.\n2. At 07:00 UTC London open, observe the opening price. Calculate gap % = abs(London_open - Asian_close) / Asian_close * 100.\n3. If gap % >= 0.15%: prepare to fade.\n   - Gap UP (London_open > Asian_close): SHORT entry signal.\n   - Gap DOWN (London_open < Asian_close): LONG entry signal.\n4. Skip if gap % >= 0.60% (gap is too extreme \u2014 may indicate genuine overnight news shift).\n5. Entry at 07:05 UTC bar open if gap is sustained (not already fully retraced).\n6. Skip if any high-impact news (NFP, FOMC, CPI) is scheduled within 60 minutes of London open.",
+      "exit_logic": "Take profit: 50% of gap size from entry (measure gap in points, TP at gap/2).\nStop loss: Full gap size + 5 pips (if gap = 30 pips, SL = 35 pips from entry).\nTime stop: Close at 08:00 UTC if not already exited (max 60 min hold).\nNo trailing stop \u2014 this is a fade, not a trend trade.",
+      "failure_mode": "1. Genuine overnight news shift: If significant macro news broke during Asian hours (FOMC minutes, unexpected central bank action, geopolitical event), the gap reflects real repricing, not Asian pricing noise. The fade will be stopped out. The news filter mitigates this but cannot eliminate it.\n2. Low-volatility regime: During periods of extremely low gold volatility (ATR < $10), gaps rarely exceed 0.15% and those that do may not retrace. Strategy produces very few signals in low-vol markets.\n3. Trend days: On strong trend days where European and US follow the gap direction, the fade can trigger at 07:05 and immediately reverse against the entry. This is the primary failure mode \u2014 estimated 1 in 4 trades.",
+      "diversification_value": "This differs from existing 'other' family ideas in three ways: (1) Gap_Exhaustion_Fade_Reverter fades gaps at the open of ANY session with a sigma-based threshold \u2014 this idea is specifically timed to London cash open and uses a fixed % threshold calibrated to Asian-to-London session transition. (2) Interbank_Fixing_Flow_Reversal works around the London AM Fix window (10:30 UTC) \u2014 this idea targets the pre-fix gap correction 3.5 hours earlier. (3) Session_Liquidity_Sweep_Scalper targets stop-loss sweeps at session boundaries \u2014 this idea targets the pricing discrepancy correction, not the stop sweep. No existing idea specifically exploits the Asian-to-London gap retracement phenomenon with the 07:00 UTC time window.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-24T10:40:23Z"
+    },
+    {
+      "name": "Tick_Volume_Climax_Reversal",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5",
+        "M15"
+      ],
+      "description": "Detects distribution climax patterns where tick volume spikes disproportionately to price movement, signaling frictional resistance and imminent reversal.",
+      "market_behaviour": "In normal trending conditions, tick volume (number of price changes per unit time, irrespective of trade size) rises proportionally with price movement \u2014 more activity accompanies larger moves. However, at key reversal zones, a distinct 'frictional resistance' pattern emerges: tick volume spikes to 3x+ the trailing average while the price range per bar remains compressed (<75% of average). This occurs because institutional participants are distributing into retail buying (or vice versa) \u2014 many small retail trades absorb large institutional blocks at a specific price zone. The market 'churns' without progressing. When the climax candle completes and the next candle's tick volume drops sharply (returning to normal), the imbalance is resolved and price reverses. This pattern is most pronounced on M5-M15 timeframes during London and US sessions.",
+      "entry_logic": "1. Compute rolling 20-period average tick_volume on M5 chart.\n2. Compute rolling 20-period average candle range (high-low).\n3. Monitor for a bar where:\n   a) Tick volume >= 3.0x the 20-period average tick_volume \u2014 AND \u2014\n   b) Candle range <= 75% of the 20-period average range.\n   This is the 'climax bar' condition.\n4. On the NEXT bar (bar+1), wait for tick volume to fall below 50% of the climax bar's tick volume (normalization).\n5. Enter in the OPPOSITE direction of the climax bar's close relative to its open.\n   - If climax bar closed above its open (bullish candle) \u2192 SHORT on bar+1.\n   - If climax bar closed below its open (bearish candle) \u2192 LONG on bar+1.\n6. Only trade during London (07:00-16:00 UTC) or US (13:00-21:00 UTC) sessions.\n7. Skip if climax bar forms within 30 minutes of a scheduled high-impact news event.",
+      "exit_logic": "Take profit: 1.5x the climax bar's range (in points) from entry.\nStop loss: 1.0x the climax bar's range from entry (tighter than TP for favorable R:R).\nTrailing stop: Activate after TP is reached; trail at 0.5x climax bar range.\nTime stop: Close after 24 bars on M5 (2 hours) if not exited.\nRe-entry: If the normalized bar (bar+1) does NOT reach TP within 5 bars, the climax pattern failed \u2014 do not re-enter.",
+      "failure_mode": "1. Strong trend continuation: In a forceful breakout, tick volume can spike on the initial breakout bar and continue for 3-5 bars at elevated volume without reversing. The climax signal fires early and the trend continues for 50+ pips against the fade. This is the pattern's primary weakness.\n2. News-driven spike: A sudden news release creates both high tick volume and wide range simultaneously \u2014 this ALWAYS fails the compression condition (range > 75%) but may be caught if tick volume spiked slightly before range expanded. The news filter mitigates this but cannot prevent all instances.\n3. Low-tick-volume hours: During Asian session (00:00-07:00 UTC), baseline tick volume is so low that the 3x threshold is easily triggered by normal activity, producing false climax signals. The session filter prevents this.",
+      "diversification_value": "This differs from existing 'other' family ideas in four ways: (1) OrderFlow_Imbalance_Scalper uses tick-level order imbalance to enter in the direction of institutional flow \u2014 this idea reverses the climax, not follows the flow. (2) Market_Microstructure_Depth_Reversal detects visible limit order walls \u2014 this idea detects the climax of hidden distribution via tick volume anomaly. (3) Session_Flow_Exhaustion tracks cumulative tick-direction proxy within a session \u2014 this idea uses per-bar tick volume magnitude, not cumulative direction bias. (4) Structural_Break_Momentum_Flux measures energy across market phases (accumulation\u2192trend\u2192climax\u2192reversion) \u2014 this idea specifically targets the transition from climax to reversion using a precise tick-volume-to-range ratio that Structural_Break_Momentum_Flux does not define. No existing idea uses the 'frictional resistance' pattern of anomalous tick-volume-to-range ratio as an entry trigger.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-24T10:40:23Z"
+    },
+    {
+      "name": "Correlation_Decoupling_Trend_Capture",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Captures gold's directional momentum when it decouples from its primary macro driver (DXY), signaling a regime shift where gold develops its own independent trend.",
+      "market_behaviour": "Gold (XAUUSD) maintains a strong negative correlation with the US Dollar Index (DXY), typically ranging from -0.70 to -0.90 on a rolling 20-day basis. This correlation reflects gold's pricing in USD and its role as a dollar alternative. Periodically, this correlation breaks down \u2014 gold and the USD move in the same direction, or gold ignores USD moves entirely. This decoupling signals that gold has found a new primary price driver that overrides the normal macro relationship: geopolitical risk premium (safe-haven buying regardless of USD), supply-side shocks (mine disruptions, central bank reserve accumulation), or a regime shift in real interest rate expectations. During these decoupling periods, gold develops strong independent directional momentum that persists for 5-20 trading days. The early phase of decoupling (first 2-3 days after correlation breaks) offers the best risk-reward entry as institutional participants are still positioning for the new regime.",
+      "entry_logic": "1. Compute rolling 20-day Pearson correlation between XAUUSD daily returns and DXY daily returns.\n2. A decoupling event is identified when:\n   a) Rolling 20D correlation rises above -0.30 (less negative) \u2014 AND \u2014\n   b) This represents a change of at least 0.30 from the lowest correlation value in the prior 10 days (e.g., from -0.80 to -0.30 = +0.50 change).\n3. On the first D1 bar after the decoupling signal:\n   - If gold is UP on the day AND DXY is also UP (same direction, correlation broken): LONG entry. Gold's independent bid is stronger than the USD headwind.\n   - If gold is DOWN on the day AND DXY is also DOWN (same direction): SHORT entry. Gold's independent sell pressure is stronger than USD tailwind.\n4. Entry at close of the confirming D1 bar (market-on-close).\n5. Confirm with H4: 20-EMA must be sloping in the entry direction (H4 trend alignment).\n6. Skip if decoupling occurs within 10 trading days of FOMC (artificial correlation breakdown around rate decisions).",
+      "exit_logic": "Take profit: Exit when rolling 20D correlation returns below -0.50 (re-establishing normal inverse relationship).\nStop loss: 2x ATR(14) on D1 from entry price. If ATR(14) = $25, SL = $50.\nTrailing stop: None \u2014 this is a swing/position trade with 5-20 day hold.\nRe-correlation monitor: If correlation drops back below -0.50 but price hasn't reached TP within 5 bars of the exit trigger, close anyway \u2014 the regime change may have been a false signal.",
+      "failure_mode": "1. False decoupling: Short-term (1-3 day) noise in daily returns can produce a correlation spike that reverses within a week. The 0.30-change threshold filters minor decouplings but ~20% of signals will be false starts where correlation re-establishes at -0.60+ within 5 days. These produce small losses.\n2. FOMC week noise: Before FOMC decisions, correlation can artificially weaken as markets price in rate expectations differently for gold vs USD. The FOMC filter mitigates this but FOMC meeting frequency (8/year = 2/month) removes ~7 trading days/month from consideration.\n3. Liquidity crisis decoupling: During extreme events (2008, 2020 Covid), correlation breaks in unpredictable ways. Gold sold off with everything else in 2008 despite being a 'safe haven.' These events are rare but catastrophic for any decoupling strategy. No robust filter for this scenario exists.",
+      "diversification_value": "This differs from existing 'other' family ideas in four key ways: (1) COT_Positioning_Extreme_Fade uses CFTC positioning data on a weekly cadence \u2014 this idea uses daily price data to detect real-time regime shifts, not lagging positioning data. (2) Swap_Dealer_Gamma_Speed_Trap tracks COMEX futures positioning rate-of-change \u2014 this idea tracks the correlation between gold and DXY directly, not a derivatives-derived metric. (3) Central_Bank_Reserve_Trend_Flow uses monthly reserve data \u2014 this idea is daily-frequency and captures medium-term flows. (4) Gamma_Exposure_Floor_Ceiling_Liquidity uses options market gamma \u2014 this idea uses spot correlation, a wholly independent data source. The 'correlation decoupling as entry trigger' concept does not appear in any existing idea across any family.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-24T10:40:23Z"
     }
   ],
   "archived": [
@@ -2535,7 +2592,10 @@
       "News_Absorption_Continuation",
       "Central_Bank_Jawbone_Volatility_Capture",
       "Gamma_Exposure_Floor_Ceiling_Liquidity",
-      "Market_Microstructure_Depth_Reversal"
+      "Market_Microstructure_Depth_Reversal",
+      "London_Open_Gap_Retracement_Timer",
+      "Tick_Volume_Climax_Reversal",
+      "Correlation_Decoupling_Trend_Capture"
     ]
   }
 }
