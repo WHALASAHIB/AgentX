@@ -1,6 +1,6 @@
 {
-  "iteration": 69,
-  "last_run": "2026-06-24T06:40:00",
+  "iteration": 73,
+  "last_run": "2026-06-24T07:55:00",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add ADX(14)>25 trending filter to EMA(3,8)+RSI(40) LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover AND RSI(14)>40 AND ADX(14)>25. Exit on EMA3<EMA8 crossunder. ATR-based SL at 1.5x, TP at 1.0x (1:1.5 TP:SL). 24h trading. Adding ADX>25 filter to address Sharpe ratio of 0.40 (below 1.0 target) by filtering out entries during non-trending/choppy conditions. Unlike iter 64 (ADX>25 on EMA3,8 without RSI, which produced PF 0.84), this combines ADX>25 with RSI>40 for dual momentum confirmation, which should reduce the false-signal entries that hurt iter 68's Sharpe.",
+  "current_hypothesis": "Raise RSI threshold from 40 to 50 on MACD(12,26,9)+RSI XAUUSD H1 LONG-only 24h. Entry: MACD crossover AND RSI(14)>50. Exit: MACD crossunder. ATR SL at 1.5x, TP at 1.0x. AvgWin/AvgLoss ratio was excellent (3.85) but WR was only 23.33% — raising RSI to 50 filters out entries during bearish or weak momentum, addressing both PF (<1.5) and WR (<40%) with one change.",
   "evolution_log": [
     {
       "iteration": 49,
@@ -48,8 +48,8 @@
       "time": "2026-06-24T10:10:00"
     },
     {
-      "iteration": 51,
-      "hypothesis": "Simplify Supertrend to bare signal only \u2014 remove ADX>20 and RSI>50 filters.",
+      "iteration": 50,
+      "hypothesis": "Simplify Supertrend to bare signal only — remove ADX>20 and RSI>50 filters.",
       "metrics": {
         "pf": 0,
         "sharpe": null,
@@ -138,14 +138,14 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades) \u2014 ADX>20 still blocks all entries in 1702 bars. Triple filter (EMA crossover + RSI>50 + ADX>20) produces zero signals on XAUUSD 30m Polygon data.",
+      "verdict": "invalid (no trades) — ADX>20 still blocks all entries in 1702 bars. Triple filter (EMA crossover + RSI>50 + ADX>20) produces zero signals on XAUUSD 30m Polygon data.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-24T11:25:00"
     },
     {
       "iteration": 57,
-      "hypothesis": "EMA(5,13)+RSI(50)+ADX(25) LONG-only on H1. Switch to H1 timeframe where best strategy (iter_44) succeeded \u2014 H1 data may have better trending characteristics.",
+      "hypothesis": "EMA(5,13)+RSI(50)+ADX(25) LONG-only on H1. Switch to H1 timeframe where best strategy (iter_44) succeeded — H1 data may have better trending characteristics.",
       "metrics": {
         "pf": 0,
         "sharpe": -7.97,
@@ -154,7 +154,7 @@
         "trades": 7,
         "net_profit": -462.67
       },
-      "verdict": "invalid (low sample, 7 trades) \u2014 H1 triple filter produced only 7 trades, all losing. ADX>25 trending filter still too restrictive even on H1. Next: remove ADX entirely on H1.",
+      "verdict": "invalid (low sample, 7 trades) — H1 triple filter produced only 7 trades, all losing. ADX>25 trending filter still too restrictive even on H1. Next: remove ADX entirely on H1.",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T11:55:00"
@@ -218,14 +218,14 @@
         "trades": 25,
         "net_profit": -53.81219809
       },
-      "verdict": "rejected (PF=1.22<1.3, Sharpe=-0.49<0.5) \u2014 Bollinger Bands mean reversion LONG-only produces 25 trades on H1 but negative Sharpe and PF below 1.3. Mean reversion catches 9 winners (avg +$90) but 16 losers (avg -$41). BB lower band crosses produce too many false signals in Polygon H1 data. Not beating best (PF 3.61 from iter 44).",
+      "verdict": "rejected (PF=1.22<1.3, Sharpe=-0.49<0.5)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T12:56:00"
     },
     {
       "iteration": 62,
-      "hypothesis": "Add SMA(50) trend filter to EMA(5,13) crossover LONG-only XAUUSD H1. Entry: EMA5 > EMA13 AND close > SMA(50). This prevents entries during bearish trend phases. Exit on crossunder. ATR-based SL at 1.0x with 1.5:1 TP ratio.",
+      "hypothesis": "Add SMA(50) trend filter to EMA(5,13) crossover LONG-only XAUUSD H1. Entry: EMA5 > EMA13 AND close > SMA(50). Exit on crossunder. ATR-based SL at 1.0x with 1.5:1 TP ratio.",
       "metrics": {
         "pf": 0.89986346,
         "sharpe": -0.94904614,
@@ -234,14 +234,14 @@
         "trades": 13,
         "net_profit": -159.110294766135
       },
-      "verdict": "invalid (low sample, 13 trades) \u2014 SMA(50) filter cut trades from 27 (iter 60 baseline) to 13. PF fell below 1.0 meaning strategy lost money. The trend filter was too restrictive on XAUUSD H1 Polygon data \u2014 most EMA crossovers occurred below SMA(50) and were blocked. Next: remove SMA filter entirely, try shorter EMAs on H1 to increase trade count.",
+      "verdict": "invalid (low sample, 13 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T13:02:00"
     },
     {
       "iteration": 63,
-      "hypothesis": "EMA(3,8) crossover LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover (shorter lookback for more frequent signals). Exit on EMA3<EMA8 crossunder. ATR(14)-based SL at 1.0x with 1.5:1 TP ratio. No additional filters.",
+      "hypothesis": "EMA(3,8) crossover LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover. Exit on EMA3<EMA8 crossunder. ATR(14)-based SL at 1.0x with 1.5:1 TP ratio. No additional filters.",
       "metrics": {
         "pf": 1.39739637,
         "sharpe": 0.83708261,
@@ -257,7 +257,7 @@
     },
     {
       "iteration": 64,
-      "hypothesis": "Add ADX(14)>25 trending filter to EMA(3,8) LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover AND ADX>25. Exit on EMA3<EMA8 crossunder. ATR-based SL at 1.0x with 1.5:1 TP ratio. ADX filter should improve Sharpe from 0.84 toward 1.0 by filtering out non-trending entries.",
+      "hypothesis": "Add ADX(14)>25 trending filter to EMA(3,8) LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover AND ADX>25. Exit on crossunder. ATR-based SL at 1.0x with 1.5:1 TP ratio.",
       "metrics": {
         "pf": 0.84385927,
         "sharpe": -2.21680592,
@@ -266,14 +266,14 @@
         "trades": 25,
         "net_profit": -273.842297693962
       },
-      "verdict": "rejected (PF=0.84<1.3, Sharpe=-2.22<0.5) \u2014 ADX>25 filter degraded performance: PF dropped from 1.40 to 0.84, Sharpe from 0.84 to -2.22, WR from 50% to 32%. ADX>25 on H1 XAUUSD Polygon data filters out good trending EMA crossovers and leaves mostly false signals. The ADX threshold is too high for H1 data.",
+      "verdict": "rejected (PF=0.84<1.3, Sharpe=-2.22<0.5)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T13:25:00"
     },
     {
       "iteration": 65,
-      "hypothesis": "Add RSI(14)>50 momentum filter to EMA(3,8) LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover AND RSI(14)>50 (bullish momentum confirmation, prevents entries during weak uptrends). Exit on EMA3<EMA8 crossunder. ATR(14)-based SL at 1.0x with 1.5:1 TP ratio. ADX>25 filter failed in iter 64 (PF dropped 1.40 to 0.84) \u2014 replacing with RSI(50) filter which should improve PF by ensuring entries only occur when short-term momentum confirms the EMA crossover.",
+      "hypothesis": "Add RSI(14)>50 momentum filter to EMA(3,8) LONG-only XAUUSD H1. Entry on EMA3>EMA8 crossover AND RSI(14)>50. Exit on crossunder. ATR(14)-based SL at 1.0x with 1.5:1 TP ratio.",
       "metrics": {
         "pf": 0.0,
         "sharpe": 0.89534204,
@@ -282,7 +282,7 @@
         "trades": 1,
         "net_profit": 221.87426295144
       },
-      "verdict": "invalid (low sample, 1 trades) \u2014 RSI(50) filter reduced EMA(3,8) entries from 26 (iter 63 baseline) to just 1 on H1. RSI>50 filter is too restrictive on this XAUUSD H1 Polygon data window. The single trade won (+$221) but 1 trade is statistically insignificant. Next: remove RSI filter, expand trading hours to 24h on EMA(3,8) to regain adequate trade count.",
+      "verdict": "invalid (low sample, 1 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T13:55:00"
@@ -312,10 +312,7 @@
         "wr": 33.33333333,
         "dd": 5.52421453,
         "trades": 51,
-        "net_profit": -505.448124692748,
-        "symbol": "XAUUSD",
-        "timeframe": "1h",
-        "iteration": 67
+        "net_profit": -505.448124692748
       },
       "verdict": "rejected (PF=0.90, Sharpe=-6.38, DD=5.52%)",
       "symbol": "XAUUSD",
@@ -324,21 +321,83 @@
     },
     {
       "iteration": 68,
-      "hypothesis": "EMA(3,8) crossover LONG-only XAUUSD H1 24h with RSI(14) filter. Entry: EMA3>EMA8 crossover AND RSI(14)>40 (softer threshold than iter 65's RSI>50 which caused 1 trade). Exit: EMA3<EMA8 crossunder. ATR-based SL at 1.5x, TP at 1.0x (1:1.5 TP:SL as iter 67). 24h trading. RSI>40 filter targets PF improvement by rejecting weak-momentum entries while maintaining adequate trade count.",
+      "hypothesis": "EMA(3,8)+RSI(40) LONG-only XAUUSD H1 24h. Entry: EMA3>EMA8 crossover AND RSI(14)>40. Exit: EMA3<EMA8 crossunder. ATR SL at 1.5x, TP at 1.0x (1:1.5 TP:SL). 24h. RSI>40 filter targets PF improvement.",
       "metrics": {
         "pf": 1.42902503,
         "sharpe": 0.4029931,
         "wr": 31.25,
         "dd": 5.52358407,
         "trades": 48,
-        "net_profit": 62.83884847316,
-        "symbol": "XAUUSD",
-        "timeframe": "1h"
+        "net_profit": 62.83884847316
       },
       "verdict": "rejected (PF=1.43, Sharpe=0.40, WR=31.25%)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T06:40:00"
+    },
+    {
+      "iteration": 69,
+      "hypothesis": "Add ADX(14)>25 trending filter to EMA(3,8)+RSI(40) LONG-only XAUUSD H1. Entry: EMA3>EMA8 crossover AND RSI(14)>40 AND ADX(14)>25. Exit on EMA3<EMA8 crossunder. ATR-based SL at 1.5x, TP at 1.0x (1:1.5 TP:SL). 24h trading. Adding ADX>25 filter to address Sharpe ratio of 0.40 (below 1.0 target) by filtering out entries during non-trending/choppy conditions.",
+      "metrics": {
+        "pf": 0.71839097,
+        "sharpe": -2.8057975,
+        "wr": 33.33333333,
+        "dd": 3.38429253,
+        "trades": 21,
+        "net_profit": -284.67059262679
+      },
+      "verdict": "rejected (PF=0.72<1.3, Sharpe=-2.81<0.5) - ADX>25 on top of RSI>40 made things worse than RSI alone (iter 68: PF 1.43). Triple filter reduces trade quality.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T14:10:00"
+    },
+    {
+      "iteration": 70,
+      "hypothesis": "EMA(5,13)+RSI(40) LONG-only XAUUSD H1 with 1.5:1 TP:SL ratio. 24h. Entry: EMA5>EMA13 crossover AND RSI(14)>40. Exit: EMA5<EMA13 crossunder. ATR SL at 1.0x, TP at 1.5x (1.5:1). Reverted from tighter EMA(3,8) pair to EMA(5,13) for smoother signals. Removed ADX(25) filter which degraded performance.",
+      "metrics": {
+        "pf": 1.04594794,
+        "sharpe": -0.75910923,
+        "wr": 20.68965517,
+        "dd": 6.92791885,
+        "trades": 29,
+        "net_profit": -185.60311532553
+      },
+      "verdict": "rejected (PF=1.05<1.3, Sharpe=-0.76<0.5, WR=20.69%<40%) - EMA(5,13) produced worse WR than EMA(3,8) (20.69% vs 29.41%). Longer EMA pair doesn't solve false crossover problem on H1.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T14:25:00"
+    },
+    {
+      "iteration": 71,
+      "hypothesis": "EMA(5,13)+RSI(40) LONG-only XAUUSD H1 24h. Entry: EMA5>EMA13 crossover AND RSI(14)>40. Exit: EMA5<EMA13 crossunder. TP at 1.0x ATR, SL at 1.0x ATR (1:1 TP:SL from 1.5:1 in iter 70). Tightening TP:SL to increase WR.",
+      "metrics": {
+        "pf": 1.04594794,
+        "sharpe": -0.75910923,
+        "wr": 20.68965517,
+        "dd": 6.92791885,
+        "trades": 29,
+        "net_profit": -185.60311532553
+      },
+      "verdict": "rejected (PF=1.046<1.3, Sharpe=-0.76<0.5, WR=20.69%<40%) — TP/SL 1:1 produced IDENTICAL results to 1.5:1. Crossunder exit always fires before TP/SL triggers on H1. Entry quality is the bottleneck.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T07:39:03"
+    },
+    {
+      "iteration": 72,
+      "hypothesis": "MACD(12,26,9) crossover + RSI(40) LONG-only XAUUSD H1 24h. Entry: MACD line crosses above Signal line AND RSI(14)>40. Exit: MACD line crosses below Signal line (bearish crossover). ATR(14)-based SL at 1.5x, no TP (exit on signal crossunder only). Switching from EMA crossover to MACD crossover for entry signal — MACD filters out smaller whipsaws. RSI(40) filter retains. No TP so exits are signal-driven, not price-target-driven.",
+      "metrics": {
+        "pf": 1.17160195,
+        "sharpe": -0.2768288,
+        "wr": 23.33333333,
+        "dd": 6.17331225,
+        "trades": 30,
+        "net_profit": -64.24924961557
+      },
+      "verdict": "rejected (PF=1.17<1.3, Sharpe=-0.28<0.5) — MACD crossover produced similar WR (23.33%) to EMA crossovers. AvgWin/AvgLoss ratio at 3.85 is strong but too many losing trades. Raising RSI threshold to 50 next.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T07:55:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

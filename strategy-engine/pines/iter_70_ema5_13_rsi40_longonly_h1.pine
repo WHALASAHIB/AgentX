@@ -1,0 +1,39 @@
+//@version=5
+strategy(title="EMA5_13_RSI40_LONGONLY_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "EMA Fast Length", minval=1, maxval=50)      // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "EMA Slow Length", minval=5, maxval=50)     // sweep: 10-20 step 2
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=28)               // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Entry Threshold", minval=20, maxval=60) // sweep: 30-50 step 5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=28)               // sweep: 7-21 step 7
+sl_mult = input.float(1.0, "Stop Loss (ATR multiple)", minval=0.5, maxval=3.0, step=0.25)   // sweep: 0.5-2.0 step 0.25
+tp_mult = input.float(1.5, "Take Profit (ATR multiple)", minval=0.5, maxval=4.0, step=0.25)  // sweep: 1.0-3.0 step 0.25
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA5 > EMA13 crossover AND RSI(14) > 40
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+
+//--- exit logic: EMA5 < EMA13 crossunder (opposite crossover)
+exit_condition = ta.crossunder(ema_fast, ema_slow)
+
+//--- trade management
+if (long_condition and strategy.position_size == 0)
+    stop_loss_price = close - atr_val * sl_mult
+    take_profit_price = close + atr_val * tp_mult
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit Long", from_entry="Long", loss=close - stop_loss_price, profit=take_profit_price - close)
+
+//--- exit on crossunder if still in position
+if (exit_condition and strategy.position_size > 0)
+    strategy.close("Long", comment="Crossunder Exit")
+
+//--- plot EMAs for visual reference
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=2)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=2)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)

@@ -1,0 +1,49 @@
+//@version=5
+strategy(title="EMA(5,13)+RSI(40) H1 LONG-only 1:1 TP:SL", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+emaFastLen = input.int(5, "EMA Fast Length", minval=1, maxval=50)
+// EMA slow period
+emaSlowLen = input.int(13, "EMA Slow Length", minval=1, maxval=50)
+// RSI period
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)
+// RSI threshold for long entry
+rsiThresh = input.int(40, "RSI Threshold (long above)", minval=1, maxval=100)
+// ATR period for SL/TP
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)
+// ATR multiplier for SL
+slMult = input.float(1.0, "SL Multiplier (ATR)", minval=0.1, maxval=5.0, step=0.1)
+// ATR multiplier for TP
+tpMult = input.float(1.0, "TP Multiplier (ATR)", minval=0.1, maxval=5.0, step=0.1)
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// LONG entry: EMA fast crosses above EMA slow AND RSI above threshold
+longEntry = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh
+
+// LONG exit: EMA fast crosses below EMA slow
+longExit = ta.crossunder(emaFast, emaSlow)
+
+//--- session filter: 24h trading (no session restriction)
+inSession = true
+
+//--- position management
+if (longEntry and inSession and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=int(atrVal * slMult / syminfo.mintick), profit=int(atrVal * tpMult / syminfo.mintick))
+
+// Crossover-based exit for already-open positions
+if (longExit and strategy.position_size > 0)
+    strategy.close("Long", comment="Exit_Crossunder")
+
+//--- visual indicators
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+hline(50, "RSI 50", color=color.gray, linestyle=hline.style_dotted)
+plot(rsiVal, "RSI", color=color.purple, linewidth=1, display=display.none)
