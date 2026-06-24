@@ -2,8 +2,8 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 123,
-    "active_count": 8,
+    "total_ideas": 126,
+    "active_count": 14,
     "archived_count": 112,
     "families_covered": [
       "breakout",
@@ -19,7 +19,7 @@
     "last_updated": "2026-06-23T13:36:25Z",
     "restructured": "2026-06-23T18:00:00Z",
     "note": "Top 8 ideas ACTIVE per LLM Council verdict. All others archived. Council verdict: Volatility_Contraction_Breakout and ATR_Regime_Selector as top build; Max_Drawdown_Lock_Protector, Volatility_Parity_Scale, Session_Decay_Exposure_Controller, Statistical_Mean_Reverter, Macro_Regime_Shifter, Slippage_Regime_Sizer as deploy filters.",
-    "last_generation": "Head Research cron - 2025-06-24"
+    "last_generation": "2026-06-24T00:20:22Z"
   },
   "active": [
     {
@@ -223,6 +223,63 @@
       "diversification_value": "Radically different from all 13 existing regime filter ideas \u2014 none uses ML ensembling or supervised learning. Existing ideas use single statistical methods (Hurst, Markov, ADX, ATR) or clustering. This is a meta-detector that learns which detector to trust when, with calibrated confidence scores. Serves as the intelligence layer for the entire strategy factory.",
       "self_grade": "A",
       "generated_at": "2026-06-23T16:13:43Z"
+    },
+    {
+      "name": "Fiscal_Year_End_RepoLiquidity_Selloff",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Exploits the predictable gold sell pressure during US fiscal year-end (late September) caused by institutional repo market cash demand, followed by a recovery rebound in early October as liquidity normalises.",
+      "market_behaviour": "The US fiscal year ends on September 30, creating a well-documented institutional cash-demand cycle in the repo and short-term funding markets. Banks, primary dealers, and money market funds rebalance balance sheets, reducing risk appetite and demanding USD liquidity. This USD liquidity squeeze creates a predictable headwind for gold (which is negatively USD-correlated) during the last 5-7 trading days of September. Once the fiscal year-end passes and quarter-end window-dressing is complete, the liquidity demand normalises in the first week of October, and gold tends to rebound sharply as institutional buyers re-enter. The pattern is amplified in years when the Fed is actively running QT or when Treasury General Account balances are being rebuilt, but even in normal years the calendar effect is measurable. The edge comes from being short gold during the liquidity squeeze and flat/reversing to long immediately after.",
+      "entry_logic": "1. On the trading day that is 7 calendar days before September 30 (approximately Sep 23-24), start monitoring XAUUSD daily for signs of weakness.\n2. Enter SHORT if: (a) daily candle closes below the 20-day EMA, AND (b) DXY is showing strength (above its 20-day EMA), AND (c) date is between Sep 20 and Sep 30.\n3. Scale position: increase size in years when 3-month USD LIBOR-OIS spread (TED-like proxy) is widening in September vs August average (indicating funding stress). Reduce to 0.5x in years when spread is stable.\n4. For the LONG side: on October 2 (first full trading day of Q4), prepare to enter LONG if: (a) XAUUSD is not already 3%+ above Sep 30 close (exhausted rebound), (b) any clear bearish momentum from Sep has stalled (daily RSI < 40 and curling up).\n5. Skip entirely if gold is already in a strong bull trend (daily ADX > 35 and price above all major EMAs) \u2014 bull trends override calendar effects.",
+      "exit_logic": "SHORT side: Take profit on the SHORT at Sep 30 close (rebuy to cover). Trailing stop at 1.5x ATR(14) on daily. Hard stop-loss: if gold closes above Sep 1 high, exit immediately (pattern invalidated). Time-stop: exit at Sep 30 close regardless.\n\nLONG side: Entry on Oct 1-2, hold for 10 trading days. Take profit at 2x ATR(14) from entry or Oct 15 close, whichever comes first. Stop-loss at 1x ATR(14) below entry. If Oct 1-2 fails to trigger (gold rallies >3% from Sep 30 instead of dipping), skip LONG entirely \u2014 the rebound may have already occurred.\n\nTime-stop: Oct 15 for the LONG leg. No re-entry.",
+      "failure_mode": "1. The Fed injects liquidity via repo operations or emergency facilities exactly during the Sep 25-30 window, neutralising the funding stress and eliminating the sell pressure. This happened during the 2019 repo crisis where the Fed's emergency repo operations actually inverted the pattern.\n2. A major geopolitical event (war escalation, sanctions) overrides the calendar effect entirely \u2014 gold rallies regardless of USD liquidity conditions. The safe-haven bid trumps the funding squeeze.\n3. In years where gold has already sold off 8-10% in August-September, the fiscal year-end effect is already priced in and the selloff is exhausted before late September arrives.",
+      "diversification_value": "Entirely different from every existing seasonal idea. The existing fiscal year-end idea (Fiscal_Year_End_Cross_Border_Demand, self_grade B-) focuses on India's, China's and Japan's fiscal year-end physical demand cycles (March-April for Japan, March for India). This idea is about the US fiscal year-end (Sep 30) and the institutional repo market mechanism \u2014 a completely different driver and timeframe. It also differs from Turn_Of_Month_Gold (which trades general TOM rebalancing across all months) by targeting the specific unique mechanism of US fiscal year-end funding stress, not generic month-end rebalancing. The two-phase structure (short then long) is also unique among seasonal ideas \u2014 no existing seasonal idea has a reversal pattern with two directional legs.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-24T00:20:22Z"
+    },
+    {
+      "name": "FOMC_Blackout_Volatility_RangeTrade",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Exploits the predictable volatility compression during the 2-week FOMC blackout period (starting 2 Saturdays before each meeting) where gold range-trades with mean-reversion bias, followed by volatility expansion at the FOMC decision.",
+      "market_behaviour": "The Federal Reserve imposes a 'blackout period' beginning the second Saturday before each FOMC meeting, during which Fed officials do not make public speeches or commentary. This 2-week window creates a structurally unique information environment: no new forward guidance, no policy signals, no hawkish/dovish surprises from speeches. For gold, this means the primary policy-signal catalyst is removed, leading to a measurable compression of realised volatility \u2014 typically 15-25% below the 30-day average. During this period, gold tends to oscillate in a narrowing range as institutional participants reduce positioning uncertainty. The compression is most pronounced in gold (vs equities or bonds) because gold is uniquely sensitive to real rate expectations, which are frozen during the blackout. After the blackout ends with the FOMC decision and press conference, volatility expands sharply (typically 2-3x the blackout average) in the direction of the surprise. The edge is in trading the predictable compression via a range-bound mean-reversion strategy, then flipping to a breakout strategy for the expansion.",
+      "entry_logic": "Blackout Phase (Range Trading):\n1. Identify the FOMC meeting date and calculate blackout start = 2 Saturdays before meeting day. For scheduled meetings (Jan, Mar, May, Jun, Jul, Sep, Nov, Dec), this gives a clean 12-14 trading day window.\n2. On the first trading day of the blackout, establish a range using the H4 chart: calculate the 5-day ATR(14) in USD terms. Set the expected blackout range as the close of the first blackout day \u00b1 1.0x 5-day ATR.\n3. Enter mean-reversion trades at the 0.5x ATR level from the midpoint: BUY when price touches lower 0.5x ATR band + H4 candle close > 20-period EMA on H4. SELL when price touches upper 0.5x ATR band + H4 candle close < 20-period EMA on H4.\n4. Skip trades if H4 ADX > 30 (trend is establishing despite blackout) \u2014 trend during blackout is rare but invalidates the range assumption.\n5. Exit all positions before 09:00 UTC on FOMC day (rate decision day) \u2014 do not hold through the event.\n\nExpansion Phase (After FOMC):\n6. At the FOMC decision, wait 30 minutes for initial volatility spike to establish direction. Then enter in the direction of the break if: (a) H1 candle close exceeds the blackout high/low by > 0.3x ATR, AND (b) the rate decision surprise (actual vs expected) aligns with the market move.",
+      "exit_logic": "Blackout Phase: Each mean-reversion trade targets 0.4x ATR(14 daily) as profit target. Stop-loss at 0.6x ATR. Time-stop: exit any trade that hasn't reached TP within 48 hours (blackout ranges narrow \u2014 holding too long risks a break). Hard rule: EXIT ALL positions before FOMC day 09:00 UTC regardless of P&L.\n\nExpansion Phase: Follow the breakout with a 2:1 risk:reward ratio. Trailing stop at 1x ATR(14 H1) after price moves 2x the initial stop in our favour. Time-stop 24 hours after entry.\n\nPerformance Objective: The blackout range-trading is designed to produce small, frequent wins (target 65-70% WR) with low volatility. The expansion trade is a swing trade (40-50% WR but large winners). Total expectancy should be positive from the range-trading alone; the expansion trade is a bonus.",
+      "failure_mode": "1. A major non-FOMC event during the blackout (geopolitical crisis, bank failure, surprise jobs data) creates volatility that breaks the blackout compression entirely. NFP or CPI releases falling within the blackout period can cause the range to be much wider than expected.\n2. The blackout compression fails entirely during crisis periods (2020 COVID, 2008 GFC) where the Fed called emergency meetings that aborted the blackout. These are rare (once every 5-10 years) but would cause the strategy to lose on every range trade.\n3. The FOMC decision goes exactly as expected (no surprise) \u2014 the expansion phase trade triggers a false breakout in one direction that reverses within hours. This is the most common failure of the expansion leg.",
+      "diversification_value": "Differs from Central_Bank_Calendar_Dovish_Hawkish_Window (which trades the 48-hour post-decision drift) by targeting the PRE-event volatility compression during the blackout period \u2014 a completely different market behaviour. Also differs from Event_Window_Seasonal_Compression (which trades macro events generally) by specifically isolating the unique FOMC blackout information vacuum mechanism that creates a predictable, reproducible volatility compression pattern. Neither existing idea trades the range contraction itself as a standalone edge. The dual-phase structure (range-trade then breakout) is also novel \u2014 no seasonal idea in the archive uses a regime-switching approach within a single calendar window.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-24T00:20:22Z"
+    },
+    {
+      "name": "Q4_TaxLoss_Harvesting_GoldRebound",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "W1"
+      ],
+      "description": "Exploits the institutional tax-loss harvesting effect in gold: artificial sell pressure in November-December from funds realising losses on gold positions for tax offsets, followed by a January rebound as institutional rebalancing and fresh allocations restore the price.",
+      "market_behaviour": "Institutional investors, mutual funds, and hedge funds engage in tax-loss harvesting during October-December each year, selling underperforming positions to realise capital losses that offset taxable gains elsewhere in their portfolios. Gold, which has a tendency to underperform in the US autumn (historically gold's weakest months are September-October-November), frequently becomes a target for these tax-loss sales. The selling is mechanical and non-fundamental \u2014 it's driven by tax planning, not by gold market fundamentals. This creates artificial downward pressure on gold in November-December that reverses in January when: (a) the 30-day wash-sale restriction expires (for US-domiciled funds) allowing re-entry, (b) new calendar-year institutional allocations are deployed, and (c) funds rebuild positions for the new year. The effect is strongest in years when gold is down 5-15% year-to-date entering October (making it a prime candidate for tax-loss selling) and weakest in years when gold is strongly positive (no losses to harvest). The January effect in gold (average +2-3% in January vs other months) is partially driven by this tax-loss reversal, making it a predictably profitable window.",
+      "entry_logic": "1. Starting November 1, check gold's year-to-date performance as of October 31 close. If YTD return is negative (any amount), the pattern is active. If YTD return is positive >5%, skip entirely (no tax-loss rationale).\n2. Monitor XAUUSD daily from November 1 through December 15. Enter LONG only when: (a) a sustained selloff of at least 3 consecutive daily red candles occurs, AND (b) daily RSI(14) drops below 35, AND (c) the cumulative selloff from the recent peak is >5%.\n3. The entry should be taken on the first green daily close after condition (b) is met \u2014 this signals the tax-loss selling wave is exhausting within that batch.\n4. Scale factor: in years where gold YTD is down >10%, use 1.5x base position size (more losses = more tax-selling = stronger reversal). Use 0.5x in years where gold is break-even to -5% YTD.\n5. Position for the Jan effect: regardless of whether the Nov-Dec dip entry was taken, initiate a standard LONG position on December 20 (capturing Christmas-to-January seasonality overlap). Exit on January 20-25 (January effect tends to fade mid-month).\n6. Skip positions entirely in December-January of years with FOMC meetings in those months that are expected to deliver a hawkish surprise \u2014 macro overrides seasonal.",
+      "exit_logic": "Tax-Loss Harvest Entry (Nov-Dec): Hold the position until one of: (a) +5% profit target reached (take full profit), (b) 21 calendar days elapsed from entry (time-stop \u2014 the specific selling batch has concluded and the bounce should have materialised), (c) gold closes below the entry stop-loss at 7% below entry price.\n\nJanuary Effect Entry: Hold from December 20 through January 20-25. Take profit when: (a) gold reaches +3% from entry, OR (b) daily RSI > 70, OR (c) January 25 date is reached (whichever comes first). Stop-loss at 4% below entry.\n\nRe-entry rule: If stopped out of the Nov-Dec entry, wait 15 days before considering the Jan effect entry (separate trade thesis).",
+      "failure_mode": "1. Gold rallies strongly in Q4 (e.g., +10-15% in Oct-Nov), eliminating any tax-loss harvesting rationale. The strategy simply never triggers \u2014 this is a non-failure (skip year) but can cause opportunity cost vs just being long.\n2. The January rebound is front-run by other market participants, compressing the window from a tradable 3-4% move to an exhausted 0.5% gap-up on Jan 2. In recent years, the January effect has been materially weaker as institutions have become more tax-efficient and hedge tax-loss harvesting with derivatives.\n3. A macro-driven gold crash in November (e.g., 2008 style, 2013 taper tantrum) overwhelms the seasonal pattern entirely. In a true crash, tax-loss harvesting joins the selling rather than being the cause, and the January rebound may not materialise for months.",
+      "diversification_value": "Differs from Gold_Seasonal_Cycle (which trades the broad Q4-Q1 seasonal pattern using multi-year averages) by identifying the specific institutional tax-loss harvesting mechanism as the CAUSE of the Q4 weakness and January rebound, rather than just trading the seasonal pattern blindly. The two-phase entry (Nov-Dec dip capture + Dec 20 Jan effect entry) is structurally different. Also differs from Turn_Of_Month_Gold (general TOM effect) by targeting a specific 6-8 week calendar window with a known causal mechanism (tax realisation) rather than a generic month-end anomaly. No existing seasonal idea explains the January effect via tax-loss reversal \u2014 Central_Bank_Calendar and Event_Window_Seasonal_Compression are event-driven, not tax-mechanism-driven.",
+      "self_grade": "B+",
+      "generated_at": "2026-06-24T00:20:22Z"
     }
   ],
   "archived": [
@@ -2399,7 +2456,10 @@
       "Monsoon_India_Demand_Frontrun",
       "Cross_Commodity_Seasonal_Rotation",
       "Diwali_Chinese_New_Year_Physical_Demand_Frontrun",
-      "Fiscal_Year_End_Cross_Border_Demand"
+      "Fiscal_Year_End_Cross_Border_Demand",
+      "Fiscal_Year_End_RepoLiquidity_Selloff",
+      "FOMC_Blackout_Volatility_RangeTrade",
+      "Q4_TaxLoss_Harvesting_GoldRebound"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

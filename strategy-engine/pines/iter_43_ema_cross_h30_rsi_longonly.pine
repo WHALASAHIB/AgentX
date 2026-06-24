@@ -1,0 +1,48 @@
+//@version=5
+strategy(title="EMA5_13_Crossover_H30_LONG_Only_RSI50", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- INPUTS
+// EMA parameters
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50)     // sweep: 3-20 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=100)   // sweep: 8-50 step 2
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)              // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (LONG only above)", minval=20, maxval=80) // sweep: 30-60 step 5
+
+// Stop loss and take profit (in points)
+sl_points = input.int(100, "Stop Loss (points)", minval=20, maxval=500)     // sweep: 50-200 step 25
+tp_points = input.int(80, "Take Profit (points)", minval=20, maxval=500)    // sweep: 40-200 step 20
+
+//--- CALCULATIONS
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+// Crossover condition
+ema_cross_above = ta.crossover(ema_fast, ema_slow)
+ema_cross_below = ta.crossunder(ema_fast, ema_slow)
+
+//--- ENTRY LOGIC
+// LONG entry: EMA5 crosses above EMA13 AND RSI > threshold
+long_condition = ema_cross_above and rsi_val > rsi_threshold
+
+// Entry: LONG only
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+//--- EXIT MANAGEMENT
+// Exit on stop loss or take profit
+if (strategy.position_size > 0)
+    // Track entry price for SL/TP calculation
+    entry_price = strategy.position_avg_price
+    sl_price = entry_price - sl_points * syminfo.mintick
+    tp_price = entry_price + tp_points * syminfo.mintick
+
+    // Use exit with explicit SL/TP
+    strategy.exit("XL", "Long", limit=tp_price, stop=sl_price)
+
+//--- VISUALS
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dotted)

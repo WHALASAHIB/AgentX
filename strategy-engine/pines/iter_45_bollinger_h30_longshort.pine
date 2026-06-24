@@ -1,0 +1,62 @@
+//@version=5
+strategy(title="BB Squeeze Breakout H30 LONG/SHORT", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_len = input.int(20, "BB Length", minval=10, maxval=50, step=2)          // sweep: 10-50 step 2
+bb_mult = input.float(2.5, "BB Std Dev", minval=1.5, maxval=4.0, step=0.25) // sweep: 1.5-4.0 step 0.25
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=28, step=1)         // sweep: 7-28 step 2
+rsi_threshold = input.int(50, "RSI Threshold", minval=40, maxval=60, step=5) // sweep: 40-60 step 5
+tp_points = input.float(100, "Take Profit (points)", minval=40, maxval=200, step=20)   // sweep: 40-200 step 20
+sl_points = input.float(80, "Stop Loss (points)", minval=30, maxval=150, step=10)      // sweep: 30-150 step 10
+
+//--- Bollinger Bands calculation
+float mid = ta.sma(close, bb_len)
+float dev = ta.stdev(close, bb_len) * bb_mult
+float upper = mid + dev
+float lower = mid - dev
+
+//--- RSI calculation
+float rsi = ta.rsi(close, rsi_len)
+
+//--- Bollinger breakout detection
+bool breakout_up = ta.crossover(close, upper)       // price breaks above upper band
+bool breakout_dn = ta.crossunder(close, lower)      // price breaks below lower band
+bool pullback_to_mid = ta.crossunder(close, mid)     // price pulls back below midline (from above)
+bool pullup_to_mid = ta.crossover(close, mid)        // price pulls up above midline (from below)
+
+//--- Band contraction (squeeze detection)
+float bb_width = (upper - lower) / mid * 100         // bandwidth as % of price
+float avg_width = ta.sma(bb_width, 20)
+bool squeeze = bb_width < avg_width                   // bandwidth below 20-period average
+
+//--- entry logic
+bool long_condition = false
+bool short_condition = false
+
+// Long: breakout above upper band, then pullback below midline, RSI confirms
+if breakout_up and squeeze
+    long_condition := pullback_to_mid and rsi > rsi_threshold
+
+// Short: breakout below lower band, then pullup to midline, RSI confirms
+if breakout_dn and squeeze
+    short_condition := pullup_to_mid and rsi < (100 - rsi_threshold)
+
+//--- entry execution
+if long_condition and strategy.position_size == 0
+    strategy.entry("LONG", strategy.long)
+
+if short_condition and strategy.position_size == 0
+    strategy.entry("SHORT", strategy.short)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "LONG", loss=sl_points, profit=tp_points)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "SHORT", loss=sl_points, profit=tp_points)
+
+//--- plot bands
+plot(mid, "Midline", color=color.yellow, linewidth=1)
+plot(upper, "Upper Band", color=color.blue, linewidth=1)
+plot(lower, "Lower Band", color=color.blue, linewidth=1)
+fill(plot(upper), plot(lower), color=color.new(color.blue, 90), title="BB Fill")
