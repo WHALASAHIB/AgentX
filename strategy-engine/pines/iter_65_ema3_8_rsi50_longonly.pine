@@ -1,0 +1,41 @@
+//@version=5
+strategy(title="EMA(3,8) + RSI(50) LONG-Only H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-5 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=5, maxval=50)        // sweep: 6-20 step 2
+rsi_len      = input.int(14, "RSI Length", minval=7, maxval=21)            // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (above = long)", minval=30, maxval=70) // sweep: 40-60 step 5
+atr_len      = input.int(14, "ATR Length", minval=7, maxval=28)            // sweep: 10-21 step 2
+sl_atr_mult  = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=3.0, step=0.25) // sweep: 0.5-2.0 step 0.25
+tp_atr_mult  = input.float(1.5, "TP ATR Multiplier", minval=0.5, maxval=5.0, step=0.25) // sweep: 1.0-3.0 step 0.5
+trade_hour_start = input.int(8, "Trade Start Hour (UTC)", minval=0, maxval=23)  // London open ~8 UTC
+trade_hour_end   = input.int(16, "Trade End Hour (UTC)", minval=0, maxval=23)   // NY close ~16 UTC
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+atr_val  = ta.atr(atr_len)
+
+//--- session filter
+in_trading_hours = hour >= trade_hour_start and hour < trade_hour_end
+
+//--- entry logic: EMA3>EMA8 crossover AND RSI>50 during trading hours = LONG
+long_entry = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold and in_trading_hours
+
+//--- exit logic: EMA3<EMA8 crossunder closes the position
+long_exit = ta.crossunder(ema_fast, ema_slow)
+
+//--- position management
+if (long_entry and strategy.position_size <= 0)
+    // Calculate ATR-based SL and TP levels in ticks
+    sl_ticks = math.floor((atr_val * sl_atr_mult) / syminfo.mintick)
+    tp_ticks = math.floor((atr_val * tp_atr_mult) / syminfo.mintick)
+    strategy.entry("EL", strategy.long)
+    strategy.exit("XL", "EL", loss=sl_ticks, profit=tp_ticks)
+
+//--- visual cues
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)

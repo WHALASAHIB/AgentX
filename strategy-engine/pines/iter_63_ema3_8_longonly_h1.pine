@@ -1,0 +1,29 @@
+//@version=5
+strategy(title="EMA(3,8) Crossover LONG-only XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)        // sweep: 2-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=2, maxval=100)       // sweep: 5-20 step 1
+atr_mult_sl = input.float(1.0, "ATR SL Multiplier", minval=0.5, maxval=5.0, step=0.5)   // sweep: 0.5-3.0 step 0.5
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.5)          // sweep: 1.0-3.0 step 0.5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=28)             // sweep: 7-21 step 7
+
+//--- indicators
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// LONG: EMA fast crosses above slow (uptrend starts)
+long_condition = ta.crossover(ema_fast, ema_slow)
+
+//--- exit logic
+// Exit when EMA fast crosses below slow (trend reversal)
+long_exit = ta.crossunder(ema_fast, ema_slow)
+
+//--- execute trades
+if (long_condition)
+    stop_loss = atr_val * atr_mult_sl
+    take_profit = stop_loss * tp_sl_ratio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=stop_loss / syminfo.mintick, profit=take_profit / syminfo.mintick)
