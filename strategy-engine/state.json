@@ -1,6 +1,6 @@
 {
-  "iteration": 89,
-  "last_run": "2026-06-24T19:47:00",
+  "iteration": 91,
+  "last_run": "2026-06-24T20:38:33",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add RSI(14)>50 bullish momentum filter to the MACD(8,17,7) LONG-only on XAUUSD H1. The bare MACD crossover lost money (PF=0.83, WR=29.7%). Adding RSI(14)>50 should filter out weak entries during ranging/down-trending markets. Same ATR-based TP/SL at 2:1 ratio (SL 1.5x ATR, TP 3.0x ATR).",
+  "current_hypothesis": "Remove RSI filter entirely. Try bare MACD(8,17,7) crossover LONG-only on XAUUSD 30m. RSI(40) was still too restrictive even on 30m (1 trade in 1684 bars = 1 signal/cycle). Without RSI, the MACD crossover should produce enough entries to evaluate the base strategy viability on 30m.",
   "evolution_log": [
     {
       "iteration": 86,
@@ -41,6 +41,33 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-24T19:47:00"
+    },
+    {
+      "iteration": 89,
+      "hypothesis": "Add RSI(14)>50 bullish momentum filter to MACD(8,17,7) LONG-only on XAUUSD H1. ATR-based TP/SL at 2:1 (SL 1.5x ATR, TP 3.0x ATR).",
+      "metrics": {"pf": 0, "sharpe": 0.357, "wr": 100, "dd": 8.37, "trades": 1, "net_profit": 60.89},
+      "verdict": "invalid (low sample, 1 trades) — RSI>50 too restrictive on H1",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T20:02:00"
+    },
+    {
+      "iteration": 90,
+      "hypothesis": "Relax RSI from 50 to 40 on MACD(8,17,7) LONG-only XAUUSD H1. Lowering RSI min to 40 should capture more entries while still filtering bearish momentum.",
+      "metrics": {"pf": 0, "sharpe": 0.357, "wr": 100, "dd": 8.37, "trades": 1, "net_profit": 60.89},
+      "verdict": "invalid (low sample, 1 trades) — RSI(40) still too restrictive on H1",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-24T20:17:00"
+    },
+    {
+      "iteration": 91,
+      "hypothesis": "Switch to XAUUSD 30m timeframe with MACD(8,17,7) LONG-only and RSI(40) filter. On 30m there are ~3x more bars than H1, so the same RSI(40) filter should capture more entries while still filtering bearish momentum. ATR-based TP/SL at 2:1 (SL 1.5x ATR, TP 3.0x ATR).",
+      "metrics": {"pf": 0, "sharpe": 0.785, "wr": 100, "dd": 8.37, "trades": 1, "net_profit": 182.89},
+      "verdict": "invalid (low sample, 1 trades) — RSI(40) too restrictive even on 30m",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-24T20:38:33"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

@@ -1,0 +1,73 @@
+//@version=5
+//=== XAUUSD 30m — MACD(8,17,7) LONG-only + RSI(40) filter ================================
+// Hypothesis: On 30m timeframe there are ~3x more bars than H1, so RSI(40) filter
+// should capture enough entries while still filtering bearish momentum.
+// ATR-based TP/SL at 2:1 ratio (SL=1.5x ATR, TP=3.0x ATR).
+//==========================================================================================
+
+strategy(
+  title="MACD(8,17,7) RSI40 LONG-only XAUUSD 30m",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- INPUTS -------------------------------------------------------------------------------
+// MACD parameters
+fastLength = input.int(8, "MACD Fast Length", minval=2, maxval=50)          // sweep: 5-12 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=100)        // sweep: 12-26 step 2
+signalLength = input.int(7, "MACD Signal Length", minval=1, maxval=30)      // sweep: 5-9 step 1
+
+// RSI filter
+rsiLength = input.int(14, "RSI Length", minval=2, maxval=50)                // sweep: 7-21 step 2
+rsiMin = input.int(40, "RSI Minimum (entry if >)", minval=20, maxval=60)   // sweep: 30-50 step 5
+
+// ATR-based TP/SL
+atrLength = input.int(14, "ATR Length", minval=5, maxval=50)               // sweep: 10-20 step 2
+slMultiplier = input.float(1.5, "SL (×ATR)", minval=0.5, maxval=5.0)       // sweep: 1.0-3.0 step 0.5
+tpMultiplier = input.float(3.0, "TP (×ATR)", minval=0.5, maxval=10.0)      // sweep: 2.0-4.0 step 0.5
+
+// Session filter (London/NY overlap)
+sessionStart = input.int(8, "Session Start (UTC)", minval=0, maxval=23)    // sweep: 6-10 step 1
+sessionEnd = input.int(16, "Session End (UTC)", minval=0, maxval=23)       // sweep: 14-20 step 1
+
+//--- INDICATORS ---------------------------------------------------------------------------
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+rsi = ta.rsi(close, rsiLength)
+atr = ta.atr(atrLength)
+
+//--- ENTRY LOGIC --------------------------------------------------------------------------
+// MACD crossover = signal to go LONG (candle close basis — process_orders_on_close=true)
+macdBullish = ta.crossover(macdLine, signalLine)
+
+// RSI filter: only enter if RSI > rsiMin (bullish momentum)
+rsiOk = rsi > rsiMin
+
+// Session filter: trade during London/NY overlap
+inSession = hour >= sessionStart and hour < sessionEnd
+
+// Entry condition: MACD bullish crossover + RSI above threshold + in session
+longEntry = macdBullish and rsiOk and inSession
+
+//--- EXIT MANAGEMENT ----------------------------------------------------------------------
+// Dynamic TP/SL based on ATR
+longSL = slMultiplier * atr
+longTP = tpMultiplier * atr
+
+// Entry
+if longEntry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+// Exit with ATR-based TP/SL
+if strategy.position_size > 0 and strategy.position_size[1] == 0
+    strategy.exit("Long Exit", "Long",
+      loss=int(longSL / syminfo.mintick),
+      profit=int(longTP / syminfo.mintick))
+
+//--- VISUALIZATION ------------------------------------------------------------------------
+plot(close, "Close", color=color.gray, display=display.none)
+hline(0, "Zero", color=color.gray, display=display.none)

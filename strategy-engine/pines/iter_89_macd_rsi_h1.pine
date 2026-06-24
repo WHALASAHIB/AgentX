@@ -1,0 +1,33 @@
+//@version=5
+strategy(title="MACD+RSI LONG-only XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50, step=1)       // sweep: 5-12 step 1
+slowLen = input.int(17, "MACD Slow Length", minval=10, maxval=50, step=1)     // sweep: 13-26 step 1
+sigLen  = input.int(7, "MACD Signal Length", minval=2, maxval=20, step=1)     // sweep: 5-14 step 1
+
+// RSI parameters
+rsiLen  = input.int(14, "RSI Length", minval=5, maxval=30, step=1)            // sweep: 10-21 step 2
+rsiMin  = input.int(50, "RSI Minimum (LONG only above)", minval=30, maxval=70, step=5) // sweep: 35-65 step 5
+
+// ATR-based TP/SL
+atrLen  = input.int(14, "ATR Length", minval=7, maxval=30, step=1)            // sweep: 10-21 step 2
+slMult  = input.float(1.5, "ATR Multiplier for SL", minval=0.5, maxval=4.0, step=0.25) // sweep: 0.75-3.0 step 0.25
+tpMult  = input.float(3.0, "ATR Multiplier for TP", minval=1.0, maxval=8.0, step=0.5)  // sweep: 1.5-5.0 step 0.5
+
+//--- indicator calculations
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, sigLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+longCondition = ta.crossover(macdLine, signalLine) and rsiVal > rsiMin
+
+if (longCondition) and strategy.position_size == 0
+    stopLoss   = close - atrVal * slMult
+    takeProfit = close + atrVal * tpMult
+    strategy.entry("LONG", strategy.long, comment="MACD+RSI L")
+    strategy.exit("LONG_EXIT", "LONG", loss=close - stopLoss, profit=takeProfit - close, comment="TP/SL L")
+
+//--- no market-wide close — exits managed by strategy.exit only
