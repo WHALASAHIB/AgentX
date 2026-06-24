@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 126,
+    "total_ideas": 129,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -280,6 +280,63 @@
       "diversification_value": "Differs from Gold_Seasonal_Cycle (which trades the broad Q4-Q1 seasonal pattern using multi-year averages) by identifying the specific institutional tax-loss harvesting mechanism as the CAUSE of the Q4 weakness and January rebound, rather than just trading the seasonal pattern blindly. The two-phase entry (Nov-Dec dip capture + Dec 20 Jan effect entry) is structurally different. Also differs from Turn_Of_Month_Gold (general TOM effect) by targeting a specific 6-8 week calendar window with a known causal mechanism (tax realisation) rather than a generic month-end anomaly. No existing seasonal idea explains the January effect via tax-loss reversal \u2014 Central_Bank_Calendar and Event_Window_Seasonal_Compression are event-driven, not tax-mechanism-driven.",
       "self_grade": "B+",
       "generated_at": "2026-06-24T00:20:22Z"
+    },
+    {
+      "name": "EndOfQuarter_Rebalance_Flow",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Captures institutional portfolio rebalancing flows into gold on the last trading day of each quarter, conditioned on quarterly equity market performance.",
+      "market_behaviour": "Institutional portfolio rebalancing is a multi-trillion-dollar mechanical flow. At each quarter-end, pension funds, sovereign wealth funds, and asset managers adjust portfolios back to target allocation weights. After a quarter where US equities have rallied significantly (+5%+), managers trim equity overweights and recycle capital into underweight assets \u2014 gold being a primary portfolio hedge recipient. This creates a measurable, repeatable buying surge in gold during the last 4-6 hours of US trading on quarter-end days. The flow is mechanical rather than discretionary, making it one of the most predictable institutional patterns in gold markets.",
+      "entry_logic": "1) Track calendar for last trading day of each calendar quarter (Mar 31, Jun 30, Sep 30, Dec 31 or last business day). 2) Before quarter-end day, compute SPY quarterly return = (close last day of prior quarter \u2192 close 2 days before quarter-end). 3) IF SPY quarterly return > +5% AND XAUUSD is within +-2% of the 20-day SMA \u2192 enter LONG at US open (13:30 UTC) with 0.5% risk. 4) IF SPY quarterly return < -3% (equity selloff quarter), gold may also benefit from 'flight to safety' rebalancing \u2192 enter LONG at US open with 0.3% risk (smaller conviction). 5) IF SPY quarterly return is between -3% and +5%, skip \u2014 no clear rebalance signal. 6) Re-entry allowed if H1 price pulls back to VWAP during US session and position was not yet filled.",
+      "exit_logic": "Stop loss: 1.5x ATR(14) from entry on H1, or below D1 VWAP (whichever is tighter). Take profit: Exit at US market close (20:00 UTC) same day \u2014 this is a same-session institutional flow capture, not a multi-day swing. No trailing; fixed TP of 1.0x ATR. Time stop: Close all at 20:00 UTC regardless of P&L. If SL not hit and position is +0.5x ATR by 18:00 UTC, move SL to breakeven. No re-entry next day \u2014 the flow is quarter-end specific.",
+      "failure_mode": "1) End-of-quarter window dressing (portfolio managers buying winners/selling losers to window-dress holdings) overwhelms rebalance flows, creating opposite price action. This is most common in Dec 31 when 'window dressing' peaks. 2) Central bank intervention or unexpected macro data (NFP/CPI released on quarter-end) creates exogenous volatility that exceeds rebalance flow impact. 3) SPY quarterly return is a noisy signal \u2014 a +5% quarter could be entirely January performance with flat Feb-Mar, meaning rebalance flows are smaller than expected.",
+      "diversification_value": "This is the only idea in the seasonal family targeting institutional portfolio rebalancing mechanics. It differs from Turn_Of_Month_Gold (which covers calendar month-end anomaly \u2014 a different phenomenon driven by month-end cash flows and fund reporting) in mechanism (institutional allocation rebalancing triggered by quarterly equity performance), timeframe (quarter-end vs month-end), and entry condition (SPY return filter vs calendar date alone). It differs from Fiscal_Year_End ideas which focus on US government fiscal year liquidity, not institutional portfolio reallocation. The signal chain is completely orthogonal: SPY quarterly return \u2192 rebalance flow into gold \u2014 no existing seasonal idea uses equity index performance as a leading indicator for gold flows.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-24T04:38:10Z"
+    },
+    {
+      "name": "US_Election_Year_Gold_Ramp",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "W1"
+      ],
+      "description": "Exploits the consistent pattern of gold rallying in the 6 months prior to US presidential elections due to policy uncertainty, then declining post-election as uncertainty resolves.",
+      "market_behaviour": "US presidential elections create a uniquely predictable macroeconomic uncertainty cycle every 4 years. In the 6-month window before Election Day (early May through early November), policy uncertainty rises sharply as candidates differentiate platforms, incumbent policy direction becomes unclear, and markets price in the risk of regime change. Gold, as the premier de-risking asset, systematically attracts capital during this window. Academic research shows gold returns are 3-4x higher in pre-election semesters vs post-election semesters (1972-2024). After the election, uncertainty resolves regardless of which party wins, and gold tends to give back 30-50% of the pre-election premium over the following 3-6 months. This pattern has held across 13 of the last 14 presidential elections since gold floated in 1971.",
+      "entry_logic": "1) Monitor calendar for US presidential election years. 2) On May 1 of election year, initiate a D1 trend-following position: enter LONG on any weekly close above the 20-week SMA. 3) Scale in: add 0.5x position size each month (Jun 1, Jul 1, Aug 1, Sep 1, Oct 1) if price remains above the 10-week EMA. 4) Maximum total position: 2x normal risk (scaled accumulation rather than one entry). 5) If at any point before October 1 the weekly RSI exceeds 75, pause additional scaling \u2014 let existing position run. 6) Exit condition: 10 trading days before Election Day (late October), close 50% of position. Close remaining 50% on Election Day close.",
+      "exit_logic": "Phase 1 (pre-election): 50% exit on Oct 25 (10 trading days before Election Day) at market. 50% exit on Election Day close. Phase 2 (post-election flip): After Election Day, if price drops below the 50-day EMA within 30 trading days, enter a SHORT with 1x risk targeting a 5% decline. SL at 2% above entry. This captures the post-election uncertainty resolution selloff. If no post-election selloff materializes (i.e., price holds above 50-day EMA for 30 days), close all gold exposure. Trail remaining long position (if any) with a 20-day EMA stop.",
+      "failure_mode": "1) Incumbent re-election in a stable policy environment (e.g., 2012, 2020 with status quo policy) produces weaker pre-election gold ramps because the uncertainty premium is smaller. 2) Black swan during election period (candidate assassination, electoral crisis, delayed result) extends uncertainty beyond the normal post-election resolution window, making the short position fail. 3) Fed policy during election year dominates the cycle \u2014 e.g., 2022 was a midterm year but Fed tightening overwhelmed seasonal patterns. 4) Only 7 observations since gold floated (1980, 1984, 1988, 1992, 1996, 2000, 2004, 2008, 2012, 2016, 2020, 2024) = limited statistical significance for the exact 6-month window, though directional consistency is strong.",
+      "diversification_value": "No existing seasonal idea targets the US presidential election cycle \u2014 the most robust 4-year calendar pattern in gold. It differs from FOMC_Blackout_Volatility_RangeTrade (which covers 2-week FOMC blackout windows \u2014 a completely different timescale and mechanism) and Event_Window_Seasonal_Compression (which bundles macro events but doesn't isolate elections). The entry mechanism (time-based accumulation with trend confirmation) and two-phase structure (long pre-election, potential short post-election) are unique in the seasonal family. The signal chain is purely calendar-based with trend filter \u2014 no existing idea uses the November presidential election cycle.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-24T04:38:10Z"
+    },
+    {
+      "name": "Fiscal_Year_New_Mandate_Accumulation",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H1"
+      ],
+      "description": "Captures the predictable gold accumulation surge in the first 10 trading days of January (global institutional new-year mandates) and April (Japanese fiscal year start), combined with positive January effect for gold.",
+      "market_behaviour": "January is the single most robust positive month for gold in the annual cycle, driven by three compounding institutional mechanisms. First, the overwhelming majority of global institutional investors (pension funds, endowments, insurance companies, sovereign wealth funds) receive new annual investment mandates starting January 1st. This triggers a concentrated wave of portfolio construction \u2014 including gold allocations \u2014 in the first 10-15 trading days. Second, the January Effect in equities (small-cap rally) has a correlated effect in gold as general risk-on positioning lifts all commodities. Third, Asian physical demand restocks after the December holiday lull, with LBMA vaults and refiners replenishing inventory. In Japan, the April fiscal year start (April 1) creates a secondary wave as Japanese pension funds (GPIF) and institutional investors execute their new mandates, with gold as a standard 3-5% portfolio allocation. This creates two distinct, predictable accumulation windows each year.",
+      "entry_logic": "1) Window 1 (January): Enter LONG at market open on the second trading day of January. Scale: 1x risk on entry. Add 0.5x risk on each 2% pullback within the first 10 trading days. Maximum position: 2x risk. 2) Condition: Skip if gold has already rallied >5% in the last 10 trading days of December (pre-buying means the January effect may be front-run). 3) Window 2 (April \u2014 Japanese fiscal year): Enter LONG on April 2 if price is within 2% of the 50-day SMA (not overextended). 1x risk, hold for 10 trading days. 4) For both windows: confirm with D1 RSI < 70 (not overbought at entry) and D1 ATR > 20-day average (adequate liquidity for accumulation).",
+      "exit_logic": "Window 1 (January): Fixed time stop \u2014 exit at close of the 15th trading day of January (Jan 22-25, depending on holidays). Hard SL at 2x ATR(14) below entry. Trailing SL activates at +1x ATR: move to breakeven. No TP target \u2014 let the accumulation window run its full duration. Window 2 (April): Exit at close of the 10th trading day after entry (approx April 15). SL at 1.5x ATR(14) below entry. No trailing \u2014 shorter window with Japanese-specific flow. If within 5 trading days of exit the position is negative, close immediately (no recovery expectation in a short accumulation window).",
+      "failure_mode": "1) Fed rate decision or FOMC meeting in the first 2 weeks of January (occurs in some years, e.g., 2024 FOMC Jan 31) can dominate institutional flows \u2014 the macro catalyst overwhelms the seasonal pattern. 2) Strong December carry-over momentum in gold (>8% monthly gain) means the January effect has been front-run and the accumulation window is already priced in. This is captured by the 'skip if >5% Dec rally' condition. 3) Japanese fiscal year window can be disrupted by the start of the Japanese fiscal year coinciding with Golden Week holidays (late April), reducing trading days. 4) The January effect has weakened in the post-2015 era of ETF-dominated gold markets as institutional flows are less concentrated on specific calendar dates.",
+      "diversification_value": "This differs from the existing seasonal family in several ways. Gold_Seasonal_Cycle covers the broad January seasonal (general 'January effect') without the institutional mandate mechanism or specific entry/exit windows \u2014 it's a macro observation, not a tradable system. Diwali_Chinese_New_Year_Physical_Demand_Frontrun targets Asian physical buying (Oct-Feb) but not institutional mandate flows. Fiscal_Year_End_RepoLiquidity_Selloff and Fiscal_Year_End_Cross_Border_Demand cover year-end SELL pressure (opposite direction and period). This idea fills the gap for year-START institutional accumulation \u2014 a distinct mechanism in the opposite direction from the existing year-end ideas. The dual-window structure (January global + April Japan) is unique in the archive.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-24T04:38:10Z"
     }
   ],
   "archived": [
@@ -2459,7 +2516,10 @@
       "Fiscal_Year_End_Cross_Border_Demand",
       "Fiscal_Year_End_RepoLiquidity_Selloff",
       "FOMC_Blackout_Volatility_RangeTrade",
-      "Q4_TaxLoss_Harvesting_GoldRebound"
+      "Q4_TaxLoss_Harvesting_GoldRebound",
+      "EndOfQuarter_Rebalance_Flow",
+      "US_Election_Year_Gold_Ramp",
+      "Fiscal_Year_New_Mandate_Accumulation"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

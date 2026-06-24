@@ -1,0 +1,27 @@
+//@version=5
+strategy(title="EMA5_13_Crossover_H1_NoRSI", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=50)        // sweep: 2-20 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=100)       // sweep: 8-30 step 2
+atrMultSL = input.float(1.0, "ATR SL Multiplier", step=0.1)              // sweep: 0.5-3.0 step 0.5
+tpRatio = input.float(1.5, "TP/SL Ratio", step=0.1)                      // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+atrVal = ta.atr(14)
+
+//--- entry logic: LONG only on EMA fast crossing above EMA slow
+longEntry = ta.crossover(emaFast, emaSlow)
+longExit = ta.crossunder(emaFast, emaSlow)
+
+//--- entry management
+if longEntry
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: EMA crossunder + ATR-based fixed TP/SL via strategy.exit
+if strategy.position_size > 0
+    slPips = atrMultSL * atrVal / syminfo.mintick
+    tpPips = slPips * tpRatio
+    strategy.exit("Long Exit", "Long", loss=int(slPips), profit=int(tpPips))
