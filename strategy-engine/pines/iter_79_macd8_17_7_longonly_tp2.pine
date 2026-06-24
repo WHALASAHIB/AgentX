@@ -1,0 +1,35 @@
+//@version=5
+strategy(title="MACD(8,17,7) Crossover LONG-only XAUUSD H1 — TP/SL 2:1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50)    // sweep: 5-12 step 2
+slowLen = input.int(17, "MACD Slow Length", minval=5, maxval=100)  // sweep: 12-26 step 3
+sigLen  = input.int(7, "MACD Signal Length", minval=1, maxval=30)  // sweep: 3-9 step 2
+
+// ATR-based TP/SL (2:1 ratio — tightened from 1.5:1 in iter 77)
+atrPeriod = input.int(14, "ATR Period", minval=5, maxval=30)        // sweep: 10-21 step 2
+slMulti  = input.float(1.0, "SL Multiplier (x ATR)", minval=0.5, maxval=3.0, step=0.1)   // sweep: 0.5-2.0 step 0.2
+tpMulti  = input.float(2.0, "TP Multiplier (x ATR)", minval=0.5, maxval=5.0, step=0.1)   // sweep: 1.0-3.0 step 0.3
+
+//--- indicator calculations
+
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, sigLen)
+atr_val = ta.atr(atrPeriod)
+
+//--- entry logic
+
+// LONG entry: MACD line crosses above Signal line (bullish crossover)
+longCondition = ta.crossover(macdLine, signalLine)
+
+if (longCondition)
+    stopLoss  = close - (atr_val * slMulti)
+    takeProfit = close + (atr_val * tpMulti)
+    strategy.entry("L", strategy.long)
+    strategy.exit("X_L", from_entry="L", loss=math.round((close - stopLoss) / syminfo.mintick), profit=math.round((takeProfit - close) / syminfo.mintick))
+
+//--- plot indicators for visual reference
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dotted)
+plot(macdLine, "MACD Line", color=color.blue, linewidth=2)
+plot(signalLine, "Signal Line", color=color.orange, linewidth=1)

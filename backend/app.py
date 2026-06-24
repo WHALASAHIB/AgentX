@@ -18,6 +18,7 @@ from __future__ import annotations
 # ═══════════════════════════════════════════════════════════════════════════
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -54,6 +55,33 @@ from backend.redis_client import get_redis
 
 logger = logging.getLogger(__name__)
 _start_time = time.time()
+
+# ── User Store (password-based auth for dev/signup) ─────────────────────────
+_USERS: dict[str, dict] = {}  # email -> {"password_hash": str}
+
+
+def _hash_password(password: str) -> str:
+    """Simple SHA-256 hash for dev-mode password storage."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def _verify_password(password: str, password_hash: str) -> bool:
+    return _hash_password(password) == password_hash
+
+
+def _seed_users():
+    """Seed known users on startup."""
+    _USERS["whalasahibtrading@gmail.com"] = {
+        "password_hash": _hash_password("Trading123!"),
+        "name": "whalasahibtrading",
+        "role": "admin",
+    }
+    logger.info("Seeded %d user(s) in user store", len(_USERS))
+
+
+def _get_user(email: str) -> dict | None:
+    return _USERS.get(email.strip().lower())
+
 
 # ── Fire-and-forget helper ─────────────────────────────────────────────────
 async def _publish_async(channel: str, message: dict):
@@ -310,6 +338,7 @@ def _get_bot_status(name: str) -> dict:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AGENTX Backend starting (v%s)", __version__)
+    _seed_users()
     _scan_running_bots()
 
     # Refresh bot scripts to catch any new multi-pair bots
@@ -477,12 +506,16 @@ async def auth_me(request: Request):
 
 @app.post("/api/auth/signin")
 async def auth_signin(request: Request):
-    """Dev-mode signin — accepts any credentials."""
+    """Dev-mode signin — verifies email/password against user store."""
     try:
         body = await request.json()
-        email = body.get("email", OWNER_EMAIL)
+        email = body.get("email", "").strip().lower()
+        password = body.get("password", "")
     except Exception:
-        email = OWNER_EMAIL
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    user = _get_user(email)
+    if not user or not _verify_password(password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     response = JSONResponse({"email": email, "status": "authenticated", "name": email.split("@")[0]})
     response.set_cookie(
         key=SESSION_COOKIE,
@@ -495,12 +528,23 @@ async def auth_signin(request: Request):
 
 @app.post("/api/auth/signup")
 async def auth_signup(request: Request):
-    """Dev-mode signup — accepts any credentials."""
+    """Dev-mode signup — stores user in the user store."""
     try:
         body = await request.json()
-        email = body.get("email", "user@agentx.trade")
+        email = body.get("email", "").strip().lower()
+        password = body.get("password", "")
     except Exception:
-        email = "user@agentx.trade"
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    if _get_user(email):
+        raise HTTPException(status_code=409, detail="User already exists")
+    _USERS[email] = {
+        "password_hash": _hash_password(password),
+        "name": email.split("@")[0],
+        "role": "user",
+    }
+    logger.info("User created: %s", email)
     response = JSONResponse({"email": email, "status": "created", "name": email.split("@")[0]})
     response.set_cookie(
         key=SESSION_COOKIE,
@@ -630,6 +674,7 @@ async def consolidated_stats():
         "equity": 0.0,
         "max_drawdown": 0.0,
         "best_account": {"name": "", "balance": 0.0, "equity": 0.0},
+        "equity_history": [],
         "bot_statuses": [],
     }
 
@@ -681,6 +726,13 @@ async def consolidated_stats():
             except Exception:
                 continue
         stats["best_account"] = best
+    except Exception:
+        pass
+
+    # ── Equity History ────────────────────────────────────────────────────
+    try:
+        equity_data = await bridge.get_equity(account_id, days=30)
+        stats["equity_history"] = equity_data if isinstance(equity_data, list) else []
     except Exception:
         pass
 
@@ -1623,22 +1675,58 @@ async def editor_list_files(auth=Depends(require_auth)):
 
 @app.get("/api/editor/files/{path:path}")
 async def editor_read_file(path: str, auth=Depends(require_auth)):
-    full_path = Path(__file__).resolve().parent.parent / path
-    if not full_path.exists() or not full_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-    content = full_path.read_text(encoding="utf-8")
-    return {"path": path, "content": content}
+    """Read a bot script file content. Resolves relative to project root or bots/ dir."""
+    project_root = Path(__file__).resolve().parent.parent  # C:\Trading
+    bots_dir = project_root / "bots"
+
+    # Try direct path first, then under bots/
+    candidates = [
+        project_root / path,
+        bots_dir / path,
+    ]
+    # Also try stripping 'bots/' prefix if it's already included
+    if path.startswith("bots/"):
+        candidates.insert(0, project_root / path[len("bots/"):])
+
+    full_path = None
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        # Security: ensure the resolved path is under project_root
+        try:
+            resolved.relative_to(project_root.resolve())
+        except ValueError:
+            continue
+        if resolved.exists() and resolved.is_file():
+            full_path = resolved
+            break
+
+    if full_path is None:
+        raise HTTPException(status_code=404, detail=f"File not found: {path}")
+    try:
+        content = full_path.read_text(encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
+    return {"path": str(full_path.relative_to(project_root)), "content": content}
 
 class SaveFileRequest(PydanticBaseModel):
     content: str
 
 @app.put("/api/editor/files/{path:path}")
 async def editor_save_file(path: str, req: SaveFileRequest, auth=Depends(require_auth)):
-    full_path = Path(__file__).resolve().parent.parent / path
-    if not full_path.exists():
+    project_root = Path(__file__).resolve().parent.parent
+    bots_dir = project_root / "bots"
+    candidates = [project_root / path, bots_dir / path]
+    if path.startswith("bots/"):
+        candidates.insert(0, project_root / path[len("bots/"):])
+    full_path = None
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            full_path = candidate
+            break
+    if full_path is None:
         raise HTTPException(status_code=404, detail="File not found")
     full_path.write_text(req.content, encoding="utf-8")
-    return {"status": "saved", "path": path}
+    return {"status": "saved", "path": str(full_path.relative_to(project_root))}
 
 @app.post("/api/editor/deploy/{path:path}")
 async def editor_deploy(path: str, auth=Depends(require_auth)):
@@ -1993,12 +2081,26 @@ async def convert_file(file: UploadFile = File(...)):
 
 @app.get("/api/settings/api-keys")
 async def settings_api_keys(auth=Depends(require_auth)):
-    return {
-        "keys": [
-            {"id": "main", "label": "Primary API Key", "prefix": "agx_", "created": "2026-01-15", "last_used": "2026-06-10 14:32:01"},
-            {"id": "readonly", "label": "Read-only Key", "prefix": "agx_", "created": "2026-03-22", "last_used": "2026-06-09 09:12:45"},
-        ]
+    # Full key values (stored here for demo; in production load from DB/vault)
+    _full_keys = {
+        "main": "agx_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p",
+        "readonly": "agx_r5t6y7u8i9o0p1q2r3s4t5u6v7w8x9y0",
     }
+    raw = [
+        {"id": "main", "label": "Primary API Key", "key": _full_keys["main"], "created": "2026-01-15", "last_used": "2026-06-10 14:32:01"},
+        {"id": "readonly", "label": "Read-only Key", "key": _full_keys["readonly"], "created": "2026-03-22", "last_used": "2026-06-09 09:12:45"},
+    ]
+    masked = []
+    for k in raw:
+        key_val = k.get("key", "")
+        if len(key_val) > 12:
+            masked_key = key_val[:8] + "..." + key_val[-4:]
+        else:
+            masked_key = key_val
+        entry = {kk: vv for kk, vv in k.items() if kk != "key"}
+        entry["key"] = masked_key
+        masked.append(entry)
+    return {"keys": masked}
 
 @app.post("/api/settings/api-keys/regenerate")
 async def settings_regenerate_key(auth=Depends(require_auth)):
@@ -2275,6 +2377,8 @@ async def get_prices():
     Reads tracked_symbols from mt5_config.json, queries the bridge for each,
     and returns a JSON dict keyed by symbol. Bridge errors for individual
     symbols are reported as null instead of failing the whole request.
+    Falls back to the last known trade price from history when live tick
+    data is unavailable.
     """
     config_path = Path(__file__).resolve().parent.parent / "mt5_config.json"
     try:
@@ -2288,20 +2392,50 @@ async def get_prices():
     bridge = get_bridge()
     prices: dict[str, Any] = {}
 
+    # Pre-fetch history to build a fallback price lookup per symbol
+    last_trade_price: dict[str, float] = {}
+    try:
+        trades = await bridge.get_trades("default", days=30)
+        # Sort by close_time descending so the first entry per symbol is the most recent
+        trades_sorted = sorted(trades, key=lambda t: t.get("close_time", ""), reverse=True)
+        for t in trades_sorted:
+            sym = t.get("symbol", "")
+            if sym and sym not in last_trade_price:
+                exit_price = t.get("exit_price")
+                if exit_price is not None:
+                    last_trade_price[sym] = float(exit_price)
+    except Exception as e:
+        logger.warning("Could not fetch trade history for fallback: %s", e)
+
     async def fetch_one(symbol: str) -> None:
+        bid = None
+        ask = None
+        timestamp = None
+        error = None
         try:
             tick = await bridge.get_tick("default", symbol)
-            prices[symbol] = {
-                "bid": tick.get("bid"),
-                "ask": tick.get("ask"),
-                "timestamp": tick.get("time") or tick.get("timestamp"),
-            }
+            bid = tick.get("bid")
+            ask = tick.get("ask")
+            timestamp = tick.get("time") or tick.get("timestamp")
         except HTTPException as e:
-            logger.warning("Bridge error for %s: %s", symbol, e.detail)
-            prices[symbol] = {"bid": None, "ask": None, "timestamp": None, "error": e.detail}
+            error = e.detail
         except Exception as e:
-            logger.warning("Unexpected error for %s: %s", symbol, e)
-            prices[symbol] = {"bid": None, "ask": None, "timestamp": None, "error": str(e)}
+            error = str(e)
+
+        # Fallback: if bid/ask are both null, use last known trade price
+        if bid is None and ask is None and symbol in last_trade_price:
+            last_price = last_trade_price[symbol]
+            bid = last_price
+            ask = last_price
+            logger.info("Fallback price for %s: using history price %s", symbol, last_price)
+
+        prices[symbol] = {
+            "bid": bid,
+            "ask": ask,
+            "timestamp": timestamp,
+        }
+        if error:
+            prices[symbol]["error"] = error
 
     await asyncio.gather(*(fetch_one(sym) for sym in symbols))
     return prices

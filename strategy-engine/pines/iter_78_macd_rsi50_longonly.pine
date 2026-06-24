@@ -1,0 +1,47 @@
+//@version=5
+// Strategy: MACD(8,17,7) + RSI(14)>50 Crossover LONG-only
+// XAUUSD H1 — adding RSI momentum filter to improve PF
+strategy(title="MACD8_17_7_RSI50_LONG_H1", overlay=true, initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         commission_type=strategy.commission.percent, commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_length = input.int(8, "MACD Fast Length", minval=1)       // sweep: 5-12 step 1
+slow_length = input.int(17, "MACD Slow Length", minval=1)      // sweep: 15-26 step 1
+signal_length = input.int(7, "MACD Signal Length", minval=1)   // sweep: 5-9 step 1
+
+// RSI filter
+rsi_length = input.int(14, "RSI Length", minval=1)             // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Threshold (min for LONG)", minval=1)  // sweep: 40-60 step 5
+
+// ATR-based TP/SL
+atr_length = input.int(14, "ATR Length", minval=1)             // sweep: 10-20 step 2
+sl_mult = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, step=0.1)   // sweep: 0.5-2.0 step 0.1
+tp_mult = input.float(1.5, "TP Multiplier (ATR)", minval=0.5, step=0.1)   // sweep: 1.0-3.0 step 0.1
+
+//--- indicator calculations
+[macd_line, signal_line, _hist] = ta.macd(close, fast_length, slow_length, signal_length)
+rsi_val = ta.rsi(close, rsi_length)
+atr_val = ta.atr(atr_length)
+
+//--- entry logic
+// LONG entry: MACD crossover AND RSI > threshold (momentum confirmation)
+long_entry = ta.crossover(macd_line, signal_line) and rsi_val > rsi_threshold
+
+//--- exit management
+// Calculate ATR-based stop and target levels from entry bar
+sl_distance = sl_mult * atr_val
+tp_distance = tp_mult * atr_val
+
+// Convert to ticks for strategy.exit
+sl_ticks = int(sl_distance / syminfo.mintick)
+tp_ticks = int(tp_distance / syminfo.mintick)
+
+//--- execution
+if long_entry and strategy.position_size == 0
+    strategy.entry("MACD_LONG", strategy.long)
+    strategy.exit("EXIT_LONG", "MACD_LONG",
+                  loss=sl_ticks, profit=tp_ticks,
+                  comment="TP/SL")
