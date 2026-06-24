@@ -1,0 +1,42 @@
+//@version=5
+strategy(title="EMA(3,8) LONG-Only XAUUSD H1 - 1:1.5 TP/SL", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFast = input.int(3, "Fast EMA Length", minval=1, maxval=50, tooltip="Fast EMA period for crossover detection")
+emaSlow = input.int(8, "Slow EMA Length", minval=1, maxval=50, tooltip="Slow EMA period for crossover detection")
+atrLength = input.int(14, "ATR Length", minval=5, maxval=50, tooltip="ATR period for stop/target calculation")
+tpMult = input.float(1.0, "TP Multiplier (ATR)", minval=0.3, maxval=5.0, step=0.1, tooltip="Take-profit = ATR * this multiplier")
+slMult = input.float(1.5, "SL Multiplier (ATR)", minval=0.3, maxval=5.0, step=0.1, tooltip="Stop-loss = ATR * this multiplier")
+use24h = input.bool(true, "Trade 24 Hours", tooltip="If false, restrict to London/NY hours (8-16 UTC)")
+
+//--- indicators
+emaFastVal = ta.ema(close, emaFast)
+emaSlowVal = ta.ema(close, emaSlow)
+atr = ta.atr(atrLength)
+
+//--- crossover detection
+buySignal = ta.crossover(emaFastVal, emaSlowVal)
+sellSignal = ta.crossunder(emaFastVal, emaSlowVal)
+
+//--- entry logic
+inTrade = strategy.position_size > 0
+
+// Time filter for optional session restriction
+timeOk = use24h ? true : (hour(time) >= 8 and hour(time) < 16)
+
+// Entry: LONG on EMA3 > EMA8 crossover, if not already in a trade and time is OK
+if buySignal and not inTrade and timeOk
+    strategy.entry("Long", strategy.long)
+
+// Exit management with ATR-based SL and TP
+if inTrade
+    // SL at slMult * ATR below entry price
+    stopLoss = strategy.position_avg_price - (slMult * atr)
+    // TP at tpMult * ATR above entry price (1:1.5 TP:SL ratio)
+    takeProfit = strategy.position_avg_price + (tpMult * atr)
+    
+    strategy.exit("XL", "Long", loss=strategy.position_avg_price - stopLoss, profit=takeProfit - strategy.position_avg_price)
+
+// Alternate exit: crossunder means trend reversed
+if sellSignal and inTrade
+    strategy.close("Long", comment="Crossover_Exit")

@@ -1,0 +1,36 @@
+//@version=5
+strategy(title="EMA3_8_RSI40_LONGONLY_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(3,    "Fast EMA Length",  minval=1, maxval=50, tooltip="Fast EMA period for crossover entry")
+emaSlowLen   = input.int(8,    "Slow EMA Length",  minval=2, maxval=50, tooltip="Slow EMA period for crossover entry")  // sweep: 5-15 step 1
+rsiLen       = input.int(14,   "RSI Length",       minval=2, maxval=50, tooltip="RSI period for momentum filter")       // sweep: 10-20 step 2
+rsiThreshold = input.int(40,   "RSI Entry Threshold", minval=30, maxval=60, tooltip="RSI must be above this to enter long")  // sweep: 35-50 step 5
+atrLen       = input.int(14,   "ATR Length",       minval=5, maxval=50, tooltip="ATR period for stop/target calculation")
+slMultiplier = input.float(1.5, "SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.1, tooltip="Stop loss = ATR * multiplier")
+tpMultiplier = input.float(1.0, "TP Multiplier (ATR)", minval=0.3, maxval=3.0, step=0.1, tooltip="Take profit = ATR * multiplier")
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atrVal  = ta.atr(atrLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold
+
+if longCondition
+    stopLoss   = close - atrVal * slMultiplier
+    takeProfit = close + atrVal * tpMultiplier
+    strategy.entry("EL", strategy.long)
+    strategy.exit("XL", "EL", loss=close - stopLoss, profit=takeProfit - close)
+
+//--- exit management: trend-crossunder exit
+if ta.crossunder(emaFast, emaSlow)
+    strategy.close("EL", comment="crossunder_exit")
+
+//--- plot indicators for visual reference
+plot(emaFast, "Fast EMA", color.blue, 1)
+plot(emaSlow, "Slow EMA", color.red, 1)
+hline(50, "RSI 50 ref", color.gray, hline.style_dashed)
+// rsi overlaid as invisible — strategy uses it
