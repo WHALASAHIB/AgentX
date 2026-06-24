@@ -1,0 +1,36 @@
+//@version=5
+strategy(title="iter_85 — MACD(8,17,7) LONG-only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(8, "MACD Fast Length", minval=2, maxval=50)     // sweep: 5-12 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=50)    // sweep: 13-26 step 1
+signalLength = input.int(7, "MACD Signal Length", minval=2, maxval=30) // sweep: 5-9 step 1
+
+// ATR-based TP/SL
+atrLength = input.int(14, "ATR Length", minval=5, maxval=30)           // sweep: 10-21 step 2
+slMultiplier = input.float(1.0, "SL Multiplier (x ATR)", minval=0.5, maxval=3.0, step=0.1)  // sweep: 0.5-2.0 step 0.1
+tpMultiplier = input.float(1.5, "TP Multiplier (x ATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.1
+
+//--- indicator calculations
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+atrValue = ta.atr(atrLength)
+
+//--- entry logic
+// LONG entry: MACD line crosses above signal line (bullish crossover)
+longCondition = ta.crossover(macdLine, signalLine)
+
+//--- exit management
+// Exit LONG when MACD line crosses below signal line
+closeLongCondition = ta.crossunder(macdLine, signalLine)
+
+//--- strategy execution
+if longCondition
+    stopLoss = close - (atrValue * slMultiplier)
+    takeProfit = close + (atrValue * tpMultiplier)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", from_entry="Long", loss=close - stopLoss, profit=takeProfit - close)
+
+// Emergency crossunder exit (if TP/SL hasn't been hit yet)
+if closeLongCondition
+    strategy.close("Long", comment="MACD_xunder")

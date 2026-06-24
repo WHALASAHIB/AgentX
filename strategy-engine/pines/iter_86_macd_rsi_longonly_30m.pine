@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="MACD(8,17,7)+RSI(50) LONG-only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(8, "MACD Fast Length", minval=1)       // sweep: 5-12 step 1
+slow_len = input.int(17, "MACD Slow Length", minval=1)      // sweep: 14-21 step 1
+sig_len = input.int(7, "MACD Signal Length", minval=1)      // sweep: 5-9 step 1
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=1)             // sweep: 10-20 step 2
+rsi_threshold = input.int(50, "RSI Threshold", minval=1)    // sweep: 40-60 step 5
+
+// ATR-based TP/SL
+atr_len = input.int(14, "ATR Length", minval=1)             // sweep: 10-20 step 2
+sl_mult = input.float(1.0, "SL Multiplier (ATR)", minval=0.1)   // sweep: 0.5-2.0 step 0.25
+tp_mult = input.float(1.5, "TP Multiplier (ATR)", minval=0.1)   // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, sig_len)
+macd_cross_above = ta.crossover(macd_line, signal_line)
+macd_cross_below = ta.crossunder(macd_line, signal_line)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+rsi_filter = rsi_val > rsi_threshold
+
+// ATR for stops
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+long_entry = macd_cross_above and rsi_filter
+
+// Track position state
+var bool in_position = false
+var float entry_price = 0.0
+var float entry_sl = 0.0
+var float entry_tp = 0.0
+
+if long_entry and strategy.position_size == 0
+    entry_price := close
+    entry_sl := close - (atr_val * sl_mult)
+    entry_tp := close + (atr_val * tp_mult)
+    strategy.entry("MACD_LONG", strategy.long)
+    strategy.exit("MACD_EXIT", "MACD_LONG", loss=int((entry_price - entry_sl) / syminfo.mintick), profit=int((entry_tp - entry_price) / syminfo.mintick))
+
+// Emergency exit on MACD crossunder (if still in position)
+if macd_cross_below and strategy.position_size > 0
+    strategy.close("MACD_LONG", comment="MACD_XUNDER")
+
+//--- plot signals for visual reference
+plot(macd_line, "MACD Line", color=color.blue, display=display.none)
+plot(signal_line, "Signal Line", color=color.orange, display=display.none)
+hline(0, "Zero", color=color.gray, display=display.none)
+plotshape(long_entry, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, title="LONG Signal")
