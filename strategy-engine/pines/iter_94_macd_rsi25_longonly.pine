@@ -1,0 +1,39 @@
+//@version=5
+strategy(title="MACD RSI25 LONG-only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+// --- inputs ---
+fast_len = input.int(8, "MACD Fast Length", minval=3, maxval=50, tooltip="Fast EMA length for MACD")   // sweep: 5-20 step 1
+slow_len = input.int(17, "MACD Slow Length", minval=5, maxval=100, tooltip="Slow EMA length for MACD")  // sweep: 10-40 step 1
+sig_len  = input.int(7, "MACD Signal Length", minval=2, maxval=30, tooltip="Signal line EMA length")    // sweep: 3-15 step 1
+rsi_len  = input.int(14, "RSI Length", minval=5, maxval=30, tooltip="RSI period")                        // sweep: 7-21 step 1
+rsi_min  = input.int(25, "RSI Minimum (Long)", minval=20, maxval=60, tooltip="Minimum RSI for long entry") // sweep: 20-50 step 5
+atr_mult_sl = input.float(1.5, "ATR Multiplier - SL", minval=0.5, maxval=5.0, step=0.25, tooltip="Stop-loss as multiple of ATR")  // sweep: 0.5-4.0 step 0.5
+atr_mult_tp = input.float(3.0, "ATR Multiplier - TP", minval=1.0, maxval=10.0, step=0.25, tooltip="Take-profit as multiple of ATR") // sweep: 1.0-6.0 step 0.5
+atr_len  = input.int(14, "ATR Length", minval=7, maxval=30, tooltip="ATR period")
+
+// --- indicator calculations ---
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, sig_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+// --- entry logic ---
+// Long entry: MACD line crosses above signal line AND RSI >= minimum threshold
+long_condition = ta.crossover(macd_line, signal_line) and rsi_val >= rsi_min
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+// --- exit management ---
+// ATR-based fixed TP/SL exits via strategy.exit
+// loss = atr_mult_sl * atr_val in price units
+// profit = atr_mult_tp * atr_val in price units
+// Use close-based stops
+sl_distance = atr_mult_sl * atr_val
+tp_distance = atr_mult_tp * atr_val
+
+// Convert to ticks for strategy.exit
+sl_ticks = int(sl_distance / syminfo.mintick)
+tp_ticks = int(tp_distance / syminfo.mintick)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)

@@ -1,0 +1,45 @@
+//@version=5
+strategy(title="MACD LONG-only Bare XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(8, "MACD Fast Length", minval=3, maxval=30)      // sweep: 5-14 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=50)     // sweep: 12-26 step 2
+signalLength = input.int(7, "MACD Signal Length", minval=2, maxval=15)  // sweep: 5-12 step 1
+
+// ATR-based TP/SL
+atrLength = input.int(14, "ATR Length", minval=5, maxval=30)            // sweep: 7-21 step 2
+slMultiplier = input.float(1.5, "SL Multiplier (x ATR)", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+tpMultiplier = input.float(3.0, "TP Multiplier (x ATR)", minval=0.5, maxval=8.0, step=0.5)  // sweep: 2.0-5.0 step 0.5
+
+// Trade session filter
+tradeHourStart = input.int(1, "Trade Start Hour (UTC)", minval=0, maxval=23)   // sweep: 0-12 step 1
+tradeHourEnd = input.int(22, "Trade End Hour (UTC)", minval=0, maxval=23)      // sweep: 12-23 step 1
+
+//--- calculations
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+atrValue = ta.atr(atrLength)
+
+//--- entry logic
+isLongEntry = ta.crossover(macdLine, signalLine)
+isExit = false
+
+// Trade session check (UTC)
+inSession = (hour(time) >= tradeHourStart and hour(time) <= tradeHourEnd)
+
+// Entry condition: MACD crossover during session
+enterLong = isLongEntry and inSession
+
+//--- entry management
+if (enterLong)
+    stopLoss = slMultiplier * atrValue
+    takeProfit = tpMultiplier * atrValue
+    strategy.entry("MACD_Long", strategy.long)
+    strategy.exit("MACD_Exit_Long", from_entry="MACD_Long", loss=stopLoss / syminfo.mintick, profit=takeProfit / syminfo.mintick)
+
+//--- plot indicators for visual reference
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dashed)
+plot(macdLine, "MACD", color=color.blue, linewidth=2)
+plot(signalLine, "Signal", color=color.orange, linewidth=1)
+plot(ta.ema(close, fastLength), "Fast EMA", color=color.green, linewidth=1)
+plot(ta.ema(close, slowLength), "Slow EMA", color=color.red, linewidth=1)

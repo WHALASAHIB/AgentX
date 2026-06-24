@@ -1,0 +1,57 @@
+//@version=5
+// === Strategy: MACD(8,17,7) + RSI(14) > 30 LONG-only on XAUUSD 30m ===
+// Hypothesis: Bare MACD on 30m gave 33 trades but PF=0.96 (unprofitable).
+// Adding RSI(14) > 30 filter to eliminate entries in deeply bearish momentum.
+// RSI(50) was too restrictive (1 trade), RSI(40) also 1 trade.
+// RSI(30) should filter only the worst ~20% of entries while keeping statistical mass.
+// ATR-based TP/SL at 2:1 ratio via SL=1.5xATR, TP=3.0xATR.
+strategy(title="MACD+RSI30 LONG 30m", overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50)       // sweep: 6-20 step 2
+slowLen = input.int(17, "MACD Slow Length", minval=5, maxval=100)     // sweep: 12-30 step 3
+sigLen  = input.int(7, "MACD Signal Length", minval=2, maxval=30)     // sweep: 5-15 step 2
+
+// RSI parameters
+rsiLen  = input.int(14, "RSI Length", minval=2, maxval=50)            // sweep: 7-21 step 7
+rsiMin  = input.int(30, "RSI Minimum (long only above)", minval=10, maxval=70) // sweep: 25-45 step 5
+
+// ATR-based stop/target parameters
+atrLen  = input.int(14, "ATR Length", minval=5, maxval=100)           // sweep: 10-20 step 2
+slMulti = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+tpMulti = input.float(3.0, "TP ATR Multiplier", minval=0.5, maxval=10.0, step=0.5) // sweep: 2.0-4.0 step 0.5
+
+// Session filter — London/NY overlap (8-16 UTC)
+sessionStart = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23)  // sweep: 6-10 step 1
+sessionEnd   = input.int(16, "Session End Hour (UTC)", minval=0, maxval=23)   // sweep: 14-20 step 1
+
+//--- indicators
+[macdLine, signalLine, hist] = ta.macd(close, fastLen, slowLen, sigLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry conditions
+inSession = hour(time) >= sessionStart and hour(time) < sessionEnd
+macdBullish = ta.crossover(macdLine, signalLine)
+rsiOk = rsiVal > rsiMin
+
+// LONG entry: MACD crossover above RSI(30) threshold during session hours
+longCondition = macdBullish and rsiOk and inSession
+
+//--- exit management
+// Strategy uses strategy.exit() for TP/SL — NO strategy.close() cascade
+if (longCondition)
+    stopLoss  = close - (atrVal * slMulti)
+    takeProfit = close + (atrVal * tpMulti)
+    strategy.entry("LONG", strategy.long)
+    strategy.exit("LONG_EXIT", "LONG",
+                   loss=close - stopLoss,
+                   profit=takeProfit - close,
+                   comment="TP/SL")

@@ -1,0 +1,36 @@
+//@version=5
+strategy(title="Iter 95 — MACD RSI28 LONG-only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(8, "MACD Fast Length", minval=2, maxval=50)
+slow_len = input.int(17, "MACD Slow Length", minval=5, maxval=100)
+sig_len  = input.int(7, "MACD Signal Length", minval=2, maxval=50)
+
+// RSI filter
+rsi_len   = input.int(14, "RSI Length", minval=2, maxval=50)       // sweep: 5-20 step 1
+rsi_min   = input.int(28, "RSI Min for LONG", minval=1, maxval=99) // sweep: 20-35 step 1
+
+// ATR-based TP/SL
+atr_len    = input.int(14, "ATR Length", minval=5, maxval=50)
+sl_mult    = input.float(1.5, "SL Multiplier (x ATR)", step=0.1)   // sweep: 1.0-3.0 step 0.2
+tp_mult    = input.float(3.0, "TP Multiplier (x ATR)", step=0.1)   // sweep: 2.0-5.0 step 0.5
+
+//--- indicators
+[macd_line, signal_line, hist] = ta.macd(close, fast_len, slow_len, sig_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic (LONG only)
+long_condition = ta.crossover(macd_line, signal_line) and rsi_val > rsi_min
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+    // ATR-based TP/SL in ticks
+    sl_ticks = int(atr_val * sl_mult / syminfo.mintick)
+    tp_ticks = int(atr_val * tp_mult / syminfo.mintick)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+//--- exit management
+// No market exit on every bar — exits only via TP/SL or manual close
+// This avoids cascade-close patterns
