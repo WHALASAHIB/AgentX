@@ -1,0 +1,62 @@
+//@version=5
+// iter_114: EMA(3,8) crossover + RSI(14)>50 + ADX(14)>25 + TP/SL 1:1.5
+// One change: EMA fast/slow from (5,13) → (3,8) to increase trade count
+strategy(title="EMA(3,8) + RSI(14)>50 + ADX(14)>25 LONG ONLY 30m", 
+         overlay=true, 
+         initial_capital=10000, 
+         default_qty_type=strategy.percent_of_equity, 
+         default_qty_value=100, 
+         commission_type=strategy.commission.percent, 
+         commission_value=0.04, 
+         process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)      // sweep: 1-50 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)      // sweep: 1-50 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)              // sweep: 2-50 step 1
+rsiMin = input.int(50, "RSI Minimum (Long Only)", minval=1, maxval=99) // sweep: 30-70 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=5, maxval=50)              // sweep: 5-50 step 1
+adxMin = input.int(25, "ADX Minimum", minval=1, maxval=100)            // sweep: 10-40 step 5
+
+// TP/SL ratios (TP = slPips * tpRatio, SL = slPips)
+tpRatio = input.float(1.0, "TP Multiplier (TP = SL × ratio)", step=0.1)  // sweep: 0.5-3.0 step 0.1
+slPips = input.int(50, "SL in pips (converted to ticks)", minval=5)       // sweep: 10-100 step 10
+
+//--- calculations
+
+// EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+// ADX
+[diPlus, diMinus, adxVal] = ta.dmi(high, low, close, adxLen)
+
+// Crossover condition (LONG ONLY)
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiMin and adxVal > adxMin
+
+//--- entry logic
+
+if longCondition
+    // Calculate SL and TP in ticks
+    slTicks = int(slPips * syminfo.mintick * 10)   // pips → ticks (10 ticks per pip for most forex)
+    tpTicks = int(slTicks * tpRatio)
+    
+    strategy.entry("Long", strategy.long)
+    strategy.exit("LongExit", "Long", loss=slTicks, profit=tpTicks)
+
+//--- exit management
+// No cascade-close — entries only on explicit crossover criteria
+// strategy.exit handles all exits via TP/SL
+
+//--- Plot EMA lines for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)

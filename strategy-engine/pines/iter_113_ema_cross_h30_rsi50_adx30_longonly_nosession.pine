@@ -1,0 +1,59 @@
+//@version=5
+strategy(title="EMA(5,13) + RSI(14)>50 + ADX(14)>30 LONG-only H30", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(5, "EMA Fast Period")        // sweep: 3-10 step 1
+emaSlow = input.int(13, "EMA Slow Period")        // sweep: 10-21 step 2
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length")              // sweep: 10-21 step 2
+rsiMin = input.int(50, "RSI Minimum (LONG-only)") // sweep: 40-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length")              // sweep: 10-21 step 2
+adxMin = input.int(30, "Min ADX (trend filter)")  // sweep: 25-35 step 5 — RAISED from 25 to 30
+
+// TP/SL — use 1:1.5 ratio (TP smaller than SL to favor win rate)
+tpPoints = input.int(50, "Take Profit (points)")  // sweep: 40-80 step 10
+slPoints = input.int(75, "Stop Loss (points)")    // sweep: 50-100 step 10
+
+//--- indicator calculations
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Manual ADX calculation (ta.adx not supported by Trader Dev parser)
+up = ta.change(high)
+down = -ta.change(low)
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr = ta.sma(tr, adxLen)
+plusDI = 100 * ta.sma(plusDM, adxLen) / atr
+minusDI = 100 * ta.sma(minusDM, adxLen) / atr
+dx = math.abs(plusDI - minusDI) / (plusDI + minusDI) * 100
+adxVal = ta.sma(dx, adxLen)
+
+//--- entry logic
+// LONG entry: EMA5 crosses above EMA13 AND RSI > 50 AND ADX > 30 (strongest trends only)
+longCondition = ta.crossover(emaF, emaS) and rsiVal > rsiMin and adxVal > adxMin
+
+// Exit condition: EMA5 crosses below EMA13
+exitCondition = ta.crossunder(emaF, emaS)
+
+//--- entry management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (strategy.position_size > 0)
+    // Fixed TP/SL exit with 1:1.5 ratio (50pt profit / 75pt loss)
+    strategy.exit("XL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
+    // Also exit on trend reversal signal
+    if (exitCondition)
+        strategy.close("Long")
+
+//--- plot EMAs
+plot(emaF, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaS, "Slow EMA", color=color.red, linewidth=1)
