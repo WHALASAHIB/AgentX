@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="EMA(5,13) Cross + ADX(16) + RSI(50) LONG ONLY XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(5,    "EMA Fast Length",      minval=1, maxval=50,   step=1)        // sweep: 3-10 step 1
+emaSlowLen   = input.int(13,   "EMA Slow Length",      minval=10, maxval=50,  step=1)        // sweep: 10-30 step 2
+adxLen       = input.int(14,   "ADX Length",           minval=5,  maxval=30,  step=1)        // sweep: 10-25 step 2
+adxThreshold = input.int(16,   "ADX Threshold",        minval=5,  maxval=35,  step=1)        // sweep: 14-25 step 2
+rsiLen       = input.int(14,   "RSI Length",           minval=5,  maxval=21,  step=1)        // sweep: 7-21 step 2
+rsiMin       = input.int(50,   "RSI Minimum (Long)",   minval=20, maxval=80,  step=5)        // sweep: 30-70 step 5
+tpSlRatio    = input.float(1.5,"TP/SL Ratio",           minval=0.5, maxval=5.0, step=0.1)    // sweep: 1.0-3.0 step 0.25
+slPct        = input.float(1.0,"Stop Loss %",           minval=0.1, maxval=5.0, step=0.1)    // sweep: 0.5-3.0 step 0.25
+
+//--- indicator calculations
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+rsiVal   = ta.rsi(close, rsiLen)
+
+// Manual ADX using EMA smoothing (ta.ema works on Trader Dev, ta.smma/ta.adx do not)
+up      = high - high[1]
+down    = low[1] - low
+plusDM  = up > down and up > 0 ? up : 0
+minusDM = down > up and down > 0 ? down : 0
+tr      = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+trSmooth    = ta.ema(tr, adxLen)
+diPlusSmooth = ta.ema(plusDM, adxLen)
+diMinusSmooth = ta.ema(minusDM, adxLen)
+diPlus  = trSmooth != 0 ? 100 * diPlusSmooth / trSmooth : 0
+diMinus = trSmooth != 0 ? 100 * diMinusSmooth / trSmooth : 0
+dx      = (diPlus + diMinus) != 0 ? 100 * math.abs(diPlus - diMinus) / (diPlus + diMinus) : 0
+adxVal  = ta.ema(dx, adxLen)
+
+//--- entry logic: LONG only
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiMin and adxVal > adxThreshold
+
+//--- session filter: London/NY overlap (8-16 UTC)
+inSession = hour >= 8 and hour < 16  // UTC, London/NY overlap
+
+// Take profit and stop loss percentages
+tpPct = slPct * tpSlRatio
+
+// Convert percentage to ticks
+slTicks = int(slPct / 100.0 * close / syminfo.mintick)
+tpTicks = int(tpPct / 100.0 * close / syminfo.mintick)
+
+//--- entry: go long on crossover with filters
+if longCondition and inSession and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+//--- visual aids
+plot(emaFast, "EMA Fast", color=color.blue,  linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red,   linewidth=1)
+hline(adxThreshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)

@@ -253,7 +253,7 @@ def run(
     final_equity = balance
 
     # ── Compute Metrics ──────────────────────────────────────────────────
-    metrics = _compute_metrics(pnl_list, eq_curve, initial_capital, final_equity, max_dd)
+    metrics = _compute_metrics(pnl_list, eq_curve, initial_capital, final_equity, max_dd, daily_pnl)
 
     # ── FTMO Evaluation ──────────────────────────────────────────────────
     ftmo_result = None
@@ -300,7 +300,7 @@ def _calc_pnl(
 ) -> float:
     """Calculate PnL for a single trade."""
     price_diff = (exit_price - entry_price) * (1 if side == "buy" else -1)
-    return price_diff * lot_size * contract_size / pip_value * pip_value if pip_value != 0 else 0.0
+    return price_diff * lot_size * contract_size if pip_value != 0 else 0.0
 
 
 def _compute_metrics(
@@ -309,6 +309,7 @@ def _compute_metrics(
     initial_capital: float,
     final_equity: float,
     max_dd: float,
+    daily_pnl: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Compute aggregate backtest metrics."""
     total_trades = len(pnl_list)
@@ -347,6 +348,13 @@ def _compute_metrics(
         loss_rate = len(losses) / total_trades if losses else 0.0
         expectancy = avg_win * win_rate - avg_loss * loss_rate
 
+    # Max daily drawdown as % of initial capital (worst single day)
+    max_daily_dd_pct = 0.0
+    if daily_pnl and initial_capital > 0:
+        worst_day = min(daily_pnl.values()) if daily_pnl else 0.0
+        if worst_day < 0:
+            max_daily_dd_pct = abs(worst_day) / initial_capital
+
     return {
         "total_return": round(total_return, 4),
         "net_profit": round(net_profit, 2),
@@ -357,6 +365,7 @@ def _compute_metrics(
         "max_dd": round(max_dd, 4),
         "avg_trade": round(avg_trade, 2),
         "expectancy": round(expectancy, 4),
+        "max_daily_dd_pct": round(max_daily_dd_pct, 4),
     }
 
 
@@ -451,6 +460,7 @@ def _empty_result(initial_capital: float, reason: str = "") -> dict:
             "max_dd": 0.0,
             "avg_trade": 0.0,
             "expectancy": 0.0,
+            "max_daily_dd_pct": 0.0,
         },
         "equity_curve": [
             {"time": "start", "equity": initial_capital},

@@ -55,11 +55,18 @@ class BridgeClient:
         if account_id:
             return await self._get(f"/api/v1/accounts/{account_id}/positions")
         accounts = await self.list_accounts()
+        seen_tickets = set()
         all_positions = []
         for acct in accounts:
             try:
                 pos = await self._get(f"/api/v1/accounts/{acct['id']}/positions")
-                all_positions.extend(pos)
+                for p in pos:
+                    tid = p.get("ticket") or p.get("id")
+                    if tid is not None and tid not in seen_tickets:
+                        seen_tickets.add(tid)
+                        all_positions.append(p)
+                    elif tid is None:
+                        all_positions.append(p)
             except HTTPException:
                 continue
         return all_positions
