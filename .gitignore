@@ -32,7 +32,8 @@ backend/db/agentx_store.json
 # Bot logs — runtime data, not source
 bots/logs/
 
-# Temp
+# Cloned third-party repos — not our source code
+research_division/repos/
 *.html
 *.bak
 /tmp/
