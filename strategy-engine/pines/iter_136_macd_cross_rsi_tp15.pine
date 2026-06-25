@@ -1,0 +1,37 @@
+//@version=5
+strategy(title="MACD Cross RSI TP15 - Iter 136", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04)
+
+//--- inputs
+// MACD parameters
+macd_fast = input.int(12, "MACD Fast Length", minval=2, maxval=50)         // sweep: 5-20 step 1
+macd_slow = input.int(26, "MACD Slow Length", minval=5, maxval=100)        // sweep: 15-40 step 2
+macd_signal = input.int(9, "MACD Signal Smoothing", minval=2, maxval=30)   // sweep: 5-15 step 1
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)                 // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=1, maxval=99)   // sweep: 40-60 step 5
+
+// TP/SL parameters
+tp_ratio = input.float(1.5, "Take Profit (×SL)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 1.0-3.0 step 0.25
+sl_atr_mult = input.float(1.0, "Stop Loss (×ATR)", minval=0.3, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.25
+
+//--- indicator calculations
+[macd_line, signal_line, hist_line] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(14)
+
+//--- entry logic
+// MACD histogram crossover above 0 (turning bullish) + RSI confirmation
+long_condition = ta.crossover(macd_line, signal_line) and rsi_val > rsi_threshold
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management — fixed TP/SL based on ATR
+sl_price = strategy.position_avg_price - sl_atr_mult * atr_val
+tp_price = strategy.position_avg_price + sl_atr_mult * atr_val * tp_ratio
+sl_ticks = int((strategy.position_avg_price - sl_price) / syminfo.mintick)
+tp_ticks = int((tp_price - strategy.position_avg_price) / syminfo.mintick)
+
+if strategy.position_size > 0
+    strategy.exit("TP/SL Exit", "Long", loss=sl_ticks, profit=tp_ticks)

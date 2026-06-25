@@ -1,0 +1,33 @@
+//@version=5
+strategy(title="MACD+RSI+SMA Trend LONG ONLY XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(12, "MACD Fast Length", minval=2, maxval=50)
+slow_len = input.int(26, "MACD Slow Length", minval=5, maxval=100)
+macd_signal = input.int(9, "MACD Signal Smoothing", minval=2, maxval=20)
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=30)
+sma_len = input.int(50, "SMA Trend Filter (close > SMA)", minval=20, maxval=100)
+atr_len = input.int(14, "ATR Length", minval=5, maxval=30)
+atr_mult = input.float(1.0, "ATR Multiplier for SL", minval=0.5, maxval=3.0, step=0.25)
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=3.0, step=0.1)
+
+//--- indicators
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, macd_signal)
+rsi_val = ta.rsi(close, rsi_len)
+sma_val = ta.sma(close, sma_len)
+atr_val = ta.atr(atr_len)
+
+//--- trend filter: close above SMA = uptrend, only long signals in uptrend
+above_sma = close > sma_val
+
+//--- entry: MACD crossover + RSI > 50 + price above SMA(50) trend filter
+long_entry = ta.crossover(macd_line, signal_line) and rsi_val > 50 and above_sma
+
+sl_ticks = int(atr_val * atr_mult / syminfo.mintick)
+tp_ticks = int(sl_ticks * tp_sl_ratio)
+
+if long_entry
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
