@@ -1,0 +1,62 @@
+//@version=5
+strategy(title="BB Squeeze + ATR Trend Strength + RSI Bounce + SMA Trend LONG ONLY XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands parameters
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)       // sweep: 10-30 step 5
+bb_mult   = input.float(2.0, "BB StdDev", minval=1.0, maxval=4.0) // sweep: 1.5-3.0 step 0.5
+
+// RSI parameters
+rsi_len   = input.int(14, "RSI Length", minval=7, maxval=28)       // sweep: 7-21 step 7
+rsi_thresh= input.int(55, "RSI Entry Threshold (> this)", minval=40, maxval=70) // sweep: 50-65 step 5
+
+// SMA trend filter
+sma_len   = input.int(50, "SMA Trend Length", minval=20, maxval=200) // sweep: 30-100 step 10
+
+// ATR trend strength filter (ADX proxy — ta.adx() not available in Trader Dev engine)
+atr_len   = input.int(14, "ATR Length", minval=7, maxval=28)       // sweep: 10-20 step 5
+atr_sma_len = input.int(20, "ATR SMA Length", minval=10, maxval=50) // sweep: 10-30 step 5
+
+// TP/SL parameters
+sl_atr_mult = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=3.0)  // sweep: 0.5-2.0 step 0.5
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0)        // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+// Bollinger Bands
+bb_basis = ta.sma(close, bb_length)
+bb_dev   = ta.stdev(close, bb_length) * bb_mult
+bb_upper = bb_basis + bb_dev
+bb_lower = bb_basis - bb_dev
+
+// RSI
+rsi_val  = ta.rsi(close, rsi_len)
+
+// SMA trend
+sma_trend = ta.sma(close, sma_len)
+
+// ATR trend strength: when ATR > its own SMA, market is in a trending/volatile phase (ADX proxy)
+atr_val      = ta.atr(atr_len)
+atr_sma      = ta.sma(atr_val, atr_sma_len)
+in_trend     = atr_val > atr_sma
+
+// BB squeeze condition: BB are expanding (not contracting) — breakout direction
+bb_width     = bb_upper - bb_lower
+bb_width_sma = ta.sma(bb_width, 20)
+bb_expanding = bb_width > bb_width_sma
+
+//--- entry logic
+// LONG entry: breakout above upper BB + strong RSI + above SMA trend + ATR trending conditions
+long_entry = close > bb_upper and rsi_val > rsi_thresh and close > sma_trend and in_trend and bb_expanding
+
+//--- exit management
+// SL and TP distances in ticks
+sl_ticks  = int((ta.atr(atr_len) * sl_atr_mult) / syminfo.mintick)
+tp_ticks  = int(sl_ticks * tp_sl_ratio)
+
+// Enter long
+if long_entry and strategy.position_size == 0
+    strategy.entry("BBL", strategy.long)
+
+// Exit with SL and TP
+if strategy.position_size > 0
+    strategy.exit("BBL_X", "BBL", loss=sl_ticks, profit=tp_ticks)

@@ -1,0 +1,47 @@
+//@version=5
+strategy(title="BB Squeeze + RSI Bounce + SMA Trend LONG ONLY XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands parameters
+bbLength = input.int(20, "BB Length", minval=5, maxval=50)          // sweep: 10-30 step 5
+bbStdDev = input.float(2.0, "BB StdDev", minval=1.0, maxval=3.0)    // sweep: 1.5-2.5 step 0.25
+
+// RSI filter
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30)         // sweep: 10-20 step 2
+rsiThreshold = input.int(50, "RSI Bounce Threshold (long)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// SMA trend filter
+smaLength = input.int(50, "SMA Trend Length", minval=20, maxval=200) // sweep: 30-100 step 10
+
+// TP/SL
+atrLength = input.int(14, "ATR Length", minval=7, maxval=30)         // sweep: 10-20 step 2
+tpSlRatio = input.float(1.5, "TP/SL Ratio", minval=1.0, maxval=3.0) // sweep: 1.0-2.0 step 0.25
+
+//--- indicator calculations
+[bbMiddle, bbUpper, bbLower] = ta.bb(close, bbLength, bbStdDev)
+rsi = ta.rsi(close, rsiLength)
+sma = ta.sma(close, smaLength)
+atrValue = ta.atr(atrLength)
+
+//--- entry logic
+// Condition 1: Price touches/lower lower band AND RSI above threshold (bounce off band)
+bounceLong = low <= bbLower and rsi > rsiThreshold
+
+// Condition 2: Price closes above upper band (breakout confirmed)
+breakoutLong = close > bbUpper
+
+// Long entry signal: either bounce or breakout, AND price above SMA(50) (uptrend)
+longCondition = (bounceLong or breakoutLong) and close > sma
+
+// Enter long
+if longCondition
+    // Calculate SL distance as 1×ATR below entry
+    strategy.entry("BB-Long", strategy.long, comment="BB-Long")
+
+//--- exit management
+// Exit long with ATR-based TP/SL: TP = 1.5×ATR, SL = 1.0×ATR
+if strategy.position_size > 0
+    // SL = entry - 1×ATR, TP = entry + 1.5×ATR
+    strategy.exit("BB-Exit", "BB-Long", 
+     loss=int(atrValue / syminfo.mintick), 
+     profit=int(atrValue * tpSlRatio / syminfo.mintick))
