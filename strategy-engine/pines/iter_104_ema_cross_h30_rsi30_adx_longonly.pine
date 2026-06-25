@@ -1,0 +1,40 @@
+//@version=5
+strategy(title="EMA Crossover RSI30 ADX Long-Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50, step=1)       // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=100, step=1)     // sweep: 10-30 step 2
+adx_len      = input.int(14, "ADX Length", minval=7, maxval=30, step=1)           // sweep: 10-21 step 2
+adx_thresh   = input.int(25, "ADX Threshold", minval=15, maxval=40, step=1)      // sweep: 20-30 step 2
+rsi_len      = input.int(14, "RSI Length", minval=7, maxval=28, step=1)          // sweep: 7-21 step 2
+rsi_min      = input.int(30, "RSI Minimum (long)", minval=20, maxval=60, step=5) // sweep: 20-50 step 5
+tp_ratio     = input.float(1.5, "Take Profit (R)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+sl_ratio     = input.float(1.0, "Stop Loss (R)", minval=0.5, maxval=5.0, step=0.5)   // sweep: 1.0-2.0 step 0.5
+session_start = input.int(8, "Session Start (UTC)", minval=0, maxval=23, step=1)
+session_end   = input.int(16, "Session End (UTC)", minval=0, maxval=23, step=1)
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+[di_plus, di_minus, adx] = ta.dmi(adx_len, adx_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+is_trending = adx > adx_thresh
+is_bullish_rsi = rsi_val > rsi_min
+in_session = (hour >= session_start and hour < session_end)
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+long_condition = cross_up and is_trending and is_bullish_rsi and in_session
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// Calculate ATR-based stop for exit references
+atr_val = ta.atr(14)
+sl_pips = int(sl_ratio * atr_val / syminfo.mintick)
+tp_pips = int(tp_ratio * atr_val / syminfo.mintick)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_pips, profit=tp_pips)

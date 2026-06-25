@@ -2612,7 +2612,7 @@ async def decisions_summary(days: int = 7):
 
 @app.get("/api/sentiment/score")
 async def get_sentiment_score():
-    """Return the current gold market sentiment score (-10 to +10) from real bot data."""
+    """Return the current gold market sentiment score from real bot data."""
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "research_division"))
     from sentiment_engine import get_sentiment
     score = await get_sentiment()

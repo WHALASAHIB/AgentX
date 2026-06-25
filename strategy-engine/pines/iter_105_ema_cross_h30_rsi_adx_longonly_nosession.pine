@@ -1,0 +1,53 @@
+//@version=5
+// Strategy: EMA(5)/EMA(13) crossover + ADX(14)>25 + RSI(14)>30 + TP/SL 1.5:1
+// Removed session filter 8-16 UTC — trading all hours
+// XAUUSD 30m, long-only
+strategy(title="EMA Crossover ADX RSI NoSession XAUUSD 30m", overlay=true,
+     initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100, commission_type=strategy.commission.percent,
+     commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50, tooltip="Sweep: 3-10 step 1")
+slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=100, tooltip="Sweep: 8-21 step 2")
+
+// ADX parameters
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30, tooltip="Sweep: 10-20 step 2")
+adx_threshold = input.int(25, "ADX Threshold (>25 trending)", minval=10, maxval=50, tooltip="Sweep: 20-30 step 2")
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=30, tooltip="Sweep: 10-20 step 2")
+rsi_min = input.int(30, "RSI Minimum (long only above)", minval=20, maxval=70, tooltip="Sweep: 25-50 step 5")
+
+// TP/SL parameters
+tp_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1, tooltip="Sweep: 1.0-3.0 step 0.2")
+sl_ratio = input.float(1.0, "SL ATR multiplier", minval=0.5, maxval=5.0, step=0.1, tooltip="Sweep: 0.5-2.0 step 0.25")
+
+//--- indicators (using ta.dmi instead of ta.adx — ta.adx not supported by all engines)
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+
+[di_plus, di_minus, adx_value] = ta.dmi(adx_len, adx_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(14)
+
+//--- entry logic
+// Long entry: EMA crossover + trending (ADX > threshold) + bullish RSI override
+is_trending = adx_value > adx_threshold
+is_bullish = rsi_val > rsi_min
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+// No session filter — trade all hours
+long_condition = cross_up and is_trending and is_bullish
+
+//--- entry management
+if long_condition and strategy.position_size == 0
+    sl_distance = atr_val * sl_ratio
+    tp_distance = sl_distance * tp_ratio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=int(sl_distance / syminfo.mintick), profit=int(tp_distance / syminfo.mintick))
+
+//--- visual overlay
+plot(ema_fast, "Fast EMA", color.blue, 1)
+plot(ema_slow, "Slow EMA", color.red, 1)
