@@ -18,5 +18,135 @@
     "detail": "Manual verification",
     "outcome": "success",
     "metadata": {}
+  },
+  {
+    "id": "dec_1782361695075_ae5e",
+    "timestamp": "2026-06-25T04:28:15.075123+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "Bot Started",
+    "detail": "symbol=AUDUSD strategy=bollinger balance=9930.79",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361696041_5b06",
+    "timestamp": "2026-06-25T04:28:16.041939+00:00",
+    "agent_id": "Macd_AUDUSD",
+    "agent_name": "Macd_AUDUSD",
+    "action": "Bot Started",
+    "detail": "symbol=AUDUSD strategy=macd balance=9930.79",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361697029_17e4",
+    "timestamp": "2026-06-25T04:28:17.029370+00:00",
+    "agent_id": "Macd_GBPUSD",
+    "agent_name": "Macd_GBPUSD",
+    "action": "Bot Started",
+    "detail": "symbol=GBPUSD strategy=macd balance=9930.79",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361697489_d7d3",
+    "timestamp": "2026-06-25T04:28:17.489671+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "SELL OPEN",
+    "detail": "0.29 AUDUSD @ 0.69019 ticket=481417995",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361698041_4d5b",
+    "timestamp": "2026-06-25T04:28:18.041212+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "Bot Started",
+    "detail": "symbol=NZDUSD strategy=bollinger balance=9930.06",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361699039_8e10",
+    "timestamp": "2026-06-25T04:28:19.039143+00:00",
+    "agent_id": "Macd_NZDUSD",
+    "agent_name": "Macd_NZDUSD",
+    "action": "Bot Started",
+    "detail": "symbol=NZDUSD strategy=macd balance=9930.06",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361700084_62db",
+    "timestamp": "2026-06-25T04:28:20.084631+00:00",
+    "agent_id": "Macd_USDCAD",
+    "agent_name": "Macd_USDCAD",
+    "action": "Bot Started",
+    "detail": "symbol=USDCAD strategy=macd balance=9930.06",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361701515_0b25",
+    "timestamp": "2026-06-25T04:28:21.515204+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL OPEN",
+    "detail": "0.29 NZDUSD @ 0.56461 ticket=481418027",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361701515_446e",
+    "timestamp": "2026-06-25T04:28:21.515204+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "Bot Started",
+    "detail": "symbol=USDCHF strategy=bollinger balance=9929.33",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361702094_626e",
+    "timestamp": "2026-06-25T04:28:22.094158+00:00",
+    "agent_id": "Macd_USDCHF",
+    "agent_name": "Macd_USDCHF",
+    "action": "Bot Started",
+    "detail": "symbol=USDCHF strategy=macd balance=9929.33",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361703172_126b",
+    "timestamp": "2026-06-25T04:28:23.172263+00:00",
+    "agent_id": "Macd_USDJPY",
+    "agent_name": "Macd_USDJPY",
+    "action": "Bot Started",
+    "detail": "symbol=USDJPY strategy=macd balance=9929.33",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361704190_8201",
+    "timestamp": "2026-06-25T04:28:24.190083+00:00",
+    "agent_id": "Sma_USDJPY",
+    "agent_name": "Sma_USDJPY",
+    "action": "Bot Started",
+    "detail": "symbol=USDJPY strategy=sma balance=9929.33",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782361705585_782c",
+    "timestamp": "2026-06-25T04:28:25.585960+00:00",
+    "agent_id": "Macd_USDJPY",
+    "agent_name": "Macd_USDJPY",
+    "action": "BUY OPEN",
+    "detail": "0.6900000000000001 USDJPY @ 161.71800 ticket=481418051",
+    "outcome": "success",
+    "metadata": {}
   }
 ]

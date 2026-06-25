@@ -19,8 +19,16 @@ import requests
 logger = logging.getLogger(__name__)
 
 # ── API Base URLs ──────────────────────────────────────────────────────────────
-BRIDGE_BASE = "http://10.10.10.100:5000"
-DASHBOARD_BASE = "http://10.10.10.100:8003"
+# Bridge binds to 127.0.0.1:5000 (localhost-only for security).
+# Backend uses port 8006 (escalated from 8003→8005→8006 due to orphaned PIDs).
+# Uses 127.0.0.1 (not 10.10.10.100) to match actual service bindings.
+try:
+    from config import BRIDGE_BASE as _CFG_BRIDGE, DASHBOARD_BASE as _CFG_DASHBOARD
+    BRIDGE_BASE = _CFG_BRIDGE
+    DASHBOARD_BASE = _CFG_DASHBOARD
+except ImportError:
+    BRIDGE_BASE = "http://127.0.0.1:5000"
+    DASHBOARD_BASE = "http://127.0.0.1:8006"
 
 # ── Request defaults ───────────────────────────────────────────────────────────
 REQUEST_TIMEOUT = 10  # seconds

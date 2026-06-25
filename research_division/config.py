@@ -33,10 +33,12 @@ DIVISION_VERSION: str = "3.4.2"
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # MT5 Bridge Service (trading data, positions, account info)
-BRIDGE_BASE: str = "http://10.10.10.100:5000"
+# Bridge binds to 127.0.0.1:5000 (localhost-only for security)
+BRIDGE_BASE: str = "http://127.0.0.1:5000"
 
 # Dashboard / Backend API (sentiment, bots status, aggregated stats)
-DASHBOARD_BASE: str = "http://10.10.10.100:8003"
+# Backend moved from 8003→8005→8006 (port escalation due to orphaned PIDs)
+DASHBOARD_BASE: str = "http://127.0.0.1:8006"
 
 # Sentiment Engine HTTP endpoint (when accessed remotely)
 SENTIMENT_API: str = f"{DASHBOARD_BASE}/api/sentiment/score"

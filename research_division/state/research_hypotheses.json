@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 132,
+    "total_ideas": 135,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -394,6 +394,65 @@
       "diversification_value": "This differs from existing 'other' family ideas in four key ways: (1) COT_Positioning_Extreme_Fade uses CFTC positioning data on a weekly cadence \u2014 this idea uses daily price data to detect real-time regime shifts, not lagging positioning data. (2) Swap_Dealer_Gamma_Speed_Trap tracks COMEX futures positioning rate-of-change \u2014 this idea tracks the correlation between gold and DXY directly, not a derivatives-derived metric. (3) Central_Bank_Reserve_Trend_Flow uses monthly reserve data \u2014 this idea is daily-frequency and captures medium-term flows. (4) Gamma_Exposure_Floor_Ceiling_Liquidity uses options market gamma \u2014 this idea uses spot correlation, a wholly independent data source. The 'correlation decoupling as entry trigger' concept does not appear in any existing idea across any family.",
       "self_grade": "A-",
       "generated_at": "2026-06-24T10:40:23Z"
+    },
+    {
+      "name": "Ramadan_Eid_MiddleEast_Gold_Surge",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Front-runs the predictable surge in physical gold demand across Middle Eastern markets during Ramadan and Eid al-Fitr/Eid al-Adha, using the Hijri calendar to predict windows 2-4 weeks in advance.",
+      "market_behaviour": "The Middle East (Saudi Arabia, UAE, Egypt, Qatar, Kuwait, Turkey) accounts for approximately 25-30% of global physical gold demand, driven by cultural traditions of gifting gold jewellery during weddings and religious festivals. Ramadan and the two Eid celebrations (Eid al-Fitr marking Ramadan's end, and Eid al-Adha 70 days later) represent the single largest concentrated gold-buying window in the Middle Eastern calendar, comparable to Diwali in India. However, the Hijri calendar shifts roughly 11 days earlier each Gregorian year, creating a slowly rotating seasonal pattern that is entirely predictable decades in advance. Approximately 4-6 weeks before each festival, wholesale gold imports into Dubai, Jeddah, Riyadh, and Doha surge 40-70%, and retail buying accelerates 2-3 weeks before the festival itself. This physical buying creates a measurable upward bid in XAUUSD spot, especially during Asian-hours when Dubai bullion fixing occurs (07:00-09:00 GST = 03:00-05:00 UTC). The effect is strongest for Ramadan (which triggers additional daily iftar-related gold buying) and Eid al-Fitr (the largest gift-giving period).",
+      "entry_logic": "1. Maintain a permanent Hijri calendar lookup table mapping Ramadan and Eid dates to Gregorian for the next 5 years. Mark three windows: (a) Wholesale Import Window = 6 to 3 weeks before the festival, (b) Retail Accumulation Window = 2 weeks before to 3 days before, (c) Peak Window = 3 days before to festival day itself. 2. On D1, at the start of the Wholesale Import Window: enter a long bias filter. Only consider BUY signals during this window. 3. Confirm entry: D1 RSI must be below 70 (not overbought) and D1 chart must be above the 50-day SMA (secular uptrend or range). 4. Enter long on a H4 pullback to the 20-EMA, with a bullish candlestick close (close > open and close > 20-EMA). 5. Skip the trade if DXY is in a confirmed uptrend (D1 DXY above 20-SMA, higher highs and higher lows) \u2014 a strong dollar can overwhelm the physical demand signal. 6. Position size: 0.5x normal (cautious due to variable demand data; rely on probability, not precision).",
+      "exit_logic": "Stop loss: 1.5x ATR(14) below entry price on H4. Take profit: 2.5x ATR(14), or exit on the festival day itself (whichever comes first). If the price reaches 1.0x ATR profit before the festival day, move stop to breakeven. No trailing; the thesis has a defined end date (the festival). Re-entry: if stopped out but still within the Retail or Peak window, re-enter on the next H4 pullback to 20-EMA with a bullish candle. If the festival passes without price reaching TP, exit at market close on the festival day regardless of P&L. Time-stop: exit all positions by 12:00 UTC on the festival day even if TP not hit.",
+      "failure_mode": "1. A strong USD rally (DXY surging 2%+ in the window) overwhelms the physical demand signal, especially if driven by a Fed surprise (hawkish hike, higher-for-longer commentary). In this scenario, gold drops 2-5% despite physical buying. 2. The demand is already priced in by the time the Wholesale Import Window starts \u2014 if gold rallied 5%+ in the 3 months before Ramadan, the physical demand catalyst is already discounted and the trade is a latecomer buying the top. 3. Middle Eastern geopolitical crisis (e.g., regional war, sanctions on Dubai) disrupts the normal gold import and distribution channels, breaking the seasonal pattern entirely. 4. The festival date varies by moon sighting \u00b11 day (the Hijri calendar is observation-based, not purely arithmetic), potentially causing exit timing error if the festival is a day earlier or later than predicted.",
+      "diversification_value": "This is the ONLY idea in the seasonal family targeting Middle Eastern religious/cultural gold demand. The existing seasonal family covers Indian demand (Diwali_Chinese_New_Year_Physical_Demand_Frontrun, Monsoon_India_Demand_Frontrun), Chinese demand (Gold_Seasonal_Cycle), and broad demand cycles, but zero ideas address the Middle East \u2014 the second-largest physical gold demand region globally. The Hijri calendar's 11-day annual shift means this pattern is dynamically rotating, offering a fundamentally different timing signal than fixed-Gregorian ideas (Turn_Of_Month_Gold, EndOfQuarter_Rebalance_Flow, Fiscal_Year_New_Mandate_Accumulation). It operates on a rotating seasonal clock, not a fixed date.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-25T04:32:27Z"
+    },
+    {
+      "name": "Central_Bank_Gold_Reserve_Announcement_Window",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Exploits the seasonal clustering of central bank gold reserve increase announcements (PBOC, RBI, TCMB, CBR, NBP, Kazakhstan) that create short-term bullish catalysts for gold, front-run by tracking the announcement recurrence patterns.",
+      "market_behaviour": "Central banks have been net buyers of gold since 2010, with purchases accelerating dramatically since 2022 (1,000+ tonnes/year by 2023-2024). Critically, these purchases cluster in predictable calendar windows. China's PBOC announces gold reserve increases monthly on approximately the 7th of each month (when it reports FX reserves data). Turkey's TCMB announces quarterly (first week of each quarter for the prior quarter's reserve change). India's RBI updates reserves monthly around the 5th. Poland's NBP updates semi-annually (March and September). The IMF IFS database releases cross-country aggregate data in the first week of each month. These announcement windows don't just report history \u2014 they signal ongoing buying, and the market reacts to each new data point. A consistent PBOC buying streak (which ran 18+ consecutive months through 2024-2025) creates a mechanical bullish tailwind on announcement dates. More importantly, when a central bank that has been a consistent buyer MISSES a month (no increase), it signals regime change that can trigger a gold selloff of 1-3%.",
+      "entry_logic": "1. Maintain a watchlist of 6 central banks that are the most consistent gold buyers: PBOC (China), RBI (India), TCMB (Turkey), CBR (Russia), NBP (Poland), and NBK (Kazakhstan). Track each bank's announcement schedule. 2. For known-consistent buyers (currently PBOC, TCMB, NBP): Enter long 1 day before their scheduled announcement window, targeting a 48-hour hold. 3. Confirmation filter: D1 gold must be trading above the 50-day SMA (structural trend must be intact) and VIX must be below 25 (no systemic crisis) \u2014 because during crises, central banks pause gold buying to provide USD liquidity. 4. Position size: 0.3x standard (news-event junior sizing). 5. Exit at market close of the day AFTER the announcement, regardless of outcome. This is a gamma/surprise trade, not a directional conviction. 6. If any previously-consistent buyer misses two consecutive scheduled announcements, ADD a short condition: enter short 1 day before the third scheduled announcement, targeting a 2-3% move as the market loses confidence in the buying narrative.",
+      "exit_logic": "Stop loss: 1.0x ATR(14) on D1 \u2014 tight, because this is a short-horizon catalyst trade. Take profit: Fixed exit at market close of the day after announcement. For the short-bias variant (missed consecutive announcements), TP = 2% profit or exit at the 48-hour mark, whichever is first. If the announcement contains a surprise buying acceleration (e.g., PBOC adds more than the typical 15-25 tonnes), trail stop from breakeven after 1x ATR profit. No re-entry permitted within the same announcement cycle.",
+      "failure_mode": "1. A central bank suddenly stops buying without warning (e.g., Russia's CBR paused in 2022 not because of gold views but because sanctions froze access to reserves). The missed-announcement signal is real but the cause may be structural rather than sentiment-driven, rendering the short-bias invalid. 2. The market fully anticipates the announcement \u2014 PBOC buying 25 tonnes is already priced in on month 18 of a buying streak, producing a 'sell the news' pattern that stops out longs. 3. A macro shock (rate hike, political crisis) on announcement day swamps the gold-reserve catalyst entirely. 4. Schedules are not always publicly known; reserve data can be released with 2-4 week lag, making precise entry timing impossible for some banks (e.g., CBR data comes quarterly via IMF CBR reporting \u2014 not directly). 5. The buying trend can reverse abruptly \u2014 if global gold reserves stabilise, the entire thesis collapses as there's no longer a consistent directional signal.",
+      "diversification_value": "No existing seasonal idea targets central bank reserve announcement calendars. The existing seasonal family covers institutional flows (EndOfQuarter_Rebalance_Flow, Fiscal_Year_New_Mandate_Accumulation), physical demand (Diwali_Chinese_New_Year_Physical_Demand_Frontrun), and calendar anomalies (Intraweek_Session_Drift, Turn_Of_Month_Gold). Central bank reserve announcements are a fundamentally different seasonal mechanism \u2014 state-actor demand, not consumer demand or institutional rebalancing. This fills the 'Central Bank / IMF Announcement Window' sub-niche, which was OPEN (0 ideas). It also bridges the seasonal and cross_asset families by conditioning on VIX and structural trends.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-25T04:32:27Z"
+    },
+    {
+      "name": "Drawdown_Regime_Recovery_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD",
+        "AUDUSD",
+        "USDJPY"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "A regime-based position-sizing overlay that classifies portfolio drawdown into Normal (<5%), Elevated (5-10%), and Crisis (>10%) states, with progressively tighter trade management rules including mandatory breakeven stops and entry suspension until recovery thresholds are met.",
+      "market_behaviour": "Drawdowns in trading are not linear \u2014 they follow a concave recovery curve where the deepest losses take the longest to recover (a 50% drawdown requires 100% return to breakeven). During active drawdowns, trader psychology (and by extension, mechanical bot performance) degrades: the bot enters lower-probability setups trying to recover, increases position sizing, and moves stops too tight, compounding the drawdown. The existing risk_overlay ideas treat drawdown as a static number applied to a sizing formula (e.g., Kelly reduces size proportionally, Max_Drawdown_Lock_Protector linearly clamps size), but they don't account for three critical empirical findings: (1) recovery asymmetry \u2014 the same percentage drawdown takes longer to recover from at higher DD levels; (2) regime persistence \u2014 once a drawdown exceeds 5%, the probability of reaching 10% triples; (3) bounce-back overshoot \u2014 after drawdowns of 10%+, the first recovery trades tend to be the most profitable because markets snap back. A regime-based approach that acknowledges these nonlinearities can prevent catastrophic losses while ensuring the bot is aggressive enough to recover when the regime shifts back to Normal.",
+      "entry_logic": "This is an overlay that runs before every trade entry across all active bots. It does not generate signals \u2014 it applies rules ON TOP of whatever entry signal each bot generates. Daily check at 00:00 UTC: compute current drawdown = (peak_account_balance - current_balance) / peak_account_balance. APPLIED TO ALL BOTS: If drawdown < 5% (Normal regime): standard position sizing per bot's own rules. Standard trailing stops (1.0x ATR). No session restrictions. If drawdown 5-10% (Elevated regime): (a) Reduce position size to 60% of bot's standard lot size. (b) Move all new trades to breakeven stop as soon as price moves 0.5x ATR in profit (aggressive breakeven \u2014 protecting the smaller position). (c) Block new entries in Asian session (00:00-09:00 HKT) \u2014 only London and US sessions permitted. (d) Suspension of discretionary or speculative entries. If drawdown > 10% (Crisis regime): (a) Reduce position size to 30% of standard. (b) Breakeven stop at 0.3x ATR profit. (c) Only entries with D1 trend confirmation (price above 50-day SMA for longs, below for shorts \u2014 strict trend trading only, no counter-trend). (d) When drawdown recovers back BELOW 5%, the overlay resets to Normal regime but stays in Recovery Watch for 10 additional trading days (monitoring for rapid re-entry into drawdown).",
+      "exit_logic": "The overlay does not modify exit logic except setting breakeven stops as described above. Standard trailing stops and take-profit rules per each bot's strategy remain active. However, in Crisis regime: widen the trailing stop from 1.0x ATR to 1.5x ATR (giving trades more room to breathe, reducing premature stop-outs during volatile snap-backs). The recovery detection logic: overlay remains active until: (1) drawdown is <5% for 10 consecutive trading days (the Recovery Watch period), and (2) at least 10 trades have been closed in Normal regime. Then full parameters restore.",
+      "failure_mode": "1. Whiplash \u2014 the bot alternates between Normal and Elevated regimes every 1-2 days due to small daily P&L swings around the 5% threshold. This causes constant parameter switching that degrades performance. Mitigation: Add a 3-day hysteresis (must stay above/below the threshold for 3 rolling days before switching). 2. Crisis regime causes the bot to become too defensive, missing the strongest recovery moves (gold snap-backs after 5%+ drops tend to be violent and profitable). The 30% position size + strict trend filter means the bot catches only a fraction of the recovery. This is a feature (survival), not a bug, but it means the overlay intentionally sacrifices peak recovery speed for drawdown containment. 3. The overlay applies uniformly across all bots, even though a single bot may be in drawdown while others are profitable. A bot-level drawdown regime would be more precise but significantly more complex to implement. 4. The 10-day Recovery Watch period delays returning to full aggressiveness during V-shaped recoveries, potentially leaving money on the table.",
+      "diversification_value": "The existing risk_overlay family has 3 A- ideas: Correlation_Collapse_Protector (monitors correlation breakdowns), Max_Drawdown_Lock_Protector (linearly clamps position size by drawdown %, without regimes or recovery management), and Volatility_Parity_Scale (keeps $ risk constant via ATR-sizing). None of these use a multi-regime approach with distinct rules per regime, mandatory breakeven steps, entry suspension, or recovery watch periods. Max_Drawdown_Lock_Protector is the closest analog but uses a single linear formula, not three discrete regimes with different stop/entry rules. Drawdown_Regime_Recovery_Sizer fills the 'trade management / post-drawdown recovery' sub-niche \u2014 the only existing idea in that niche is VaR_Trailing_Stop_Overlay (B+, real-time VaR-based stops with no drawdown-awareness). This is orthogonally different: regime-based vs. VaR-based.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-25T04:32:27Z"
     }
   ],
   "archived": [
@@ -2539,7 +2598,8 @@
       "Multi_TF_Vol_Convexity_Sizer",
       "Session_Decay_Exposure_Controller",
       "Entropy_Regime_Contingency_Sizer",
-      "Skew_Asymmetry_Insurer"
+      "Skew_Asymmetry_Insurer",
+      "Drawdown_Regime_Recovery_Sizer"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
@@ -2576,7 +2636,9 @@
       "Q4_TaxLoss_Harvesting_GoldRebound",
       "EndOfQuarter_Rebalance_Flow",
       "US_Election_Year_Gold_Ramp",
-      "Fiscal_Year_New_Mandate_Accumulation"
+      "Fiscal_Year_New_Mandate_Accumulation",
+      "Ramadan_Eid_MiddleEast_Gold_Surge",
+      "Central_Bank_Gold_Reserve_Announcement_Window"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

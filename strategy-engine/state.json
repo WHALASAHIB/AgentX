@@ -1,6 +1,6 @@
 {
-  "iteration": 111,
-  "last_run": "2026-06-25T11:50:00",
+  "iteration": 113,
+  "last_run": "2026-06-25T04:23:58Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Tighter entry filter: raise RSI minimum from 35 to 50 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1:1.5 (no session filter) LONG ONLY XAUUSD 30m. Iter 110 tightened TP/SL from 1.5:1 to 1:1.5, which improved WR from 38% to 50% (13W/13L) but PF stayed at 0.84 (avg win $64 < avg loss $76). The 1:1.5 ratio helped WR but the smaller TP means winning trades cap out before losers. Next logical step: filter out weaker entries by raising RSI minimum to 50, so only strong momentum long signals enter. Risk: may reduce trade count below 20.",
+  "current_hypothesis": "Raise ADX threshold from 25 to 30 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 50/75pts (0.67:1) LONG ONLY XAUUSD 30m. Iter 112 raised ADX from 15 to 25, dramatically improving PF from 0.83 to 2.72 (16W/15L, 31 trades). But Sharpe is still 0.66 (<1.0). Higher ADX threshold should let only the strongest trends trigger, reducing variance and improving risk-adjusted returns. Risk: trade count may drop below 20.",
   "evolution_log": [
     {
       "iteration": 108,
@@ -31,10 +31,24 @@
     },
     {
       "iteration": 110,
-      "hypothesis": "Tighten TP/SL from 1.5:1 to 1:1.5 on EMA(5,13) crossover + ADX(14)>15 + RSI(14)>35 LONG ONLY XAUUSD 30m. Iter 109 had 26 trades but PF 0.73, WR 38.46% — the 1.5:1 TP/SL ratio was too ambitious for this EMA crossover strategy. Tightening to 1:1.5 (TP smaller than SL) should allow more trades to close as winners, improving WR toward 50%+.",
+      "hypothesis": "Tighten TP/SL from 1.5:1 to 1:1.5 on EMA(5,13) crossover + ADX(14)>15 + RSI(14)>35 LONG ONLY XAUUSD 30m.",
       "metrics": {"pf": 0.84445026, "sharpe": -1.86509076, "wr": 50.0, "dd": 7.71881205, "trades": 26, "net_profit": -360.264548524247},
-      "verdict": "rejected (PF=0.84<1.3, Sharpe=-1.87<0.5) — TP/SL 1:1.5 improved WR from 38% to 50% (13W/13L, good) but avg win $64 < avg loss $76, so net is still negative -$360. The MR turned off with higher WR but PF stays below 1.0.",
+      "verdict": "rejected (PF=0.84<1.3, Sharpe=-1.87<0.5) — TP/SL 1:1.5 improved WR from 38% to 50% (13W/13L) but avg win $64 < avg loss $76, net still negative.",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:50:00"
+    },
+    {
+      "iteration": 111,
+      "hypothesis": "Raise RSI minimum from 35 to 50 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1:1.5 (no session filter) LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0.82637657, "sharpe": -5.27828143, "wr": 55.26315789, "dd": 5.27282971, "trades": 38, "net_profit": -433.674188811676},
+      "verdict": "rejected (PF=0.83<1.3, Sharpe=-5.28<0.5) — RSI(50) improved WR to 55% (21W/17L) but avg win $31 < avg loss $47. Stronger trend filter needed.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:02:00"
+    },
+    {
+      "iteration": 112,
+      "hypothesis": "Raise ADX threshold from 15 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 2.71594432, "sharpe": 0.6588394, "wr": 51.61290323, "dd": 0.76280566, "trades": 31, "net_profit": 26.531756014836},
+      "verdict": "accepted (incremental) — PF 2.72, Sharpe 0.66. Raising ADX from 15→25 fixed the PF collapse: 16W/15L with avg win $28.47 vs avg loss $11.18 (2.55:1 ratio). Sharpe is now the weakest metric at 0.66. Not best yet (best PF=3.61 from iter 44).",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:23:58"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

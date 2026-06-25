@@ -117,12 +117,12 @@ def _calculate_sl_tp(symbol: str, order_type: int,
     """
     Compute SL and TP prices.
     SL = 1.5 × ATR away from entry (opposite direction).
-    TP = 3.0 × ATR away (profit direction).
+    TP = 6.0 × ATR away (profit direction, 1:4 RR).
     Returns (sl_price, tp_price).
     """
     point = mt5.symbol_info(symbol).point
     sl_points = int(round(1.5 * atr / point))
-    tp_points = int(round(3.0 * atr / point))
+    tp_points = int(round(6.0 * atr / point))
     if order_type == mt5.ORDER_TYPE_BUY:
         sl_price = entry_price - sl_points * point
         tp_price = entry_price + tp_points * point
@@ -130,6 +130,40 @@ def _calculate_sl_tp(symbol: str, order_type: int,
         sl_price = entry_price + sl_points * point
         tp_price = entry_price - tp_points * point
     return sl_price, tp_price
+
+
+def _trail_to_breakeven(symbol: str, magic: int, entry_price: float,
+                        atr: float) -> bool:
+    """Move stop loss to breakeven when price reaches 1:2 RR (3.0 x ATR)."""
+    positions = mt5.positions_get(symbol=symbol)
+    if positions is None:
+        return False
+    breakeven_dist = 3.0 * atr
+    modified = False
+    for pos in positions:
+        if pos.magic != magic:
+            continue
+        if pos.sl is not None and abs(pos.sl - entry_price) < 0.00001:
+            continue
+        if pos.type == mt5.ORDER_TYPE_BUY:
+            current_price = mt5.symbol_info_tick(symbol).bid
+            if current_price and (current_price - entry_price) >= breakeven_dist:
+                req = {"action": mt5.TRADE_ACTION_SLTP, "position": pos.ticket,
+                       "sl": entry_price, "tp": pos.tp}
+                result = mt5.order_send(req)
+                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                    modified = True
+                    print(f"[TRAIL] BUY {symbol} tix={pos.ticket} SL→BE {entry_price:.5f}")
+        elif pos.type == mt5.ORDER_TYPE_SELL:
+            current_price = mt5.symbol_info_tick(symbol).ask
+            if current_price and (entry_price - current_price) >= breakeven_dist:
+                req = {"action": mt5.TRADE_ACTION_SLTP, "position": pos.ticket,
+                       "sl": entry_price, "tp": pos.tp}
+                result = mt5.order_send(req)
+                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                    modified = True
+                    print(f"[TRAIL] SELL {symbol} tix={pos.ticket} SL→BE {entry_price:.5f}")
+    return modified
 
 
 def _calculate_bollinger(data: list[float], period: int = 20, std_mult: float = 2.0):
@@ -214,6 +248,14 @@ def main():
                 # Check existing positions
                 positions = mt5.positions_get(symbol=symbol)
                 has_position = positions and any(p.magic == MAGIC for p in positions)
+
+                if has_position:
+                    # Trail stop to breakeven when position reaches 1:2 RR
+                    atr_now = _calculate_atr(symbol)
+                    for p in positions:
+                        if p.magic == MAGIC:
+                            _trail_to_breakeven(symbol, MAGIC, p.price_open, atr_now)
+                            break
 
                 if not has_position:
                     # Price broke above upper band → BUY, below lower → SELL
