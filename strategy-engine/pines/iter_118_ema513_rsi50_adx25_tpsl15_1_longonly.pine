@@ -1,0 +1,53 @@
+//@version=5
+strategy(title="EMA(5,13) + RSI(50) + ADX(25) + TP/SL 1.5:1 XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFast = input.int(5, "EMA Fast Period")          // sweep: 3-10 step 1
+emaSlow = input.int(13, "EMA Slow Period")          // sweep: 8-26 step 2
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length")                // sweep: 7-21 step 7
+rsiMin = input.int(50, "RSI Minimum (LONG-only)")   // sweep: 30-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length")                // sweep: 7-28 step 7
+adxMin = input.int(25, "Min ADX (trend filter)")    // sweep: 15-35 step 5
+
+// TP/SL
+slPoints = input.int(80, "Stop Loss (points)")      // sweep: 40-120 step 10
+tpPoints = input.int(120, "Take Profit (points)")   // sweep: 60-180 step 10 (1.5:1 ratio)
+
+//--- indicator calculations
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Manual ADX calculation (ta.adx() not available in Trader Dev engine)
+up = ta.change(high)
+down = -ta.change(low)
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr = ta.sma(tr, adxLen)
+plusDI = 100 * ta.sma(plusDM, adxLen) / atr
+minusDI = 100 * ta.sma(minusDM, adxLen) / atr
+dx = math.abs(plusDI - minusDI) / (plusDI + minusDI) * 100
+adxVal = ta.sma(dx, adxLen)
+
+//--- entry logic
+// LONG entry: EMA5 crosses above EMA13 AND RSI > RSI min AND ADX > min threshold
+longCondition = ta.crossover(emaF, emaS) and rsiVal > rsiMin and adxVal > adxMin
+
+//--- entry management — single entry, no re-entry, no cascade
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management — fixed TP/SL only, no cascade-close on bar close
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
+
+//--- visual indicators
+plot(emaF, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaS, "EMA Slow", color=color.red, linewidth=1)
+hline(50, "RSI 50 Ref", color=color.gray, linestyle=hline.style_dotted)

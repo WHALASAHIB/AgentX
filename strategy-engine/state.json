@@ -1,6 +1,6 @@
 {
-  "iteration": 115,
-  "last_run": "2026-06-25T13:02:00Z",
+  "iteration": 119,
+  "last_run": "2026-06-25T14:12:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,57 +13,19 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Revert EMA from (3,8) to (5,13) and reduce RSI minimum from 50 to 40 on EMA(5,13) crossover + ADX(14)>25 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m. The triple filter (EMA(3,8) crossover + RSI>50 + ADX>25) was too restrictive — 0 trades in 1653 bars. Short EMAs oscillate too fast on 30m and rarely align with all three filters. Reverting to (5,13) with RSI(40) should allow entries while maintaining quality.",
+  "current_hypothesis": "Raise ADX threshold from 25 to 28 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m. Iteration 118 with RSI(50) restored PF to 2.72 (16W/15L, cascade 1.0) — matching iter 44's PF regime. But Sharpe is 0.95 (just below 1.0), the only remaining weak metric. Increasing ADX from 25→28 should filter marginal trend trades, improving Sharpe towards 1.0+ while maintaining sufficient trade count.",
   "evolution_log": [
-    {
-      "iteration": 108,
-      "hypothesis": "Raise RSI minimum from 30 to 40 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m.",
-      "metrics": {"pf": 0.0, "sharpe": 0.0, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0.0},
-      "verdict": "invalid (no trades) — RSI(40)+ADX(15) double filter was too restrictive, 0 entries in 1656 bars.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:23:00"
-    },
-    {
-      "iteration": 109,
-      "hypothesis": "Lower RSI minimum from 40 to 35 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m.",
-      "metrics": {"pf": 0.73065357, "sharpe": -3.0383128, "wr": 38.46153846, "dd": 10.52626987, "trades": 26, "net_profit": -607.073861860978},
-      "verdict": "rejected (PF=0.73<1.3, Sharpe=-3.04<0.5) — RSI(35) produced 26 trades but PF collapsed. 10 wins / 16 losses, net -$607.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:37:00"
-    },
-    {
-      "iteration": 110,
-      "hypothesis": "Tighten TP/SL from 1.5:1 to 1:1.5 on EMA(5,13) crossover + ADX(14)>15 + RSI(14)>35 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 0.84445026, "sharpe": -1.86509076, "wr": 50.0, "dd": 7.71881205, "trades": 26, "net_profit": -360.264548524247},
-      "verdict": "rejected (PF=0.84<1.3, Sharpe=-1.87<0.5) — TP/SL 1:1.5 improved WR from 38% to 50% (13W/13L) but avg win $64 < avg loss $76, net still negative.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:50:00"
-    },
-    {
-      "iteration": 111,
-      "hypothesis": "Raise RSI minimum from 35 to 50 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1:1.5 (no session filter) LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 0.82637657, "sharpe": -5.27828143, "wr": 55.26315789, "dd": 5.27282971, "trades": 38, "net_profit": -433.674188811676},
-      "verdict": "rejected (PF=0.83<1.3, Sharpe=-5.28<0.5) — RSI(50) improved WR to 55% (21W/17L) but avg win $31 < avg loss $47. Stronger trend filter needed.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:02:00"
-    },
-    {
-      "iteration": 112,
-      "hypothesis": "Raise ADX threshold from 15 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 2.71594432, "sharpe": 0.6588394, "wr": 51.61290323, "dd": 0.76280566, "trades": 31, "net_profit": 26.531756014836},
-      "verdict": "accepted (incremental) — PF 2.72, Sharpe 0.66. Raising ADX from 15→25 fixed the PF collapse: 16W/15L with avg win $28.47 vs avg loss $11.18 (2.55:1 ratio). Sharpe is now the weakest metric at 0.66. Not best yet (best PF=3.61 from iter 44).",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:23:58"
-    },
-    {
-      "iteration": 113,
-      "hypothesis": "Raise ADX threshold from 25 to 30 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 2.47161864, "sharpe": 0.40848389, "wr": 57.14285714, "dd": 0.69182409, "trades": 21, "net_profit": 12.900364554578},
-      "verdict": "rejected (PF=2.47 Sharpe=0.41<0.5 DD=0.69%) — ADX(30) increased WR from 51.6% to 57.1% but cut trades from 31 to 21 and Sharpe from 0.66 to 0.41. Too restrictive: fewer trades = higher variance.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:52:00"
-    },
-    {
-      "iteration": 114,
-      "hypothesis": "Revert ADX from 30 to 25 and shorten EMAs from (5,13) to (3,8) on EMA crossover + RSI(14)>50 + ADX(14)>25 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 0.0, "sharpe": 0.0, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0.0},
-      "verdict": "invalid (no trades) — EMA(3,8) crossover + RSI(50) + ADX(25) triple filter produced 0 entries in 1653 bars. Short EMAs oscillate too fast on 30m to align with all three filters simultaneously.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T13:02:00"
-    }
+    {"iteration": 108, "hypothesis": "Raise RSI minimum from 30 to 40 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m.", "metrics": {"pf": 0.0, "sharpe": 0.0, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0.0}, "verdict": "invalid (no trades) — RSI(40)+ADX(15) double filter was too restrictive, 0 entries in 1656 bars.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:23:00"},
+    {"iteration": 109, "hypothesis": "Lower RSI minimum from 40 to 35 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m.", "metrics": {"pf": 0.73065357, "sharpe": -3.0383128, "wr": 38.46153846, "dd": 10.52626987, "trades": 26, "net_profit": -607.073861860978}, "verdict": "rejected (PF=0.73<1.3, Sharpe=-3.04<0.5) — RSI(35) produced 26 trades but PF collapsed. 10 wins / 16 losses, net -$607.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:37:00"},
+    {"iteration": 110, "hypothesis": "Tighten TP/SL from 1.5:1 to 1:1.5 on EMA(5,13) crossover + ADX(14)>15 + RSI(14)>35 LONG ONLY XAUUSD 30m.", "metrics": {"pf": 0.84445026, "sharpe": -1.86509076, "wr": 50.0, "dd": 7.71881205, "trades": 26, "net_profit": -360.264548524247}, "verdict": "rejected (PF=0.84<1.3, Sharpe=-1.87<0.5) — TP/SL 1:1.5 improved WR from 38% to 50% (13W/13L) but avg win $64 < avg loss $76, net still negative.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:50:00"},
+    {"iteration": 111, "hypothesis": "Raise RSI minimum from 35 to 50 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1:1.5 (no session filter) LONG ONLY XAUUSD 30m.", "metrics": {"pf": 0.82637657, "sharpe": -5.27828143, "wr": 55.26315789, "dd": 5.27282971, "trades": 38, "net_profit": -433.674188811676}, "verdict": "rejected (PF=0.83<1.3, Sharpe=-5.28<0.5) — RSI(50) improved WR to 55% (21W/17L) but avg win $31 < avg loss $47. Stronger trend filter needed.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:02:00"},
+    {"iteration": 112, "hypothesis": "Raise ADX threshold from 15 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.", "metrics": {"pf": 2.71594432, "sharpe": 0.6588394, "wr": 51.61290323, "dd": 0.76280566, "trades": 31, "net_profit": 26.531756014836}, "verdict": "accepted (incremental) — PF 2.72, Sharpe 0.66. Raising ADX from 15→25 fixed the PF collapse: 16W/15L with avg win $28.47 vs avg loss $11.18 (2.55:1 ratio). Sharpe is now the weakest metric at 0.66. Not best yet (best PF=3.61 from iter 44).", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:23:58"},
+    {"iteration": 113, "hypothesis": "Raise ADX threshold from 25 to 30 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.", "metrics": {"pf": 2.47161864, "sharpe": 0.40848389, "wr": 57.14285714, "dd": 0.69182409, "trades": 21, "net_profit": 12.900364554578}, "verdict": "rejected (PF=2.47 Sharpe=0.41<0.5 DD=0.69%) — ADX(30) increased WR from 51.6% to 57.1% but cut trades from 31 to 21 and Sharpe from 0.66 to 0.41. Too restrictive: fewer trades = higher variance.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T12:52:00"},
+    {"iteration": 114, "hypothesis": "Revert ADX from 30 to 25 and shorten EMAs from (5,13) to (3,8) on EMA crossover + RSI(14)>50 + ADX(14)>25 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.", "metrics": {"pf": 0.0, "sharpe": 0.0, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0.0}, "verdict": "invalid (no trades) — EMA(3,8) crossover + RSI(50) + ADX(25) triple filter produced 0 entries in 1653 bars. Short EMAs oscillate too fast on 30m to align with all three filters simultaneously.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T13:02:00"},
+    {"iteration": 115, "hypothesis": "Revert EMA from (3,8) to (5,13) and reduce RSI minimum from 50 to 40 on EMA(5,13) crossover + ADX(14)>25 + TP/SL 1:1.5 LONG ONLY XAUUSD 30m.", "metrics": {"pf": 1.48477462, "sharpe": -0.48185487, "wr": 70.83333333, "dd": 2.02416017, "trades": 24, "net_profit": -34.092552313883}, "verdict": "rejected (PF=1.48 Sharpe=-0.48 DD=2.02%) — 17W/7L (70.83% WR) but avg_loss $46.67 >> avg_win $28.53. The 1:1.5 TP/SL causes losses to outweigh wins despite 71% hit rate. Negative Sharpe makes this unviable.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T13:15:00"},
+    {"iteration": 116, "hypothesis": "Flip TP/SL from 1:1.5 to 1.5:1 on EMA(5,13) crossover + RSI(14)>40 + ADX(14)>25 LONG ONLY XAUUSD 30m. Iteration 115 showed 70.83% WR (17W/7L) but negative Sharpe (-0.48) because avg_loss $46.67 >> avg_win $28.53 (ratio 0.61). The 1:1.5 TP/SL means risking 1.5x to gain 1x. Flipping to 1.5:1 means TP catches 1.5xATR upside while SL stops at 1xATR, converting the high WR into positive expectancy.", "metrics": {"pf": 0.98297849, "sharpe": -5.3826841, "wr": 40.38461538, "dd": 9.76419583, "trades": 104, "net_profit": -852.61691157606}, "verdict": "rejected (PF=0.98<1.3, Sharpe=-5.38<0.5, Cascade=1.33>1.2) — TP/SL flip to 1.5:1 with re-entry logic caused 104 trades but 78 unique entries (cascade ratio 1.33). Re-entry pullback logic produced 26 depth-2 cascade closes. 42W/62L, net -$852. Commission $821 on 104 trades overwhelmed any gains. Structural cascade problem.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T13:30:00"},
+    {"iteration": 117, "hypothesis": "Remove re-entry (pullback bounce) logic to fix cascade-close pattern on EMA(5,13) crossover + RSI(14)>40 + ADX(14)>25 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m. Iteration 116 showed 104 trades but 78 unique entries (cascade ratio 1.33 > 1.2). The reEntryCondition (close > emaFast pullback) created 26 depth-2 entries that cascade-closed. Removing re-entries will: (1) eliminate cascade-close invalidation, (2) reduce commission overhead ($821 paid on 104 trades), (3) test whether pure crossover + TP/SL 1.5:1 is viable without re-entry noise.", "metrics": {"pf": 1.15582868, "sharpe": -2.2151796, "wr": 42.30769231, "dd": 3.08377945, "trades": 26, "net_profit": -153.39140263533}, "verdict": "rejected (PF=1.16<1.3, Sharpe=-2.22<0.5) — Cascade fixed: 26/26 unique entries, ratio 1.0. But 11W/15L with PF 1.16 and negative Sharpe. Commission $218 on 26 trades hurt the net. Raising RSI from 40→50 is the next logical param sweep.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T13:56:00"},
+    {"iteration": 118, "hypothesis": "Raise RSI minimum from 40 to 50 on EMA(5,13) crossover + ADX(14)>25 + TP/SL 1.5:1 (no re-entry) LONG ONLY XAUUSD 30m. Iteration 117 fixed cascade-close (ratio 1.0, 26 unique entries) but PF=1.16 and Sharpe=-2.22 remain weak with 11W/15L. Raising RSI from 40 to 50 should increase entry quality, recovering PF towards iter 112's 2.72 (which had RSI(50)+ADX(25)+TP/SL 1:1.5 but different TP/SL ratio).", "metrics": {"pf": 2.71603947, "sharpe": 0.95188918, "wr": 51.61290323, "dd": 0.68904737, "trades": 31, "net_profit": 38.582887059005}, "verdict": "accepted (incremental) — RSI(50) restored PF to 2.72 (2.55:1 avg win/loss ratio, 16W/15L). Sharpe improved from -2.22 to 0.95 but still just below 1.0. Cascade ratio 1.0 perfect — 31/31 unique entries. Not new best (best PF=3.61 from iter 44). Next: raise ADX from 25 to 28 to push Sharpe above 1.0.", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T14:12:00"}
   ],
   "started_at": "2026-06-23T11:23:00",
   "pairs_explored": ["XAUUSD"],

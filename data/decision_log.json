@@ -148,5 +148,35 @@
     "detail": "0.6900000000000001 USDJPY @ 161.71800 ticket=481418051",
     "outcome": "success",
     "metadata": {}
+  },
+  {
+    "id": "dec_1782364043955_e56e",
+    "timestamp": "2026-06-25T05:07:23.955958+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL OPEN",
+    "detail": "0.24 USDCHF @ 0.81110 ticket=481436111",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782364401484_c07c",
+    "timestamp": "2026-06-25T05:13:21.484719+00:00",
+    "agent_id": "Macd_NZDUSD",
+    "agent_name": "Macd_NZDUSD",
+    "action": "BUY OPEN",
+    "detail": "0.3 NZDUSD @ 0.56474 ticket=481438833",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782364518480_464d",
+    "timestamp": "2026-06-25T05:15:18.480408+00:00",
+    "agent_id": "Macd_AUDUSD",
+    "agent_name": "Macd_AUDUSD",
+    "action": "BUY OPEN",
+    "detail": "0.3 AUDUSD @ 0.68997 ticket=481439428",
+    "outcome": "success",
+    "metadata": {}
   }
 ]
