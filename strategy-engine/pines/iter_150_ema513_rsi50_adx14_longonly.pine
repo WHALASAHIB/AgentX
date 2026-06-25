@@ -1,0 +1,73 @@
+//@version=5
+strategy(title="EMA5_13_ADX14_RSI50_LongOnly_XAUUSD_30m",
+         overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- Inputs
+// EMA parameters
+ema_fast_len = input.int(5, "Fast EMA Length", minval=1, maxval=50)       // sweep: 3-21 step 2
+ema_slow_len = input.int(13, "Slow EMA Length", minval=1, maxval=100)     // sweep: 8-50 step 5
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)                // sweep: 7-21 step 2
+rsi_min = input.int(50, "RSI Minimum (Long Only)", minval=20, maxval=80)  // sweep: 30-60 step 5
+
+// ADX parameters
+adx_len = input.int(14, "ADX Length", minval=2, maxval=50)                // sweep: 7-28 step 2
+adx_threshold = input.int(14, "ADX Minimum Threshold", minval=1, maxval=50) // sweep: 4-25 step 2
+
+// TP/SL parameters
+tp_sl_ratio = input.float(1.5, "Take Profit / Stop Loss Ratio", minval=0.5, maxval=5.0)  // sweep: 0.5-3.0 step 0.25
+sl_atr_mult = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=5.0)              // sweep: 0.5-3.0 step 0.5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                               // sweep: 7-21 step 2
+
+//--- Indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+// Manual ADX calculation (Trader Dev engine does not support ta.adx())
+// True Range
+tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+// +DM and -DM
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+// EMA-smoothed TR, +DM, -DM
+smoothed_tr = ta.ema(tr, adx_len)
+smoothed_plus_dm = ta.ema(plus_dm, adx_len)
+smoothed_minus_dm = ta.ema(minus_dm, adx_len)
+// +DI and -DI
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+// DX and ADX
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.ema(dx, adx_len)
+
+atr_val = ta.atr(atr_len)
+
+//--- Entry logic
+ema_cross_over = ta.crossover(ema_fast, ema_slow)
+
+// LONG ONLY: Enter when EMA fast crosses above slow, RSI > 50, and ADX > threshold
+long_condition = ema_cross_over and rsi_val > rsi_min and adx_val > adx_threshold
+
+//--- Exit management
+// Calculate SL and TP distances based on ATR
+sl_distance = sl_atr_mult * atr_val
+tp_distance = tp_sl_ratio * sl_distance
+
+// Convert to ticks for strategy.exit()
+sl_ticks = math.round(sl_distance / syminfo.mintick)
+tp_ticks = math.round(tp_distance / syminfo.mintick)
+
+// Entry and exit
+if long_condition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=sl_ticks, profit=tp_ticks)

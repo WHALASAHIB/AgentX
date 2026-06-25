@@ -1,0 +1,59 @@
+//@version=5
+strategy(title="EMA Cross H30 + RSI50 + ADX20 LONG ONLY", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(12, "Fast EMA", minval=3, maxval=50, step=1, group="EMA")        // sweep: 5-20 step 1
+slow_len = input.int(26, "Slow EMA", minval=10, maxval=100, step=1, group="EMA")       // sweep: 15-50 step 1
+
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=1, group="RSI")         // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Entry Threshold (long > this)", minval=30, maxval=70, step=5, group="RSI")  // sweep: 30-70 step 5
+
+adx_len = input.int(14, "ADX Length", minval=7, maxval=21, step=1, group="ADX")         // sweep: 7-21 step 1
+adx_threshold = input.int(20, "ADX Min Threshold (must be > this)", minval=10, maxval=40, step=2, group="ADX")  // sweep: 14-25 step 2
+
+atr_len = input.int(14, "ATR Length for SL/TP", minval=7, maxval=28, step=1, group="SL/TP")  // sweep: 7-28 step 1
+atr_mult_sl = input.float(1.0, "ATR Multiplier for SL", minval=0.5, maxval=3.0, step=0.25, group="SL/TP")  // sweep: 0.5-2.0 step 0.25
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=3.0, step=0.25, group="SL/TP")  // sweep: 0.5-3.0 step 0.25
+
+use_session_filter = input.bool(true, "Use Session Filter (London/NY)", group="Session")
+session_start = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23, step=1, group="Session")  // sweep: 0-12 step 1
+session_end = input.int(16, "Session End Hour (UTC)", minval=0, maxval=23, step=1, group="Session")    // sweep: 8-20 step 1
+
+//--- indicators
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+
+rsi_val = ta.rsi(close, rsi_len)
+
+[di_plus, di_minus, adx] = ta.dmi(high, low, close, adx_len)
+
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// Conditions for LONG entry
+ema_bullish = ta.crossover(fast_ema, slow_ema)       // Fast EMA crosses above Slow EMA
+rsi_ok = rsi_val > rsi_threshold                     // RSI above threshold (bullish momentum)
+adx_ok = adx > adx_threshold                         // ADX above threshold (trending market)
+
+// Session filter: only trade during London/NY overlap hours
+current_hour = hour(time)
+session_ok = not use_session_filter or (current_hour >= session_start and current_hour < session_end)
+
+// Combine conditions for entry
+long_condition = ema_bullish and rsi_ok and adx_ok and session_ok
+
+//--- exit management
+// Calculate ATR-based stop loss and take profit
+sl_distance = atr_mult_sl * atr_val
+tp_distance = tp_sl_ratio * sl_distance
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=syminfo.mintick * math.round(sl_distance / syminfo.mintick), profit=syminfo.mintick * math.round(tp_distance / syminfo.mintick))
+    // Entry with ATR-based fixed SL/TP: SL = atr_mult_sl * ATR, TP = tp_sl_ratio * SL distance
+
+//--- visual
+plot(fast_ema, "Fast EMA", color=color.blue, linewidth=1)
+plot(slow_ema, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dotted)
+plotchar(long_condition, "Long Entry", "▲", location=location.belowbar, color=color.green, size=size.tiny)
