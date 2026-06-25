@@ -1,0 +1,36 @@
+//@version=5
+// --- Strategy: EMA(5,13) Crossover + RSI(14)>50 + DMI/ADX(14)>28 + TP/SL 1.5:1
+// --- LONG ONLY — XAUUSD 30m
+// --- Iteration 119: Raising ADX from 25 to 28 to push Sharpe > 1.0
+strategy(title="EMA5_13_RSI50_ADX28_LONGONLY_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(5, "EMA Fast Length", minval=1, maxval=50)
+emaSlowLen = input.int(13, "EMA Slow Length", minval=1, maxval=50)  // sweep: 8-20 step 2
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiMin = input.int(50, "RSI Minimum (entry)", minval=1, maxval=100)  // sweep: 30-60 step 5
+dmiLen = input.int(14, "DMI/ADX Length", minval=2, maxval=50)
+adxMin = input.int(28, "ADX Minimum (trend filter)", minval=10, maxval=40)  // sweep: 20-35 step 3
+tpSlRatio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0)  // sweep: 1.0-3.0 step 0.5
+atrLen = input.int(14, "ATR Length for Stops", minval=5, maxval=50)
+slMultiplier = input.float(1.0, "SL Multiplier (xATR)", minval=0.5, maxval=4.0)  // sweep: 0.5-3.0 step 0.5
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+[diPlus, diMinus, adxVal] = ta.dmi(high, low, close, dmiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic — EMA crossover + RSI filter + ADX trend filter
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiMin and adxVal > adxMin
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management — fixed TP/SL based on ATR
+slDist = slMultiplier * atrVal
+tpDist = slDist * tpSlRatio
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slDist / syminfo.mintick, profit=tpDist / syminfo.mintick)
