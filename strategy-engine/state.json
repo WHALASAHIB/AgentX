@@ -1,6 +1,6 @@
 {
-  "iteration": 141,
-  "last_run": "2026-06-25T21:05:00Z",
+  "iteration": 144,
+  "last_run": "2026-06-25T21:39:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,98 +13,151 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Lower RSI entry threshold from 55 to 50 on BB squeeze + close > SMA(5) momentum + SMA(50) trend LONG ONLY XAUUSD 30m. Rationale: PF=1.22<1.5 triggers the 'add RSI(14) filter (long if RSI>50)' rule. Current RSI threshold is 55 (already above 50); lowering to 50 strictly implements the rule. Should increase trade count from 32 and potentially capture more good entries that were previously rejected by the high RSI threshold.",
+  "current_hypothesis": "Lower ADX threshold from 18 to 14 on BB squeeze + close > SMA(5) + SMA(50) trend + RSI(50) + TP/SL 1.5:1 LONG ONLY XAUUSD 30m. ADX(18) still too restrictive (0 trades for second consecutive run). ADX(14) is a minimal trend filter that should allow BB squeeze entries while still screening out the most choppy markets.",
   "evolution_log": [
     {
-      "iteration": 128,
-      "hypothesis": "Raise ADX threshold from 8 to 14 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.46643166, "sharpe": 0.70879176, "wr": 52.0, "dd": 5.08246926, "trades": 25, "net_profit": 122.662898486478},
-      "verdict": "accepted (incremental)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T18:15:00"
+      "iteration": 143,
+      "hypothesis": "Lower ADX threshold from 25 to 18 on BB squeeze + close > SMA(5) + SMA(50) trend + RSI(50) + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — ADX(18) still too restrictive combined with BB squeeze + SMA(5) + SMA(50) + RSI(50). Second consecutive 0-trade run with ADX filter on BB squeeze strategy.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T21:39:00"
     },
     {
-      "iteration": 129,
-      "hypothesis": "Raise ADX threshold from 14 to 18 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 0.91466625, "sharpe": -5.29784038, "wr": 37.77777778, "dd": 6.06108982, "trades": 45, "net_profit": -425.069776823872},
-      "verdict": "rejected (PF=0.91<1.3, Sharpe=-5.30<0.5)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T18:42:00"
+      "iteration": 142,
+      "hypothesis": "Add ADX(14) > 25 filter to BB squeeze + close > SMA(5) + SMA(50) trend + RSI(50) + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — ADX(25) combined with BB squeeze + SMA(5) + SMA(50) + RSI(50) was too restrictive. No bar met all conditions.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T21:36:00"
     },
     {
-      "iteration": 130,
-      "hypothesis": "Change EMA from (5,13) to (8,21) on EMA crossover + RSI(14)>50 + ADX(14)>14 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 0.99038367, "sharpe": -2.6889256, "wr": 37.14285714, "dd": 5.81097423, "trades": 35, "net_profit": -284.607166180347},
-      "verdict": "rejected (PF=0.99<1.3, Sharpe=-2.69<0.5)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T18:57:00"
+      "iteration": 141,
+      "hypothesis": "Lower RSI entry threshold from 55 to 50 on BB squeeze + close > SMA(5) momentum + SMA(50) trend LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0.90240974, "sharpe": -8.71761725, "wr": 37.81512605, "dd": 13.31359339, "trades": 119, "net_profit": -1130.767770956098},
+      "verdict": "rejected (PF=0.90<1.3, Sharpe=-8.72<0.5) — Lowering RSI from 55 to 50 was disastrous.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T21:20:00"
     },
     {
-      "iteration": 131,
-      "hypothesis": "Revert EMA from (8,21) to (5,13) and tighten TP/SL from 1.5:1 to 1:1 on EMA crossover + RSI(14)>50 + ADX(14)>14 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.00221778, "sharpe": -3.03970449, "wr": 50.0, "dd": 4.55575956, "trades": 38, "net_profit": -296.885940121696},
-      "verdict": "rejected (PF=1.00<1.3, Sharpe=-3.04<0.5)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T19:15:00"
-    },
-    {
-      "iteration": 132,
-      "hypothesis": "Raise ADX threshold from 14 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.23786642, "sharpe": -0.65658637, "wr": 56.25, "dd": 1.90979456, "trades": 16, "net_profit": -45.409563134093},
-      "verdict": "invalid (low sample, 16 trades)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T19:45:00"
-    },
-    {
-      "iteration": 133,
-      "hypothesis": "Lower ADX threshold from 25 to 22 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.27076167, "sharpe": -0.57340607, "wr": 55.0, "dd": 2.52438517, "trades": 20, "net_profit": -46.812630210894},
-      "verdict": "rejected (PF=1.27<1.3, Sharpe=-0.57<0.5)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:00:00"
-    },
-    {
-      "iteration": 134,
-      "hypothesis": "Revert TP/SL from 1:1 to 1.5:1 with ADX(14)>22 on EMA(5,13) crossover + RSI(14)>50 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.34083595, "sharpe": 0.11589351, "wr": 45.0, "dd": 2.79465873, "trades": 20, "net_profit": 6.051169621554},
-      "verdict": "rejected (PF=1.34 Sharpe=0.12 DD=2.79%)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:15:00"
-    },
-    {
-      "iteration": 135,
-      "hypothesis": "Lower ADX threshold from 22 to 14 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 0.7332367, "sharpe": -3.37386532, "wr": 18.18181818, "dd": 5.78358618, "trades": 22, "net_profit": -331.736663992377},
-      "verdict": "rejected (PF=0.73<1.3, Sharpe=-3.37<0.5)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:30:00"
-    },
-    {
-      "iteration": 136,
-      "hypothesis": "Switch to MACD(12,26,9) crossover + RSI(14)>50 + TP/SL 1.5:1 (1×ATR SL) LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.37992398, "sharpe": -0.55213913, "wr": 46.66666667, "dd": 3.01599214, "trades": 30, "net_profit": -45.780066879157},
-      "verdict": "rejected (PF=1.38 Sharpe=-0.55 DD=3.02%)",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:45:00"
-    },
-    {
-      "iteration": 137,
-      "hypothesis": "Add SMA(50) trend filter (close > SMA) to MACD(12,26,9) crossover + RSI(14)>50 + TP/SL 1.5:1 (1×ATR SL) LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.91259858, "sharpe": 1.71144228, "wr": 52.38095238, "dd": 2.17243548, "trades": 21, "net_profit": 116.750590141324},
-      "verdict": "accepted (incremental) — SMA(50) trend filter transformed MACD+RSI from losing (-$45.78) to profitable (+$116.75), boosted PF from 1.38 to 1.91, Sharpe from -0.55 to +1.71, WR from 46.67% to 52.38%. All metrics green — switching indicator family.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:49:00"
-    },
-    {
-      "iteration": 138,
-      "hypothesis": "Try Bollinger Bands(20, 2) squeeze breakout with RSI(14) bounce filter + SMA(50) trend filter LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.07911298, "sharpe": -3.07207221, "wr": 38.18181818, "dd": 5.82345095, "trades": 55, "net_profit": -347.754496282336},
-      "verdict": "rejected (PF=1.08<1.3, Sharpe=-3.07<0.5) — Bollinger Bands not profitable on 30m XAUUSD.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:51:00"
+      "iteration": 140,
+      "hypothesis": "Replace ATR trend-strength filter with 5-bar SMA momentum filter (close > sma(close,5)) on BB squeeze + RSI(55) bounce + SMA(50) trend LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.22198763, "sharpe": -1.15074463, "wr": 40.625, "dd": 2.96726921, "trades": 32, "net_profit": -111.780551212805},
+      "verdict": "rejected (PF=1.22<1.3, Sharpe=-1.15<0.5) — 5-bar SMA momentum filter performed worse than ATR trend-strength proxy.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T21:05:00"
     },
     {
       "iteration": 139,
       "hypothesis": "Add ATR(14) > SMA(ATR,20) trend strength filter to BB squeeze + RSI(55) bounce + SMA(50) trend LONG ONLY XAUUSD 30m.",
       "metrics": {"pf": 1.4230882, "sharpe": 0.15461826, "wr": 44.0, "dd": 3.14958753, "trades": 25, "net_profit": 9.558762825625},
       "verdict": "rejected (PF=1.42 Sharpe=0.15<0.5) — ATR trend-strength proxy improved from iter 138 but Sharpe still well below 0.5.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:53:00"
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:53:00"
     },
     {
-      "iteration": 140,
-      "hypothesis": "Replace ATR trend-strength filter with 5-bar SMA momentum filter (close > sma(close,5)) on BB squeeze + RSI(55) bounce + SMA(50) trend LONG ONLY XAUUSD 30m.",
-      "metrics": {"pf": 1.22198763, "sharpe": -1.15074463, "wr": 40.625, "dd": 2.96726921, "trades": 32, "net_profit": -111.780551212805},
-      "verdict": "rejected (PF=1.22<1.3, Sharpe=-1.15<0.5) — 5-bar SMA momentum filter performed worse than ATR trend-strength proxy. Sharpe dropped from +0.155 (iter 139) to -1.15.",
-      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T21:05:00"
+      "iteration": 138,
+      "hypothesis": "Try Bollinger Bands(20, 2) squeeze breakout with RSI(14) bounce filter + SMA(50) trend filter LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.07911298, "sharpe": -3.07207221, "wr": 38.18181818, "dd": 5.82345095, "trades": 55, "net_profit": -347.754496282336},
+      "verdict": "rejected (PF=1.08<1.3, Sharpe=-3.07<0.5) — Bollinger Bands not profitable on 30m XAUUSD.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:51:00"
+    },
+    {
+      "iteration": 137,
+      "hypothesis": "Add SMA(50) trend filter (close > SMA) to MACD(12,26,9) crossover + RSI(14)>50 + TP/SL 1.5:1 (1xATR SL) LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.91259858, "sharpe": 1.71144228, "wr": 52.38095238, "dd": 2.17243544, "trades": 21, "net_profit": 116.750590141324},
+      "verdict": "accepted (incremental) — SMA(50) trend filter transformed MACD+RSI from losing (-$45.78) to profitable (+$116.75), boosted PF from 1.38 to 1.91, Sharpe from -0.55 to +1.71, WR from 46.67% to 52.38%. All metrics green — switching indicator family.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:49:00"
+    },
+    {
+      "iteration": 136,
+      "hypothesis": "Switch to MACD(12,26,9) crossover + RSI(14)>50 + TP/SL 1.5:1 (1xATR SL) LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.37992398, "sharpe": -0.55213913, "wr": 46.66666667, "dd": 3.01599214, "trades": 30, "net_profit": -45.780066879157},
+      "verdict": "rejected (PF=1.38 Sharpe=-0.55 DD=3.02%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:45:00"
+    },
+    {
+      "iteration": 135,
+      "hypothesis": "Lower ADX threshold from 22 to 14 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0.7332367, "sharpe": -3.37386532, "wr": 18.18181818, "dd": 5.78358618, "trades": 22, "net_profit": -331.736663992377},
+      "verdict": "rejected (PF=0.73<1.3, Sharpe=-3.37<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:30:00"
+    },
+    {
+      "iteration": 134,
+      "hypothesis": "Revert TP/SL from 1:1 to 1.5:1 with ADX(14)>22 on EMA(5,13) crossover + RSI(14)>50 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.34083595, "sharpe": 0.11589351, "wr": 45.0, "dd": 2.79465873, "trades": 20, "net_profit": 6.051169621554},
+      "verdict": "rejected (PF=1.34 Sharpe=0.12 DD=2.79%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:15:00"
+    },
+    {
+      "iteration": 133,
+      "hypothesis": "Lower ADX threshold from 25 to 22 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.27076167, "sharpe": -0.57340607, "wr": 55.0, "dd": 2.52438517, "trades": 20, "net_profit": -46.812630210894},
+      "verdict": "rejected (PF=1.27<1.3, Sharpe=-0.57<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T20:00:00"
+    },
+    {
+      "iteration": 132,
+      "hypothesis": "Raise ADX threshold from 14 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.23786642, "sharpe": -0.65658637, "wr": 56.25, "dd": 1.90979456, "trades": 16, "net_profit": -45.409563134093},
+      "verdict": "invalid (low sample, 16 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T19:45:00"
+    },
+    {
+      "iteration": 131,
+      "hypothesis": "Revert EMA from (8,21) to (5,13) and tighten TP/SL from 1.5:1 to 1:1 on EMA crossover + RSI(14)>50 + ADX(14)>14 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.00221778, "sharpe": -3.03970449, "wr": 50.0, "dd": 4.55575956, "trades": 38, "net_profit": -296.885940121696},
+      "verdict": "rejected (PF=1.00<1.3, Sharpe=-3.04<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T19:15:00"
+    },
+    {
+      "iteration": 130,
+      "hypothesis": "Change EMA from (5,13) to (8,21) on EMA crossover + RSI(14)>50 + ADX(14)>14 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0.99038367, "sharpe": -2.6889256, "wr": 37.14285714, "dd": 5.81097423, "trades": 35, "net_profit": -284.607166180347},
+      "verdict": "rejected (PF=0.99<1.3, Sharpe=-2.69<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T18:57:00"
+    },
+    {
+      "iteration": 129,
+      "hypothesis": "Raise ADX threshold from 14 to 18 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0.91466625, "sharpe": -5.29784038, "wr": 37.77777778, "dd": 6.06108982, "trades": 45, "net_profit": -425.069776823872},
+      "verdict": "rejected (PF=0.91<1.3, Sharpe=-5.30<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T18:42:00"
+    },
+    {
+      "iteration": 128,
+      "hypothesis": "Raise ADX threshold from 8 to 14 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.46643166, "sharpe": 0.70879176, "wr": 52.0, "dd": 5.08246926, "trades": 25, "net_profit": 122.662898486478},
+      "verdict": "accepted (incremental)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-25T18:15:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

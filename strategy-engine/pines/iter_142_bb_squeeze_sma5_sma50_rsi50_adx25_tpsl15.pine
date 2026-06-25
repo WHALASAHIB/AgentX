@@ -1,0 +1,57 @@
+//@version=5
+strategy(title="BB Squeeze SMA5 SMA50 RSI50 ADX25 TP1.5 SL1 LONG XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)       // sweep: 10-30 step 5
+bb_mult   = input.float(2.0, "BB StdDev Mult", minval=0.5, maxval=4.0, step=0.5)  // sweep: 1.5-3.0 step 0.5
+
+// SMA trend filters
+sma_fast_len = input.int(5, "SMA Fast Length", minval=2, maxval=20)   // sweep: 3-10 step 1
+sma_trend_len = input.int(50, "SMA Trend Length", minval=20, maxval=200) // sweep: 30-100 step 10
+
+// RSI filter
+rsi_len   = input.int(14, "RSI Length", minval=5, maxval=30)      // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Entry Threshold (long>this)", minval=30, maxval=70) // sweep: 45-60 step 5
+
+// ADX filter
+adx_len       = input.int(14, "ADX Length", minval=7, maxval=30)   // sweep: 10-20 step 5
+adx_threshold = input.int(25, "ADX Min Threshold", minval=10, maxval=50) // sweep: 18-30 step 4
+
+// TP/SL
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+tp_sl_ratio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.5)        // sweep: 1.0-3.0 step 0.5
+atr_len     = input.int(14, "ATR Length", minval=7, maxval=30)     // sweep: 10-20 step 5
+
+//--- indicator calculations
+[bb_middle, bb_upper, bb_lower] = ta.bb(close, bb_length, bb_mult)
+sma_fast  = ta.sma(close, sma_fast_len)
+sma_trend = ta.sma(close, sma_trend_len)
+rsi_val   = ta.rsi(close, rsi_len)
+[adx_val, plus_di, minus_di] = ta.dmi(high, low, close, adx_len)
+atr_val   = ta.atr(atr_len)
+
+//--- BB squeeze detection: Bollinger Band width contraction (bands narrow)
+bb_width      = bb_upper - bb_lower
+bb_width_avg  = ta.sma(bb_width, 20)  // 20-bar average of BB width
+bb_squeeze    = bb_width < bb_width_avg * 0.8  // BB width < 80% of 20-bar average = squeeze
+
+//--- entry logic (LONG ONLY)
+long_condition = false
+
+// BB squeeze breakout: price closes above upper BB band
+// or price crosses above middle band during squeeze
+bb_breakout_up  = close > bb_upper
+bb_mid_bounce   = ta.crossover(close, bb_middle) and bb_squeeze
+
+// Entry condition: BB squeeze breakout + momentum + trend + RSI + ADX (ALL filters)
+if (bb_breakout_up or bb_mid_bounce) and (close > sma_fast) and (close > sma_trend) and (rsi_val > rsi_threshold) and (adx_val > adx_threshold)
+    long_condition := true
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    // ATR-based stop loss and profit target
+    sl_price  = strategy.position_avg_price - (atr_val * sl_atr_mult)
+    tp_price  = strategy.position_avg_price + (atr_val * sl_atr_mult * tp_sl_ratio)
+    strategy.exit("XL", "Long", loss=math.round((strategy.position_avg_price - sl_price) / syminfo.mintick), profit=math.round((tp_price - strategy.position_avg_price) / syminfo.mintick))
