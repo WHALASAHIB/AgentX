@@ -261,7 +261,7 @@ def _get_bot_script(name: str) -> Path:
     return script
 
 def _log_bot_decision(agent_name: str, action: str, detail: str, outcome: str = "success"):
-    """Log a bot action to the decision_log."""
+    """Log a bot action to the decision_log and agent_logs."""
     try:
         _dl_path = Path(__file__).resolve().parent.parent / "scripts"
         sys.path.insert(0, str(_dl_path))
@@ -276,6 +276,18 @@ def _log_bot_decision(agent_name: str, action: str, detail: str, outcome: str = 
             outcome=outcome,
             metadata={"source": "bot_controller"},
         )
+        # Also save agent log for orchestrator
+        try:
+            db = get_db()
+            db.save_agent_log(
+                agent_name=agent_name,
+                task=action,
+                decision=action,
+                outcome=outcome,
+                metadata={"detail": detail, "source": "bot_controller"},
+            )
+        except Exception:
+            pass
     except Exception:
         pass
 
@@ -881,6 +893,17 @@ async def list_accounts(auth=Depends(require_auth)):
                 "last_error": "Not configured in bridge",
                 "enabled": a.get("enabled", True),
             }
+    # Enrich with balance/equity from bridge account details
+    for acct in merged.values():
+        if acct.get("connected"):
+            try:
+                info = await bridge.get_account(acct["id"])
+                if isinstance(info, dict):
+                    acct["balance"] = float(info.get("balance", 0) or 0)
+                    acct["equity"] = float(info.get("equity", 0) or 0)
+                    acct["profit"] = float(info.get("profit", 0) or 0)
+            except Exception as exc:
+                logger.warning("Failed to fetch account detail for %s: %s", acct["id"], exc)
     return list(merged.values())
 
 @app.get("/api/accounts/active")
@@ -2264,69 +2287,48 @@ async def orchestrator_agents(auth=Depends(require_auth)):
     agents = []
     now = datetime.now(timezone.utc)
 
-    # Fetch bot statuses for agent context
+    # Fetch bot statuses — these ARE the real agents
     bots = db.get_bots()
 
-    # Fetch agent logs for real last_active timestamps
-    agent_logs = db.get_agent_logs(limit=50)
-    # Build per-agent last_active from logs
-    last_active_map: dict[str, str] = {}
-    for log in agent_logs:
-        name = log.get("agent_name", "")
-        ts = log.get("created_at", "")
-        if name and ts and name not in last_active_map:
-            last_active_map[name] = ts
+    # Fetch decision logs for real last_active timestamps and actions
+    decisions = db.get_agent_logs(limit=100) if hasattr(db, 'get_agent_logs') else []
 
-    # Count recent activity per agent
-    recent_window = now - timedelta(hours=1)
-    activity_counts: dict[str, int] = {}
-    for log in agent_logs:
-        name = log.get("agent_name", "")
+    # Build per-bot last_active and last_action from decisions
+    bot_activity: dict[str, dict] = {}
+    for dec in decisions:
+        name = dec.get("agent_name", "")
         if not name:
             continue
-        ts = log.get("created_at", "")
-        if ts:
-            try:
-                t = datetime.fromisoformat(ts)
-                if t >= recent_window:
-                    activity_counts[name] = activity_counts.get(name, 0) + 1
-            except (ValueError, TypeError):
-                pass
+        if name not in bot_activity:
+            bot_activity[name] = {"last_active": dec.get("created_at", ""), "last_action": dec.get("action", "")}
+        # Prefer newer
+        ts = dec.get("created_at", "")
+        if ts and ts > bot_activity[name]["last_active"]:
+            bot_activity[name] = {"last_active": ts, "last_action": dec.get("action", "")}
 
-    for a in ORCHESTRATOR_AGENTS:
-        agent = dict(a)
-        agent_id = a["id"]
+    # Create agent entries from real bots
+    for bot in bots:
+        name = bot.get("name", "")
+        status = bot.get("status", "stopped")
+        script = bot.get("script_path", "")
+        # Extract strategy from script name or bot name
+        parts = name.split("_")
+        strategy = parts[0] if len(parts) > 1 else "custom"
+        symbol = parts[1] if len(parts) > 1 else ""
 
-        # Determine agent status from bot activity
-        bot_entries = [b for b in bots if agent_id in b.get("strategy", "").lower() or agent_id in b.get("name", "").lower()]
-        if bot_entries:
-            running = any(b.get("status") == "running" for b in bot_entries)
-            agent["status"] = "running" if running else agent.get("status", "idle")
+        activity = bot_activity.get(name, {})
+        agents.append({
+            "id": name,
+            "name": name.replace("_", " ").title(),
+            "avatar": "🤖",
+            "role": f"{strategy.capitalize()} Strategy on {symbol}" if symbol else f"{strategy.capitalize()} Strategy",
+            "status": "running" if status == "running" else "idle",
+            "last_active": activity.get("last_active") or bot.get("last_started", ""),
+            "last_action": activity.get("last_action", f"Monitoring {symbol or strategy}"),
+        })
 
-        # Determine if recently active
-        recent_count = activity_counts.get(agent_id, 0)
-        if recent_count > 0:
-            agent["status"] = "active"
-
-        # Last active timestamp
-        last_ts = last_active_map.get(agent_id)
-        if last_ts:
-            agent["last_active"] = last_ts
-        else:
-            # Fallback: use bot last_started
-            for b in bot_entries:
-                if b.get("last_started"):
-                    agent["last_active"] = b["last_started"]
-                    break
-
-        # Last action summary
-        actions = {"research": "market intel & tool discovery", "clawjatt": "system health", "alphaguru": "portfolio", "hermesjatti": "risk limits"}
-        agent["last_action"] = f"Monitoring {actions.get(agent_id, 'system health')}"
-        if recent_count > 0:
-            agent["last_action"] = f"Processed {recent_count} task(s) in the last hour"
-
-        agent["uptime"] = 3600 + hash(agent_id) % 7200
-        agents.append(agent)
+    # Sort: running first, then idle
+    agents.sort(key=lambda a: (0 if a["status"] == "running" else 1, a["name"]))
 
     return {"agents": agents}
 

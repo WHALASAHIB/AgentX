@@ -1,0 +1,81 @@
+//@version=5
+//============================================================
+// Strategy: EMA(5,13) Crossover + RSI(14)>40 + ADX(14)>15
+// XAUUSD 30m — Long only, no session filter, TP 1.5:1
+// Iteration 108
+//============================================================
+strategy(title="EMA5_13_RSI40_ADX15_LongOnly_H30",
+         overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50, step=1)  // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=100, step=1) // sweep: 8-30 step 2
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30, step=1)           // sweep: 7-21 step 2
+rsi_min = input.int(40, "RSI Minimum (long only above this)", minval=20, maxval=70, step=5) // sweep: 30-60 step 5
+
+// ADX parameters
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30, step=1)           // sweep: 10-20 step 2
+adx_min = input.int(15, "ADX Minimum", minval=10, maxval=40, step=5)         // sweep: 10-25 step 5
+
+// TP/SL ratio (1:n)
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.5
+
+// ATR for stop placement
+atr_len = input.int(14, "ATR Length", minval=5, maxval=30, step=1)
+atr_mult_sl = input.float(1.5, "ATR Multiplier for SL", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=1)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=1)
+
+rsi_val = ta.rsi(close, rsi_len)
+hline(50, "RSI 50", color=color.gray, linestyle=hline.style_dotted)
+plot(rsi_val, "RSI", color=color.purple, display=display.data_window)
+
+[di_plus, di_minus, adx_val] = ta.dmi(high, low, close, adx_len)
+hline(adx_min, "ADX Threshold", color=color.orange, linestyle=hline.style_dashed)
+plot(adx_val, "ADX", color=color.orange, display=display.data_window)
+
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// Long setup: EMA fast crosses above EMA slow + RSI > minimum + ADX > minimum
+long_cross = ta.crossover(ema_fast, ema_slow)
+long_enter = long_cross and rsi_val > rsi_min and adx_val > adx_min
+
+// Exit signals (crossover/close based — not cascade)
+long_exit_cross = ta.crossunder(ema_fast, ema_slow)
+
+//--- Position management
+var float long_entry_price = na
+var float long_sl_price = na
+var float long_tp_price = na
+
+if long_enter and strategy.position_size == 0
+    long_entry_price := close
+    // SL based on ATR (aggressive — 1.5x ATR below entry)
+    long_sl_price := close - (atr_val * atr_mult_sl)
+    // TP based on ratio of SL distance
+    long_tp_price := close + ((close - long_sl_price) * tp_sl_ratio)
+    
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long",
+         loss=int((close - long_sl_price) / syminfo.mintick),
+         profit=int(((close - long_sl_price) * tp_sl_ratio) / syminfo.mintick))
+
+// Description for strategy report
+strategy.close("Long", when=long_exit_cross and strategy.position_size > 0)
+
+//--- Plot coloured background for entry zones
+bgcolor(long_enter ? color.new(color.green, 90) : na, title="Entry Zone")

@@ -35,12 +35,33 @@ class RedisClient:
                 socket_connect_timeout=1,
                 socket_timeout=1,
             )
-            self._connected = True
-            logger.info("Redis client configured: %s:%s", self.host, self.port)
+            # Test the connection with a ping
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # Already inside an async context — schedule the ping
+                    asyncio.ensure_future(self._test_connection())
+                    self._connected = True
+                else:
+                    loop.run_until_complete(self._client.ping())
+                    self._connected = True
+            except Exception:
+                self._connected = False
+                logger.warning("Redis server unreachable at %s:%s", self.host, self.port)
         except ImportError:
             logger.info("redis package not installed — running without Redis pub/sub")
         except Exception as e:
             logger.warning("Redis unavailable (%s) — running without Redis pub/sub", e)
+
+    async def _test_connection(self):
+        """Test Redis connection from within an async context."""
+        try:
+            await self._client.ping()
+            self._connected = True
+            logger.info("Redis connected: %s:%s", self.host, self.port)
+        except Exception as e:
+            self._connected = False
+            logger.warning("Redis unreachable at %s:%s — %s", self.host, self.port, e)
 
     @property
     def connected(self) -> bool:

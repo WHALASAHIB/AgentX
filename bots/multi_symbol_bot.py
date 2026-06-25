@@ -49,11 +49,11 @@ def _log_decision(agent_name: str, action: str, detail: str, outcome: str = "suc
     """Send decision log entry to backend."""
     try:
         payload = json.dumps({
+            "agent_id": agent_name,
             "agent_name": agent_name,
             "action": action,
             "detail": detail,
             "outcome": outcome,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
         }).encode()
         req = urllib.request.Request(
             f"{BACKEND_URL}/api/decisions",
@@ -237,19 +237,66 @@ def _count_open_positions(symbol: str, magic: int) -> int:
     return sum(1 for p in positions if p.magic == magic)
 
 
+def _calculate_atr(symbol: str, period: int = 14) -> float:
+    """Calculate Average True Range from H1 price data.
+
+    Returns ATR value, or a sensible default based on symbol type
+    (50 pips for forex, 500 points for XAUUSD).
+    """
+    rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_H1, 0, 20)
+    info = mt5.symbol_info(symbol)
+
+    if rates is None or len(rates) < period:
+        # Fallback default based on symbol type
+        if info is None:
+            return 0.005
+        point = info.point if info.point else 0.0001
+        if "XAU" in symbol.upper() or "GOLD" in symbol.upper():
+            return 50.0 * point if point else 5.0
+        return 50.0 * point if point else 0.005
+
+    # ATR = average of (high - low) over 'period' bars
+    tr_values = [rates[i][2] - rates[i][3] for i in range(min(period, len(rates)))]
+    if not tr_values:
+        return 0.005
+    return sum(tr_values) / len(tr_values)
+
+
+def _calculate_sl_tp(symbol: str, order_type: int, entry_price: float,
+                     atr: float) -> tuple[float, float]:
+    """Calculate stop-loss and take-profit prices based on ATR.
+
+    SL = 1.5 x ATR away from entry (opposite direction)
+    TP = 3.0 x ATR away from entry (profit direction, 1:2 RR ratio)
+    Returns (sl_price, tp_price).
+    """
+    if order_type == mt5.ORDER_TYPE_BUY:
+        sl_price = entry_price - (1.5 * atr)
+        tp_price = entry_price + (3.0 * atr)
+    else:  # SELL
+        sl_price = entry_price + (1.5 * atr)
+        tp_price = entry_price - (3.0 * atr)
+    return sl_price, tp_price
+
+
 def _open_trade(symbol: str, order_type: int, lot: float, magic: int,
-                comment: str, deviation: int = 20) -> Optional[int]:
-    """Open a market order. Returns ticket number or None."""
+                comment: str, deviation: int = 20,
+                atr: Optional[float] = None) -> Optional[int]:
+    """Open a market order. Returns ticket number or None.
+    If atr is provided, calculates SL/TP automatically using _calculate_sl_tp.
+    """
     price = mt5.symbol_info_tick(symbol)
     if price is None:
         return None
+
+    entry_price = price.ask if order_type == mt5.ORDER_TYPE_BUY else price.bid
 
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
         "volume": lot,
         "type": order_type,
-        "price": price.ask if order_type == mt5.ORDER_TYPE_BUY else price.bid,
+        "price": entry_price,
         "sl": 0.0,
         "tp": 0.0,
         "deviation": deviation,
@@ -259,16 +306,27 @@ def _open_trade(symbol: str, order_type: int, lot: float, magic: int,
         "type_filling": mt5.ORDER_FILLING_IOC,
     }
 
+    # Calculate SL/TP using ATR if provided
+    if atr is not None:
+        sl_price, tp_price = _calculate_sl_tp(symbol, order_type, entry_price, atr)
+        request["sl"] = round(sl_price, 5)
+        request["tp"] = round(tp_price, 5)
+
     result = mt5.order_send(request)
     if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
         return None
     return result.order
 
 
-def _calculate_lot(symbol: str, risk_pct: float = 0.008) -> float:
+def _calculate_lot(symbol: str, risk_pct: float = 0.005,
+                   sl_distance: Optional[float] = None) -> float:
     """
     Calculate position size based on risk % of account balance.
-    Default 0.8% risk per trade.
+    Default 0.5% risk per trade.
+
+    If sl_distance is provided, uses the precise formula:
+        lot = (balance * risk_pct) / (sl_distance_in_ticks * trade_tick_value)
+    Falls back to rough estimate if sl_distance is None.
     """
     account = mt5.account_info()
     if account is None:
@@ -282,8 +340,20 @@ def _calculate_lot(symbol: str, risk_pct: float = 0.008) -> float:
     if info is None:
         return max(0.01, round(risk_amount / 1000, 2))
 
-    # Simple lot sizing: $50 risk ≈ 0.01 lot for forex majors
-    lot = risk_amount / 5000  # rough: $5000 risk = 1 standard lot
+    if sl_distance is not None and sl_distance > 0 and info.trade_tick_size and info.trade_tick_value:
+        # Precise lot sizing using SL distance (in price units)
+        tick_size = info.trade_tick_size
+        tick_value = info.trade_tick_value
+        ticks_in_sl = sl_distance / tick_size
+        loss_per_lot = ticks_in_sl * tick_value
+        if loss_per_lot > 0:
+            lot = risk_amount / loss_per_lot
+        else:
+            lot = risk_amount / 5000
+    else:
+        # Fallback: rough estimate using standard pip value
+        lot = risk_amount / 5000  # rough: $5000 risk = 1 standard lot
+
     lot = max(info.volume_min, min(lot, info.volume_max))
     lot = round(lot / info.volume_step) * info.volume_step
     return max(0.01, lot)
@@ -315,7 +385,7 @@ def main():
     parser.add_argument("--strategy", type=str, required=True,
                         choices=list(STRATEGIES.keys()) + ["all"],
                         help="Trading strategy")
-    parser.add_argument("--risk", type=float, default=0.008, help="Risk per trade (decimal, default 0.008 = 0.8%%)")
+    parser.add_argument("--risk", type=float, default=0.005, help="Risk per trade (decimal, default 0.005 = 0.5%%)")
     parser.add_argument("--interval", type=int, default=60, help="Check interval in seconds (default 60)")
     args = parser.parse_args()
 
@@ -414,11 +484,18 @@ def main():
                 continue  # No signal this tick
 
             # ── Execute Trade ──────────────────────────────────────
-            lot = _calculate_lot(symbol, risk_pct)
+            atr = _calculate_atr(symbol)
             order_type = mt5.ORDER_TYPE_BUY if signal == "buy" else mt5.ORDER_TYPE_SELL
             order_type_str = "BUY" if signal == "buy" else "SELL"
 
-            ticket = _open_trade(symbol, order_type, lot, strategy_magic, bot_name)
+            # Calculate SL distance for precise lot sizing
+            entry_price = ask if signal == "buy" else bid
+            sl_price, tp_price = _calculate_sl_tp(symbol, order_type, entry_price, atr)
+            sl_distance = abs(entry_price - sl_price)
+
+            lot = _calculate_lot(symbol, risk_pct, sl_distance)
+
+            ticket = _open_trade(symbol, order_type, lot, strategy_magic, bot_name, atr=atr)
             if ticket is not None:
                 daily_trades_today += 1
                 open_price = ask if signal == "buy" else bid

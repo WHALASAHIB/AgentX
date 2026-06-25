@@ -8,5 +8,15 @@
     "detail": "testing",
     "outcome": "pending",
     "metadata": {}
+  },
+  {
+    "id": "dec_1782358101913_2e97",
+    "timestamp": "2026-06-25T03:28:21.913042+00:00",
+    "agent_id": "test_bot",
+    "agent_name": "Test Bot",
+    "action": "Test Start",
+    "detail": "Manual verification",
+    "outcome": "success",
+    "metadata": {}
   }
 ]

@@ -1,0 +1,61 @@
+//@version=5
+strategy(title="EMA(5,13) Cross ADX(15) RSI(30) XAUUSD 30m", overlay=true, initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         commission_type=strategy.commission.percent, commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+fastLen = input.int(5, "Fast EMA Length", minval=1, maxval=50)     // sweep: 3-13 step 2
+slowLen = input.int(13, "Slow EMA Length", minval=1, maxval=50)    // sweep: 8-26 step 2
+
+// ADX filter
+adxLen   = input.int(14, "ADX Length", minval=5, maxval=30)        // sweep: 10-25 step 5
+adxThresh = input.int(15, "ADX Threshold", minval=5, maxval=50)    // sweep: 15-30 step 5
+
+// RSI filter
+rsiLen   = input.int(14, "RSI Length", minval=5, maxval=30)        // sweep: 7-21 step 7
+rsiMin   = input.int(30, "RSI Minimum (Long Only)", minval=10, maxval=60) // sweep: 20-50 step 10
+
+// TP/SL
+tpSlRatio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+slPct     = input.float(0.5, "Stop Loss %", minval=0.1, maxval=3.0, step=0.1) // sweep: 0.3-1.5 step 0.2
+
+//--- indicator calculations
+fastEma = ta.ema(close, fastLen)
+slowEma = ta.ema(close, slowLen)
+
+// Manual ADX calculation (platform compatibility)
+adx_up = ta.change(high)
+adx_down = -ta.change(low)
+adx_tr = ta.tr(true)
+adx_plusDM = adx_up > adx_down and adx_up > 0 ? adx_up : 0
+adx_minusDM = adx_down > adx_up and adx_down > 0 ? adx_down : 0
+adx_plusDI = 100 * ta.rma(adx_plusDM, adxLen) / ta.rma(adx_tr, adxLen)
+adx_minusDI = 100 * ta.rma(adx_minusDM, adxLen) / ta.rma(adx_tr, adxLen)
+adxVal = 100 * ta.rma(math.abs(adx_plusDI - adx_minusDI) / (adx_plusDI + adx_minusDI), adxLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry conditions
+// Long: EMA fast crosses above slow, ADX > threshold, RSI > minimum
+longCross = ta.crossover(fastEma, slowEma)
+longCondition = longCross and adxVal > adxThresh and rsiVal > rsiMin
+
+//--- entry logic
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// SL = slPct% below entry, TP = slPct * tpSlRatio% above entry
+slTicks = int(slPct / 100.0 * close / syminfo.mintick)
+tpTicks = int(slTicks * tpSlRatio)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+//--- plot indicators
+plot(fastEma, "Fast EMA", color=color.blue, linewidth=1)
+plot(slowEma, "Slow EMA", color=color.red, linewidth=1)
+hline(adxThresh, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)

@@ -1,0 +1,86 @@
+//@version=5
+strategy(title="iter_110_EMA_cross_RSI35_ADX15_TP1_1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFast = input.int(5, title="EMA Fast Period", minval=1, maxval=50)        // sweep: 3-10 step 1
+emaSlow = input.int(13, title="EMA Slow Period", minval=1, maxval=50)       // sweep: 10-26 step 1
+
+// ADX (manual calculation)
+adxPeriod = input.int(14, title="ADX Period", minval=1, maxval=50)          // sweep: 7-21 step 2
+adxThreshold = input.int(15, title="ADX Threshold", minval=1, maxval=50)    // sweep: 10-25 step 2
+
+// RSI
+rsiPeriod = input.int(14, title="RSI Period", minval=1, maxval=30)          // sweep: 7-21 step 2
+rsiMinLong = input.int(35, title="RSI Minimum (Long)", minval=1, maxval=99) // sweep: 30-50 step 5
+
+// TP/SL ratio — tightened from 1.5:1 to 1:1.5 (TP smaller than SL)
+// TP:SL = 1:1.5 means tpSlRatio = 1/1.5 = 0.67
+tpSlRatio = input.float(0.67, title="TP/SL Ratio (TP:SL)", step=0.05)       // sweep: 0.5-2.0 step 0.25
+slPercent = input.float(0.5, title="Stop Loss % of Entry", step=0.1)        // sweep: 0.3-1.5 step 0.2
+
+//--- calculations
+ema_fast = ta.ema(close, emaFast)
+ema_slow = ta.ema(close, emaSlow)
+
+//--- Manual ADX calculation (since ta.adx is not supported on this platform)
+// True Range
+trVal = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+atr = ta.rma(trVal, adxPeriod)
+
+// Directional Movement
+upMove = high - high[1]
+downMove = low[1] - low
+
+plusDM = 0.0
+minusDM = 0.0
+plusDM := upMove > downMove and upMove > 0 ? upMove : 0
+minusDM := downMove > upMove and downMove > 0 ? downMove : 0
+
+// Smoothed DMs
+smoothPlusDM = ta.rma(plusDM, adxPeriod)
+smoothMinusDM = ta.rma(minusDM, adxPeriod)
+
+// Directional Indicators
+plusDI = 100 * smoothPlusDM / atr
+minusDI = 100 * smoothMinusDM / atr
+
+// DX and ADX
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = ta.rma(dx, adxPeriod)
+
+//--- RSI
+rsiVal = ta.rsi(close, rsiPeriod)
+
+//--- Crossover detection
+emaCrossOver = ta.crossover(ema_fast, ema_slow)
+
+//--- entry logic (LONG ONLY)
+longCondition = emaCrossOver and adxVal > adxThreshold and rsiVal > rsiMinLong
+
+//--- exit management
+var float entryPrice = na
+var float slPrice = na
+var float tpPrice = na
+
+if longCondition
+    strategy.entry("LONG", strategy.long)
+    entryPrice := close
+    slPrice := entryPrice * (1 - slPercent / 100)
+    // TP:SL = 1:1.5 means TP distance = (1/1.5) * SL distance
+    tpPrice := entryPrice * (1 + slPercent / 100 * tpSlRatio)
+
+if strategy.position_size > 0 and not na(entryPrice) and not na(slPrice) and not na(tpPrice)
+    strategy.exit("LONG_EXIT", "LONG", loss=int((entryPrice - slPrice) / syminfo.mintick), profit=int((tpPrice - entryPrice) / syminfo.mintick))
+
+// Reset tracking when flat
+if strategy.position_size == 0
+    entryPrice := na
+    slPrice := na
+    tpPrice := na
+
+//--- visual signals
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=1)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=1)
+
+plotshape(longCondition, title="Long Entry", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small)

@@ -1,6 +1,6 @@
 {
-  "iteration": 107,
-  "last_run": "2026-06-25T10:38:00",
+  "iteration": 111,
+  "last_run": "2026-06-25T11:50:00",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,115 +13,28 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Raise RSI minimum from 30 to 50 on EMA(5)/EMA(13) crossover + ADX(14)>20 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m. Iter 106 (RSI>30, ADX>20) produced 18 trades (up from 1 with ADX>25), but PF was only 1.03 and net profit negative after costs — too many weak entries passed through. RSI(14)>50 should filter out marginal signals in choppy conditions while ADX(20) remains loose enough to allow EMA crossovers. Target: ~8-15 higher-quality trades with PF > 1.5.",
+  "current_hypothesis": "Tighter entry filter: raise RSI minimum from 35 to 50 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1:1.5 (no session filter) LONG ONLY XAUUSD 30m. Iter 110 tightened TP/SL from 1.5:1 to 1:1.5, which improved WR from 38% to 50% (13W/13L) but PF stayed at 0.84 (avg win $64 < avg loss $76). The 1:1.5 ratio helped WR but the smaller TP means winning trades cap out before losers. Next logical step: filter out weaker entries by raising RSI minimum to 50, so only strong momentum long signals enter. Risk: may reduce trade count below 20.",
   "evolution_log": [
     {
-      "iteration": 95,
-      "hypothesis": "RSI(28) filter on MACD(8,17,7) LONG-only XAUUSD 30m — finding the RSI sweet spot between 30 (16 trades, PF 2.22) and 25 (66 trades, PF 0.84). RSI(28) should produce ~30-35 trades and hopefully maintain PF > 1.5.",
-      "metrics": {"pf": 0.87748203, "sharpe": -2.21450706, "wr": 33.33333333, "dd": 8.93204047, "trades": 36, "net_profit": -506.03095645298},
-      "verdict": "rejected (PF=0.88<1.3, Sharpe=-2.21<0.5) — RSI(28) produced enough trades but PF collapsed vs RSI(30)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-24T21:55:00"
+      "iteration": 108,
+      "hypothesis": "Raise RSI minimum from 30 to 40 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m.",
+      "metrics": {"pf": 0.0, "sharpe": 0.0, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0.0},
+      "verdict": "invalid (no trades) — RSI(40)+ADX(15) double filter was too restrictive, 0 entries in 1656 bars.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:23:00"
     },
     {
-      "iteration": 96,
-      "hypothesis": "Shorter MACD(5,13,5) with RSI(30) filter on XAUUSD 30m. MACD(8,17,7)+RSI(30) produced PF 2.22 but only 16 trades. Shorter EMAs (5/13/5) cross more frequently, should generate ~30-35 trades while maintaining signal quality under the RSI(30) filter that previously worked.",
-      "metrics": {"pf": 1.00889914, "sharpe": -2.48609851, "wr": 34.72222222, "dd": 9.35977336, "trades": 72, "net_profit": -547.905198105013},
-      "verdict": "rejected (PF=1.01<1.3, Sharpe=-2.49<0.5) — shorter MACD crossed too often in chop, 47 losing trades dragged PF near 1.0",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-24T22:00:00"
+      "iteration": 109,
+      "hypothesis": "Lower RSI minimum from 40 to 35 on EMA(5,13) crossover + ADX(14)>15 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m.",
+      "metrics": {"pf": 0.73065357, "sharpe": -3.0383128, "wr": 38.46153846, "dd": 10.52626987, "trades": 26, "net_profit": -607.073861860978},
+      "verdict": "rejected (PF=0.73<1.3, Sharpe=-3.04<0.5) — RSI(35) produced 26 trades but PF collapsed. 10 wins / 16 losses, net -$607.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:37:00"
     },
     {
-      "iteration": 97,
-      "hypothesis": "Add ADX(14) filter (ADX > 25) to MACD(5,13,5) RSI(30) strategy on XAUUSD 30m. Since iter 96 had 72 trades but a Sharpe of -2.49 and PF of 1.01, the strategy was losing money in non-trending chop. ADX>25 ensures we only enter in trending conditions. Previous MACD+ADX combos (iter 87) used ADX but with different MACD params — revisiting with shorter MACD(5,13,5) should preserve trade count while filtering noise.",
-      "metrics": {"pf": 1.40774251, "sharpe": 1.29047423, "wr": 39.65517241, "dd": 4.05043154, "trades": 58, "net_profit": 219.732707578858},
-      "verdict": "accepted (incremental) — ADX>25 filter fixed chop problem: PF up from 1.01 to 1.41, Sharpe from -2.49 to 1.29. 58 trades with cascade ratio 1.0. Still PF<1.5 target and WR<40%.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-24T22:08:00"
-    },
-    {
-      "iteration": 98,
-      "hypothesis": "Increase RSI minimum from 30 to 50 on MACD(5,13,5) ADX(14)>25 strategy. Iter 97 had PF 1.41 with 58 trades but WR 39.66% — RSI(30) was too loose. Stricter RSI>50 for long-only should improve PF/WR by filtering marginal entries. ADX>25 already removes chop; RSI>50 adds momentum confirmation for higher-quality signals.",
-      "metrics": {"pf": 1.05402275, "sharpe": -1.90576335, "wr": 31.48148148, "dd": 7.93794283, "trades": 54, "net_profit": -332.915012417769},
-      "verdict": "rejected (PF=1.05<1.3, Sharpe=-1.91<0.5) — RSI>50 was too strict: filtered out too many good entries, reduced WR from 39.66% to 31.48%, flipped Sharpe from +1.29 to -1.91",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-24T22:15:00"
-    },
-    {
-      "iteration": 99,
-      "hypothesis": "Tighten TP/SL ratio from 2:1 to 1:1.5 on MACD(5,13,5) ADX(14)>25 RSI(50) strategy. Iter 98 (RSI>50, TP 2:1) produced PF 1.05, WR 31.48% — RSI>50 was too strict and degraded signal quality. With avg win/avg loss ratio at 2.29 but only 17 wins out of 54 trades, the 2:1 TP target is too ambitious for weaker signals. Tightening to 1:1.5 should capture profits faster and improve WR.",
-      "metrics": {"pf": 0.0, "sharpe": -0.0375, "wr": 0.0, "dd": 8.37, "trades": 1, "net_profit": -49.82},
-      "verdict": "invalid (low sample, 1 trade) — RSI>50 + manual ADX(14)>25 over-filtered, only 1 trade in 1680 bars. Manual ADX implementation using ta.rma may produce different values than native ta.adx, compounding restrictiveness.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-24T22:30:00"
-    },
-    {
-      "iteration": 100,
-      "hypothesis": "Drop RSI filter entirely, keep ADX(14)>25 and TP/SL 1:1.5 on MACD(5,13,5) XAUUSD 30m. Iter 99 (RSI>50 + ADX>25 + TP=1.5) produced only 1 trade — RSI>50 is too restrictive with manual ADX. Previous best template from iter 97 had RSI(30) and ADX(14)>25 with 58 trades. Removing RSI entirely while keeping ADX>25 as the primary trend filter should increase trade count to ~50-60 while TP/SL 1:1.5 improves WR from 39.66%.",
-      "metrics": {"pf": 0.95617427, "sharpe": -2.42153182, "wr": 36.69724771, "dd": 7.63970294, "trades": 109, "net_profit": -507.892763331227},
-      "verdict": "rejected (PF=0.96<1.3, Sharpe=-2.42<0.5) — dropping RSI gave 109 trades (great sample) but PF collapsed below 1.0, losing -$508. No filter beyond ADX>25 lets too many chop entries through.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-24T22:35:00"
-    },
-    {
-      "iteration": 101,
-      "hypothesis": "Add RSI(14) filter (long only if RSI(14)>50, short only if RSI(14)<50) to MACD(5,13,5)+ADX(14)>25+TP/SL 1:1.5 on XAUUSD 30m. Iter 100 (no RSI) produced 109 trades but PF 0.96 — too many losing trades let through. Previous RSI(30)>50 (iter 99) was too restrictive (1 trade) because RSI(30) is less responsive. Shorter RSI(14) period should be more dynamic, filtering marginal entries while allowing enough trades (~40-60) to maintain statistical significance. TP/SL remains 1:1.5.",
-      "metrics": {"pf": 0.73189447, "sharpe": -2.57895794, "wr": 40.0, "dd": 7.54224785, "trades": 30, "net_profit": -481.70407282706},
-      "verdict": "rejected (PF=0.73<1.3, Sharpe=-2.58<0.5) — RSI(14) made PF worse than iter 100's 0.96. Longs (3/12 WR, -$820) dragged down profitable shorts (9/18 WR, +$338). RSI(14) on 30m is too noisy for MACD-based signals.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-25T09:10:00"
-    },
-    {
-      "iteration": 102,
-      "hypothesis": "Switch entry signal from MACD(5,13,5) to EMA(5)/EMA(13) crossover (long only) on XAUUSD 30m. Keep ADX(14)>25, RSI(14)>50 filter, and TP/SL 1:1.5. The best strategy (iter 44, PF 3.61) used EMA crossover with RSI+ADX on 30m. MACD has consistently underperformed EMA on this timeframe across 7+ iterations (PF range 0.73-0.96). Reverting to the proven EMA crossover template should restore PF toward the 1.4-3.6 range seen in earlier EMA-based iterations.",
-      "metrics": {"pf": 3.50890982, "sharpe": 1.18693891, "wr": 66.66666667, "dd": 7.04943196, "trades": 3, "net_profit": 214.030560537729},
-      "verdict": "invalid (low sample, 3 trades) — EMA crossover works but RSI(14)>50 + ADX(14)>25 + session filter (8-16 UTC) is too restrictive. Excellent quality signals (PF 3.51, WR 66.67%) but only 3 trades in 1659 bars makes the result statistically weak.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-25T09:32:00"
-    },
-    {
-      "iteration": 103,
-      "hypothesis": "Lower RSI minimum from 50 to 40 on EMA(5)/EMA(13) crossover + ADX(14)>25 + long-only session filter on XAUUSD 30m. Iter 102 produced excellent metrics (PF 3.51, WR 66.67%, DD 7.05%, Sharpe 1.19) but only 3 trades — RSI(14)>50 filter is too restrictive with the manual ADX(14)>25 and session 8-16 UTC. RSI(14)>40 will allow more crossovers through while maintaining a bullish bias. Target: ~20-30 trades with PF > 1.5.",
-      "metrics": {"pf": 4.45617339, "sharpe": 4.09033331, "wr": 62.5, "dd": 0.89608642, "trades": 8, "net_profit": 206.686726306496},
-      "verdict": "invalid (low sample, 8 trades) — RSI(40) doubled trade count from 3 to 8 with exceptional quality (PF 4.46, Sharpe 4.09) but still below the 20-trade threshold. EMA(5,13) + ADX(14)>25 + session 8-16 UTC + RSI(14)>40 is too restrictive for statistical significance.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-25T10:00:00"
-    },
-    {
-      "iteration": 104,
-      "hypothesis": "Lower RSI minimum from 40 to 30 on EMA(5)/EMA(13) crossover + ADX(14)>25 + long-only session filter on XAUUSD 30m. Iter 103 (RSI>40) produced excellent quality metrics (PF 4.46, Sharpe 4.09, WR 62.5%, DD 0.9%) but only 8 trades — still not enough for statistical significance. Lowering RSI to 30 should allow more crossovers through while preserving the bullish bias. RSI(14)>30 was the sweet spot in the MACD era (iter 97, 58 trades PF 1.41). Target: 20-30 trades with PF > 1.5.",
-      "metrics": {"pf": 1.39125733, "sharpe": -0.01506669, "wr": 62.5, "dd": 1.48284937, "trades": 8, "net_profit": -2.033344659481},
-      "verdict": "invalid (low sample, 8 trades) — RSI(30) produced identical 8 trades to iter 103 (RSI>40). The session filter (8-16 UTC) is the binding constraint, not the RSI threshold. Same trade count with slightly degraded PF (1.39 from 4.46) suggests RSI>30 vs >40 matters little when session filter restricts entries to only 8 hours/day.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-25T10:15:00"
-    },
-    {
-      "iteration": 105,
-      "hypothesis": "Remove session filter 8-16 UTC on EMA(5)/EMA(13) crossover + ADX(14)>25 + RSI(14)>30 + TP/SL 1.5:1 on XAUUSD 30m. Iter 104 (RSI>30, session 8-16 UTC) produced identical 8 trades to iter 103 (RSI>40) — the session filter is the binding constraint, not the RSI threshold. Removing session filter entirely should allow entries across all trading hours, targeting 30-50 trades while maintaining signal quality (PF 1.39, WR 62.5% on the 8 trades that did fire).",
-      "metrics": {"pf": 0.0, "sharpe": 0.04930585, "wr": 0.0, "dd": 8.36525342, "trades": 1, "net_profit": -25.569683710602},
-      "verdict": "invalid (low sample, 1 trade) — Removing session filter didn't help: ADX(14)>25 was the binding constraint, not the session window. Only 1 trade in 1658 bars. The EMA(5,13) crossover + ADX>25 + RSI>30 triple filter is still too restrictive regardless of session.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-25T10:22:00"
-    },
-    {
-      "iteration": 106,
-      "hypothesis": "Lower ADX threshold from 25 to 20 on EMA(5)/EMA(13) crossover + RSI(14)>30 + TP/SL 1.5:1 (no session filter) on XAUUSD 30m. Iter 105 removed session filter 8-16 UTC but still only produced 1 trade — ADX(14)>25 was the binding constraint, not the session filter. Lowering ADX to 20 should allow more crossover signals while still filtering heavy chop. Target: ~20-30 trades with PF > 1.2.",
-      "metrics": {"pf": 1.03235154, "sharpe": -0.57681113, "wr": 33.33333333, "dd": 7.55796691, "trades": 18, "net_profit": -156.540424588302},
-      "verdict": "invalid (low sample, 18 trades) — ADX(20) increased trade count from 1 to 18 (good direction) but PF of 1.03 is barely above breakeven, Sharpe is negative, and trade count is still below 20. The strategy lost -$156.54 after costs and slippage. Multiple weak entries passed through the loose ADX(20)+RSI(30) filter.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-25T10:38:00"
+      "iteration": 110,
+      "hypothesis": "Tighten TP/SL from 1.5:1 to 1:1.5 on EMA(5,13) crossover + ADX(14)>15 + RSI(14)>35 LONG ONLY XAUUSD 30m. Iter 109 had 26 trades but PF 0.73, WR 38.46% — the 1.5:1 TP/SL ratio was too ambitious for this EMA crossover strategy. Tightening to 1:1.5 (TP smaller than SL) should allow more trades to close as winners, improving WR toward 50%+.",
+      "metrics": {"pf": 0.84445026, "sharpe": -1.86509076, "wr": 50.0, "dd": 7.71881205, "trades": 26, "net_profit": -360.264548524247},
+      "verdict": "rejected (PF=0.84<1.3, Sharpe=-1.87<0.5) — TP/SL 1:1.5 improved WR from 38% to 50% (13W/13L, good) but avg win $64 < avg loss $76, so net is still negative -$360. The MR turned off with higher WR but PF stays below 1.0.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T11:50:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

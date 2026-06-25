@@ -1,0 +1,106 @@
+{
+  "doc_name": "sample_financial_doc",
+  "line_count": 86,
+  "structure": [
+    {
+      "title": "Q4 2025 Earnings Report — Nvidia Corporation (NVDA)",
+      "node_id": "0001",
+      "line_num": 1,
+      "nodes": [
+        {
+          "title": "Executive Summary",
+          "node_id": "0002",
+          "line_num": 3
+        },
+        {
+          "title": "Revenue Breakdown",
+          "node_id": "0003",
+          "line_num": 7,
+          "nodes": [
+            {
+              "title": "Data Center",
+              "node_id": "0004",
+              "line_num": 9
+            },
+            {
+              "title": "Gaming",
+              "node_id": "0005",
+              "line_num": 14
+            },
+            {
+              "title": "Professional Visualization",
+              "node_id": "0006",
+              "line_num": 19
+            },
+            {
+              "title": "Automotive",
+              "node_id": "0007",
+              "line_num": 23
+            }
+          ]
+        },
+        {
+          "title": "Margin Analysis",
+          "node_id": "0008",
+          "line_num": 27,
+          "nodes": [
+            {
+              "title": "Gross Margin",
+              "node_id": "0009",
+              "line_num": 29
+            },
+            {
+              "title": "Operating Margin",
+              "node_id": "0010",
+              "line_num": 34
+            }
+          ]
+        },
+        {
+          "title": "Balance Sheet Highlights",
+          "node_id": "0011",
+          "line_num": 40
+        },
+        {
+          "title": "Forward Guidance",
+          "node_id": "0012",
+          "line_num": 47,
+          "nodes": [
+            {
+              "title": "Q1 2026 Outlook",
+              "node_id": "0013",
+              "line_num": 49
+            },
+            {
+              "title": "Key Strategic Initiatives",
+              "node_id": "0014",
+              "line_num": 55
+            }
+          ]
+        },
+        {
+          "title": "Risk Factors",
+          "node_id": "0015",
+          "line_num": 62
+        },
+        {
+          "title": "Appendix",
+          "node_id": "0016",
+          "line_num": 70,
+          "nodes": [
+            {
+              "title": "Key Metrics Comparison",
+              "node_id": "0017",
+              "line_num": 72
+            },
+            {
+              "title": "Recent Analyst Ratings",
+              "node_id": "0018",
+              "line_num": 82
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
