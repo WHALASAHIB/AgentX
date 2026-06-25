@@ -1,0 +1,66 @@
+//@version=5
+strategy(title="BB Squeeze + SMA50 Trend + RSI50 + ADX14 Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands parameters
+bb_length = input.int(20, "BB Length", minval=5, maxval=50, group="Bollinger Bands")
+bb_mult   = input.float(2.0, "BB StdDev Mult", minval=1.0, maxval=4.0, step=0.1, group="Bollinger Bands")
+
+// SMA parameters
+sma_fast_len = input.int(5, "SMA Fast (Momentum)", minval=2, maxval=20, group="SMAs")
+sma_trend_len = input.int(50, "SMA Trend", minval=20, maxval=200, group="SMAs")
+
+// RSI parameters
+rsi_len   = input.int(14, "RSI Length", minval=7, maxval=28, group="RSI")
+rsi_threshold = input.int(50, "RSI Threshold (min for long)", minval=40, maxval=70, group="RSI")
+
+// ADX parameters
+adx_len  = input.int(14, "ADX Length", minval=7, maxval=28, group="ADX")
+adx_threshold = input.int(14, "ADX Threshold (min)", minval=10, maxval=40, group="ADX") // sweep: 10-40 step 2
+
+// ATR for SL
+atr_len      = input.int(14, "ATR Length", minval=7, maxval=28, group="Risk Management")
+sl_atr_mult  = input.float(1.0, "SL = ATR × multiplier", minval=0.5, maxval=3.0, step=0.25, group="Risk Management")
+tp_sl_ratio  = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=3.0, step=0.25, group="Risk Management") // sweep: 0.5-2.5 step 0.25
+
+// BB squeeze multiplier
+squeeze_mult = input.float(0.80, "BB Squeeze Threshold (× avg width)", minval=0.50, maxval=1.00, step=0.05, group="Entry Filters")
+
+//--- calculations
+bb       = ta.bb(close, bb_length, bb_mult)
+bb_upper = bb.upper
+bb_mid   = bb.mid
+bb_lower = bb.lower
+bb_width = (bb_upper - bb_lower) / bb_mid
+
+avg_bb_width = ta.sma(bb_width, bb_length)
+is_squeeze   = bb_width < avg_bb_width * squeeze_mult
+
+sma_fast  = ta.sma(close, sma_fast_len)
+sma_trend = ta.sma(close, sma_trend_len)
+
+rsi_val = ta.rsi(close, rsi_len)
+
+[di_plus, di_minus, adx_val] = ta.dmi(high, low, close, adx_len)
+
+atr_val = ta.atr(atr_len)
+
+//--- entry conditions (LONG ONLY)
+trend_ok     = close > sma_trend           // price above 50-bar SMA (uptrend)
+momentum_ok  = close > sma_fast             // close > fast SMA for momentum
+rsi_ok       = rsi_val > rsi_threshold       // RSI > threshold (bullish bias)
+adx_ok       = adx_val > adx_threshold       // ADX > threshold (trending) — lowered to 14 for more entries
+no_position  = strategy.position_size == 0
+
+long_condition = is_squeeze and trend_ok and momentum_ok and rsi_ok and adx_ok and no_position
+
+//--- exit management
+sl_distance = atr_val * sl_atr_mult
+tp_distance = sl_distance * tp_sl_ratio
+
+sl_price = strategy.position_avg_price - sl_distance
+tp_price = strategy.position_avg_price + tp_distance
+
+if long_condition
+    strategy.entry("BB_LONG", strategy.long)
+    strategy.exit("BB_LONG_EXIT", "BB_LONG", loss=int(sl_distance / syminfo.mintick), profit=int(tp_distance / syminfo.mintick))
