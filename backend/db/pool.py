@@ -293,6 +293,16 @@ class PostgresPool:
 
     # ── Agent Logs ────────────────────────────────────────────────────────────
 
+    def get_agent_logs(self, limit: int = 50) -> list[dict]:
+        """Return the most recent agent log entries."""
+        if self._pool:
+            return self.fetch_all(
+                "SELECT * FROM agent_logs ORDER BY created_at DESC LIMIT %s",
+                (limit,),
+            )
+        logs = list(self._mock_store.get("agent_logs", []))
+        return sorted(logs, key=lambda x: x.get("created_at", ""), reverse=True)[:limit]
+
     def save_agent_log(self, agent_name: str, task: str, decision: str, outcome: str, metadata: dict = None):
         if self._pool:
             self.execute(

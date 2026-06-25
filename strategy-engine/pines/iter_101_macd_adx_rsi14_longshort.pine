@@ -1,0 +1,71 @@
+//@version=5
+strategy(title="MACD(5,13,5) ADX(14)>25 RSI(14) Filter XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(5, "MACD Fast Length", minval=2, maxval=30, step=1)    // sweep: 3-10 step 1
+slow_len = input.int(13, "MACD Slow Length", minval=5, maxval=50, step=1)   // sweep: 10-20 step 2
+sig_len  = input.int(5, "MACD Signal Length", minval=2, maxval=20, step=1)  // sweep: 3-9 step 1
+
+// ADX filter
+adx_len  = input.int(14, "ADX Length", minval=5, maxval=30, step=1)         // sweep: 10-20 step 2
+adx_threshold = input.int(25, "ADX Threshold", minval=15, maxval=40, step=5) // sweep: 20-30 step 2
+
+// RSI filter (NEW — added to filter marginal entries in trending market)
+rsi_len  = input.int(14, "RSI Length", minval=5, maxval=25, step=1)         // sweep: 7-21 step 2
+rsi_long_min = input.int(50, "RSI Minimum (Long)", minval=30, maxval=70, step=2) // sweep: 40-60 step 5
+rsi_short_max = input.int(50, "RSI Maximum (Short)", minval=30, maxval=70, step=2) // sweep: 40-60 step 5
+
+// TP/SL ratio (1:1.5 means TP=1.5x SL distance)
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-2.5 step 0.5
+
+//--- manual ADX calculation (ta.rma-based, matching Pine's internal ta.adx)
+m_period = adx_len
+hi_val = high
+lo_val = low
+cl_val = close
+
+// True Range
+tr_val = math.max(hi_val - lo_val, math.abs(hi_val - cl_val[1]), math.abs(lo_val - cl_val[1]))
+atr_val = ta.rma(tr_val, m_period)
+
+// +DM and -DM
+up_move = hi_val - hi_val[1]
+down_move = lo_val[1] - lo_val
+plus_dm = (up_move > down_move and up_move > 0) ? up_move : 0.0
+minus_dm = (down_move > up_move and down_move > 0) ? down_move : 0.0
+
+// Smoothed DM (RMA = Wilder's smoothing)
+plus_di = 100.0 * ta.rma(plus_dm, m_period) / atr_val
+minus_di = 100.0 * ta.rma(minus_dm, m_period) / atr_val
+
+// DX and ADX
+dx_val = 100.0 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx_val, m_period)
+
+//--- MACD
+[macd_line, signal_line, macd_hist] = ta.macd(close, fast_len, slow_len, sig_len)
+
+//--- RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+// LONG: MACD crosses above signal AND ADX > threshold AND RSI > 50 (momentum direction)
+long_condition = ta.crossover(macd_line, signal_line) and adx_val > adx_threshold and rsi_val > rsi_long_min
+
+// SHORT: MACD crosses below signal AND ADX > threshold AND RSI < 50 (momentum direction)
+short_condition = ta.crossunder(macd_line, signal_line) and adx_val > adx_threshold and rsi_val < rsi_short_max
+
+//--- exit management
+// SL and TP based on ATR at entry
+entry_atr = ta.atr(14)
+sl_dist = entry_atr / syminfo.mintick
+tp_dist = sl_dist * tp_sl_ratio
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=math.round(sl_dist), profit=math.round(tp_dist))
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=math.round(sl_dist), profit=math.round(tp_dist))

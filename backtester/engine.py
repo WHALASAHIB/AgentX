@@ -337,6 +337,16 @@ def _compute_metrics(
 
     avg_trade = net_profit / total_trades if total_trades > 0 else 0.0
 
+    # Expectancy = avg_win * win_rate - avg_loss * loss_rate
+    expectancy = 0.0
+    if total_trades > 0:
+        wins = [p for p in pnl_list if p > 0]
+        losses = [p for p in pnl_list if p < 0]
+        avg_win = sum(wins) / len(wins) if wins else 0.0
+        avg_loss = abs(sum(losses) / len(losses)) if losses else 0.0
+        loss_rate = len(losses) / total_trades if losses else 0.0
+        expectancy = avg_win * win_rate - avg_loss * loss_rate
+
     return {
         "total_return": round(total_return, 4),
         "net_profit": round(net_profit, 2),
@@ -346,6 +356,7 @@ def _compute_metrics(
         "sharpe": round(sharpe, 4),
         "max_dd": round(max_dd, 4),
         "avg_trade": round(avg_trade, 2),
+        "expectancy": round(expectancy, 4),
     }
 
 
@@ -439,8 +450,12 @@ def _empty_result(initial_capital: float, reason: str = "") -> dict:
             "sharpe": 0.0,
             "max_dd": 0.0,
             "avg_trade": 0.0,
+            "expectancy": 0.0,
         },
-        "equity_curve": [],
+        "equity_curve": [
+            {"time": "start", "equity": initial_capital},
+            {"time": "end", "equity": initial_capital},
+        ],
         "trades": [],
         "ftmo": None,
         "ftmo_phase2": None,

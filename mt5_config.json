@@ -3,8 +3,27 @@
     "password": "X$W5359Ni5qL",
     "server": "FTMO-Demo",
     "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
-    "symbols": [
-        "XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF",
-        "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"
+    "symbols": ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"],
+    "accounts": [
+        {
+            "id": "ftmo-demo",
+            "name": "FTMO-Demo",
+            "login": 1513767391,
+            "password": "X$W5359Ni5qL",
+            "server": "FTMO-Demo",
+            "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "symbols": ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"],
+            "enabled": true
+        },
+        {
+            "id": "mt5-demo",
+            "name": "MT5-Demo",
+            "login": 5051185832,
+            "password": "YyEd*j7w",
+            "server": "FTMO-Demo",
+            "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "symbols": ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"],
+            "enabled": true
+        }
     ]
 }
