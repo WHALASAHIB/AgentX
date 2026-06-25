@@ -1,0 +1,77 @@
+//@version=5
+// Strategy: EMA(5,13) Crossover + RSI(14)>50 + Manual ADX(14)>14 LONG ONLY
+// Iteration 123 — Lower ADX from 18 to 14 (Wilder default) to increase trade count above 20
+// Uses manual ADX calculation (Wilder's SMMA method) matching iter 122 that got 16 trades with ADX>18
+strategy(title="EMA513_RSI50_ADX14_LongOnly", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(5, "EMA Fast", minval=2, maxval=50)       // sweep: 2-20 step 1
+emaSlow = input.int(13, "EMA Slow", minval=5, maxval=100)      // sweep: 8-30 step 2
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)      // sweep: 5-30 step 5
+rsiMin = input.int(50, "RSI Minimum (long)", minval=20, maxval=70) // sweep: 30-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length", minval=7, maxval=30)      // sweep: 7-30 step 3
+adxMin = input.float(14, "ADX Minimum", minval=10, maxval=40, step=1.0) // sweep: 10-35 step 5
+
+// TP/SL parameters
+tpRatio = input.float(1.5, "Take Profit (ATR mult)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.3
+slRatio = input.float(1.0, "Stop Loss (ATR mult)", minval=0.5, maxval=5.0, step=0.1)    // sweep: 0.5-3.0 step 0.3
+
+// ATR period
+atrLen = input.int(14, "ATR Period", minval=5, maxval=30)      // sweep: 5-30 step 5
+
+//--- calculations
+emaFastVal = ta.ema(close, emaFast)
+emaSlowVal = ta.ema(close, emaSlow)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- Manual ADX calculation (Wilder's SMMA method — same as iter 122)
+// True Range
+hiLow = high - low
+hiClose = math.abs(high - close[1])
+loClose = math.abs(low - close[1])
+tr = math.max(hiLow, hiClose, loClose)
+
+// Up move / Down move
+up = high - high[1]
+down = low[1] - low
+
+// +DM and -DM
+plusDM = up > down and up > 0 ? up : 0
+minusDM = down > up and down > 0 ? down : 0
+
+// Smoothed TR, +DM, -DM (Wilder's SMMA = EMA with alpha = 1/length)
+alpha = 1.0 / adxLen
+smoothedTR = 0.0
+smoothedPlusDM = 0.0
+smoothedMinusDM = 0.0
+smoothedTR := nz(smoothedTR[1]) == 0 ? ta.sma(tr, adxLen) : smoothedTR[1] + alpha * (tr - smoothedTR[1])
+smoothedPlusDM := nz(smoothedPlusDM[1]) == 0 ? ta.sma(plusDM, adxLen) : smoothedPlusDM[1] + alpha * (plusDM - smoothedPlusDM[1])
+smoothedMinusDM := nz(smoothedMinusDM[1]) == 0 ? ta.sma(minusDM, adxLen) : smoothedMinusDM[1] + alpha * (minusDM - smoothedMinusDM[1])
+
+// +DI and -DI
+plusDI = 100 * smoothedPlusDM / smoothedTR
+minusDI = 100 * smoothedMinusDM / smoothedTR
+
+// DX and ADX
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = 0.0
+adxVal := nz(adxVal[1]) == 0 ? ta.sma(dx, adxLen) : adxVal[1] + alpha * (dx - adxVal[1])
+
+//--- entry logic: EMA crossover + RSI > min + ADX > min (LONG ONLY)
+longCondition = ta.crossover(emaFastVal, emaSlowVal) and rsi > rsiMin and adxVal > adxMin
+
+//--- exit management
+if (longCondition)
+    stopLoss = math.round(slRatio * atr / syminfo.mintick)
+    takeProfit = math.round(tpRatio * atr / syminfo.mintick)
+    strategy.entry("Long", strategy.long, comment="Long")
+    strategy.exit("XL", "Long", loss=stopLoss, profit=takeProfit, comment="Exit")

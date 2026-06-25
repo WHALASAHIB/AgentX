@@ -178,5 +178,645 @@
     "detail": "0.3 AUDUSD @ 0.68997 ticket=481439428",
     "outcome": "success",
     "metadata": {}
+  },
+  {
+    "id": "dec_1782371059559_382d",
+    "timestamp": "2026-06-25T07:04:19.559719+00:00",
+    "agent_id": "Macd_GBPUSD",
+    "agent_name": "Macd_GBPUSD",
+    "action": "SELL OPEN",
+    "detail": "0.2 GBPUSD @ 1.31776 ticket=481503549",
+    "outcome": "success",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372745794_772c",
+    "timestamp": "2026-06-25T07:32:25.794437+00:00",
+    "agent_id": "Macd_NZDUSD",
+    "agent_name": "Macd_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.29 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372748224_7cc4",
+    "timestamp": "2026-06-25T07:32:28.224856+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372801826_6de4",
+    "timestamp": "2026-06-25T07:33:21.826944+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372807850_8a4c",
+    "timestamp": "2026-06-25T07:33:27.850136+00:00",
+    "agent_id": "Macd_NZDUSD",
+    "agent_name": "Macd_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372810288_e7f2",
+    "timestamp": "2026-06-25T07:33:30.288162+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372863875_e6cb",
+    "timestamp": "2026-06-25T07:34:23.875403+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372865817_887a",
+    "timestamp": "2026-06-25T07:34:25.817560+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372869908_c8e1",
+    "timestamp": "2026-06-25T07:34:29.908625+00:00",
+    "agent_id": "Macd_NZDUSD",
+    "agent_name": "Macd_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372927898_1c18",
+    "timestamp": "2026-06-25T07:35:27.898319+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372932338_f829",
+    "timestamp": "2026-06-25T07:35:32.338426+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372985968_7fa9",
+    "timestamp": "2026-06-25T07:36:25.968503+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372989977_df5f",
+    "timestamp": "2026-06-25T07:36:29.977898+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782372994404_7b12",
+    "timestamp": "2026-06-25T07:36:34.404672+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373048007_6840",
+    "timestamp": "2026-06-25T07:37:28.007446+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373052040_c853",
+    "timestamp": "2026-06-25T07:37:32.040896+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373056465_199e",
+    "timestamp": "2026-06-25T07:37:36.465288+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373114074_e240",
+    "timestamp": "2026-06-25T07:38:34.074882+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373118504_5b95",
+    "timestamp": "2026-06-25T07:38:38.504187+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373176154_2db5",
+    "timestamp": "2026-06-25T07:39:36.154559+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373180557_4277",
+    "timestamp": "2026-06-25T07:39:40.557032+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373230068_8a28",
+    "timestamp": "2026-06-25T07:40:30.068181+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373238210_e161",
+    "timestamp": "2026-06-25T07:40:38.210923+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373242606_7bcd",
+    "timestamp": "2026-06-25T07:40:42.606952+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373292106_4c33",
+    "timestamp": "2026-06-25T07:41:32.106387+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373304638_37a4",
+    "timestamp": "2026-06-25T07:41:44.638296+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373360287_ea30",
+    "timestamp": "2026-06-25T07:42:40.287448+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373366701_83c4",
+    "timestamp": "2026-06-25T07:42:46.701457+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373414152_648e",
+    "timestamp": "2026-06-25T07:43:34.152219+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373422330_7a4b",
+    "timestamp": "2026-06-25T07:43:42.330095+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373428775_1e4f",
+    "timestamp": "2026-06-25T07:43:48.775584+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373476208_b90b",
+    "timestamp": "2026-06-25T07:44:36.208973+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373484384_dada",
+    "timestamp": "2026-06-25T07:44:44.384788+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373490832_80ae",
+    "timestamp": "2026-06-25T07:44:50.832171+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373546439_ef46",
+    "timestamp": "2026-06-25T07:45:46.439568+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373608507_9641",
+    "timestamp": "2026-06-25T07:46:48.507368+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373658284_4724",
+    "timestamp": "2026-06-25T07:47:38.284591+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373670576_1013",
+    "timestamp": "2026-06-25T07:47:50.576887+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373720346_d31e",
+    "timestamp": "2026-06-25T07:48:40.346528+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373782390_7533",
+    "timestamp": "2026-06-25T07:49:42.390560+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373792674_146a",
+    "timestamp": "2026-06-25T07:49:52.674901+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373792867_12cd",
+    "timestamp": "2026-06-25T07:49:52.867948+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373844496_0767",
+    "timestamp": "2026-06-25T07:50:44.496676+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373854733_1144",
+    "timestamp": "2026-06-25T07:50:54.733157+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373854908_c561",
+    "timestamp": "2026-06-25T07:50:54.908154+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373906545_77ca",
+    "timestamp": "2026-06-25T07:51:46.545710+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373916802_cc2b",
+    "timestamp": "2026-06-25T07:51:56.802025+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373916948_5ad6",
+    "timestamp": "2026-06-25T07:51:56.948233+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373978877_f24a",
+    "timestamp": "2026-06-25T07:52:58.877447+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782373979027_23b5",
+    "timestamp": "2026-06-25T07:52:59.027004+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374028646_4ff0",
+    "timestamp": "2026-06-25T07:53:48.646617+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374040939_4f96",
+    "timestamp": "2026-06-25T07:54:00.939193+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374041082_c07f",
+    "timestamp": "2026-06-25T07:54:01.082017+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374102994_8da7",
+    "timestamp": "2026-06-25T07:55:02.994821+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374103152_3993",
+    "timestamp": "2026-06-25T07:55:03.152431+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374150740_64d5",
+    "timestamp": "2026-06-25T07:55:50.740430+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374165080_6a05",
+    "timestamp": "2026-06-25T07:56:05.080274+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374165206_43a3",
+    "timestamp": "2026-06-25T07:56:05.206816+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374332808_745a",
+    "timestamp": "2026-06-25T07:58:52.808063+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374347152_5a43",
+    "timestamp": "2026-06-25T07:59:07.152791+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374347262_5f2d",
+    "timestamp": "2026-06-25T07:59:07.262858+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374394865_ab0e",
+    "timestamp": "2026-06-25T07:59:54.865026+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger_AUDUSD",
+    "action": "BUY FAILED",
+    "detail": "0.01 AUDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374409207_341a",
+    "timestamp": "2026-06-25T08:00:09.207296+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger_NZDUSD",
+    "action": "SELL FAILED",
+    "detail": "0.01 NZDUSD",
+    "outcome": "error",
+    "metadata": {}
+  },
+  {
+    "id": "dec_1782374409318_665a",
+    "timestamp": "2026-06-25T08:00:09.318872+00:00",
+    "agent_id": "Bollinger_USDCHF",
+    "agent_name": "Bollinger_USDCHF",
+    "action": "SELL FAILED",
+    "detail": "0.01 USDCHF",
+    "outcome": "error",
+    "metadata": {}
   }
 ]

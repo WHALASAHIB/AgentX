@@ -396,6 +396,246 @@ class GoldPhoenixStrategy:
         return self._name
 
 
+class PineScriptStrategy:
+    """Pine Script strategy — translated from .pine files to local backtester.
+
+    Uses EMA crossover + ADX > threshold + RSI > min for long entries.
+    Conforms to the same interface as other built-in strategies (next, name, __init__).
+
+    Configurable params:
+        fast_ema (int):   fast EMA period (default: 5)
+        slow_ema (int):   slow EMA period (default: 13)
+        adx_len (int):    ADX lookback period (default: 14)
+        adx_thresh (int): ADX threshold for trending market (default: 15)
+        rsi_len (int):    RSI lookback period (default: 14)
+        rsi_min (int):    RSI minimum for long entry (default: 50)
+        tp_ratio (float): take-profit multiple of ATR (default: 1.0)
+        sl_ratio (float): stop-loss multiple of ATR (default: 1.5)
+    Signal logic:
+        BUY when fast EMA crosses above slow EMA
+             AND ADX > threshold
+             AND RSI > minimum
+    """
+
+    def __init__(self, data: pd.DataFrame, fast_ema: int = 5, slow_ema: int = 13,
+                 adx_len: int = 14, adx_thresh: int = 15,
+                 rsi_len: int = 14, rsi_min: int = 50,
+                 tp_ratio: float = 1.0, sl_ratio: float = 1.5):
+        self.data = data
+        self.fast_ema = fast_ema
+        self.slow_ema = slow_ema
+        self.adx_len = adx_len
+        self.adx_thresh = adx_thresh
+        self.rsi_len = rsi_len
+        self.rsi_min = rsi_min
+        self.tp_ratio = tp_ratio
+        self.sl_ratio = sl_ratio
+        self._name = f"PineScript(EMA{fast_ema}_{slow_ema}_ADX{adx_len}_{adx_thresh}_RSI{rsi_len}_{rsi_min})"
+
+        closes = data["close"].values.astype(float)
+        highs = data["high"].values.astype(float)
+        lows = data["low"].values.astype(float)
+
+        # EMA via pandas ewm
+        self.ema_fast = data["close"].ewm(span=fast_ema, adjust=False).mean().values
+        self.ema_slow = data["close"].ewm(span=slow_ema, adjust=False).mean().values
+
+        # RSI & ADX
+        self.rsi_arr = self._compute_rsi(closes, rsi_len)
+        self.adx_arr = self._compute_adx(highs, lows, closes, adx_len)
+
+    # ── Classmethod: parse .pine file ──────────────────────────────────────
+
+    @classmethod
+    def from_pine_file(cls, pine_path: str, data: pd.DataFrame) -> "PineScriptStrategy":
+        """Parse a .pine file, extract strategy inputs, return a configured instance.
+
+        Handles both styles seen in the iter_*.pine files:
+            var_name = input.int(5, "Label", ...)
+            input.int(5, "Label", ...)
+        Maps variable names and labels to the PineScriptStrategy parameter names.
+        """
+        with open(pine_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Extract variable-name + default-value from both input.int and input.float
+        # Pattern: varName = input.int(DEFAULT, "LABEL" ...
+        # Pattern: varName = input.float(DEFAULT, "LABEL" ...
+        raw_params: dict[str, int | float] = {}
+
+        for m in re.finditer(
+            r"(\w+)\s*=\s*input\.int\s*\(\s*(\d+)\s*,\s*\"([^\"]+)\"",
+            content,
+        ):
+            raw_params[m.group(1)] = int(m.group(2))
+            raw_params[m.group(3)] = int(m.group(2))  # also store by label
+
+        for m in re.finditer(
+            r"(\w+)\s*=\s*input\.float\s*\(\s*([\d.]+)\s*,\s*\"([^\"]+)\"",
+            content,
+        ):
+            raw_params[m.group(1)] = float(m.group(2))
+            raw_params[m.group(3)] = float(m.group(2))
+
+        for m in re.finditer(
+            r"input\.int\s*\(\s*(\d+)\s*,\s*\"([^\"]+)\"",
+            content,
+        ):
+            raw_params[m.group(2)] = int(m.group(1))
+
+        for m in re.finditer(
+            r"input\.float\s*\(\s*([\d.]+)\s*,\s*\"([^\"]+)\"",
+            content,
+        ):
+            raw_params[m.group(2)] = float(m.group(1))
+
+        # Fuzzy mapping from .pine identifiers → PineScriptStrategy kwargs
+        mapping: dict[str, list[str]] = {
+            "fast_ema": [
+                "ema_fast_len", "emaFastLen", "ema_fast", "emaFast",
+                "Fast EMA Length", "EMA Fast Length", "fast",
+            ],
+            "slow_ema": [
+                "ema_slow_len", "emaSlowLen", "ema_slow", "emaSlow",
+                "Slow EMA Length", "EMA Slow Length", "slow",
+            ],
+            "adx_len": [
+                "adx_len", "adxLen", "ADX Length",
+            ],
+            "adx_thresh": [
+                "adx_thresh", "adxMin", "adx_min",
+                "ADX Threshold", "ADX Minimum (Trending)",
+            ],
+            "rsi_len": [
+                "rsi_len", "rsiLen", "RSI Length",
+            ],
+            "rsi_min": [
+                "rsi_min", "rsiMin",
+                "RSI Minimum (Long Only)", "RSI Minimum (long)",
+            ],
+            "tp_ratio": [
+                "tp_ratio", "tpMult", "tp_mult",
+                "Take Profit (R)", "Take Profit (×ATR)",
+            ],
+            "sl_ratio": [
+                "sl_ratio", "slMult", "sl_mult",
+                "Stop Loss (R)", "Stop Loss (×ATR)",
+            ],
+        }
+
+        kwargs: dict[str, object] = {}
+        for our_key, aliases in mapping.items():
+            for alias in aliases:
+                val = raw_params.get(alias)
+                if val is not None:
+                    kwargs[our_key] = val
+                    break
+
+        return cls(data, **kwargs)
+
+    # ── Indicator computations ────────────────────────────────────────────
+
+    @staticmethod
+    def _compute_rsi(closes: np.ndarray, period: int) -> np.ndarray:
+        """Wilder-style RSI."""
+        out = np.full_like(closes, np.nan)
+        if len(closes) < period + 1:
+            return out
+        deltas = np.diff(closes)
+        gains = np.where(deltas > 0, deltas, 0.0)
+        losses = np.where(deltas < 0, -deltas, 0.0)
+        avg_gain = float(np.mean(gains[:period]))
+        avg_loss = float(np.mean(losses[:period]))
+        if avg_loss == 0:
+            out[period] = 100.0
+        else:
+            out[period] = 100.0 - (100.0 / (1.0 + avg_gain / avg_loss))
+        for i in range(period + 1, len(closes)):
+            avg_gain = (avg_gain * (period - 1) + gains[i - 1]) / period
+            avg_loss = (avg_loss * (period - 1) + losses[i - 1]) / period
+            if avg_loss == 0:
+                out[i] = 100.0
+            else:
+                out[i] = 100.0 - (100.0 / (1.0 + avg_gain / avg_loss))
+        return out
+
+    @staticmethod
+    def _compute_adx(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int) -> np.ndarray:
+        """Standard DMI-based ADX calculation."""
+        up = np.full_like(highs, np.nan)
+        down = np.full_like(lows, np.nan)
+        for i in range(1, len(highs)):
+            up[i] = highs[i] - highs[i - 1]
+            down[i] = lows[i - 1] - lows[i]
+
+        plus_dm = np.where((up > down) & (up > 0), up, 0.0)
+        minus_dm = np.where((down > up) & (down > 0), down, 0.0)
+
+        tr = np.full_like(highs, np.nan)
+        for i in range(1, len(highs)):
+            tr[i] = max(
+                highs[i] - lows[i],
+                abs(highs[i] - closes[i - 1]),
+                abs(lows[i] - closes[i - 1]),
+            )
+
+        def _smooth(arr, per):
+            out = np.full_like(arr, np.nan)
+            if len(arr) < per:
+                return out
+            out[per] = np.nansum(arr[1 : per + 1])
+            for j in range(per + 1, len(arr)):
+                out[j] = out[j - 1] - out[j - 1] / per + arr[j]
+            return out
+
+        tr_s = _smooth(tr, period)
+        plus_s = _smooth(plus_dm, period)
+        minus_s = _smooth(minus_dm, period)
+
+        pdi = 100.0 * plus_s / tr_s
+        mdi = 100.0 * minus_s / tr_s
+        dx = 100.0 * np.abs(pdi - mdi) / (pdi + mdi + 1e-10)
+        return _smooth(dx, period)
+
+    # ── Signal logic ──────────────────────────────────────────────────────
+
+    def next(self, i: int) -> dict:
+        """Return signal dict for bar i.
+
+        BUY when fast EMA crosses above slow EMA AND ADX > threshold AND RSI > min.
+        """
+        min_idx = max(self.fast_ema, self.slow_ema, self.adx_len, self.rsi_len)
+        if i < min_idx:
+            return {"action": None}
+        if (
+            np.isnan(self.ema_fast[i])
+            or np.isnan(self.ema_slow[i])
+            or np.isnan(self.adx_arr[i])
+            or np.isnan(self.rsi_arr[i])
+        ):
+            return {"action": None}
+
+        # EMA crossover
+        prev_fast = self.ema_fast[i - 1]
+        prev_slow = self.ema_slow[i - 1]
+        curr_fast = self.ema_fast[i]
+        curr_slow = self.ema_slow[i]
+
+        if (
+            prev_fast <= prev_slow
+            and curr_fast > curr_slow
+            and self.adx_arr[i] > self.adx_thresh
+            and self.rsi_arr[i] > self.rsi_min
+        ):
+            return {"action": "buy"}
+
+        return {"action": None}
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+
 # ── Registry: maps strategy keys → classes ─────────────────────────────────
 BUILTIN_STRATEGIES: dict[str, type] = {
     "sma_crossover": SMAStrategy,

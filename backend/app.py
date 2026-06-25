@@ -1476,7 +1476,7 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
     import pandas as pd
     from data import INSTRUMENTS, fetch
     from engine import run as bt_run
-    from loader import list_strategies
+    from loader import list_strategies, PineScriptStrategy
 
     instrument = INSTRUMENTS.get(req.symbol)
     if not instrument:
@@ -1493,8 +1493,7 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
         date_to = req.date_to
     timeframe = req.timeframe
 
-    # ── If a raw pine_script is provided, write to temp file → MCP ────
-    # Must check before data fetch since MCP handles its own data
+    # ── If a raw pine_script is provided, write to temp file → parse locally ──
     if req.pine_script:
         import tempfile
         tmp = tempfile.NamedTemporaryFile(
@@ -1504,30 +1503,54 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
         script_path = tmp.name
         tmp.close()
         try:
-            from scripts.trader_dev_bridge import run_pine_backtest
-            mcp_result = await run_pine_backtest(
-                strategy_name=script_path,
-                symbol=req.symbol,
-                timeframe=req.timeframe,
-                capital=req.capital,
-                date_from=date_from,
-                date_to=date_to,
+            # Parse the .pine file and run local backtest
+            strategy = PineScriptStrategy.from_pine_file(script_path, None)
+            # Need data — fetch it now
+            data = fetch(instrument["ticker"], date_from, date_to, interval=timeframe)
+            if data is None or len(data) < 20:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Not enough data for {req.symbol} {timeframe} from {date_from} to {date_to}. "
+                           f"Got {len(data) if data is not None else 0} bars.",
+                )
+            # Recreate strategy with actual data
+            strategy_params = {
+                "fast_ema": strategy.fast_ema,
+                "slow_ema": strategy.slow_ema,
+                "adx_len": strategy.adx_len,
+                "adx_thresh": strategy.adx_thresh,
+                "rsi_len": strategy.rsi_len,
+                "rsi_min": strategy.rsi_min,
+                "tp_ratio": strategy.tp_ratio,
+                "sl_ratio": strategy.sl_ratio,
+            }
+            local_result = bt_run(
+                strategy_class=PineScriptStrategy,
+                data=data,
+                initial_capital=req.capital,
+                spread_pips=instrument.get("spread_pips", 1.0),
+                pip_value=instrument.get("pip_value", 0.0001),
+                contract_size=instrument.get("contract_size", 100),
+                risk_per_trade=req.risk_per_trade,
+                strategy_params=strategy_params,
+                ftmo_mode=req.ftmo_mode,
+                lot_size=req.lot_size,
             )
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=503,
-                detail=f"Trader.dev MCP is not available or unreachable: {e}. "
-                       f"Pine Script backtests require a connection "
-                       f"to https://mcp.trader.dev/sse. Please verify the service is running."
+                status_code=500,
+                detail=f"Local Pine Script backtest failed: {e}",
             )
         finally:
             try:
                 os.unlink(script_path)
             except Exception:
                 pass
-        return mcp_result
+        return local_result
 
     data = fetch(instrument["ticker"], date_from, date_to, interval=timeframe)
     if data is None or len(data) < 20:
@@ -1545,30 +1568,110 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
     if not effective_key:
         raise HTTPException(status_code=400, detail="Either strategy_key or strategy_name is required")
 
-    # ── Pine Script (iter_*) strategies → route to trader.dev MCP ──────
+    # ── Pine Script (iter_*) strategies → parse .pine file and use local backtester ──
     if effective_key.startswith("iter_"):
+        pines_dir = _Path(__file__).resolve().parent.parent / "strategy-engine" / "pines"
+        pine_path = pines_dir / f"{effective_key}.pine"
+        if not pine_path.is_file():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Pine Script strategy file not found: {pine_path}. "
+                       f"Expected {effective_key}.pine in {pines_dir}",
+            )
         try:
-            from scripts.trader_dev_bridge import run_pine_backtest
-            mcp_result = await run_pine_backtest(
-                strategy_name=effective_key,
-                symbol=req.symbol,
-                timeframe=req.timeframe,
-                capital=req.capital,
-                date_from=date_from,
-                date_to=date_to,
+            # Parse the .pine file to extract parameters
+            strategy = PineScriptStrategy.from_pine_file(str(pine_path), data)
+            strategy_params = {
+                "fast_ema": strategy.fast_ema,
+                "slow_ema": strategy.slow_ema,
+                "adx_len": strategy.adx_len,
+                "adx_thresh": strategy.adx_thresh,
+                "rsi_len": strategy.rsi_len,
+                "rsi_min": strategy.rsi_min,
+                "tp_ratio": strategy.tp_ratio,
+                "sl_ratio": strategy.sl_ratio,
+            }
+            result = bt_run(
+                strategy_class=PineScriptStrategy,
+                data=data,
+                initial_capital=req.capital,
+                spread_pips=instrument.get("spread_pips", 1.0),
+                pip_value=instrument.get("pip_value", 0.0001),
+                contract_size=instrument.get("contract_size", 100),
+                risk_per_trade=req.risk_per_trade,
+                strategy_params=strategy_params,
+                ftmo_mode=req.ftmo_mode,
+                lot_size=req.lot_size,
             )
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
         except Exception as e:
             raise HTTPException(
-                status_code=503,
-                detail=f"Trader.dev MCP is not available or unreachable: {e}. "
-                       f"Pine Script backtests ({effective_key}) require a connection "
-                       f"to https://mcp.trader.dev/sse. Please verify the service is running."
+                status_code=500,
+                detail=f"Local Pine Script backtest failed for {effective_key}: {e}",
             )
 
-        # Return MCP result directly (already in standardized format)
-        return mcp_result
+        # ── Normalise equity_curve: always list of {time, equity}, never empty ──
+        raw_eq = result.get("equity_curve", [])
+        if isinstance(raw_eq, list) and len(raw_eq) > 0:
+            eq_data = []
+            for point in raw_eq:
+                if isinstance(point, dict):
+                    d = point.get("time", "")
+                    eq_data.append({
+                        "time": d.strftime("%Y-%m-%d %H:%M") if hasattr(d, "strftime") else str(d)[:19],
+                        "equity": float(point.get("equity", 0)),
+                    })
+        elif isinstance(raw_eq, pd.DataFrame):
+            eq_df = raw_eq
+            eq_data = []
+            time_col = "time" if "time" in eq_df.columns else ("date" if "date" in eq_df.columns else None)
+            if time_col:
+                for _, row in eq_df.iterrows():
+                    d = row[time_col]
+                    eq_data.append({
+                        "time": d.strftime("%Y-%m-%d %H:%M") if hasattr(d, "strftime") else str(d)[:16],
+                        "equity": float(row.get("equity", 0)),
+                    })
+            else:
+                eq_data = [{"time": str(i), "equity": float(row.get("equity", 0))} for i, (_, row) in enumerate(eq_df.iterrows())]
+        else:
+            eq_data = []
+
+        if not eq_data:
+            start_eq = float(req.capital)
+            end_eq = float(result.get("final_equity", start_eq))
+            eq_data = [
+                {"time": date_from[:10] + " 00:00", "equity": start_eq},
+                {"time": date_to[:10] + " 00:00", "equity": end_eq},
+            ]
+
+        trades_list = []
+        for t in result.get("trades", []):
+            if not isinstance(t, dict):
+                continue
+            trades_list.append({
+                "entry_time": str(t.get("entry_time", "")),
+                "exit_time": str(t.get("exit_time", "")),
+                "symbol": req.symbol,
+                "side": t.get("side", ""),
+                "entry_price": float(t.get("entry_price", 0)),
+                "exit_price": float(t.get("exit_price", 0)),
+                "pnl": float(t.get("pnl", 0)),
+                "pnl_pips": float(t.get("pnl_pips", 0)),
+                "pnl_pct": float(t.get("pnl_pct", 0)),
+                "exit_reason": t.get("exit_reason", ""),
+            })
+
+        import numpy as np
+        return {
+            "metrics": {k: float(v) if isinstance(v, (np.floating,)) else int(v) if isinstance(v, (np.integer,)) else bool(v) if isinstance(v, np.bool_) else v for k, v in result["metrics"].items()},
+            "equity_curve": eq_data,
+            "trades": trades_list,
+            "ftmo": result.get("ftmo"),
+            "ftmo_phase2": result.get("ftmo_phase2"),
+            "final_equity": float(result["final_equity"]),
+        }
 
     # ── Local backtester for built-in strategies ────────────────────────
     if effective_key not in strategies:
