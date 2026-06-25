@@ -1,6 +1,6 @@
 {
-  "iteration": 132,
-  "last_run": "2026-06-25T19:15:00Z",
+  "iteration": 136,
+  "last_run": "2026-06-25T20:30:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,35 +13,63 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Raise ADX threshold from 14 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m. Iter 131 with ADX>14 produced PF 1.00 (breakeven before commissions) and Sharpe -3.04 with 50% WR and 38 trades. 19W/19L, avg win $45.70 vs avg loss $45.60 — TP/SL 1:1 makes every trade nearly equal in dollar terms and commissions consume the edge. Raising ADX from 14 to 25 should filter out weak/choppy trends and improve signal quality, pushing PF above 1.3 and Sharpe positive.",
+  "current_hypothesis": "Revert ADX from 14 back to 22 and add a trailing stop (trail_offset = 1.0×ATR) replacing fixed TP/SL on EMA(5,13) crossover + RSI(14)>50 LONG ONLY XAUUSD 30m. ADX>14 (iter 135) produced only PF 0.73, Sharpe -3.37, and WR 18% — far worse than ADX>22 (iter 134) which had PF 1.34, Sharpe 0.12, WR 45%. The lower threshold let in too many weak-trend losing trades (18 losers out of 22). Reverting to ADX>22 (which worked: WR 45%, PF 1.34) and adding a trailing stop should improve Sharpe by letting winners run while protecting against reversals, smoothing the equity curve.",
   "evolution_log": [
     {
       "iteration": 128,
       "hypothesis": "Raise ADX threshold from 8 to 14 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
       "metrics": {"pf": 1.46643166, "sharpe": 0.70879176, "wr": 52.0, "dd": 5.08246926, "trades": 25, "net_profit": 122.662898486478},
-      "verdict": "accepted (incremental) — Raising ADX from 8→14 improved PF from 1.13→1.47 and Sharpe from -0.39→0.71 while keeping 25 trades. 13W/12L, avg win $78.92 vs avg loss $58.30 (1.35:1). All metrics pass minimum thresholds. Sharpe 0.71 is weakest (below 1.0). Next: raise ADX to 18.",
+      "verdict": "accepted (incremental) — Raising ADX from 8→14 improved PF from 1.13→1.47 and Sharpe from -0.39→0.71 while keeping 25 trades.",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T18:15:00"
     },
     {
       "iteration": 129,
       "hypothesis": "Raise ADX threshold from 14 to 18 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
       "metrics": {"pf": 0.91466625, "sharpe": -5.29784038, "wr": 37.77777778, "dd": 6.06108982, "trades": 45, "net_profit": -425.069776823872},
-      "verdict": "rejected (PF=0.91<1.3, Sharpe=-5.30<0.5) — ADX(18) with EMA-based calculation produced 45 trades (adequate sample) but PF 0.91 and negative Sharpe. 17W/28L (37.8% WR), net -$425. Raising ADX from 14→18 made PF and Sharpe notably worse than iter 128 (PF 1.47, Sharpe 0.71). Higher ADX threshold paradoxically increased trade count (45 vs 25), suggesting the EMA-based ADX calc behaves non-linearly.",
+      "verdict": "rejected (PF=0.91<1.3, Sharpe=-5.30<0.5)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T18:42:00"
     },
     {
       "iteration": 130,
       "hypothesis": "Change EMA from (5,13) to (8,21) on EMA crossover + RSI(14)>50 + ADX(14)>14 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m.",
       "metrics": {"pf": 0.99038367, "sharpe": -2.6889256, "wr": 37.14285714, "dd": 5.81097423, "trades": 35, "net_profit": -284.607166180347},
-      "verdict": "rejected (PF=0.99<1.3, Sharpe=-2.69<0.5) — EMA(8,21) wider spread produced PF 0.99 and negative Sharpe. 13W/22L (37.1% WR), net -$284.60. The crossover rate barely changed (35 trades vs 25 at iter 128 with EMA 5,13) but the wider EMA spread generated worse quality signals (WR dropped from 52% to 37.1%). Cascade ratio 1.0 — no cascade-close issue. Reverting to EMA(5,13) with tighter TP/SL 1:1.",
+      "verdict": "rejected (PF=0.99<1.3, Sharpe=-2.69<0.5)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T18:57:00"
     },
     {
       "iteration": 131,
       "hypothesis": "Revert EMA from (8,21) to (5,13) and tighten TP/SL from 1.5:1 to 1:1 on EMA crossover + RSI(14)>50 + ADX(14)>14 LONG ONLY XAUUSD 30m.",
       "metrics": {"pf": 1.00221778, "sharpe": -3.03970449, "wr": 50.0, "dd": 4.55575956, "trades": 38, "net_profit": -296.885940121696},
-      "verdict": "rejected (PF=1.00<1.3, Sharpe=-3.04<0.5) — TP/SL 1:1 made avg win ($45.70) ≈ avg loss ($45.60). 19W/19L with 50% WR means pure breakeven before $298 commissions. The tighter TP/SL killed the edge. Raising ADX from 14 to 25 to filter weak trends.",
+      "verdict": "rejected (PF=1.00<1.3, Sharpe=-3.04<0.5)", 
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T19:15:00"
+    },
+    {
+      "iteration": 132,
+      "hypothesis": "Raise ADX threshold from 14 to 25 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.23786642, "sharpe": -0.65658637, "wr": 56.25, "dd": 1.90979456, "trades": 16, "net_profit": -45.409563134093},
+      "verdict": "invalid (low sample, 16 trades)",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T19:45:00"
+    },
+    {
+      "iteration": 133,
+      "hypothesis": "Lower ADX threshold from 25 to 22 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1:1 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.27076167, "sharpe": -0.57340607, "wr": 55.0, "dd": 2.52438517, "trades": 20, "net_profit": -46.812630210894},
+      "verdict": "rejected (PF=1.27<1.3, Sharpe=-0.57<0.5)",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:00:00"
+    },
+    {
+      "iteration": 134,
+      "hypothesis": "Revert TP/SL from 1:1 to 1.5:1 with ADX(14)>22 on EMA(5,13) crossover + RSI(14)>50 LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.34083595, "sharpe": 0.11589351, "wr": 45.0, "dd": 2.79465873, "trades": 20, "net_profit": 6.051169621554},
+      "verdict": "rejected (PF=1.34 Sharpe=0.12 DD=2.79%)",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:15:00"
+    },
+    {
+      "iteration": 135,
+      "hypothesis": "Lower ADX threshold from 22 to 14 on EMA(5,13) crossover + RSI(14)>50 + TP/SL 1.5:1 LONG ONLY XAUUSD 30m. Iter 134 with ADX>22 and TP/SL 1.5:1 produced PF 1.34 and Sharpe 0.12. Lowering ADX to 14 should increase trade count to improve sample diversity and smooth the equity curve.",
+      "metrics": {"pf": 0.7332367, "sharpe": -3.37386532, "wr": 18.18181818, "dd": 5.78358618, "trades": 22, "net_profit": -331.736663992377},
+      "verdict": "rejected (PF=0.73<1.3, Sharpe=-3.37<0.5) — ADX>14 was a disaster: 4W/18L, WR 18.18%, PF 0.73. The lower threshold let in too many weak-trend trades, losing -$331.74. ADX>22 (iter 134) was clearly better with PF 1.34, WR 45%, and positive net profit. Reverting to ADX>22 with a trailing stop.",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-06-25T20:30:00"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

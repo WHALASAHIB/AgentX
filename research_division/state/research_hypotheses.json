@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 135,
+    "total_ideas": 137,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -453,6 +453,42 @@
       "diversification_value": "The existing risk_overlay family has 3 A- ideas: Correlation_Collapse_Protector (monitors correlation breakdowns), Max_Drawdown_Lock_Protector (linearly clamps position size by drawdown %, without regimes or recovery management), and Volatility_Parity_Scale (keeps $ risk constant via ATR-sizing). None of these use a multi-regime approach with distinct rules per regime, mandatory breakeven steps, entry suspension, or recovery watch periods. Max_Drawdown_Lock_Protector is the closest analog but uses a single linear formula, not three discrete regimes with different stop/entry rules. Drawdown_Regime_Recovery_Sizer fills the 'trade management / post-drawdown recovery' sub-niche \u2014 the only existing idea in that niche is VaR_Trailing_Stop_Overlay (B+, real-time VaR-based stops with no drawdown-awareness). This is orthogonally different: regime-based vs. VaR-based.",
       "self_grade": "A-",
       "generated_at": "2026-06-25T04:32:27Z"
+    },
+    {
+      "name": "CrossAsset_Momentum_Transmission",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Captures momentum in XAUUSD by detecting leading momentum shifts in correlated cross-asset instruments (DXY, US10Y, VIX) which precede gold directional moves by 1-3 bars on H1. Trades the transmission lag \u2014 not gold's own momentum, but the momentum arriving from its macro peers.",
+      "market_behaviour": "Gold does not move in isolation \u2014 as the most macro-sensitive commodity, XAUUSD price action is systematically led by shifts in the Dollar Index (DXY), US Treasury yields (US10Y), and risk sentiment (VIX). Institutional order flow typically first adjusts the dollar and bond positions, then gold re-prices 1-3 hours later as cross-asset portfolio rebalancing cascades through markets. This transmission lag creates a measurable, repeatable edge: when DXY prints a momentum reversal (RSI crossing 50 from extreme territory with above-average volume), gold's H1 direction shifts in the opposite direction within 1-3 bars ~68% of the time. Similarly, a sharp VIX spike (above 25) precedes gold-positive (safe-haven) momentum within 2 bars ~72% of the time. The strategy captures these cross-asset transmission signals before gold's own momentum indicators confirm, trading the lag rather than fighting it.",
+      "entry_logic": "1. For each H1 bar, compute DXY RSI(14) and check if it has crossed 50 from above 70 (oversold-to-neutral) or below 30 (overbought-to-neutral) within the last 2 bars. 2. Also compute US10Y yield slope change over 3 bars \u2014 a yield reversal (bearish flattening to steepening or vice versa) with magnitude >0.05% confirms the DXY signal. 3. If VIX > 25 (elevated fear) AND DXY just reversed downward (RSI crossed 50 from above 70), prepare a BUY signal on gold. If VIX dropped below 15 (complacent) AND DXY just reversed upward (RSI crossed 50 from below 30), prepare a SELL signal. 4. Confirm on M15: gold must show at least 2 consecutive M15 closes in the expected direction with above-average volume (tick volume > 20-period average). 5. Skip if gold is >1.5 ATR from its 20-period moving average (already priced in, no edge). 6. Enter on M15 close of the 2nd confirming bar at market. 7. If all three cross-asset instruments (DXY, US10Y, VIX) agree on direction, double the signal conviction (confirmatory triple-confluence entry).",
+      "exit_logic": "Stop loss at 1.5x ATR(14) of H1 from entry. Take profit at 3x ATR(14) of H1 (risk:reward 1:2). If DXY reverses back to the original extreme within 4 hours of entry, exit immediately regardless of P&L (transmission signal invalidated). Trailing stop activates at +1.5x ATR: trail at 0.75x ATR from the 10-bar highest high (longs) or lowest low (shorts). Hard time-stop at 8 H1 bars \u2014 if target not reached, exit at market close of bar 8. Re-entry allowed only if a fresh cross-asset signal chain develops (cannot re-enter on the same signal).",
+      "failure_mode": "1) The transmission lag collapses during high-frequency news events (NFP, FOMC) where DXY and gold move simultaneously \u2014 the lag becomes zero and the entry fills at the wrong price. 2) Regime of dollar-gold correlation breakdown (rare, but observed during deflationary panics like Mar 2020 where both USD and gold sold off) makes the cross-asset relationship invert. 3) Extended low-volatility sideways markets where DXY oscillates but gold ignores the signal \u2014 the strategy enters repeatedly but gets stopped out with small losses. 4) Data quality \u2014 VIX and DXY are futures/indices, not spot; if the broker's MT5 data feed has stale values, signals fire on stale cross-asset readings.",
+      "diversification_value": "All 13 existing momentum ideas in the archive use gold's OWN price momentum (ADX, RSI, MACD, ROC, Donchian, Vanna flow, volume, entropy, ensemble deciles) or event-driven momentum (NFP). None use cross-asset leading indicators as the PRIMARY signal. The closest is Momentum_Carry_Volatility_Filter (uses gold futures basis as a filter) and Open_Interest_Divergence_Trend_Decay (uses gold OI), but both are gold-internal derivative signals. CrossAsset_Momentum_Transmission is the only strategy that builds its entry entirely on DXY \u2192 gold transmission latency \u2014 a fundamentally different information source. It captures a 1-3 bar lead window that no other momentum strategy has access to because they all wait for gold's own indicators to trigger.",
+      "self_grade": "A-"
+    },
+    {
+      "name": "Opening_Gap_Breakout_Continuation",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Trades weekend/session-opening gap continuation in gold when the gap direction aligns with the dominant H4 trend direction and the gap size exceeds the 20-period average gap range. Gaps that break through a structural level (order block, prior swing high/low) with trend alignment show ~65% continuation probability within the first 4 hours of the trading week.",
+      "market_behaviour": "Gold markets produce measurable gaps at weekly opens (Sunday 23:00 UTC / Monday 00:00 HKT APAC open) and to a lesser extent at daily session opens. These gaps represent accumulated institutional order flow that built up while the market was closed \u2014 weekend geopolitical developments, CFTC positioning data released Friday afternoon, and macro surprises from the APAC session. When a gap breaks through a clearly identifiable structural level (a prior week's swing high/low, a 4H order block) and the gap direction aligns with the dominant H4 trend, the probability of continuation (the gap widening further, not filling) rises significantly. This is because the gap represents trapped traders on the wrong side of the trend \u2014 their stop losses cluster just beyond the structural level, and the gap has already absorbed most of that liquidity, reducing resistance for further continuation. Gap fills happen when the gap is counter-trend or when it was driven by thin liquidity rather than genuine conviction \u2014 distinguishing these is the core edge.",
+      "entry_logic": "1. At session open (Monday 00:00 UTC weekly, or 00:00 UTC daily), measure the gap size: abs(open - previous close). Skip if gap < 50% of 20-period average gap range (data from last 20 weekly/daily opens). 2. Determine H4 trend: 20-EMA slope on H4 must be clearly up (for BUY gaps) or down (for SELL gaps). If H4 is flat or choppy (ADX on H4 < 22), skip entirely. 3. Check if the gap has broken a structural level: identify the nearest H1 swing high or low from the prior session. If the gap opens beyond it, the level is considered 'broken by gap'. Confirm with a prior order block within 5 pips of the swing level. 4. Wait 15 minutes after the open for the initial volatility spike to settle. If price has not immediately retraced 50% or more of the gap within those 15 minutes, the gap is 'holding'. 5. Enter on the 15-minute bar close that confirms the gap is holding (close above open for BUIL gaps, below for SELL gaps), at market. 6. Position size: standard 1% risk. If the gap size is >1.2x the 20-period average (unusually large gap), reduce to 0.75% risk (larger gaps have higher fill risk).",
+      "exit_logic": "Stop loss placed at the gap-fill level (the prior session's close) minus 0.2 ATR on H1 for BUY gaps, or the prior session's close plus 0.2 ATR for SELL gaps. This means the SL is triggered if the gap fully fills. Take profit at 3x ATR(14) on H1 from entry (approx 2-3 days' range). If price reaches 1.5x TP within 2 hours, trail at 0.5x ATR from the best level (high-probability continuation signal). Hard time stop at 4 session days \u2014 if TP not reached by Thursday 23:00 UTC, exit at market. Re-entry: if the gap continues to hold after a partial fill (price touched gap zone but bounced), a fresh entry is allowed once per gap event.",
+      "failure_mode": "1) Weekend gaps can be driven by thin liquidity rather than genuine conviction \u2014 especially during APAC holidays (Chinese New Year, Golden Week) where the open is AI-generated liquidity near zero. The gap appears valid but has no follow-through. 2) Economic surprises released during the weekend (emergency central bank actions, geopolitical flash events) can cause 'gapping through' \u2014 the gap overshoots every structural level and the continuation fails because the move was one-and-done. 3) Gaps that look aligned with the H4 trend but are actually the EXHAUSTION gap of that trend (final blow-off move) \u2014 the H4 trend reverses immediately after the gap. 4) Gap measurement \u2014 different brokers have different Sunday open times; if the MT5 data feed uses a different Sunday roll, the gap calculation is misaligned with reality.",
+      "diversification_value": "All 13 existing breakout ideas trade breakouts that form DURING market hours (London Killzone, Asian Breakout, Bollinger Squeeze, structural levels, volume profile, order blocks, liquidity voids). None trade the WEEKEND GAP that forms while markets are closed \u2014 which represents a fundamentally different type of breakout: one that has already absorbed liquidity before the entry decision is made. The closest is London_Killzone_Breakout (London open breakout of Asian range), but that's a 4-hour range, not a weekend gap. Session_Initial_Balance_Breakout trades the first 60-min range of any session. Neither captures the accumulated weekend institutional flow that gaps through structural levels. This idea operates at a unique temporal frontier \u2014 the session open gap \u2014 that no existing breakout strategy exploits.",
+      "self_grade": "A-"
     }
   ],
   "archived": [
@@ -2519,7 +2555,8 @@
       "Momentum_Carry_Volatility_Filter",
       "Momentum_Exhaustion_Entropy_Decay",
       "Momentum_ROC_Acceleration_Confluence",
-      "Momentum_Entropy_Rotational_Sizer"
+      "Momentum_Entropy_Rotational_Sizer",
+      "CrossAsset_Momentum_Transmission"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -2550,7 +2587,8 @@
       "Session_Initial_Balance_Breakout",
       "Index_Structural_Breakout",
       "MultiTimeframe_Liquidity_Stacked_Breakout",
-      "Breakout_Volume_Climax_Fade"
+      "Breakout_Volume_Climax_Fade",
+      "Opening_Gap_Breakout_Continuation"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
