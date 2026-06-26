@@ -1,6 +1,6 @@
 {
-  "iteration": 160,
-  "last_run": "2026-06-26T00:53:10Z",
+  "iteration": 164,
+  "last_run": "2026-06-26T04:45:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,8 +13,72 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Reduce ADX threshold from 18 to 14 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. ADX>18 with RSI>55 blocked all entries (0 trades) for the second time. At iter 157, ADX>14 + RSI>55 produced 26 trades. The data shows ALL 26 trades had ADX between 14 and 18. Return to ADX>14 which is the proven minimum that allows entries through while still filtering weak trends. The WR (26.9%) and Sharpe (0.21) will still need improvement but at least trades will exist to analyze.",
+  "current_hypothesis": "Reduce ADX threshold from 25 to 15 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>15 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. ADX>25 with manual ADX produced only 7 trades in 1621 bars (down from ~23 at ADX>18). The ADX>25 filter is too restrictive for this EMA combo even with real ADX values. PF at 1.39 was strong for those 7 trades (above 1.3 threshold) but sample is too small. WR at 42.9% was above 40% target. DD at 1.45% is excellent. Next: reduce ADX from 25 to 15 — a middle ground between ADX>14 (which gave 25-26 trades) and ADX>18 (which gave 23). Should restore trade count to ~24 while still filtering weaker trends.",
   "evolution_log": [
+    {
+      "iteration": 163,
+      "hypothesis": "Increase ADX threshold from 18 to 25 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>25 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. Manual ADX passes real values so ADX>25 should meaningfully filter weaker trends and improve PF.",
+      "metrics": {
+        "pf": 1.39217947,
+        "sharpe": -0.45956756,
+        "wr": 42.85714286,
+        "dd": 1.45404905,
+        "trades": 7,
+        "net_profit": -16.771785835466
+      },
+      "verdict": "invalid (low sample, 7 trades) — ADX>25 with manual ADX produced only 7 trades. While PF (1.39) and WR (42.9%) look good, the sample is too small for statistical significance. ADX>25 is too restrictive: it cut off ~70% of the trades that ADX>18 allowed (23 at iter 162). Cascade ratio 1.0 (clean). Next: reduce ADX threshold to 15 — a middle ground between ADX>14 (25 trades) and ADX>18 (23 trades).",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-26T04:45:00Z"
+    },
+    {
+      "iteration": 162,
+      "hypothesis": "Increase ADX threshold from 14 to 18 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>18 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. Sharpe at -1.59 is the weakest metric. ADX is now manual (replaced unsupported ta.adx()) so ADX values are real. Previous ADX>18 attempt (iter 159) used broken ta.adx() which returned 0 for all bars — that's why it produced 0 trades. Manual ADX passes real values, so ADX>18 should filter to higher-quality trending entries while still allowing trades.",
+      "metrics": {
+        "pf": 0.96400146,
+        "sharpe": -3.58949124,
+        "wr": 39.13043478,
+        "dd": 3.00871809,
+        "trades": 23,
+        "net_profit": -205.3209008703
+      },
+      "verdict": "rejected (PF=0.96<1.3, Sharpe=-3.59<0.5) — ADX>18 barely filtered (23 vs 25 trades from iter 161). Only 2 trades had ADX between 14-18. Performance collapsed: PF dropped from 1.25 to 0.96, Sharpe from -1.59 to -3.59, WR from 44% to 39%. The 2 excluded trades were likely winners, or this is pure variance among 23-25 trade samples. Manual ADX values are consistently above 18 during EMA crossovers with RSI>55. Cascade ratio 1.0 (clean). AvgWinLoss 1.5 confirms TP/SL is the dominant exit. Avg bars held: 3.0 (90min on 30m chart). Next: ADX>25 with manual ADX (real values) — untested since iter 158 used broken ta.adx().",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-26T04:30:00Z"
+    },
+    {
+      "iteration": 161,
+      "hypothesis": "Increase TP/SL ratio from 1:1 to 1.5:1 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. Sharpe at -3.02 is the weakest metric. The current 1:1 TP/SL means winners and losers are the same size — with 50% WR the strategy barely breaks even before commissions (-$158 after $214 commission). Moving to 1.5:1 TP lets winners outsize losers, converting the 50% WR into positive expectancy. Manual ADX calculation replaced ta.adx (not supported by engine).",
+      "metrics": {
+        "pf": 1.2489691,
+        "sharpe": -1.58855736,
+        "wr": 44.0,
+        "dd": 3.00871809,
+        "trades": 25,
+        "net_profit": -100.377989983
+      },
+      "verdict": "rejected (PF=1.25<1.3, Sharpe=-1.59<0.5) — TP/SL 1.5:1 on manual ADX produced 25 trades with 44% WR. PF improved from 1.14 (iter 160) to 1.25. Sharpe improved from -3.02 to -1.59. AvgWinLoss ratio at 1.59 confirms TP/SL is actually the dominant exit (close to theoretical 1.5). WR dropped from 50% to 44% (expected with wider TP). Net loss -$100 after $207 commission. Cascade ratio 1.0 (clean). The strategy is trending in the right direction — TP/SL change was effective. Next: tighten ADX from 14 to 18 to filter weaker trends and improve Sharpe.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-26T04:15:00Z"
+    },
+    {
+      "iteration": 160,
+      "hypothesis": "Reduce ADX threshold from 18 to 14 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. ADX>18 blocked all entries (0 trades at iter 159). Return to ADX>14 which is the proven minimum that allows entries.",
+      "metrics": {
+        "pf": 1.14323524,
+        "sharpe": -3.0205234,
+        "wr": 50.0,
+        "dd": 2.69648004,
+        "trades": 26,
+        "net_profit": -158.364496306
+      },
+      "verdict": "rejected (PF=1.14<1.3, Sharpe=-3.02<0.5) — ADX>14 restored trade count to 26 (same as iter 157). Win rate jumped to 50% (vs 26.9% at iter 157) — manual ADX calculation produces different entry signals than ta.adx(). PF at 1.14 barely above breakeven. Commissions ($214) consume all gross profit. Sharpe at -3.02 is the critical weakness. Cascade ratio 1.0 (clean). Next: increase TP/SL from 1:1 to 1.5:1 to let winners outsize losers and convert 50% WR into profitability.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-26T04:00:00Z"
+    },
     {
       "iteration": 159,
       "hypothesis": "Reduce ADX threshold from 25 to 18 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>18 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. ADX>25 produced 0 trades across 1621 bars (too restrictive with RSI>55 filter already halving entries from 51 to 26 at iter 157). ADX>18 is a middle ground that should allow some entries through while still filtering weak trends.",
@@ -26,14 +90,14 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades) \u2014 ADX>18 combined with RSI>55 still blocks all 1621 bars. At iter 157, RSI>55 + ADX>14 produced 26 trades. ALL those 26 trades had ADX between 14 and 18. ADX>18 is still too restrictive. Next: revert to ADX>14 which is the proven minimum that allows entries.",
+      "verdict": "invalid (no trades) — ADX>18 combined with RSI>55 still blocks all 1621 bars. At iter 157, RSI>55 + ADX>14 produced 26 trades. ALL those 26 trades had ADX between 14 and 18. ADX>18 is still too restrictive. Next: revert to ADX>14 which is the proven minimum that allows entries.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T00:53:10Z"
     },
     {
       "iteration": 158,
-      "hypothesis": "Increase ADX minimum threshold from 14 to 25 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>25 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit \u2014 LONG ONLY XAUUSD 30m. Sharpe at 0.21 is the weakest metric (target > 1.0). Raising ADX threshold to 25 ensures only strong trending market entries survive, filtering out choppy/whipsaw conditions that produce negative risk-adjusted returns.",
+      "hypothesis": "Increase ADX minimum threshold from 14 to 25 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>25 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. Sharpe at 0.21 is the weakest metric (target > 1.0). Raising ADX threshold to 25 ensures only strong trending market entries survive, filtering out choppy/whipsaw conditions that produce negative risk-adjusted returns.",
       "metrics": {
         "pf": 0,
         "sharpe": 0,
@@ -42,14 +106,14 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades) \u2014 ADX>25 combined with RSI>55 blocked all 1621 bars from generating any entry. RSI>55 alone (at iter 157, ADX>14) produced 26 trades. Adding ADX>25 on top starved the strategy completely. The ADX>25 filter is too restrictive for this EMA combo. Need to find a middle ground \u2014 try ADX>18 next.",
+      "verdict": "invalid (no trades) — ADX>25 combined with RSI>55 blocked all 1621 bars from generating any entry. RSI>55 alone (at iter 157, ADX>14) produced 26 trades. Adding ADX>25 on top starved the strategy completely. The ADX>25 filter is too restrictive for this EMA combo. Need to find a middle ground — try ADX>18 next.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T03:30:00"
     },
     {
       "iteration": 157,
-      "hypothesis": "Increase RSI entry threshold from 50 to 55 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit \u2014 LONG ONLY XAUUSD 30m. WR at 25.5% from iter 156 is the weakest metric. Raising RSI to 55 ensures only stronger bullish momentum entries survive, filtering out weak entries that get stopped out before TP.",
+      "hypothesis": "Increase RSI entry threshold from 50 to 55 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. WR at 25.5% from iter 156 is the weakest metric. Raising RSI to 55 ensures only stronger bullish momentum entries survive, filtering out weak entries that get stopped out before TP.",
       "metrics": {
         "pf": 1.41713258,
         "sharpe": 0.21377648,
@@ -58,14 +122,14 @@
         "trades": 26,
         "net_profit": 18.693702576264
       },
-      "verdict": "rejected (PF=1.42<1.5, Sharpe=0.21<0.5, WR=26.9%<40%) \u2014 Raising RSI to 55 halved trade count from 51 to 26 vs iter 156. WR marginally improved from 25.5% to 26.9%, and net profit flipped from -$163 to +$19. PF improved from 1.24 to 1.42 but still below 1.5 target. Sharpe at 0.21 is the weakest metric. Cascade ratio 1.0 (clean). The RSI 55 filter successfully removed weak entries but didn't fix the core issue: most trades still exit at a loss via EMA crossunder before TP/SL can trigger. Next: increase ADX from 14 to 25 to restrict entries to strong trending conditions.",
+      "verdict": "rejected (PF=1.42<1.5, Sharpe=0.21<0.5, WR=26.9%<40%) — Raising RSI to 55 halved trade count from 51 to 26 vs iter 156. WR marginally improved from 25.5% to 26.9%, and net profit flipped from -$163 to +$19. PF improved from 1.24 to 1.42 but still below 1.5 target. Sharpe at 0.21 is the weakest metric. Cascade ratio 1.0 (clean). The RSI 55 filter successfully removed weak entries but didn't fix the core issue: most trades still exit at a loss via EMA crossunder before TP/SL can trigger. Next: increase ADX from 14 to 25 to restrict entries to strong trending conditions.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T02:00:00"
     },
     {
       "iteration": 156,
-      "hypothesis": "ADD BACK the EMA crossunder exit signal to recycle capital for new entries. EMA(5,13) crossover + RSI(14)>50 + ADX(14)>14 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit \u2014 LONG ONLY XAUUSD 30m.",
+      "hypothesis": "ADD BACK the EMA crossunder exit signal to recycle capital for new entries. EMA(5,13) crossover + RSI(14)>50 + ADX(14)>14 + TP/SL 1:1 (1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.23765046,
         "sharpe": -0.88818992,
@@ -74,7 +138,7 @@
         "trades": 51,
         "net_profit": -162.795833517948
       },
-      "verdict": "rejected (PF=1.24<1.3, Sharpe=-0.89<0.5, WR=25.5%<40%) \u2014 Adding back EMA crossunder exit restored trade count to 51 (from 1 in iter 155). Cascade ratio 1.0 (clean). However, WR collapsed to 25.5%: the EMA crossunder exit fires too early, cutting trades before the 1:1 TP/SL can hit. The signal-based exit dominates the fixed TP \u2014 most trades are closed on trend reversal at a loss. WR is the weakest metric at 25.5%.",
+      "verdict": "rejected (PF=1.24<1.3, Sharpe=-0.89<0.5, WR=25.5%<40%) — Adding back EMA crossunder exit restored trade count to 51 (from 1 in iter 155). Cascade ratio 1.0 (clean). However, WR collapsed to 25.5%: the EMA crossunder exit fires too early, cutting trades before the 1:1 TP/SL can hit. The signal-based exit dominates the fixed TP — most trades are closed on trend reversal at a loss. WR is the weakest metric at 25.5%.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T01:45:00"
@@ -90,7 +154,7 @@
         "trades": 1,
         "net_profit": -25.569683710602
       },
-      "verdict": "invalid (low sample, 1 trade) \u2014 Pure TP/SL exit produced only 1 trade in 1621 bars. The single trade was held for 1584 bars (~33 days) because SL/TP never triggered. Capital locked for 33 days prevented any further entries. Cascade ratio 1.0 (clean, no cascade-close). Conclusion: removing close-based exit on this strategy STARVES trade count. Need both exits: TP/SL as risk boundary AND signal-based exit to recycle capital.",
+      "verdict": "invalid (low sample, 1 trade) — Pure TP/SL exit produced only 1 trade in 1621 bars. The single trade was held for 1584 bars (~33 days) because SL/TP never triggered. Capital locked for 33 days prevented any further entries. Cascade ratio 1.0 (clean, no cascade-close). Conclusion: removing close-based exit on this strategy STARVES trade count. Need both exits: TP/SL as risk boundary AND signal-based exit to recycle capital.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T01:00:00"
@@ -99,7 +163,7 @@
       "iteration": 154,
       "hypothesis": "Remove close-based exit (ema_cross_under, rsi_exit, adx_exit) from EMA(5,13)+RSI(50)+ADX(14)+TP/SL 1:1 (1xATR SL) LONG ONLY XAUUSD 30m. A pure fixed TP/SL exit will test whether 1:1 ratio improves WR from 26%.",
       "metrics": null,
-      "verdict": "error: POST /backtests/adhoc \u2192 500: timeout exceeded when trying to connect (persistent server error after 3 retries)",
+      "verdict": "error: POST /backtests/adhoc → 500: timeout exceeded when trying to connect (persistent server error after 3 retries)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T00:45:00"
@@ -115,7 +179,7 @@
         "trades": 50,
         "net_profit": -140.159962677661
       },
-      "verdict": "rejected (PF=1.26<1.3, Sharpe=-0.75<0.5, WR=26%<40%) \u2014 IDENTICAL to iter 152 metrics. The close-based exit (ema_cross_under, rsi_adx_exit) overrides the fixed TP/SL entirely \u2014 changing ratio had zero effect because trades are closed by signal conditions before TP/SL can trigger. Cascade ratio 1.0 (clean). Next: remove close-based exit to let fixed TP/SL actually control trade exits.",
+      "verdict": "rejected (PF=1.26<1.3, Sharpe=-0.75<0.5, WR=26%<40%) — IDENTICAL to iter 152 metrics. The close-based exit (ema_cross_under, rsi_adx_exit) overrides the fixed TP/SL entirely — changing ratio had zero effect because trades are closed by signal conditions before TP/SL can trigger. Cascade ratio 1.0 (clean). Next: remove close-based exit to let fixed TP/SL actually control trade exits.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T00:30:00"
@@ -131,7 +195,7 @@
         "trades": 50,
         "net_profit": -140.159962677661
       },
-      "verdict": "rejected (PF=1.26<1.3, Sharpe=-0.75<0.5, WR=26%<40%) \u2014 RSI revert from 55 to 50 restored trade count to 50 (vs 13 at iter 151), but trade quality collapsed. WR at 26% is the weakest metric, producing negative Sharpe. Cascade ratio 1.0 (clean, no cascade-close). Next: tighten TP/SL from 1.5:1 to 1:1 to improve win rate.",
+      "verdict": "rejected (PF=1.26<1.3, Sharpe=-0.75<0.5, WR=26%<40%) — RSI revert from 55 to 50 restored trade count to 50 (vs 13 at iter 151), but trade quality collapsed. WR at 26% is the weakest metric, producing negative Sharpe. Cascade ratio 1.0 (clean, no cascade-close). Next: tighten TP/SL from 1.5:1 to 1:1 to improve win rate.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-26T00:15:00"
@@ -147,7 +211,7 @@
         "trades": 13,
         "net_profit": 61.785893224924
       },
-      "verdict": "rejected (Sharpe=0.09<0.5, WR=30.8%<40%) \u2014 RSI>55 reduced trade count from 50 to 13. Win rate improved marginally from 26% to 30.8%. PF improved from 1.26 to 1.61 (above 1.5!). Net profit positive at $61.79. But trade count is too low (13) for statistical significance, and Sharpe at 0.09 is essentially zero risk-adjusted return. Cascade ratio 1.0 (clean). Next: revert RSI to 50 to restore trade count.",
+      "verdict": "rejected (Sharpe=0.09<0.5, WR=30.8%<40%) — RSI>55 reduced trade count from 50 to 13. Win rate improved marginally from 26% to 30.8%. PF improved from 1.26 to 1.61 (above 1.5!). Net profit positive at $61.79. But trade count is too low (13) for statistical significance, and Sharpe at 0.09 is essentially zero risk-adjusted return. Cascade ratio 1.0 (clean). Next: revert RSI to 50 to restore trade count.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-25T23:45:00"

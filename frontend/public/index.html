@@ -81,6 +81,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.3s ease; }
+    .live-active { color: var(--success); }
+    .live-inactive { color: var(--text-sec); }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
@@ -134,7 +136,7 @@
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sec)">
-        <span id="liveIndicator">●</span> Live
+        <span id="liveIndicator" class="live-inactive">●</span> Live
       </div>
     </div>
 
@@ -378,13 +380,33 @@
       }
     }
 
+    async function updateLiveIndicator() {
+      try {
+        const res = await fetch(API+'/api/health', {
+          headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+        });
+        if (!res.ok) throw new Error('Not connected');
+        const data = await res.json();
+        const connected = data?.bridge?.connected || data?.bridge?.data?.connected || false;
+        const indicator = document.getElementById('liveIndicator');
+        indicator.className = connected ? 'live-active' : 'live-inactive';
+      } catch(e) {
+        const indicator = document.getElementById('liveIndicator');
+        if (indicator) indicator.className = 'live-inactive';
+      }
+    }
+
     async function init() {
       authCheck();
       await fetchActiveAccount();
+      await updateLiveIndicator();
+      setInterval(updateLiveIndicator, 10000);
       await Promise.all([fetchPrices(), fetchSentiment(), fetchStats(), fetchPositions()]);
       pricesInterval = setInterval(fetchPrices, 5000);
-      // Refresh positions every 10 seconds
+      // Refresh positions, stats, and sentiment every 10 seconds
       setInterval(fetchPositions, 10000);
+      setInterval(fetchStats, 10000);
+      setInterval(fetchSentiment, 10000);
       document.getElementById('lastUpdate').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
     }
     init();

@@ -818,6 +818,15 @@ async def consolidated_stats(account_id: Optional[str] = None):
     except Exception:
         pass
 
+    # ── Account Info (get balance/equity for requested account) ─────────────
+    try:
+        acct_info = await bridge.get_account(account_id)
+        if acct_info:
+            stats["balance"] = float(acct_info.get("balance", 0) or 0)
+            stats["equity"] = float(acct_info.get("equity", 0) or 0)
+    except Exception:
+        pass
+
     # ── Best Account ───────────────────────────────────────────────────────
     try:
         bridge_accounts = await bridge.list_accounts()
@@ -836,9 +845,6 @@ async def consolidated_stats(account_id: Optional[str] = None):
                         "balance": balance,
                         "equity": equity,
                     }
-                    # Also promote best balance/equity to top-level fields
-                    stats["balance"] = balance
-                    stats["equity"] = equity
             except Exception:
                 continue
         stats["best_account"] = best

@@ -1,0 +1,102 @@
+//@version=5
+strategy(title="EMA513_RSI14_ADX14_TP15SL_LONGONLY (iter 163)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=50)      // sweep: 3-20 step 2
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=100)     // sweep: 8-30 step 3
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=28)               // sweep: 7-28 step 7
+rsiMin = input.int(55, "RSI Minimum (Long)", minval=30, maxval=80)      // sweep: 40-70 step 5
+
+// ADX parameters (manual calculation)
+adxLen = input.int(14, "ADX Length", minval=7, maxval=28)               // sweep: 7-28 step 7
+adxMin = input.int(25, "ADX Minimum", minval=10, maxval=50)             // sweep: 10-45 step 5
+
+// TP/SL parameters (ATR-based)
+atrLen = input.int(14, "ATR Length", minval=7, maxval=28)               // sweep: 7-28 step 7
+tpMultiplier = input.float(1.5, "TP Multiplier (× ATR)", minval=0.5, maxval=5.0)  // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (× ATR)", minval=0.5, maxval=5.0)  // sweep: 0.5-2.0 step 0.5
+
+//--- indicators
+
+// EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+plot(emaFast, "EMA Fast", color.blue, 1)
+plot(emaSlow, "EMA Slow", color.red, 1)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+hline(50, "RSI Mid", color.gray, hline.style_dotted)
+hline(rsiMin, "RSI Min", color.green, hline.style_dashed)
+
+// Manual ADX calculation (replaces unsupported ta.adx())
+// Step 1: True Range
+trVal = ta.tr(true)
+// Step 2: Directional Movement
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = na(upMove) ? na : (upMove > downMove and upMove > 0 ? upMove : 0)
+minusDM = na(downMove) ? na : (downMove > upMove and downMove > 0 ? downMove : 0)
+// Step 3: Smoothed ATR, +DM, -DM using Wilder's RMA (same as ta.rma with alpha=1/length)
+plusDM_s = ta.rma(plusDM, adxLen)
+minusDM_s = ta.rma(minusDM, adxLen)
+tr_s = ta.rma(trVal, adxLen)
+// Step 4: Directional Indicators
+plusDI = 100 * plusDM_s / tr_s
+minusDI = 100 * minusDM_s / tr_s
+// Step 5: DX and ADX
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = ta.rma(dx, adxLen)
+
+plot(adxVal, "ADX", color.purple, 1)
+hline(adxMin, "ADX Min", color.maroon, hline.style_dashed)
+plot(plusDI, "+DI", color.green, 1)
+plot(minusDI, "-DI", color.red, 1)
+
+// ATR for SL/TP calculation
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+
+// Entry conditions (LONG ONLY)
+emaCrossOver = ta.crossover(emaFast, emaSlow)
+rsiOkLong = rsiVal > rsiMin
+adxOk = adxVal > adxMin
+
+longCondition = emaCrossOver and rsiOkLong and adxOk
+
+//--- exit management
+
+// Exit conditions
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+rsiExitLong = rsiVal < 50  // RSI drops below midline
+// ADX exit: ADX drops below threshold
+adxExit = adxVal < adxMin
+
+signalExit = emaCrossUnder or rsiExitLong or adxExit
+
+// Entry: long only
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+// Exit: TP/SL or signal-based
+if (strategy.position_size > 0)
+    // Calculate SL and TP levels
+    slDist = slMultiplier * atrVal
+    tpDist = tpMultiplier * atrVal
+    stopLevel = close - slDist
+    profitLevel = close + tpDist
+    
+    strategy.exit("TP/SL Exit", "Long", loss=int(slDist / syminfo.mintick), profit=int(tpDist / syminfo.mintick))
+    
+    // Signal-based exit (overrides TP/SL if triggered first)
+    if (signalExit)
+        strategy.close("Long")
+
+//--- visual markers
+plotshape(longCondition, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, title="Long Entry")
+plotshape(signalExit and strategy.position_size > 0, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small, title="Signal Exit")

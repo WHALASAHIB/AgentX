@@ -1,0 +1,62 @@
+//@version=5
+strategy(title="EMA_RSI_ADX_TP15_LONG_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(5, "EMA Fast", minval=1, maxval=50, group="Strategy")  // sweep: 3-10 step 1
+ema_slow = input.int(13, "EMA Slow", minval=1, maxval=100, group="Strategy")  // sweep: 8-20 step 1
+rsi_period = input.int(14, "RSI Period", minval=2, maxval=50, group="Filters")  // sweep: 7-21 step 1
+rsi_threshold = input.int(55, "RSI Entry Threshold", minval=30, maxval=80, group="Filters")  // sweep: 50-65 step 5
+adx_period = input.int(14, "ADX Period", minval=5, maxval=30, group="Filters")  // sweep: 10-20 step 2
+adx_threshold = input.int(14, "ADX Minimum", minval=5, maxval=50, group="Filters")  // sweep: 10-20 step 2
+atr_period = input.int(14, "ATR Period", minval=5, maxval=30, group="Risk")  // sweep: 10-20 step 2
+tp_ratio = input.float(1.5, "TP Ratio (×ATR)", minval=0.5, maxval=5.0, step=0.1, group="Risk")  // sweep: 1.0-2.0 step 0.1 — INCREASED from 1:1 to 1.5:1
+sl_ratio = input.float(1.0, "SL Ratio (×ATR)", minval=0.5, maxval=5.0, step=0.1, group="Risk")  // sweep: 0.5-2.0 step 0.1
+
+//--- indicators
+ema_fast_val = ta.ema(close, ema_fast)
+ema_slow_val = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_period)
+atr_val = ta.atr(atr_period)
+
+//--- manual ADX calculation (engine does not support ta.adx())
+// Step 1: True Range
+prev_close = close[1]
+tr_val = math.max(high - low, math.abs(high - prev_close), math.abs(low - prev_close))
+// Step 2: Directional Movement
+prev_high = high[1]
+prev_low = low[1]
+up_move = high - prev_high
+down_move = prev_low - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0.0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0.0
+// Step 3: Smoothing (Wilder's = EMA with alpha=1/period)
+smoothed_tr = ta.ema(tr_val, adx_period)
+smoothed_plus_dm = ta.ema(plus_dm, adx_period)
+smoothed_minus_dm = ta.ema(minus_dm, adx_period)
+// Step 4: Directional Indicators
+plus_di = 100.0 * smoothed_plus_dm / smoothed_tr
+minus_di = 100.0 * smoothed_minus_dm / smoothed_tr
+// Step 5: DX
+dx = 100.0 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+// Step 6: ADX
+adx_line = ta.ema(dx, adx_period)
+
+//--- entry conditions
+ema_cross_over = ta.crossover(ema_fast_val, ema_slow_val)
+ema_cross_under = ta.crossunder(ema_fast_val, ema_slow_val)
+
+// LONG ONLY: entry requires EMA crossover + RSI above threshold + ADX above threshold (trending market)
+long_entry = ema_cross_over and rsi_val > rsi_threshold and adx_line > adx_threshold
+long_exit_signal = ema_cross_under
+
+//--- entry logic
+if long_entry
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    // Fixed TP/SL using ATR — loss=1xATR, profit=1.5xATR (1.5:1 ratio)
+    strategy.exit("TP/SL", "Long", loss=int(atr_val * sl_ratio / syminfo.mintick), profit=int(atr_val * tp_ratio / syminfo.mintick))
+    // EMA crossunder early exit to recycle capital — prevents holding through trend reversals
+    if long_exit_signal
+        strategy.close("Long", comment="EMA_XU")
