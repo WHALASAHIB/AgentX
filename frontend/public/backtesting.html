@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Backtesting — Trading Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg: #050508; --card: #0d0d1a; --text: #e2e8f0; --text-sec: #94a3b8; --border: #1e1e2e; --accent: #00d4aa; --accent-hover: #00b894; --secondary: #6366f1; --danger: #ef4444; --success: #22c55e; --sidebar-w: 240px; --radius: 12px; }
+    .light { --bg: #f5f5f7; --card: #ffffff; --text: #1a1a2e; --text-sec: #64748b; --border: #e2e8f0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--card); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s, background 0.3s; }
+    .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .sidebar-brand svg { width: 32px; height: 32px; flex-shrink: 0; }
+    .sidebar-brand span { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: var(--text-sec); text-decoration: none; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; }
+    .nav-item:hover, .nav-item.active { color: var(--text); background: rgba(0,212,170,0.06); }
+    .nav-item.active { border-left-color: var(--accent); color: var(--accent); }
+    .nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-footer { padding: 12px 20px; border-top: 1px solid var(--border); }
+    .theme-toggle { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-sec); margin-bottom: 8px; border: none; width: 100%; font-family: 'Inter', sans-serif; }
+    .theme-toggle:hover { background: var(--border); }
+    .logout-btn { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--danger); font-size: 13px; cursor: pointer; width: 100%; font-family: 'Inter', sans-serif; }
+    .logout-btn:hover { background: rgba(239,68,68,0.1); }
+    .main-content { margin-left: var(--sidebar-w); padding: 24px 32px; min-height: 100vh; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; }
+    .hamburger { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px; z-index: 101; }
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .backtest-form { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+    .form-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+    .form-group { flex: 1; min-width: 180px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .form-group select, .form-group input { width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: 'Inter', sans-serif; outline: none; }
+    .form-group select:focus, .form-group input:focus { border-color: var(--accent); }
+    .form-group select option { background: var(--card); color: var(--text); }
+    .btn-primary { padding: 10px 24px; background: var(--accent); color: #050508; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .results-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+    .metric-card .metric-value { font-size: 20px; font-weight: 700; }
+    .metric-card .metric-value.green { color: var(--success); }
+    .metric-card .metric-value.red { color: var(--danger); }
+    .metric-card .metric-label { font-size: 11px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+    .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; }
+    .chart-container canvas { max-height: 300px; }
+    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-sec); }
+    .loading::after { content: ''; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    /* === Timeline slider — enhanced styling === */
+    input[type=range] {
+      width: 100%; height: 6px;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) 12%, var(--border) 12%);
+      border-radius: 4px; outline: none;
+      -webkit-appearance: none;
+    }
+    /* WebKit track (must be transparent so the element background shows through) */
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 6px; background: transparent; border-radius: 4px;
+    }
+    /* WebKit thumb — glow + hover scale */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      background: var(--accent); border-radius: 50%; cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,212,170,0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin-top: -6px;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.22);
+      box-shadow: 0 0 16px rgba(0,212,170,0.7);
+    }
+    /* Firefox track */
+    input[type=range]::-moz-range-track {
+      height: 6px; background: var(--border); border-radius: 4px; border: none;
+    }
+    /* Firefox filled (progress) segment */
+    input[type=range]::-moz-range-progress {
+      height: 6px; background: var(--accent); border-radius: 4px;
+    }
+    /* Firefox thumb — glow + hover scale */
+    input[type=range]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      background: var(--accent); border: none; border-radius: 50%; cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,212,170,0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    input[type=range]::-moz-range-thumb:hover {
+      transform: scale(1.22);
+      box-shadow: 0 0 16px rgba(0,212,170,0.7);
+    }
+    /* Value label — pill background */
+    .slider-value {
+      font-size: 13px; font-weight: 600;
+      color: var(--accent);
+      min-width: 68px; text-align: center;
+      background: rgba(0,212,170,0.1);
+      padding: 4px 14px; border-radius: 20px;
+      border: 1px solid rgba(0,212,170,0.2);
+    }
+    .light .slider-value {
+      background: rgba(0,212,170,0.08);
+      border-color: rgba(0,212,170,0.18);
+    }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .overlay.show { display: block; }
+      .main-content { margin-left: 0; padding: 16px; } .hamburger { display: block; }
+      .form-row { flex-direction: column; } .form-group { min-width: 100%; }
+      .results-metrics { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+      <a href="portfolio.html" class="nav-item"><span class="icon">💼</span> Portfolio</a>
+      <a href="bots.html" class="nav-item"><span class="icon">🤖</span> Bot Control</a>
+      <a href="backtesting.html" class="nav-item active"><span class="icon">🔙</span> Backtesting</a>
+      <a href="accounts.html" class="nav-item"><span class="icon">🏦</span> Accounts</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📈</span> Analytics</a>
+      <a href="scripts.html" class="nav-item"><span class="icon">📝</span> Scripts</a>
+      <a href="trades.html" class="nav-item"><span class="icon">🔄</span> Trades</a>
+      <a href="decision-log.html" class="nav-item"><span class="icon">📋</span> Decisions</a>
+      <a href="ai.html" class="nav-item"><span class="icon">🧠</span> AI Agents</a>
+      <a href="settings.html" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <h1>Backtesting</h1>
+      </div>
+    </div>
+
+    <div class="backtest-form fade-in">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Strategy (80 available)</label>
+          <select id="strategySelect"><option value="">Loading 80 strategies...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Symbol</label>
+          <select id="symbolSelect">
+            <option value="XAUUSD">XAUUSD</option>
+            <option value="EURUSD">EURUSD</option>
+            <option value="GBPUSD">GBPUSD</option>
+            <option value="USDJPY">USDJPY</option>
+            <option value="USDCHF">USDCHF</option>
+            <option value="USDCAD">USDCAD</option>
+            <option value="AUDUSD">AUDUSD</option>
+            <option value="NZDUSD">NZDUSD</option>
+            <option value="BTCUSD">BTCUSD</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Timeframe</label>
+          <select id="timeframeSelect">
+            <option value="">Default</option>
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="30m">30m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+            <option value="1d">1d</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>From</label>
+          <input type="date" id="dateFrom">
+        </div>
+        <div class="form-group">
+          <label>To</label>
+          <input type="date" id="dateTo">
+        </div>
+        <div class="form-group" style="flex:0;min-width:180px;">
+          <label>Timeline</label>
+          <div class="slider-row">
+            <input type="range" id="timelineSlider" min="0.25" max="10" step="0.25" value="1"
+              oninput="updateTimeline(this.value)">
+            <span class="slider-value" id="timelineLabel">1 year</span>
+          </div>
+        </div>
+        <div class="form-group" style="flex:0;min-width:auto;">
+          <label>&nbsp;</label>
+          <button class="btn-primary" id="runBtn" onclick="runBacktest()">▶ Run</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultsArea" style="display:none;">
+      <div class="section-title">📊 Backtest Results</div>
+      <div class="results-metrics" id="metricsGrid"></div>
+      <div class="chart-container"><h3 class="section-title">📈 Equity Curve</h3><canvas id="btEquityChart"></canvas></div>
+      <div class="card" id="tradesSummary"><h3 class="section-title">📋 Trade Summary</h3></div>
+    </div>
+  </main>
+
+  <script>
+    const API = '';
+    let btChart = null;
+
+    function authCheck() { if(!localStorage.getItem('token')) window.location.href='signin.html'; }
+    function logout() { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href='signin.html'; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+    function toggleTheme() { document.body.classList.toggle('light'); const l=document.body.classList.contains('light'); localStorage.setItem('theme',l?'light':'dark'); document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode'; }
+    (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
+    function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';return(d===0?n.toFixed(0):n.toFixed(d)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+    function fmtUsd(n){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const sign=n>=0?'':'−';return sign+'$'+fmt(Math.abs(n));}
+    function updateTimeline(years) {
+      const to = new Date();
+      const from = new Date();
+      from.setFullYear(from.getFullYear() - Number(years));
+      document.getElementById('dateTo').value = to.toISOString().slice(0,10);
+      document.getElementById('dateFrom').value = from.toISOString().slice(0,10);
+      const y = Number(years);
+      if (y < 1) document.getElementById('timelineLabel').textContent = Math.round(y*12) + ' months';
+      else if (y === 1) document.getElementById('timelineLabel').textContent = '1 year';
+      else document.getElementById('timelineLabel').textContent = y + ' years';
+    }
+
+    async function loadStrategies() {
+      try {
+        const res = await fetch(API+'/api/backtest/strategies');
+        const strategies = await res.json();
+        const sel = document.getElementById('strategySelect');
+        sel.innerHTML = '<option value="">Select a strategy...</option>';
+        strategies.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.name;
+          opt.textContent = s.name.replace(/_/g,' ');
+          sel.appendChild(opt);
+        });
+        // Add built-in strategies if not in list
+        const builtins = ['sma_crossover','macd_crossover','bollinger_bands','volatility_breakout','gold_phoenix'];
+        const existingNames = new Set(strategies.map(s=>s.name));
+        builtins.forEach(b => {
+          if(!existingNames.has(b)) {
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b.replace(/_/g,' ') + ' (built-in)';
+            sel.appendChild(opt);
+          }
+        });
+      } catch(e) {
+        document.getElementById('strategySelect').innerHTML = '<option value="">Error loading strategies</option>';
+        console.error('Strategies error:', e);
+      }
+    }
+
+    async function runBacktest() {
+      const btn = document.getElementById('runBtn');
+      btn.disabled = true; btn.textContent = '⏳ Running...';
+      const strategy = document.getElementById('strategySelect').value;
+      const symbol = document.getElementById('symbolSelect').value;
+      const timeframe = document.getElementById('timeframeSelect').value;
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+      if(!strategy) { alert('Please select a strategy'); btn.disabled=false; btn.textContent='▶ Run'; return; }
+      try {
+        const body = { strategy_name: strategy, symbol };
+        if(timeframe) body.timeframe = timeframe;
+        if(dateFrom) body.date_from = dateFrom;
+        if(dateTo) body.date_to = dateTo;
+        const res = await fetch(API+'/api/backtest/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+localStorage.getItem('token') },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.detail||'Backtest failed');
+        displayResults(data);
+      } catch(e) {
+        alert('Error: '+e.message);
+        console.error(e);
+      }
+      btn.disabled = false; btn.textContent = '▶ Run';
+    }
+
+    function displayResults(data) {
+      document.getElementById('resultsArea').style.display = 'block';
+      const metrics = data.metrics || data;
+      const grid = document.getElementById('metricsGrid');
+      // Convert decimal rates to percentages for display
+      const winRatePct = (metrics.win_rate || 0) * 100;
+      const maxDdPct = (metrics.max_drawdown || metrics.max_dd || 0) * 100;
+      const maxDailyDdPct = (metrics.max_daily_dd_pct || 0) * 100;
+      const items = [
+        { label:'Total Trades', val: fmt(metrics.total_trades,0), cls:'' },
+        { label:'Win Rate', val: fmt(winRatePct,1)+'%', cls:winRatePct>=50?'green':'red' },
+        { label:'Profit Factor', val: fmt(metrics.profit_factor,2), cls:(metrics.profit_factor||0)>=1?'green':'red' },
+        { label:'Sharpe', val: fmt(metrics.sharpe_ratio||metrics.sharpe,2), cls:(metrics.sharpe_ratio||metrics.sharpe||0)>=1?'green':'red' },
+        { label:'Max DD', val: fmt(maxDdPct,1)+'%', cls:'red' },
+        { label:'Max Daily DD%', val: fmt(maxDailyDdPct,1)+'%', cls:maxDailyDdPct>5?'red':'green' },
+        { label:'Expectancy', val: fmtUsd(metrics.expectancy||0), cls:(metrics.expectancy||0)>=0?'green':'red' },
+        { label:'Net Profit', val: fmtUsd(metrics.net_profit||metrics.net_pnl||0), cls:(metrics.net_profit||0)>=0?'green':'red' }
+      ];
+      grid.innerHTML = items.map(i => `<div class="metric-card fade-in"><div class="metric-value ${i.cls}">${i.val}</div><div class="metric-label">${i.label}</div></div>`).join('');
+
+      const equity = data.equity_curve || [];
+      const ctx = document.getElementById('btEquityChart').getContext('2d');
+      if(btChart) btChart.destroy();
+      if(equity.length>0) {
+        btChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: equity.map((_,i)=>i),
+            datasets: [{ label:'Equity', data: equity.map(p=>p.equity), borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,0.08)', fill:true, tension:0.3, pointRadius:0 }]
+          },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(30,30,46,0.3)'}}, y:{grid:{color:'rgba(30,30,46,0.3)'}} } }
+        });
+      } else {
+        ctx.canvas.parentElement.innerHTML+='<div class="loading">No equity curve data</div>';
+      }
+
+      const trades = data.trades || [];
+      const ts = document.getElementById('tradesSummary');
+      if(trades.length>0) {
+        const PAGE_SIZE = 50;
+        let btPage = 0;
+        function renderTradePage(page) {
+          const start = page * PAGE_SIZE;
+          const end = Math.min(start + PAGE_SIZE, trades.length);
+          const pageTrades = trades.slice(start, end);
+          const totalPages = Math.ceil(trades.length / PAGE_SIZE);
+          let rows = pageTrades.map((t,i) => `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px 4px">${start + i + 1}</td>
+            <td style="padding:6px 4px">${t.side||'N/A'}</td>
+            <td style="padding:6px 4px">${t.entry_time||''}<br><span style="font-size:11px;color:var(--text-sec)">${t.entry_price!==undefined?fmt(t.entry_price,5):t.entry||'N/A'}</span></td>
+            <td style="padding:6px 4px">${t.exit_time||''}<br><span style="font-size:11px;color:var(--text-sec)">${t.exit_price!==undefined?fmt(t.exit_price,5):t.exit||'N/A'}</span></td>
+            <td style="padding:6px 4px;color:${(t.pnl||0)>=0?'var(--success)':'var(--danger)'}">${fmtUsd(t.pnl||0)}</td>
+          </tr>`).join('');
+          let paginationHtml = '';
+          if(totalPages > 1) {
+            paginationHtml = `<div style="display:flex;justify-content:center;gap:8px;padding:12px 0;">
+              <button onclick="btPage=Math.max(0,btPage-1);renderTradePage(btPage)" style="padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:12px;" ${page===0?'disabled':''}>◀ Prev</button>
+              <span style="font-size:12px;color:var(--text-sec);padding:4px 0">Page ${page+1} of ${totalPages} (${trades.length} total)</span>
+              <button onclick="btPage=Math.min(${totalPages-1},btPage+1);renderTradePage(btPage)" style="padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:12px;" ${page===totalPages-1?'disabled':''}>Next ▶</button>
+            </div>`;
+          }
+          ts.innerHTML = `<h3 class="section-title">📋 Trade Summary — ${trades.length} trades</h3>
+            <div style="max-height:400px;overflow-y:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr style="border-bottom:1px solid var(--border);color:var(--text-sec);text-align:left;">
+                  <th style="padding:8px 4px">#</th><th style="padding:8px 4px">Type</th><th style="padding:8px 4px">Entry</th><th style="padding:8px 4px">Exit</th><th style="padding:8px 4px">P&L</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+              ${paginationHtml}
+            </div>`;
+        }
+        renderTradePage(0);
+      } else {
+        ts.innerHTML = `<h3 class="section-title">📋 Trade Summary</h3><div class="loading">No trades in this backtest</div>`;
+      }
+
+      document.getElementById('resultsArea').scrollIntoView({behavior:'smooth'});
+    }
+
+    authCheck(); loadStrategies(); updateTimeline(document.getElementById('timelineSlider')?.value || 1);
+  </script>
+</body>
+</html>

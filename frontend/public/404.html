@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>404 — Page Not Found</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #050508; --card: #0d0d1a; --text: #e2e8f0; --text-sec: #94a3b8; --border: #1e1e2e; --accent: #00d4aa; }
+    .light { --bg: #f5f5f7; --card: #ffffff; --text: #1a1a2e; --text-sec: #64748b; --border: #e2e8f0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; transition: background 0.3s, color 0.3s; }
+    .container { text-align: center; padding: 24px; max-width: 440px; }
+    .error-code { font-size: 96px; font-weight: 800; background: linear-gradient(135deg, var(--accent), #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+    h1 { font-size: 24px; font-weight: 700; margin: 16px 0 8px; }
+    p { color: var(--text-sec); font-size: 15px; line-height: 1.5; margin-bottom: 24px; }
+    .btn-home { display: inline-block; padding: 12px 28px; background: var(--accent); color: #050508; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+    .btn-home:hover { opacity: 0.85; }
+    .theme-toggle { position: fixed; top: 16px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--text); cursor: pointer; font-size: 14px; font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+  <div class="container">
+    <div class="error-code">404</div>
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for doesn't exist or has been moved. Let's get you back on track.</p>
+    <a href="index.html" class="btn-home">← Back to Dashboard</a>
+  </div>
+  <script>
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      document.getElementById('themeBtn').textContent = isLight ? '☀️ Light' : '🌙 Dark';
+    }
+    (function() {
+      const t = localStorage.getItem('theme');
+      if(t === 'light') { document.body.classList.add('light'); document.getElementById('themeBtn').textContent = '☀️ Light'; }
+    })();
+  </script>
+</body>
+</html>

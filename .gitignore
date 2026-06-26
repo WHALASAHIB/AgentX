@@ -34,7 +34,6 @@ bots/logs/
 
 # Cloned third-party repos — not our source code
 research_division/repos/
-*.html
 *.bak
 /tmp/
 temp/

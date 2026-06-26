@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Scripts — Trading Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #050508; --card: #0d0d1a; --text: #e2e8f0; --text-sec: #94a3b8; --border: #1e1e2e; --accent: #00d4aa; --secondary: #6366f1; --danger: #ef4444; --success: #22c55e; --sidebar-w: 240px; --radius: 12px; }
+    .light { --bg: #f5f5f7; --card: #ffffff; --text: #1a1a2e; --text-sec: #64748b; --border: #e2e8f0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--card); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s, background 0.3s; }
+    .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .sidebar-brand svg { width: 32px; height: 32px; flex-shrink: 0; }
+    .sidebar-brand span { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: var(--text-sec); text-decoration: none; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; }
+    .nav-item:hover, .nav-item.active { color: var(--text); background: rgba(0,212,170,0.06); }
+    .nav-item.active { border-left-color: var(--accent); color: var(--accent); }
+    .nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-footer { padding: 12px 20px; border-top: 1px solid var(--border); }
+    .theme-toggle { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-sec); margin-bottom: 8px; border: none; width: 100%; font-family: 'Inter', sans-serif; }
+    .theme-toggle:hover { background: var(--border); }
+    .logout-btn { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--danger); font-size: 13px; cursor: pointer; width: 100%; font-family: 'Inter', sans-serif; }
+    .logout-btn:hover { background: rgba(239,68,68,0.1); }
+    .main-content { margin-left: var(--sidebar-w); padding: 24px 32px; min-height: 100vh; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; }
+    .hamburger { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px; z-index: 101; }
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+    .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; min-height: calc(100vh - 140px); }
+    .file-tree { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; overflow-y: auto; }
+    .file-tree .tree-title { font-size: 13px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .file-tree .folder { margin-bottom: 4px; }
+    .file-tree .folder-name { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 13px; font-weight: 500; color: var(--text); cursor: pointer; border-radius: 6px; }
+    .file-tree .folder-name:hover { background: rgba(0,212,170,0.06); }
+    .file-tree .folder-children { padding-left: 20px; }
+    .file-tree .file-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; font-size: 13px; color: var(--text-sec); cursor: pointer; border-radius: 6px; transition: all 0.15s; }
+    .file-tree .file-item:hover, .file-tree .file-item.active { color: var(--accent); background: rgba(0,212,170,0.06); }
+    .code-panel { background: #0a0a14; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+    .light .code-panel { background: #f8f8fa; }
+    .code-header { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 500; color: var(--text-sec); display: flex; justify-content: space-between; align-items: center; }
+    .code-content { flex: 1; overflow-y: auto; overflow-x: auto; padding: 16px; font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; tab-size: 4; min-height: 200px; }
+    .code-content .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-sec); }
+    .code-content .loading::after { content: ''; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; }
+    .code-content .placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-sec); font-family: 'Inter', sans-serif; font-size: 14px; }
+    .kw { color: #ff79c6; } .str { color: #f1fa8c; } .cm { color: #6272a4; } .fn { color: #50fa7b; } .num { color: #bd93f9; } .dec { color: #8be9fd; } .imp { color: #ff5555; } .op { color: #ff79c6; }
+    .light .kw { color: #d63384; } .light .str { color: #0d9488; } .light .cm { color: #94a3b8; } .light .fn { color: #059669; } .light .num { color: #7c3aed; } .light .dec { color: #0284c7; } .light .imp { color: #dc2626; } .light .op { color: #d63384; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .overlay.show { display: block; }
+      .main-content { margin-left: 0; padding: 16px; } .hamburger { display: block; }
+      .editor-layout { grid-template-columns: 1fr; height: auto; }
+      .file-tree { max-height: 250px; } .code-panel { min-height: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+      <a href="portfolio.html" class="nav-item"><span class="icon">💼</span> Portfolio</a>
+      <a href="bots.html" class="nav-item"><span class="icon">🤖</span> Bot Control</a>
+      <a href="backtesting.html" class="nav-item"><span class="icon">🔙</span> Backtesting</a>
+      <a href="accounts.html" class="nav-item"><span class="icon">🏦</span> Accounts</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📈</span> Analytics</a>
+      <a href="scripts.html" class="nav-item active"><span class="icon">📝</span> Scripts</a>
+      <a href="trades.html" class="nav-item"><span class="icon">🔄</span> Trades</a>
+      <a href="decision-log.html" class="nav-item"><span class="icon">📋</span> Decisions</a>
+      <a href="ai.html" class="nav-item"><span class="icon">🧠</span> AI Agents</a>
+      <a href="settings.html" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <h1>Script Editor</h1>
+      </div>
+    </div>
+    <div class="editor-layout">
+      <div class="file-tree" id="fileTree"><div class="loading">Loading files...</div></div>
+      <div class="code-panel">
+        <div class="code-header"><span id="fileName">Select a file</span></div>
+        <div class="code-content" id="codeContent"><div class="placeholder">📁 Click a file in the tree to view its code</div></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API = '';
+    function authCheck() { if(!localStorage.getItem('token')) window.location.href='signin.html'; }
+    function logout() { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href='signin.html'; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+    function toggleTheme() { document.body.classList.toggle('light'); const l=document.body.classList.contains('light'); localStorage.setItem('theme',l?'light':'dark'); document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode'; }
+    (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
+
+    function highlightPython(code) {
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const h = esc(code);
+      const out = [];
+      const kw = new Set(['import','from','as','def','class','return','if','elif','else','for','while','in','not','and','or','True','False','None','try','except','finally','with','async','await','pass','break','continue','raise','yield','lambda','self','print']);
+      const dunder = new Set(['init','name','main','file','str','repr','eq','ne','lt','gt','le','ge','add','sub','mul','div','len','getitem','setitem','delitem','iter','next','enter','exit','call','hash','bool','new','class']);
+      let i = 0;
+      while (i < h.length) {
+        // Single-line comment: # ...
+        if (h[i] === '#' || (h[i] === '&' && h.slice(i, i+4) === '&lt;' && h.slice(i+4, i+6) === '--')) {
+          const end = h.indexOf('\n', i);
+          const line = end === -1 ? h.slice(i) : h.slice(i, end);
+          out.push('<span class="cm">' + line + '</span>');
+          i += line.length;
+          continue;
+        }
+        // Double-quoted string: "..."
+        if (h[i] === '"') {
+          const end = h.indexOf('"', i+1);
+          if (end === -1) { out.push(h.slice(i)); break; }
+          const s = h.slice(i, end+1);
+          out.push('<span class="str">' + s + '</span>');
+          i = end + 1;
+          continue;
+        }
+        // Single-quoted string: '...'
+        if (h[i] === "'") {
+          const end = h.indexOf("'", i+1);
+          if (end === -1) { out.push(h.slice(i)); break; }
+          const s = h.slice(i, end+1);
+          out.push('<span class="str">' + s + '</span>');
+          i = end + 1;
+          continue;
+        }
+        // Triple-double-quote: &quot;&quot;&quot;...&quot;&quot;&quot; (HTML escaped)
+        if (h.slice(i, i+24) === '&quot;&quot;&quot;') {
+          const end = h.indexOf('&quot;&quot;&quot;', i+24);
+          if (end === -1) { out.push(h.slice(i)); break; }
+          out.push('<span class="cm">' + h.slice(i, end+24) + '</span>');
+          i = end + 24;
+          continue;
+        }
+        // Triple-single-quote: &apos;&apos;&apos;...&apos;&apos;&apos;
+        if (h.slice(i, i+18) === "&apos;&apos;&apos;") {
+          const end = h.indexOf("&apos;&apos;&apos;", i+18);
+          if (end === -1) { out.push(h.slice(i)); break; }
+          out.push('<span class="cm">' + h.slice(i, end+18) + '</span>');
+          i = end + 18;
+          continue;
+        }
+        // Number (word boundary)
+        if (/[0-9]/.test(h[i]) && (i === 0 || /\W/.test(h[i-1]))) {
+          let j = i;
+          while (j < h.length && /[0-9.eE+\-]/.test(h[j])) j++;
+          if (j > i) {
+            out.push('<span class="num">' + h.slice(i, j) + '</span>');
+            i = j;
+            continue;
+          }
+        }
+        // Word — check for keywords and dunder methods
+        if (/[a-zA-Z_]/.test(h[i])) {
+          let j = i;
+          while (j < h.length && /\w/.test(h[j])) j++;
+          const word = h.slice(i, j);
+          if (kw.has(word)) {
+            out.push('<span class="kw">' + word + '</span>');
+          } else if (word.startsWith('__') && word.endsWith('__') && dunder.has(word.slice(2,-2))) {
+            out.push('<span class="dec">' + word + '</span>');
+          } else {
+            out.push(word);
+          }
+          i = j;
+          continue;
+        }
+        // Everything else
+        out.push(h[i]);
+        i++;
+      }
+      return out.join('');
+    }
+
+    async function loadFileTree() {
+      try {
+        const res = await fetch(API+'/api/editor/files');
+        const data = await res.json();
+        renderTree(data.files||[]);
+      } catch(e) { document.getElementById('fileTree').innerHTML='<div class="placeholder">Error loading files</div>'; }
+    }
+
+    function renderTree(files, container) {
+      const tree = container || document.getElementById('fileTree');
+      tree.innerHTML = '<div class="tree-title">📂 Bot Scripts</div>';
+      files.forEach(f => {
+        if(f.type === 'folder') {
+          const div = document.createElement('div');
+          div.className = 'folder';
+          const nameDiv = document.createElement('div');
+          nameDiv.className = 'folder-name';
+          nameDiv.innerHTML = '📁 ' + f.name;
+          nameDiv.onclick = () => { const c=div.querySelector('.folder-children'); if(c) c.style.display=c.style.display==='none'?'block':'none'; };
+          div.appendChild(nameDiv);
+          const children = document.createElement('div');
+          children.className = 'folder-children';
+          if(f.children) renderTree(f.children, children);
+          div.appendChild(children);
+          tree.appendChild(div);
+        } else {
+          const item = document.createElement('div');
+          item.className = 'file-item';
+          item.innerHTML = '📄 ' + f.name;
+          item.onclick = () => loadFile(f.path, item);
+          tree.appendChild(item);
+        }
+      });
+    }
+
+    async function loadFile(path, el) {
+      document.querySelectorAll('.file-item.active').forEach(e=>e.classList.remove('active'));
+      if(el) el.classList.add('active');
+      document.getElementById('fileName').textContent = path;
+      document.getElementById('codeContent').innerHTML = '<div class="loading">Loading file...</div>';
+      try {
+        const res = await fetch(API+'/api/editor/files/'+path);
+        const data = await res.json();
+        const content = data.content || '';
+        document.getElementById('codeContent').innerHTML = highlightPython(content);
+      } catch(e) {
+        document.getElementById('codeContent').innerHTML = '<div class="placeholder">Error loading file: '+e.message+'</div>';
+      }
+    }
+
+    authCheck(); loadFileTree();
+  </script>
+</body>
+</html>

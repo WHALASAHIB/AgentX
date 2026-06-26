@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Accounts — Trading Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#050508;--card:#0d0d1a;--text:#e2e8f0;--text-sec:#94a3b8;--border:#1e1e2e;--accent:#00d4aa;--secondary:#6366f1;--danger:#ef4444;--success:#22c55e;--sidebar-w:240px;--radius:12px; }
+    .light { --bg:#f5f5f7;--card:#ffffff;--text:#1a1a2e;--text-sec:#64748b;--border:#e2e8f0; }
+    * { margin:0;padding:0;box-sizing:border-box; }
+    body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.3s,color 0.3s; }
+    ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    .sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--card);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;z-index:100;transition:transform 0.3s,background 0.3s;}
+    .sidebar-brand{padding:0 20px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .sidebar-brand svg{width:32px;height:32px;flex-shrink:0;}
+    .sidebar-brand span{font-size:16px;font-weight:700;color:var(--accent);}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:var(--text-sec);text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;}
+    .nav-item:hover,.nav-item.active{color:var(--text);background:rgba(0,212,170,0.06);}
+    .nav-item.active{border-left-color:var(--accent);color:var(--accent);}
+    .nav-item .icon{font-size:18px;width:22px;text-align:center;}
+    .sidebar-footer{padding:12px 20px;border-top:1px solid var(--border);}
+    .theme-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-sec);margin-bottom:8px;border:none;width:100%;font-family:'Inter',sans-serif;}
+    .theme-toggle:hover{background:var(--border);}
+    .logout-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--danger);font-size:13px;cursor:pointer;width:100%;font-family:'Inter',sans-serif;}
+    .logout-btn:hover{background:rgba(239,68,68,0.1);}
+    .main-content{margin-left:var(--sidebar-w);padding:24px 32px;min-height:100vh;}
+    .page-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+    .page-header h1{font-size:26px;font-weight:700;}
+    .hamburger{display:none;background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;padding:4px;z-index:101;}
+    .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+    .section-title{font-size:18px;font-weight:600;margin-bottom:16px;}
+    .accounts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:24px;}
+    .account-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:24px;transition:all 0.2s;position:relative;}
+    .account-card.active{border-color:var(--accent);box-shadow:0 0 20px rgba(0,212,170,0.1);}
+    .account-card .acct-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+    .account-card .acct-name{font-size:16px;font-weight:600;}
+    .account-card .acct-server{font-size:12px;color:var(--text-sec);margin-top:2px;}
+    .account-card .acct-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;}
+    .acct-badge.active-badge{background:rgba(0,212,170,0.15);color:var(--accent);}
+    .acct-badge.inactive-badge{background:rgba(148,163,184,0.15);color:var(--text-sec);}
+    .acct-details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+    .acct-detail .detail-label{font-size:11px;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;}
+    .acct-detail .detail-value{font-size:18px;font-weight:700;margin-top:2px;}
+    .detail-value.green{color:var(--success);}
+    .detail-value.red{color:var(--danger);}
+    .btn-switch{padding:8px 20px;background:var(--secondary);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;width:100%;}
+    .btn-switch:hover{opacity:0.9;}
+    .btn-switch:disabled{opacity:0.4;cursor:not-allowed;}
+    .positions-section{margin-top:24px;}
+    .positions-section table{width:100%;border-collapse:collapse;font-size:13px;}
+    .positions-section th{text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;}
+    .positions-section td{padding:8px;border-bottom:1px solid var(--border);}
+    .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-sec);}
+    .loading::after{content:'';width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-left:8px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .fade-in{animation:fadeIn 0.3s ease;}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.overlay.show{display:block;}
+      .main-content{margin-left:0;padding:16px;}.hamburger{display:block;}
+      .accounts-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+      <a href="portfolio.html" class="nav-item"><span class="icon">💼</span> Portfolio</a>
+      <a href="bots.html" class="nav-item"><span class="icon">🤖</span> Bot Control</a>
+      <a href="backtesting.html" class="nav-item"><span class="icon">🔙</span> Backtesting</a>
+      <a href="accounts.html" class="nav-item active"><span class="icon">🏦</span> Accounts</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📈</span> Analytics</a>
+      <a href="scripts.html" class="nav-item"><span class="icon">📝</span> Scripts</a>
+      <a href="trades.html" class="nav-item"><span class="icon">🔄</span> Trades</a>
+      <a href="decision-log.html" class="nav-item"><span class="icon">📋</span> Decisions</a>
+      <a href="ai.html" class="nav-item"><span class="icon">🧠</span> AI Agents</a>
+      <a href="settings.html" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <h1>Current Account</h1>
+      </div>
+    </div>
+
+    <div class="accounts-grid" id="accountsGrid"><div class="loading">Loading accounts...</div></div>
+    <div class="card positions-section" id="positionsSection" style="display:none;">
+      <h3 class="section-title">📊 Open Positions</h3>
+      <table><thead><tr><th>Symbol</th><th>Type</th><th>Volume</th><th>Entry</th><th>Current</th><th>P&L</th></tr></thead><tbody id="positionsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody></table>
+    </div>
+  </main>
+
+  <script>
+    const API='';
+    function authCheck(){if(!localStorage.getItem('token'))window.location.href='signin.html';}
+    function logout(){localStorage.removeItem('token');localStorage.removeItem('user');window.location.href='signin.html';}
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    function toggleTheme(){document.body.classList.toggle('light');const l=document.body.classList.contains('light');localStorage.setItem('theme',l?'light':'dark');document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode';}
+    (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
+    function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';return(d===0?n.toFixed(0):n.toFixed(d)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+    function fmtUsd(n){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const sign=n>=0?'':'−';return sign+'$'+fmt(Math.abs(n));}
+
+    async function loadAccounts() {
+      try {
+        const [accountsRes, activeRes] = await Promise.all([
+          fetch(API+'/api/accounts'),
+          fetch(API+'/api/accounts/active')
+        ]);
+        const accounts = await accountsRes.json();
+        const activeData = await activeRes.json();
+        const activeId = activeData.active_account_id || (accounts.find(a=>a.connected)||{}).id || 'default';
+
+        // Fetch per-account stats in parallel
+        const statsPromises = accounts.map(acct =>
+          fetch(API+'/api/bridge/accounts/'+acct.id+'/stats?days=30')
+            .then(r => r.json().catch(() => ({})))
+            .catch(() => ({}))
+        );
+        const statsResults = await Promise.all(statsPromises);
+        const statsMap = {};
+        accounts.forEach((acct, i) => { statsMap[acct.id] = statsResults[i] || {}; });
+
+        renderAccounts(accounts, activeId, statsMap);
+        loadPositions(activeId);
+      } catch(e) {
+        document.getElementById('accountsGrid').innerHTML='<div class="loading" style="color:var(--danger)">Error loading accounts</div>';
+        console.error(e);
+      }
+    }
+
+    function renderAccounts(accounts, activeId, statsMap) {
+      // Hide internal "default" account from user display
+      const displayAccounts = accounts.filter(a => a.id !== 'default');
+
+      // When activeId is 'default', find the displayed account that shares
+      // the same login as the hidden default account (they are the same broker account)
+      let resolvedActiveId = activeId;
+      if (activeId === 'default') {
+        const defaultAcct = accounts.find(a => a.id === 'default');
+        if (defaultAcct && defaultAcct.login) {
+          const matchingDisplay = displayAccounts.find(
+            a => String(a.login) === String(defaultAcct.login)
+          );
+          if (matchingDisplay) resolvedActiveId = matchingDisplay.id;
+        }
+      }
+
+      const grid = document.getElementById('accountsGrid');
+      grid.innerHTML = displayAccounts.map(acct => {
+        const isActive = acct.id === resolvedActiveId;
+        const s = statsMap[acct.id] || {};
+        const balance = acct.balance || s.balance || 0;
+        const equity = acct.equity || s.equity || 0;
+        const netPnl = s.net_profit || s.total_pnl || acct.profit || 0;
+        const winRate = s.win_rate || 0;
+        return `
+          <div class="account-card ${isActive?'active':''} fade-in">
+            <div class="acct-header">
+              <div>
+                <div class="acct-name">${acct.name}</div>
+                <div class="acct-server">${acct.server} · Login: ${acct.login||'N/A'}</div>
+              </div>
+              <span class="acct-badge ${isActive?'active-badge':'inactive-badge'}">${isActive?'● Active':'○ Inactive'}</span>
+            </div>
+            <div class="acct-details">
+              <div class="acct-detail"><div class="detail-label">Balance</div><div class="detail-value">${fmtUsd(balance)}</div></div>
+              <div class="acct-detail"><div class="detail-label">Equity</div><div class="detail-value">${fmtUsd(equity)}</div></div>
+              <div class="acct-detail"><div class="detail-label">Total P&amp;L</div><div class="detail-value ${netPnl>=0?'green':'red'}">${fmtUsd(netPnl)}</div></div>
+              <div class="acct-detail"><div class="detail-label">Win Rate</div><div class="detail-value">${fmt(winRate,1)}%</div></div>
+            </div>
+            <button class="btn-switch" onclick="switchAccount('${acct.id}')" ${isActive?'disabled':''}>${isActive?'✓ Active':'Switch'}</button>
+            ${acct.last_error ? `<div style="margin-top:8px;font-size:12px;color:var(--danger);">${acct.last_error}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function switchAccount(id) {
+      try {
+        const res = await fetch(API+'/api/accounts/'+id+'/switch', { method:'POST' });
+        const data = await res.json();
+        if(data.status==='switched') loadAccounts();
+        else alert('Failed: '+(data.detail||'unknown'));
+      } catch(e) { alert('Error: '+e.message); }
+    }
+
+    async function loadPositions(activeId) {
+      try {
+        const res = await fetch(API+'/api/bridge/accounts/'+activeId+'/positions');
+        if(res.status === 404) {
+          document.getElementById('positionsSection').style.display = 'none';
+          return;
+        }
+        if(!res.ok) {
+          document.getElementById('positionsSection').style.display = 'none';
+          return;
+        }
+        const positions = await res.json();
+        const sec = document.getElementById('positionsSection');
+        const body = document.getElementById('positionsBody');
+        if(Array.isArray(positions) && positions.length>0) {
+          sec.style.display = 'block';
+          body.innerHTML = positions.map(p => `
+            <tr>
+              <td><strong>${p.symbol||p.instrument||'?'}</strong></td>
+              <td>${p.type||'N/A'}</td>
+              <td>${p.volume||p.vol||0}</td>
+              <td>${fmt(p.open_price||p.price||0,5)}</td>
+              <td>${fmt(p.current_price||p.price||0,5)}</td>
+              <td style="color:${(p.profit||0)>=0?'var(--success)':'var(--danger)'}">${fmtUsd(p.profit||0)}</td>
+            </tr>
+          `).join('');
+        } else {
+          sec.style.display = 'block';
+          body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-sec);padding:16px;">No open positions</td></tr>';
+        }
+      } catch(e) {
+        document.getElementById('positionsSection').style.display='none';
+      }
+    }
+
+    authCheck(); loadAccounts();
+  </script>
+</body>
+</html>

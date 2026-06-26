@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portfolio — Trading Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg: #050508; --card: #0d0d1a; --text: #e2e8f0; --text-sec: #94a3b8; --border: #1e1e2e; --accent: #00d4aa; --secondary: #6366f1; --danger: #ef4444; --success: #22c55e; --sidebar-w: 240px; --radius: 12px; }
+    .light { --bg: #f5f5f7; --card: #ffffff; --text: #1a1a2e; --text-sec: #64748b; --border: #e2e8f0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--card); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s, background 0.3s; }
+    .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .sidebar-brand svg { width: 32px; height: 32px; flex-shrink: 0; }
+    .sidebar-brand span { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: var(--text-sec); text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent; }
+    .nav-item:hover, .nav-item.active { color: var(--text); background: rgba(0,212,170,0.06); }
+    .nav-item.active { border-left-color: var(--accent); color: var(--accent); }
+    .nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-footer { padding: 12px 20px; border-top: 1px solid var(--border); }
+    .theme-toggle { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-sec); margin-bottom: 8px; border: none; width: 100%; font-family: 'Inter', sans-serif; }
+    .theme-toggle:hover { background: var(--border); }
+    .logout-btn { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--danger); font-size: 13px; cursor: pointer; width: 100%; font-family: 'Inter', sans-serif; }
+    .logout-btn:hover { background: rgba(239,68,68,0.1); }
+    .main-content { margin-left: var(--sidebar-w); padding: 24px 32px; min-height: 100vh; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; }
+    .hamburger { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px; z-index: 101; }
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+    .stat-card .stat-value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+    .stat-card .stat-label { font-size: 12px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value.green { color: var(--success); } .stat-value.red { color: var(--danger); }
+    .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .chart-container canvas { max-height: 320px; max-width: 100%; }
+    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-sec); }
+    .loading::after { content: ''; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .overlay.show { display: block; }
+      .main-content { margin-left: 0; padding: 16px; } .hamburger { display: block; }
+      .chart-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .page-header h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+      <a href="portfolio.html" class="nav-item active"><span class="icon">💼</span> Portfolio</a>
+      <a href="bots.html" class="nav-item"><span class="icon">🤖</span> Bot Control</a>
+      <a href="backtesting.html" class="nav-item"><span class="icon">🔙</span> Backtesting</a>
+      <a href="accounts.html" class="nav-item"><span class="icon">🏦</span> Accounts</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📈</span> Analytics</a>
+      <a href="scripts.html" class="nav-item"><span class="icon">📝</span> Scripts</a>
+      <a href="trades.html" class="nav-item"><span class="icon">🔄</span> Trades</a>
+      <a href="decision-log.html" class="nav-item"><span class="icon">📋</span> Decisions</a>
+      <a href="ai.html" class="nav-item"><span class="icon">🧠</span> AI Agents</a>
+      <a href="settings.html" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <h1>Portfolio</h1>
+      </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"><div class="loading">Loading stats...</div></div>
+
+    <div class="chart-row">
+      <div class="chart-container"><h3 class="section-title">📈 Equity Curve</h3><canvas id="equityChart"></canvas></div>
+      <div class="chart-container"><h3 class="section-title">🧩 Allocation</h3><canvas id="allocationChart"></canvas></div>
+    </div>
+
+    <div class="chart-container"><h3 class="section-title">📊 Position Sizes</h3><canvas id="positionsChart"></canvas></div>
+
+    <div class="card" id="positionsSection" style="margin-top:24px;">
+      <h3 class="section-title">📋 Open Positions</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr>
+          <th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;">Symbol</th>
+          <th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;">Type</th>
+          <th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;">Volume</th>
+          <th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;">Entry</th>
+          <th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;">Current</th>
+          <th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;">P&amp;L</th>
+        </tr></thead>
+        <tbody id="positionsBody"><tr><td colspan="6" class="loading">Loading positions...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const API = '';
+    let eqChart, allocChart, posChart;
+    function authCheck() { if(!localStorage.getItem('token')) window.location.href='signin.html'; }
+    function logout() { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href='signin.html'; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+    function toggleTheme() { document.body.classList.toggle('light'); const l=document.body.classList.contains('light'); localStorage.setItem('theme',l?'light':'dark'); document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode'; }
+    (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
+    function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';return(d===0?n.toFixed(0):n.toFixed(d)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+    function fmtUsd(n){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const sign=n>=0?'':'−';return sign+'$'+fmt(Math.abs(n));}
+
+    let activeAccountId = 'default';
+
+    async function fetchActiveAccount() {
+      try {
+        const res = await fetch(API+'/api/accounts/active', {
+          headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+        });
+        if(res.ok) {
+          const data = await res.json();
+          activeAccountId = data.active_account_id || 'default';
+        } else {
+          activeAccountId = 'default';
+        }
+      } catch(e) { console.error('fetchActiveAccount error:', e); activeAccountId = 'default'; }
+    }
+
+    async function loadData() {
+      try {
+        await fetchActiveAccount();
+        const [statsRes, positionsRes] = await Promise.all([
+          fetch(API+'/api/stats?account_id='+activeAccountId),
+          fetch(API+'/api/positions?account_id='+activeAccountId)
+        ]);
+        const stats = await statsRes.json();
+        const positions = await positionsRes.json();
+        renderStats(stats);
+        renderEquityChart(stats.equity_history||[]);
+        renderAllocationChart(positions, stats);
+        renderPositionsChart(positions);
+      } catch(e) { console.error('Load error:', e); }
+    }
+
+    function renderStats(d) {
+      const pnl = d.net_pnl || d.net_profit || 0;
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card fade-in"><div class="stat-label">Total Trades</div><div class="stat-value">${fmt(d.total_trades,0)}</div></div>
+        <div class="stat-card fade-in"><div class="stat-label">Win Rate</div><div class="stat-value ${(d.win_rate||0)>=50?'green':'red'}">${fmt((d.win_rate||0),1)}%</div></div>
+        <div class="stat-card fade-in"><div class="stat-label">Profit Factor</div><div class="stat-value ${(d.profit_factor||0)>=1?'green':'red'}">${fmt(d.profit_factor,2)}</div></div>
+        <div class="stat-card fade-in"><div class="stat-label">Net P&L</div><div class="stat-value ${pnl>=0?'green':'red'}">${fmtUsd(pnl)}</div></div>
+      `;
+    }
+
+    function renderEquityChart(history) {
+      const ctx = document.getElementById('equityChart').getContext('2d');
+      if(eqChart) eqChart.destroy();
+      if(!history||history.length===0){ctx.canvas.parentElement.innerHTML+='<div class="loading">No equity data</div>';return;}
+      eqChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: history.map(h=>h.time||''),
+          datasets: [{ label:'Equity', data: history.map(h=>h.equity||0), borderColor:'#00d4aa', backgroundColor:'rgba(0,212,170,0.08)', fill:true, tension:0.3, pointRadius:2 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>'$'+fmt(ctx.parsed.y)}} }, scales:{ x:{ticks:{maxTicksLimit:10,color:'#94a3b8',font:{size:10}},grid:{color:'rgba(30,30,46,0.3)'}}, y:{ticks:{callback:v=>'$'+fmt(v),color:'#94a3b8',font:{size:10}},grid:{color:'rgba(30,30,46,0.3)'}} } }
+      });
+    }
+
+    function renderAllocationChart(positions, stats) {
+      const ctx = document.getElementById('allocationChart').getContext('2d');
+      if(allocChart) allocChart.destroy();
+      const pairCounts = {};
+      (stats.bot_statuses||[]).forEach(b => {
+        const pair = b.name.split('_')[1];
+        if(pair) pairCounts[pair] = (pairCounts[pair]||0)+1;
+      });
+      const labels = Object.keys(pairCounts);
+      const vals = Object.values(pairCounts);
+      if(labels.length===0) { ctx.canvas.parentElement.innerHTML+='<div class="loading">No allocation data</div>'; return; }
+      const colors = ['#00d4aa','#6366f1','#f59e0b','#ef4444','#22c55e','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+      allocChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets:[{ data:vals, backgroundColor:colors.slice(0,labels.length), borderWidth:0 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{color:'#94a3b8',font:{size:11},padding:8} } } }
+      });
+    }
+
+    function renderPositionsChart(positions) {
+      const ctx = document.getElementById('positionsChart').getContext('2d');
+      if(posChart) posChart.destroy();
+      if(!positions||positions.length===0) { ctx.canvas.parentElement.innerHTML='<div class="loading">No open positions</div>'; renderPositionsTable([]); return; }
+      posChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: positions.map(p=>p.symbol||'?'),
+          datasets: [{
+            label: 'Volume',
+            data: positions.map(p=>p.volume||0),
+            backgroundColor: positions.map(p=>(p.profit||0)>=0?'rgba(34,197,94,0.6)':'rgba(239,68,68,0.6)'),
+            borderRadius: 4
+          }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>'Volume: '+ctx.parsed.y}} }, scales:{ x:{grid:{color:'rgba(30,30,46,0.3)'}}, y:{grid:{color:'rgba(30,30,46,0.3)'}} } }
+      });
+      renderPositionsTable(positions);
+    }
+
+    function renderPositionsTable(positions) {
+      const body = document.getElementById('positionsBody');
+      if(!body) return;
+      if(!positions||positions.length===0) {
+        body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-sec);padding:16px;">No open positions</td></tr>';
+        return;
+      }
+      body.innerHTML = positions.map(p => `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid var(--border);"><strong>${p.symbol||'?'}</strong></td>
+          <td style="padding:8px;border-bottom:1px solid var(--border);">${p.type||'N/A'}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border);">${fmt(p.volume||0,2)}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border);">${fmt(p.open_price||p.price||0,5)}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border);">${fmt(p.current_price||0,5)}</td>
+          <td style="padding:8px;border-bottom:1px solid var(--border);color:${(p.profit||0)>=0?'var(--success)':'var(--danger)'}">${fmtUsd(p.profit||0)}</td>
+        </tr>
+      `).join('');
+    }
+
+    authCheck(); loadData();
+    // Refresh positions every 10 seconds
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>

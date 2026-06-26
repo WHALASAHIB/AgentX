@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bot Control — Trading Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #050508; --card: #0d0d1a; --text: #e2e8f0; --text-sec: #94a3b8; --border: #1e1e2e; --accent: #00d4aa; --accent-hover: #00b894; --secondary: #6366f1; --danger: #ef4444; --success: #22c55e; --sidebar-w: 240px; --radius: 12px; }
+    .light { --bg: #f5f5f7; --card: #ffffff; --text: #1a1a2e; --text-sec: #64748b; --border: #e2e8f0; }
+    * { margin:0;padding:0;box-sizing:border-box; }
+    body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.3s,color 0.3s; }
+    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--border);border-radius:3px; }
+    .sidebar { position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--card);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;z-index:100;transition:transform 0.3s,background 0.3s; }
+    .sidebar-brand { padding:0 20px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px; }
+    .sidebar-brand svg { width:32px;height:32px;flex-shrink:0; }
+    .sidebar-brand span { font-size:16px;font-weight:700;color:var(--accent); }
+    .sidebar-nav { flex:1;padding:12px 0;overflow-y:auto; }
+    .nav-item { display:flex;align-items:center;gap:12px;padding:10px 20px;color:var(--text-sec);text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent; }
+    .nav-item:hover,.nav-item.active { color:var(--text);background:rgba(0,212,170,0.06); }
+    .nav-item.active { border-left-color:var(--accent);color:var(--accent); }
+    .nav-item .icon { font-size:18px;width:22px;text-align:center; }
+    .sidebar-footer { padding:12px 20px;border-top:1px solid var(--border); }
+    .theme-toggle { display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-sec);margin-bottom:8px;border:none;width:100%;font-family:'Inter',sans-serif; }
+    .theme-toggle:hover { background:var(--border); }
+    .logout-btn { display:flex;align-items:center;gap:8px;padding:8px 12px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--danger);font-size:13px;cursor:pointer;width:100%;font-family:'Inter',sans-serif; }
+    .logout-btn:hover { background:rgba(239,68,68,0.1); }
+    .main-content { margin-left:var(--sidebar-w);padding:24px 32px;min-height:100vh; }
+    .page-header { display:flex;align-items:center;gap:12px;margin-bottom:24px; }
+    .page-header h1 { font-size:26px;font-weight:700; }
+    .hamburger { display:none;background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;padding:4px;z-index:101; }
+    .overlay { display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99; }
+    .card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px; }
+    .section-title { font-size:18px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px; }
+    .section-title .badge { font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:var(--accent);color:#050508; }
+    .test-bot-card { background:var(--card);border:2px solid var(--accent);border-radius:var(--radius);padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px; }
+    .test-bot-info h3 { font-size:16px;font-weight:600; }
+    .test-bot-info p { font-size:13px;color:var(--text-sec);margin-top:4px; }
+    .test-bot-status { display:flex;align-items:center;gap:12px; }
+    .status-dot { width:10px;height:10px;border-radius:50%;display:inline-block; }
+    .status-dot.running { background:var(--success);box-shadow:0 0 8px var(--success); }
+    .status-dot.stopped { background:var(--text-sec); }
+    .btn-start { padding:10px 24px;background:var(--accent);color:#050508;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif; }
+    .btn-start:hover { background:var(--accent-hover); }
+    .btn-stop { padding:10px 24px;background:var(--danger);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif; }
+    .btn-stop:hover { background:#dc2626; }
+    .btn-start:disabled,.btn-stop:disabled { opacity:0.5;cursor:not-allowed; }
+    table { width:100%;border-collapse:collapse;font-size:13px; }
+    th { text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--text-sec);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.3px; }
+    td { padding:10px 8px;border-bottom:1px solid var(--border); }
+    tr:hover { background:rgba(0,212,170,0.03); }
+    .badge-running { display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;background:rgba(34,197,94,0.15);color:var(--success); }
+    .badge-stopped { display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;background:rgba(148,163,184,0.15);color:var(--text-sec); }
+    .loading { display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-sec); }
+    .loading::after { content:'';width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-left:8px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes fadeIn { from { opacity:0;transform:translateY(8px); } to { opacity:1;transform:translateY(0); } }
+    .fade-in { animation:fadeIn 0.3s ease; }
+    @media (max-width:768px) {
+      .sidebar { transform:translateX(-100%); } .sidebar.open { transform:translateX(0); } .overlay.show { display:block; }
+      .main-content { margin-left:0;padding:16px; } .hamburger { display:block; }
+      .test-bot-card { flex-direction:column;align-items:stretch; }
+      table { font-size:12px; } th,td { padding:6px 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+      <a href="portfolio.html" class="nav-item"><span class="icon">💼</span> Portfolio</a>
+      <a href="bots.html" class="nav-item active"><span class="icon">🤖</span> Bot Control</a>
+      <a href="backtesting.html" class="nav-item"><span class="icon">🔙</span> Backtesting</a>
+      <a href="accounts.html" class="nav-item"><span class="icon">🏦</span> Accounts</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📈</span> Analytics</a>
+      <a href="scripts.html" class="nav-item"><span class="icon">📝</span> Scripts</a>
+      <a href="trades.html" class="nav-item"><span class="icon">🔄</span> Trades</a>
+      <a href="decision-log.html" class="nav-item"><span class="icon">📋</span> Decisions</a>
+      <a href="ai.html" class="nav-item"><span class="icon">🧠</span> AI Agents</a>
+      <a href="settings.html" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <h1>Bot Control</h1>
+      </div>
+    </div>
+
+    <div class="section-title">🧪 Test Bot <span class="badge">XAUUSD 0.01</span></div>
+    <div class="test-bot-card fade-in" id="testBotCard">
+      <div class="test-bot-info">
+        <h3>Test Bot</h3>
+        <p>Opens 0.01 XAUUSD trade, auto-closes after 20s</p>
+        <div class="test-bot-status" style="margin-top:8px;">
+          <span class="status-dot stopped" id="testStatusDot"></span>
+          <span id="testStatusText" style="font-size:13px;color:var(--text-sec);">Stopped</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-start" id="testStartBtn" onclick="startTestBot()">▶ Start Test</button>
+        <button class="btn-stop" id="testStopBtn" onclick="stopTestBot()" disabled>⏹ Stop</button>
+      </div>
+    </div>
+
+    <div class="section-title">🤖 All Bots <span class="badge" id="botCount">14</span></div>
+    <div class="card" style="overflow-x:auto;">
+      <table id="botsTable">
+        <thead><tr><th>Name</th><th>Script</th><th>Status</th><th>PID</th><th>Actions</th></tr></thead>
+        <tbody id="botsBody"><tr><td colspan="5" class="loading">Loading bots...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const API = '';
+    let testInterval = null;
+
+    function authCheck() { if(!localStorage.getItem('token')) window.location.href='signin.html'; }
+    function logout() { localStorage.removeItem('token');localStorage.removeItem('user');window.location.href='signin.html'; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show'); }
+    function toggleTheme() { document.body.classList.toggle('light');const l=document.body.classList.contains('light');localStorage.setItem('theme',l?'light':'dark');document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode'; }
+    (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
+
+    async function loadBots() {
+      try {
+        const res = await fetch(API+'/api/bots');
+        const bots = await res.json();
+        renderBots(bots);
+      } catch(e) { document.getElementById('botsBody').innerHTML='<tr><td colspan="5" style="color:var(--danger);padding:20px;">Error loading bots</td></tr>'; }
+    }
+
+    function renderBots(bots) {
+      const body = document.getElementById('botsBody');
+      document.getElementById('botCount').textContent = bots.length;
+      body.innerHTML = bots.map(b => `
+        <tr class="fade-in">
+          <td><strong>${b.display_name||b.name}</strong></td>
+          <td style="color:var(--text-sec);font-size:12px;">${(b.script||'').split('\\').pop()||'-'}</td>
+          <td><span class="${b.running?'badge-running':'badge-stopped'}">${b.running?'● Running':'○ Stopped'}</span></td>
+          <td style="color:var(--text-sec);font-size:12px;">${b.pid||'-'}</td>
+          <td>
+            <button class="btn-start" style="padding:6px 14px;font-size:12px;" onclick="startBot('${b.name}')" ${b.running?'disabled':''}>▶</button>
+            <button class="btn-stop" style="padding:6px 14px;font-size:12px;" onclick="stopBot('${b.name}')" ${!b.running?'disabled':''}>⏹</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function startBot(name) {
+      try {
+        const res = await fetch(API+'/api/bots/'+name+'/start', { method:'POST' });
+        const data = await res.json();
+        if(data.status==='started') loadBots();
+        else alert('Failed to start: '+(data.detail||'unknown'));
+      } catch(e) { alert('Error: '+e.message); }
+    }
+
+    async function stopBot(name) {
+      try {
+        const res = await fetch(API+'/api/bots/'+name+'/stop', { method:'POST' });
+        const data = await res.json();
+        if(data.status==='stopped') loadBots();
+        else alert('Failed to stop: '+(data.detail||'unknown'));
+      } catch(e) { alert('Error: '+e.message); }
+    }
+
+    async function startTestBot() {
+      const btn = document.getElementById('testStartBtn');
+      btn.disabled = true; btn.textContent = '⏳ Starting...';
+      try {
+        const res = await fetch(API+'/api/bots/test/start', { method:'POST' });
+        const data = await res.json();
+        if(data.status==='started'||data.status==='ok'||data.status==='running') {
+          updateTestStatus({ running:true });
+          if(testInterval) clearInterval(testInterval);
+          testInterval = setInterval(checkTestStatus, 5000);
+        } else alert('Failed: '+(data.detail||'unknown'));
+      } catch(e) { alert('Error: '+e.message); }
+      btn.disabled = false; btn.textContent = '▶ Start Test';
+    }
+
+    async function stopTestBot() {
+      try {
+        const res = await fetch(API+'/api/bots/test/stop', { method:'POST' });
+        const data = await res.json();
+        if(data.status==='stopped') updateTestStatus({ running:false });
+      } catch(e) { console.error(e); }
+    }
+
+    async function checkTestStatus() {
+      try {
+        const res = await fetch(API+'/api/bots/test/status');
+        const data = await res.json();
+        updateTestStatus(data);
+        if(!data.running && testInterval) { clearInterval(testInterval); testInterval=null; }
+      } catch(e) { console.error(e); }
+    }
+
+    function updateTestStatus(data) {
+      const running = data.running || false;
+      const dot = document.getElementById('testStatusDot');
+      const text = document.getElementById('testStatusText');
+      const stopBtn = document.getElementById('testStopBtn');
+      dot.className = 'status-dot ' + (running?'running':'stopped');
+      text.textContent = running ? 'Running (PID: '+(data.pid||'?')+')' : 'Stopped';
+      stopBtn.disabled = !running;
+    }
+
+    authCheck(); loadBots(); checkTestStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Agents — Trading Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#050508;--card:#0d0d1a;--text:#e2e8f0;--text-sec:#94a3b8;--border:#1e1e2e;--accent:#00d4aa;--secondary:#6366f1;--danger:#ef4444;--success:#22c55e;--sidebar-w:240px;--radius:12px; }
+    .light { --bg:#f5f5f7;--card:#ffffff;--text:#1a1a2e;--text-sec:#64748b;--border:#e2e8f0; }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.3s,color 0.3s;}
+    ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    .sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--card);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;z-index:100;transition:transform 0.3s,background 0.3s;}
+    .sidebar-brand{padding:0 20px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .sidebar-brand svg{width:32px;height:32px;flex-shrink:0;}
+    .sidebar-brand span{font-size:16px;font-weight:700;color:var(--accent);}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:var(--text-sec);text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;}
+    .nav-item:hover,.nav-item.active{color:var(--text);background:rgba(0,212,170,0.06);}
+    .nav-item.active{border-left-color:var(--accent);color:var(--accent);}
+    .nav-item .icon{font-size:18px;width:22px;text-align:center;}
+    .sidebar-footer{padding:12px 20px;border-top:1px solid var(--border);}
+    .theme-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-sec);margin-bottom:8px;border:none;width:100%;font-family:'Inter',sans-serif;}
+    .theme-toggle:hover{background:var(--border);}
+    .logout-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--danger);font-size:13px;cursor:pointer;width:100%;font-family:'Inter',sans-serif;}
+    .logout-btn:hover{background:rgba(239,68,68,0.1);}
+    .main-content{margin-left:var(--sidebar-w);padding:24px 32px;min-height:100vh;}
+    .page-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+    .page-header h1{font-size:26px;font-weight:700;}
+    .hamburger{display:none;background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;padding:4px;z-index:101;}
+    .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+    .agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .agent-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:border-color 0.2s;}
+    .agent-card:hover{border-color:var(--accent);}
+    .agent-card .agent-icon{font-size:32px;margin-bottom:8px;}
+    .agent-card .agent-name{font-size:16px;font-weight:600;}
+    .agent-card .agent-role{font-size:13px;color:var(--text-sec);margin-top:2px;}
+    .agent-card .agent-status{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;margin-top:8px;}
+    .agent-status.active{background:rgba(34,197,94,0.15);color:var(--success);}
+    .agent-status.idle{background:rgba(148,163,184,0.15);color:var(--text-sec);}
+    .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-sec);}
+    .loading::after{content:'';width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-left:8px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.overlay.show{display:block;}
+      .main-content{margin-left:0;padding:16px;}.hamburger{display:block;}
+      .agents-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+      <a href="portfolio.html" class="nav-item"><span class="icon">💼</span> Portfolio</a>
+      <a href="bots.html" class="nav-item"><span class="icon">🤖</span> Bot Control</a>
+      <a href="backtesting.html" class="nav-item"><span class="icon">🔙</span> Backtesting</a>
+      <a href="accounts.html" class="nav-item"><span class="icon">🏦</span> Accounts</a>
+      <a href="analytics.html" class="nav-item"><span class="icon">📈</span> Analytics</a>
+      <a href="scripts.html" class="nav-item"><span class="icon">📝</span> Scripts</a>
+      <a href="trades.html" class="nav-item"><span class="icon">🔄</span> Trades</a>
+      <a href="decision-log.html" class="nav-item"><span class="icon">📋</span> Decisions</a>
+      <a href="ai.html" class="nav-item active"><span class="icon">🧠</span> AI Agents</a>
+      <a href="settings.html" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <h1>AI Agents</h1>
+      </div>
+    </div>
+
+    <div class="section-title" style="font-size:18px;font-weight:600;margin-bottom:16px;">🧠 Orchestrator Agents</div>
+    <div class="agents-grid" id="agentsGrid"><div class="loading">Loading agents...</div></div>
+  </main>
+
+  <script>
+    const API='';
+    function authCheck(){if(!localStorage.getItem('token'))window.location.href='signin.html';}
+    function logout(){localStorage.removeItem('token');localStorage.removeItem('user');window.location.href='signin.html';}
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    function toggleTheme(){document.body.classList.toggle('light');const l=document.body.classList.contains('light');localStorage.setItem('theme',l?'light':'dark');document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode';}
+    (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
+
+    const agentIcons = ['🧠','🤖','📊','🔍','💹','⚡','🎯','🛡️','📈','🔮'];
+
+    async function loadAgents() {
+      try {
+        const res = await fetch(API+'/api/orchestrator/agents');
+        const agents = await res.json();
+        const grid = document.getElementById('agentsGrid');
+        const arr = Array.isArray(agents) ? agents : (agents.agents||[]);
+        if(arr.length===0) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-sec)">No agents configured</div>';
+          return;
+        }
+        grid.innerHTML = arr.map((a,i) => `
+          <div class="agent-card fade-in">
+            <div class="agent-icon">${agentIcons[i%agentIcons.length]}</div>
+            <div class="agent-name">${a.name||a.agent||'Agent'}</div>
+            <div class="agent-role">${a.role||a.type||a.description||'Trading Agent'}</div>
+            <div class="agent-status ${(a.status||'idle').toLowerCase()}">● ${(a.status||'Idle').toUpperCase()}</div>
+          </div>
+        `).join('');
+      } catch(e) {
+        document.getElementById('agentsGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--danger)">Error loading agents</div>';
+      }
+    }
+
+    authCheck(); loadAgents();
+  </script>
+</body>
+</html>
