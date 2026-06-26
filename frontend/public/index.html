@@ -318,7 +318,7 @@
       const pnl = data.net_pnl || data.net_profit || 0;
       grid.innerHTML = `
         <div class="stat-card fade-in"><div class="stat-label">Total Trades</div><div class="stat-value">${fmt(data.total_trades,0)}</div></div>
-        <div class="stat-card fade-in"><div class="stat-label">Win Rate</div><div class="stat-value ${(data.win_rate||0)*100>=50?'green':'red'}">${fmt((data.win_rate||0)*100,1)}%</div></div>
+        <div class="stat-card fade-in"><div class="stat-label">Win Rate</div><div class="stat-value ${(data.win_rate||0)>=50?'green':'red'}">${fmt((data.win_rate||0),1)}%</div></div>
         <div class="stat-card fade-in"><div class="stat-label">Profit Factor</div><div class="stat-value ${(data.profit_factor||0)>=1?'green':'red'}">${fmt(data.profit_factor,2)}</div></div>
         <div class="stat-card fade-in"><div class="stat-label">Net P&L</div><div class="stat-value ${pnl>=0?'green':'red'}">${fmtUsd(pnl)}</div></div>
       `;

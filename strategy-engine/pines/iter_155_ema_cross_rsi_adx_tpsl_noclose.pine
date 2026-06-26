@@ -1,0 +1,59 @@
+//@version=5
+strategy(
+  title="EMA(5,13)+RSI(50)+ADX(14) TP/SL 1:1 NoClose LONG ONLY XAUUSD 30m",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- inputs
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=50)              // sweep: 2-20 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=100)            // sweep: 8-30 step 2
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)                      // sweep: 7-21 step 2
+rsiMin = input.int(50, "RSI Minimum (LONG-only)", minval=20, maxval=80)        // sweep: 45-60 step 5
+adxLen = input.int(14, "ADX Length", minval=5, maxval=50)                      // sweep: 10-20 step 2
+adxMin = input.int(14, "Min ADX (trend filter)", minval=5, maxval=50)          // sweep: 10-25 step 2
+atrLen = input.int(14, "ATR Length for SL", minval=5, maxval=50)               // sweep: 7-21 step 2
+slAtrMult = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=3.0, step=0.1) // sweep: 0.5-2.0 step 0.25
+tpSlRatio = input.float(1.0, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.5
+
+//--- indicator calculations
+emaF = ta.ema(close, emaFastLen)
+emaS = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Manual ADX calculation using DMI (ta.adx not available on this platform)
+up = ta.change(high)
+down = -ta.change(low)
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr = ta.sma(tr, adxLen)
+plusDI = 100 * ta.sma(plusDM, adxLen) / atr
+minusDI = 100 * ta.sma(minusDM, adxLen) / atr
+dx = math.abs(plusDI - minusDI) / (plusDI + minusDI) * 100
+adxVal = ta.sma(dx, adxLen)
+
+// ATR for stop placement
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// LONG entry: EMA5 crosses above EMA13 AND RSI > RSI min AND ADX > min threshold
+longCondition = ta.crossover(emaF, emaS) and rsiVal > rsiMin and adxVal > adxMin
+
+//--- trade management: PURE fixed TP/SL exit — NO close-based exits
+if (longCondition and strategy.position_size == 0)
+    slDist = slAtrMult * atrVal
+    tpDist = slDist * tpSlRatio
+    strategy.entry("LONG", strategy.long)
+    strategy.exit("LONG_EXIT", "LONG",
+         loss=int(slDist / syminfo.mintick),
+         profit=int(tpDist / syminfo.mintick))
+
+//--- plot EMAs for visual reference
+plot(emaF, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaS, "EMA Slow", color=color.red, linewidth=1)

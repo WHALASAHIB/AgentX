@@ -1,0 +1,43 @@
+//@version=5
+strategy(title="iter_154_EMA_RSI_ADX_TPonly XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(5, "EMA Fast Length", minval=1, maxval=50)
+emaSlowLen = input.int(13, "EMA Slow Length", minval=1, maxval=100)
+// sweep: fast 3-10 step 1, slow 10-30 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(50, "RSI Entry Threshold (long if > this)", minval=30, maxval=70)
+// sweep: 40-60 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30)
+adxThreshold = input.int(14, "ADX Minimum (trending only)", minval=10, maxval=40)
+// sweep: 10-30 step 2
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length for SL/TP", minval=5, maxval=30)
+slAtrMultiplier = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=3.0, step=0.25)
+tpAtrMultiplier = input.float(1.0, "TP ATR Multiplier", minval=0.5, maxval=3.0, step=0.25)
+// sweep: TP 0.5-2.0 step 0.25, SL 0.5-2.0 step 0.25
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+adxVal = ta.adx(high, low, close, adxLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry conditions
+// Long entry: EMA fast crosses above slow, RSI > threshold, ADX > threshold
+longEntry = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold and adxVal > adxThreshold
+
+//--- entry logic
+if longEntry
+    // Calculate SL and TP distances in ticks using ATR
+    slDistance = int(atrVal * slAtrMultiplier / syminfo.mintick)
+    tpDistance = int(atrVal * tpAtrMultiplier / syminfo.mintick)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=slDistance, profit=tpDistance)
