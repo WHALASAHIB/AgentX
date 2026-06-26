@@ -1041,6 +1041,27 @@ async def add_account(req: AddAccountRequest, auth=Depends(require_auth)):
     }
     db.save_account(acct)
     logger.info("Account saved: id=%s login=%s", acct["id"], acct["login"])
+
+    # Also register account with bridge so it can auto-discover it
+    try:
+        from bridge.config import save_account as bridge_save_account
+        bridge_acct = AccountConfig(
+            id=req.id,
+            name=req.name or req.id,
+            login=req.login,
+            password=req.password or "",
+            password_encrypted=encrypted,
+            server=req.server,
+            terminal_path=req.terminal_path,
+            symbols=req.symbols,
+            enabled=req.enabled,
+        )
+        bridge_save_account(bridge_acct)
+        logger.info("Account synced to bridge config: id=%s", req.id)
+    except Exception as e:
+        logger.warning("Failed to sync account to bridge config: %s", e)
+        # Don't fail the request if bridge sync fails
+
     return {"status": "created", "account": acct}
 
 @app.delete("/api/accounts/{account_id}")
@@ -1049,6 +1070,13 @@ async def delete_account(account_id: str, auth=Depends(require_auth)):
     removed = db.delete_account(account_id)
     if not removed:
         raise HTTPException(status_code=404, detail="Account not found")
+    # Also remove bridge config file for this account
+    try:
+        from bridge.config import remove_account as bridge_remove_account
+        bridge_remove_account(account_id)
+        logger.info("Removed bridge config for account: %s", account_id)
+    except Exception as e:
+        logger.warning("Failed to remove bridge config for %s: %s", account_id, e)
     return {"status": "deleted", "account_id": account_id}
 
 class TestConnectionResponse(PydanticBaseModel):
@@ -1133,11 +1161,24 @@ _test_bot_proc: Optional[subprocess.Popen] = None
 
 @app.post("/api/bots/test/start")
 async def test_bot_start():
-    """Start the test bot (opens 0.01 BUY XAUUSD, holds 20s, closes)."""
+    """Start the test bot (opens 0.01 BUY XAUUSD, holds 20s, closes) on the active account."""
     global _test_bot_proc
 
     if _test_bot_proc is not None and _test_bot_proc.poll() is None:
         raise HTTPException(status_code=409, detail="Test bot is already running")
+
+    # Read active account from DB
+    db = get_db()
+    active_id = db.get_active_account()
+    if not active_id:
+        raise HTTPException(status_code=400, detail="No active account selected. Switch to an account first.")
+
+    # Verify account exists in bridge
+    bridge = get_bridge()
+    try:
+        acct = await bridge.get_account(active_id)
+    except HTTPException:
+        raise HTTPException(status_code=400, detail=f"Active account '{active_id}' not found in bridge")
 
     script = _BOTS_DIR / "test_bot.py"
     if not script.exists():
@@ -1150,15 +1191,15 @@ async def test_bot_start():
             pythonw = sys.executable  # fall back to python if pythonw not found
 
         proc = subprocess.Popen(
-            [pythonw, str(script)],
+            [pythonw, str(script), "--account-id", active_id],
             cwd=str(_BOTS_DIR),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             creationflags=subprocess.DETACHED_PROCESS if hasattr(subprocess, 'DETACHED_PROCESS') else 0,
         )
         _test_bot_proc = proc
-        logger.info("Test bot started (PID %d)", proc.pid)
-        return {"name": "test_bot", "status": "running", "pid": proc.pid}
+        logger.info("Test bot started on account %s (PID %d)", active_id, proc.pid)
+        return {"name": "test_bot", "status": "running", "pid": proc.pid, "account_id": active_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start test bot: {e}")
 
@@ -1485,6 +1526,10 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
     from pathlib import Path as _Path
     bt_root = str(_Path(__file__).resolve().parent.parent / "backtester")
     _sys.path.insert(0, bt_root)
+    # Force-reload backtester modules to pick up code changes
+    for _mod in list(_sys.modules.keys()):
+        if _mod.startswith("data") or _mod.startswith("engine") or _mod.startswith("loader"):
+            del _sys.modules[_mod]
     import pandas as pd
     from data import INSTRUMENTS, fetch
     from engine import run as bt_run

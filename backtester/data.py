@@ -39,6 +39,9 @@ TIMEFRAME_MAP = {
     "1d": 1440, "D1": 1440, "1w": 10080, "W1": 10080,
 }
 
+# ── Bridge HTTP API endpoint ───────────────────────────────────────────────
+BRIDGE_URL = "http://127.0.0.1:5000"
+
 # ── Base prices for synthetic fallback (approximate real levels) ───────────
 _BASE_PRICES = {
     "XAUUSD": 2330.0, "EURUSD": 1.0850, "GBPUSD": 1.2700,
@@ -62,46 +65,127 @@ def _load_mt5_config() -> dict:
         return {}
 
 
-def _ensure_mt5() -> bool:
-    """Lazy-initialize MT5 with credentials. Returns True if connected."""
-    global _MT5_AVAILABLE, _MT5_INITIALIZED
-    if _MT5_INITIALIZED:
-        return _MT5_AVAILABLE
+def _fetch_from_bridge(
+    ticker: str,
+    date_from: str,
+    date_to: str,
+    interval: str = "1h",
+    bridge_url: str = BRIDGE_URL,
+) -> Optional[object]:
+    """Fetch OHLC data from the MT5 Bridge HTTP API.
+    Returns a DataFrame with columns time, open, high, low, close, tick_volume.
+    Returns None on failure."""
+    import requests
+
+    # Use mt5-demo account (has market data access)
+    account_id = "mt5-demo"
+
+    # Map interval to bridge format
+    interval_map = {
+        "1m": "1m", "5m": "5m", "15m": "15m", "30m": "30m",
+        "H1": "1h", "1h": "1h", "H4": "4h", "4h": "4h",
+        "D1": "1d", "1d": "1d", "W1": "1w", "1w": "1w",
+    }
+    tf = interval_map.get(interval, "1h")
+
+    url = f"{bridge_url}/api/v1/history/{account_id}/{ticker}"
+    params = {
+        "date_from": date_from,
+        "date_to": date_to,
+        "timeframe": tf,
+    }
 
     try:
-        import MetaTrader5 as mt5
+        resp = requests.get(url, params=params, timeout=30)
+        if resp.status_code != 200:
+            logger.warning(
+                "Bridge history returned %d for %r %s",
+                resp.status_code, ticker, interval,
+            )
+            return None
+
+        data = resp.json()
+        if not isinstance(data, list) or len(data) == 0:
+            logger.warning("Bridge history returned empty list for %r", ticker)
+            return None
+
+        df = pd.DataFrame(data)
+        df["time"] = pd.to_datetime(df["time"])
+
+        logger.info(
+            "Fetched %d real bars via bridge for %r %s [%s to %s]",
+            len(df), ticker, interval, date_from, date_to,
+        )
+        return df
     except ImportError:
-        logger.warning("MetaTrader5 package not installed.")
-        _MT5_AVAILABLE = False
-        _MT5_INITIALIZED = True
-        return False
+        logger.warning("requests package not available for bridge fetch")
+        return None
+    except Exception as e:
+        logger.warning("Bridge fetch error for %r: %s", ticker, e)
+        return None
 
-    # Try with credentials first
-    cfg = _load_mt5_config()
-    init_kw = {}
-    terminal_path = cfg.get("terminal_path", "")
-    if terminal_path:
-        init_kw["path"] = terminal_path
-    login = cfg.get("login")
-    password = cfg.get("password")
-    server = cfg.get("server")
-    if login and password and server:
-        init_kw["login"] = int(login)
-        init_kw["password"] = str(password)
-        init_kw["server"] = str(server)
-        init_kw["timeout"] = 30000
 
-    if not mt5.initialize(**init_kw):
-        err = mt5.last_error()
-        logger.warning("MT5 initialize failed: %s", err)
-        _MT5_AVAILABLE = False
-        _MT5_INITIALIZED = True
-        return False
+def _fetch_from_mt5_direct(
+    ticker: str,
+    date_from: str,
+    date_to: str,
+    interval: str = "1h",
+) -> Optional[object]:
+    """Direct MT5 fetch as fallback (if bridge is down but MT5 is available)."""
+    try:
+        import MetaTrader5 as mt5
 
-    logger.info("MT5 initialized successfully.")
-    _MT5_AVAILABLE = True
-    _MT5_INITIALIZED = True
-    return True
+        cfg = _load_mt5_config()
+        init_kw = {}
+        terminal_path = cfg.get("terminal_path", "")
+        if terminal_path:
+            init_kw["path"] = terminal_path
+
+        login = cfg.get("login")
+        password = cfg.get("password")
+        server = cfg.get("server")
+        if login and password and server:
+            init_kw["login"] = int(login)
+            init_kw["password"] = str(password)
+            init_kw["server"] = str(server)
+
+        if not mt5.initialize(**init_kw):
+            return None
+
+        tf_minutes = _mt5_timeframe(interval) or 60
+        mt5_tf_map = {
+            1: mt5.TIMEFRAME_M1, 5: mt5.TIMEFRAME_M5, 15: mt5.TIMEFRAME_M15,
+            30: mt5.TIMEFRAME_M30, 60: mt5.TIMEFRAME_H1, 240: mt5.TIMEFRAME_H4,
+            1440: mt5.TIMEFRAME_D1, 10080: mt5.TIMEFRAME_W1,
+        }
+        mt5_tf = mt5_tf_map.get(tf_minutes, mt5.TIMEFRAME_H1)
+
+        dt_from = datetime.strptime(date_from, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        dt_to = datetime.strptime(date_to, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+
+        mt5.symbol_select(ticker, True)
+        rates = mt5.copy_rates_range(ticker, mt5_tf, dt_from, dt_to)
+        mt5.shutdown()
+
+        if rates is not None and len(rates) > 0:
+            df = pd.DataFrame(rates)
+            df["time"] = pd.to_datetime(df["time"], unit="s")
+            logger.info(
+                "Fetched %d direct MT5 bars for %r %s [%s to %s]",
+                len(df), ticker, interval, date_from, date_to,
+            )
+            return df
+
+        return None
+    except ImportError:
+        return None
+    except Exception as e:
+        logger.debug("Direct MT5 fetch error for %r: %s", ticker, e)
+        try:
+            mt5.shutdown()
+        except Exception:
+            pass
+        return None
 
 
 def _mt5_timeframe(interval: str) -> Optional[int]:
@@ -188,47 +272,22 @@ def fetch(
     interval: str = "1h",
     try_synthetic: bool = True,
 ) -> Optional[object]:
-    """Fetch OHLC data from MT5. Generates synthetic fallback if unavailable."""
-    mt5_data = None
-    if _ensure_mt5():
-        try:
-            import MetaTrader5 as mt5
-            import pandas as pd
+    """Fetch OHLC data from the MT5 Bridge HTTP API.
+    Falls back to synthetic data if bridge is unavailable."""
 
-            tf_minutes = _mt5_timeframe(interval) or 60
+    # 1) Try bridge HTTP API first
+    bridge_data = _fetch_from_bridge(ticker, date_from, date_to, interval)
+    if bridge_data is not None and len(bridge_data) >= 20:
+        return bridge_data
 
-            mt5_tf_map = {
-                1: mt5.TIMEFRAME_M1, 5: mt5.TIMEFRAME_M5, 15: mt5.TIMEFRAME_M15,
-                30: mt5.TIMEFRAME_M30, 60: mt5.TIMEFRAME_H1, 240: mt5.TIMEFRAME_H4,
-                1440: mt5.TIMEFRAME_D1, 10080: mt5.TIMEFRAME_W1,
-            }
-            mt5_tf = mt5_tf_map.get(tf_minutes, mt5.TIMEFRAME_H1)
-
-            dt_from = datetime.strptime(date_from, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-            dt_to = datetime.strptime(date_to, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-
-            symbol_info = mt5.symbol_info(ticker)
-            if symbol_info is not None and not symbol_info.visible:
-                mt5.symbol_select(ticker, True)
-
-            rates = mt5.copy_rates_range(ticker, mt5_tf, dt_from, dt_to)
-            if rates is not None and len(rates) > 0:
-                df = pd.DataFrame(rates)
-                df["time"] = pd.to_datetime(df["time"], unit="s")
-                logger.info(
-                    "Fetched %d real bars for %r %s [%s to %s]",
-                    len(df), ticker, interval, date_from, date_to,
-                )
-                mt5_data = df
-        except Exception as exc:
-            logger.debug("MT5 fetch error for %r: %s", ticker, exc)
-
+    # 2) Fallback: try direct MT5 (backup)
+    mt5_data = _fetch_from_mt5_direct(ticker, date_from, date_to, interval)
     if mt5_data is not None and len(mt5_data) >= 20:
         return mt5_data
 
-    # Fallback to synthetic data
+    # 3) Last resort: synthetic data
     if try_synthetic:
-        logger.info("MT5 returned no data for %r %s — using synthetic fallback", ticker, interval)
+        logger.info("Bridge and MT5 unavailable for %r %s — using synthetic fallback", ticker, interval)
         return _generate_synthetic_data(ticker, date_from, date_to, interval)
 
     return None

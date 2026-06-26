@@ -1,5 +1,41 @@
 {
-  "strategy": "Propfirm Pass v8",
-  "mistakes": [],
-  "lessons_learned": []
+  "strategy": "Propfirm Pass v8 / Multi-Pair System",
+  "mistakes": [
+    {
+      "date": "2026-06-25",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -793.03,
+      "root_cause": "Multi-pair MACD bots (M200200, M200100) continued trading on FTMO account during REDUCE risk state, accumulating -$356 combined losses in a single day. USDJPY positions (M0) closed by FTMO risk desk for additional -$436.",
+      "fix": "Kill multi-pair bots on FTMO account until risk state returns to GREEN. These bots were designed for unlimited demo, not FTMO challenge with 10% max DD.",
+      "prevention_rule": "When risk state is REDUCE and drawdown > 8%, ALL bots on FTMO account must be paused — not just switched strategies."
+    },
+    {
+      "date": "2026-06-25",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Propfirm Pass bot (M780012) ran once at 15:29 UTC, synced state from other bots' trades (found 9 actual trades), immediately hit daily max limit, and went to sleep without ever placing a trade with its own magic number. State sync function does not filter by magic.",
+      "fix": "State sync in sync_state_from_mt5() already filters by MAGIC and SYMBOL — but the log message 'found 9 trades' suggests it may have read trades from other bots incorrectly. Root cause: the bot ran at 15:29 UTC, which is past the 13:00-15:00 US Open window (session ends at 15:00). The 'Max trades per day' trigger at startup means a stale state file from a previous run persisted trade counts.",
+      "prevention_rule": "Verify the bot actually trades on its own magic number before reporting execution success."
+    },
+    {
+      "date": "2026-06-26",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -455.00,
+      "root_cause": "USDJPY trades (magic 0, likely FTMO manual closure or orphan bot trades) lost -$455 today with CLOSED_BY_FTMO comment — FTMO's risk desk is actively intervening on this account.",
+      "fix": "Emergency: reduce exposure immediately. Account at 8.6% drawdown — only 1.4% from FTMO 10% liquidation.",
+      "prevention_rule": "Monitor FTMO account drawdown in real-time. At 8% DD, auto-pause ALL trading. At 9%, send emergency alert."
+    }
+  ],
+  "lessons_learned": [
+    "Multi-pair bots (MACD/SMA) should NEVER be run on an FTMO challenge account. They were optimized for $100K demo with different risk tolerance. On a $10K FTMO account with 10% max DD, their 0% win rate on multiple pairs generates terminal drawdown.",
+    "CLOSED_BY_FTMO comment in trade history is a RED FLAG — it means FTMO's risk management has flagged the account and is manually closing positions.",
+    "PropFirm Pass v8 bot (M780012) has zero trades to date. The strategy is untested in live conditions. Do not deploy without addressing the multi-pair bot bleed first.",
+    "Risk supervisor MT5 connectivity failed from Jun 25 16:40 UTC to Jun 26 22:40 UTC — 30 hours without risk monitoring on a rapidly deteriorating account."
+  ]
 }

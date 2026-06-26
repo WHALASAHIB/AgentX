@@ -431,6 +431,7 @@ class PineScriptStrategy:
         self.tp_ratio = tp_ratio
         self.sl_ratio = sl_ratio
         self._name = f"PineScript(EMA{fast_ema}_{slow_ema}_ADX{adx_len}_{adx_thresh}_RSI{rsi_len}_{rsi_min})"
+        self._in_position = False  # Track open position state for exit signals
 
         closes = data["close"].values.astype(float)
         highs = data["high"].values.astype(float)
@@ -490,35 +491,56 @@ class PineScriptStrategy:
             raw_params[m.group(2)] = float(m.group(1))
 
         # Fuzzy mapping from .pine identifiers → PineScriptStrategy kwargs
+        # Compiled from ALL 168 iter_*.pine files to cover every naming convention
         mapping: dict[str, list[str]] = {
             "fast_ema": [
-                "ema_fast_len", "emaFastLen", "ema_fast", "emaFast",
-                "Fast EMA Length", "EMA Fast Length", "fast",
+                "fast_len", "fastLen", "ema_fast_len", "emaFastLen",
+                "ema_fast", "emaFast", "fastLength", "fast_length",
+                "emaLength1", "fastLength", "fast",
+                "Fast EMA Length", "EMA Fast Length",
             ],
             "slow_ema": [
-                "ema_slow_len", "emaSlowLen", "ema_slow", "emaSlow",
-                "Slow EMA Length", "EMA Slow Length", "slow",
+                "slow_len", "slowLen", "ema_slow_len", "emaSlowLen",
+                "ema_slow", "emaSlow", "slowLength", "slow_length",
+                "emaLength2", "slowLength",
+                "Slow EMA Length", "EMA Slow Length",
             ],
             "adx_len": [
-                "adx_len", "adxLen", "ADX Length",
+                "adx_len", "adxLen", "adx_length", "adxLength",
+                "dmi_len", "diLength", "adxPeriod", "adx_period",
+                "ADX Length",
             ],
             "adx_thresh": [
-                "adx_thresh", "adxMin", "adx_min",
+                "adx_threshold", "adxThreshold", "adx_thresh", "adxThresh",
+                "adx_min", "adxMin", "adxMin",
                 "ADX Threshold", "ADX Minimum (Trending)",
             ],
             "rsi_len": [
-                "rsi_len", "rsiLen", "RSI Length",
+                "rsi_len", "rsiLen", "rsi_length", "rsiLength",
+                "rsiPeriod", "rsi_period", "rsiLen",
+                "RSI Length",
             ],
             "rsi_min": [
-                "rsi_min", "rsiMin",
+                "rsi_min", "rsiMin", "rsi_threshold", "rsiThreshold",
+                "rsi_thresh", "rsiThresh", "rsiLongMin", "rsi_long_min",
+                "rsiLongThresh", "rsiMinLong", "rsi_entry_threshold",
+                "rsiThresh", "rsiMin",
                 "RSI Minimum (Long Only)", "RSI Minimum (long)",
+                "RSI Threshold (min for long)", "RSI Long Threshold",
             ],
             "tp_ratio": [
-                "tp_ratio", "tpMult", "tp_mult",
+                "tp_ratio", "tpRatio", "tp_sl_ratio", "tpSlRatio",
+                "tp_mult", "tpMult", "tpMulti", "tpMultiplier",
+                "tp_atr_mult", "tpATRMult", "tpAtrMultiplier",
+                "tpPoints", "tp_points", "targetDist",
                 "Take Profit (R)", "Take Profit (×ATR)",
             ],
             "sl_ratio": [
-                "sl_ratio", "slMult", "sl_mult",
+                "sl_ratio", "slRatio", "sl_atr_mult", "slAtrMult",
+                "slMulti", "slMultiplier", "slMult",
+                "slPct", "sl_pct", "sl_percent",
+                "slPoints", "sl_points",
+                "slAtrMultiplier", "slATRMult", "slMultiplier",
                 "Stop Loss (R)", "Stop Loss (×ATR)",
             ],
         }
@@ -603,6 +625,8 @@ class PineScriptStrategy:
         """Return signal dict for bar i.
 
         BUY when fast EMA crosses above slow EMA AND ADX > threshold AND RSI > min.
+        SELL (exit long) when fast EMA crosses below slow EMA to close the position.
+        Uses self._in_position to ensure SELL only triggers when a position is open.
         """
         min_idx = max(self.fast_ema, self.slow_ema, self.adx_len, self.rsi_len)
         if i < min_idx:
@@ -615,18 +639,25 @@ class PineScriptStrategy:
         ):
             return {"action": None}
 
-        # EMA crossover
         prev_fast = self.ema_fast[i - 1]
         prev_slow = self.ema_slow[i - 1]
         curr_fast = self.ema_fast[i]
         curr_slow = self.ema_slow[i]
 
+        # Exit signal: fast EMA crosses below slow EMA (reverse of entry)
+        if self._in_position and prev_fast >= prev_slow and curr_fast < curr_slow:
+            self._in_position = False
+            return {"action": "sell"}
+
+        # Entry signal: fast EMA crosses above slow EMA + ADX + RSI filter
         if (
-            prev_fast <= prev_slow
+            not self._in_position
+            and prev_fast <= prev_slow
             and curr_fast > curr_slow
             and self.adx_arr[i] > self.adx_thresh
             and self.rsi_arr[i] > self.rsi_min
         ):
+            self._in_position = True
             return {"action": "buy"}
 
         return {"action": None}

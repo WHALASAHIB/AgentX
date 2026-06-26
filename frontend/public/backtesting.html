@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Backtesting — Trading Terminal</title>
+  <title>Backtesting — Agent X</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
@@ -124,7 +124,7 @@
 <body>
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Trading Terminal</span></div>
+    <div class="sidebar-brand"><svg viewBox="0 0 48 48" fill="none"><rect x="4" y="14" width="8" height="20" rx="2" fill="currentColor" opacity="0.6"/><rect x="16" y="8" width="8" height="26" rx="2" fill="currentColor" opacity="0.8"/><rect x="28" y="18" width="8" height="16" rx="2" fill="currentColor"/><rect x="40" y="4" width="8" height="30" rx="2" fill="currentColor" opacity="0.4"/></svg><span>Agent X</span></div>
     <nav class="sidebar-nav">
       <a href="index.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
       <a href="portfolio.html" class="nav-item"><span class="icon">💼</span> Portfolio</a>
@@ -225,7 +225,7 @@
     function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
     function toggleTheme() { document.body.classList.toggle('light'); const l=document.body.classList.contains('light'); localStorage.setItem('theme',l?'light':'dark'); document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode'; }
     (function(){const t=localStorage.getItem('theme');if(t==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light Mode'}})();
-    function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';return(d===0?n.toFixed(0):n.toFixed(d)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+    function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const fixed=n.toFixed(d);const parts=fixed.split('.');parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');return parts.join('.');}
     function fmtUsd(n){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const sign=n>=0?'':'−';return sign+'$'+fmt(Math.abs(n));}
     function updateTimeline(years) {
       const to = new Date();

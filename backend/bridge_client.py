@@ -83,6 +83,20 @@ class BridgeClient:
     async def get_tick(self, account_id: str, symbol: str) -> dict:
         return await self._get(f"/api/v1/accounts/{account_id}/tick/{symbol}")
 
+    async def trade(self, request: dict) -> dict:
+        """Execute a trade via the bridge's /api/v1/trade endpoint."""
+        import httpx
+        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+            try:
+                resp = await client.post(f"{self.base_url}/api/v1/trade", json=request)
+                if resp.status_code == 400:
+                    return resp.json()
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.RequestError as e:
+                logger.warning("Bridge trade failed: %s", e)
+                raise HTTPException(status_code=503, detail=f"Bridge unreachable: {e}")
+
 
 _bridge_client = BridgeClient()
 
