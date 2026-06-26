@@ -1,6 +1,6 @@
 {
-  "iteration": 165,
-  "last_run": "2026-06-26T05:00:00Z",
+  "iteration": 166,
+  "last_run": "2026-06-26T05:15:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,8 +13,24 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Switch EMA crossunder exit to RSI(14)<50 exit on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>15 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + RSI<50 exit — LONG ONLY XAUUSD 30m. Sharpe at -1.88 is the weakest metric by far. The EMA crossunder exit dominates trade closure — most trades are stopped out on trend reversal before TP/SL can trigger. Switching to RSI(14)<50 exit means the strategy exits when momentum fades rather than when the trend fully reverses. This should let winners breathe longer while still recycling capital promptly. AvgWinLoss at 1.66 confirms TP/SL does work when it fires, but the crossunder exit hits first too often. RSI<50 exit is a softer signal that may improve Sharpe by reducing variance.",
+  "current_hypothesis": "Revert from RSI(14)<50 exit back to EMA crossunder exit on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>15 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. RSI<50 exit (iter 165) produced PF=1.03 and Sharpe=-3.13, significantly worse than EMA crossunder exit at iter 164 (PF=1.22, Sharpe=-1.88). The RSI<50 exit reduced WR from 42.3% to 40% and AvgWinLoss from 1.66 to 1.54. Reverting to EMA crossunder exit which had better metrics across all dimensions. The underlying issue persists: signal-based exits close trades before TP/SL can trigger. Next candidate after re-establishing baseline: increase TP/SL ratio from 1.5:1 to 2:1.",
   "evolution_log": [
+    {
+      "iteration": 165,
+      "hypothesis": "Switch EMA crossunder exit to RSI(14)<50 exit on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>15 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + RSI<50 exit — LONG ONLY XAUUSD 30m.",
+      "metrics": {
+        "pf": 1.0258784,
+        "sharpe": -3.12681002,
+        "wr": 40.0,
+        "dd": 2.84042905,
+        "trades": 20,
+        "net_profit": -158.065684748817
+      },
+      "verdict": "rejected (PF=1.03<1.3, Sharpe=-3.13<0.5) — RSI<50 exit made things WORSE than EMA crossunder exit (iter 164: PF=1.22, Sharpe=-1.88). PF dropped from 1.22 to 1.03, Sharpe from -1.88 to -3.13. Trade count dropped from 26 to 20. AvgWinLoss at 1.54 confirms TP/SL fires correctly when triggered, but the RSI<50 exit closes trades before TP/SL at roughly the same frequency as EMA crossunder. WR stayed at 40% (barely meeting target). Cascade ratio 1.0 (clean). Commissions $166.77 consume all gross profit. Next: revert to EMA crossunder exit which performed better.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-26T05:15:00Z"
+    },
     {
       "iteration": 164,
       "hypothesis": "Reduce ADX threshold from 25 to 15 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>15 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m.",

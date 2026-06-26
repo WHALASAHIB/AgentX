@@ -1,0 +1,77 @@
+//@version=5
+strategy(title="EMA_RSI_ADX_RSIexit_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMAs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=1, maxval=50)  // sweep: 3-20 step 2
+ema_slow_len = input.int(13, "Slow EMA Length", minval=1, maxval=100)  // sweep: 8-30 step 2
+
+// RSI entry filter
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)  // sweep: 7-21 step 2
+rsi_entry_threshold = input.int(55, "RSI Entry Threshold (long if >)", minval=1, maxval=100)  // sweep: 50-70 step 5
+
+// ADX trend filter (manual calculation)
+adx_len = input.int(14, "ADX Length", minval=2, maxval=50)  // sweep: 7-21 step 2
+adx_threshold = input.int(15, "ADX Threshold (enter if >)", minval=1, maxval=50)  // sweep: 10-30 step 5
+
+// TP/SL
+atr_len = input.int(14, "ATR Length", minval=2, maxval=50)  // sweep: 7-21 step 2
+tp_sl_ratio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+sl_atr_mult = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+
+// RSI exit threshold
+rsi_exit_threshold = input.int(50, "RSI Exit Threshold (exit if <)", minval=1, maxval=100)  // sweep: 30-60 step 5
+
+//--- calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+
+rsi_val = ta.rsi(close, rsi_len)
+
+// Manual ADX calculation (avoids ta.adx() which may not be supported)
+true_range = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+atr_raw = ta.rma(true_range, adx_len)
+
+// Directional movement
+up_move = high - high[1]
+down_move = low[1] - low
+
+plus_dm = 0.0
+minus_dm = 0.0
+if up_move > down_move and up_move > 0
+    plus_dm := up_move
+else
+    plus_dm := 0.0
+if down_move > up_move and down_move > 0
+    minus_dm := down_move
+else
+    minus_dm := 0.0
+
+plus_di_smooth = ta.rma(plus_dm, adx_len) / atr_raw * 100
+minus_di_smooth = ta.rma(minus_dm, adx_len) / atr_raw * 100
+
+dx = math.abs(plus_di_smooth - minus_di_smooth) / (plus_di_smooth + minus_di_smooth) * 100
+manual_adx = ta.rma(dx, adx_len)
+
+atr = ta.atr(atr_len)
+sl_distance = atr * sl_atr_mult
+tp_distance = sl_distance * tp_sl_ratio
+
+//--- entry conditions
+ema_crossover = ta.crossover(ema_fast, ema_slow)
+long_entry = ema_crossover and rsi_val > rsi_entry_threshold and manual_adx > adx_threshold
+
+//--- exit condition: RSI(14) < 50
+rsi_exit = rsi_val < rsi_exit_threshold
+
+//--- entry logic
+if long_entry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    // Fixed TP/SL as risk boundary
+    strategy.exit("TP/SL", "Long", loss=int(sl_distance / syminfo.mintick), profit=int(tp_distance / syminfo.mintick))
+    // RSI-based exit to recycle capital when momentum fades
+    if rsi_exit
+        strategy.close("Long", comment="RSI<50_exit")
