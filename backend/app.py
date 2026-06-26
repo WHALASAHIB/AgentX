@@ -767,13 +767,16 @@ async def get_magic_numbers():
 # ── Consolidated Stats ────────────────────────────────────────────────────────
 
 @app.get("/api/stats")
-async def consolidated_stats():
+async def consolidated_stats(account_id: Optional[str] = None):
     """Aggregate positions, trades, and bridge data for a quick trading overview."""
     bridge = get_bridge()
     db = get_db()
     
-    # Use default account ID
-    account_id = "default"
+    # Use active account or provided account ID
+    if account_id is None:
+        account_id = db.get_active_account()
+    if account_id is None:
+        account_id = "default"
     
     stats = {
         "total_positions": 0,
@@ -793,7 +796,7 @@ async def consolidated_stats():
 
     # ── Positions ──────────────────────────────────────────────────────────
     try:
-        positions = await bridge.get_positions()
+        positions = await bridge.get_positions(account_id)
         stats["total_positions"] = len(positions)
         stats["open_positions"] = sum(
             1 for p in positions if p.get("type") != "closed" and p.get("profit") is not None
@@ -1090,9 +1093,12 @@ async def test_account_connection(account_id: str, auth=Depends(require_auth)):
 # ── Positions Endpoints ───────────────────────────────────────────────────────
 
 @app.get("/api/positions")
-async def all_positions(auth=Depends(require_auth)):
+async def all_positions(account_id: Optional[str] = None, auth=Depends(require_auth)):
     bridge = get_bridge()
-    positions = await bridge.get_positions()
+    db = get_db()
+    if account_id is None:
+        account_id = db.get_active_account()
+    positions = await bridge.get_positions(account_id)
     # Normalize to ensure PnL (profit) is present per position
     normalized = []
     for pos in positions:

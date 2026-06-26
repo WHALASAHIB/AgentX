@@ -1,0 +1,60 @@
+//@version=5
+strategy(title="EMA5_13_RSI55_ADX25_LONGONLY_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+ema_fast_len = input.int(5, "Fast EMA Length", minval=1, maxval=50)  // sweep: 3-20 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=1, maxval=100) // sweep: 8-30 step 1
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)           // sweep: 7-21 step 1
+rsi_entry_threshold = input.int(55, "RSI Entry Threshold (long)", minval=1, maxval=100) // sweep: 50-70 step 5
+
+// ADX filter
+adx_len = input.int(14, "ADX Length", minval=2, maxval=50)           // sweep: 7-21 step 1
+adx_threshold = input.int(25, "ADX Minimum Threshold", minval=1, maxval=100) // sweep: 15-35 step 5
+
+// TP/SL parameters (1:1 — 1xATR)
+atr_len = input.int(14, "ATR Length", minval=2, maxval=50)           // sweep: 7-21 step 1
+sl_atr_mult = input.float(1.0, "SL ATR Multiplier", minval=0.1, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.5
+tp_atr_mult = input.float(1.0, "TP ATR Multiplier", minval=0.1, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.5
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+// ADX using dmi (returns [diPlus, diMinus, adx])
+[di_plus, di_minus, adx_val] = ta.dmi(high, low, close, adx_len)
+
+// ATR for TP/SL distances
+atr_val = ta.atr(atr_len)
+
+//--- crossover / crossunder signals
+ema_cross_over  = ta.crossover(ema_fast, ema_slow)
+ema_cross_under = ta.crossunder(ema_fast, ema_slow)
+
+//--- entry condition: LONG only
+// Enter long when: EMA fast crosses above EMA slow AND RSI > threshold AND ADX > threshold
+long_entry = ema_cross_over and rsi_val > rsi_entry_threshold and adx_val > adx_threshold
+
+//--- exit condition: trend reversal
+// Exit long when: EMA fast crosses below EMA slow (signal-based exit to recycle capital)
+long_exit_signal = ema_cross_under
+
+//--- entry management
+if long_entry
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// If we have a long position and EMA crossunder triggers, exit
+if strategy.position_size > 0 and long_exit_signal
+    strategy.close("Long", comment="ema_xunder_exit")
+
+//--- Fixed TP/SL using ATR-based stops (1:1 ratio)
+if strategy.position_size > 0
+    stop_loss   = strategy.position_avg_price - (atr_val * sl_atr_mult)
+    take_profit = strategy.position_avg_price + (atr_val * tp_atr_mult)
+    strategy.exit("TP/SL", "Long", stop=stop_loss, limit=take_profit)

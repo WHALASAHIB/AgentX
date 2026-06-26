@@ -1,0 +1,42 @@
+//@version=5
+strategy(title="EMA CROSS RSI55 ADX18 LONG ONLY XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(5, "Fast EMA", minval=1, maxval=50)       // sweep: 3-20 step 1
+ema_slow = input.int(13, "Slow EMA", minval=5, maxval=100)      // sweep: 8-30 step 1
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)      // sweep: 7-21 step 1
+rsi_threshold = input.int(55, "RSI Entry Threshold", minval=30, maxval=70)  // sweep: 50-65 step 5
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)      // sweep: 10-25 step 2
+adx_threshold = input.int(18, "ADX Minimum", minval=10, maxval=40) // sweep: 14-25 step 2
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)      // sweep: 7-21 step 2
+sl_atr_mult = input.float(1.0, "SL Multiplier (ATR)", step=0.1) // sweep: 0.5-2.0 step 0.25
+tp_sl_ratio = input.float(1.0, "TP:SL Ratio", step=0.1)         // sweep: 0.5-3.0 step 0.5
+
+//--- indicators
+ema_fast_val = ta.ema(close, ema_fast)
+ema_slow_val = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+[di_plus, di_minus, adx_val] = ta.dmi(high, low, close, adx_len)
+atr_val = ta.atr(atr_len)
+
+//--- signals
+ema_cross_over = ta.crossover(ema_fast_val, ema_slow_val)
+ema_cross_under = ta.crossunder(ema_fast_val, ema_slow_val)
+rsi_ok = rsi_val > rsi_threshold
+adx_ok = adx_val > adx_threshold
+
+//--- entry logic
+long_condition = ema_cross_over and rsi_ok and adx_ok
+
+//--- exit management
+sl_pips = int(atr_val * sl_atr_mult / syminfo.mintick)
+tp_pips = int(sl_pips * tp_sl_ratio)
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+if (strategy.position_size > 0)
+    strategy.exit("Exit Long", "Long", loss=sl_pips, profit=tp_pips)
+    // Also exit on trend reversal signal
+    if (ema_cross_under)
+        strategy.close("Long", comment="ema_xunder")
