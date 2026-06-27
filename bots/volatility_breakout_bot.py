@@ -26,7 +26,7 @@ except ImportError:
 # ── Constants ──────────────────────────────────────────────────────────
 CHECK_INTERVAL = 10
 MAGIC = 200500
-BACKEND_URL = "http://localhost:8006"
+BACKEND_URL = "http://localhost:8008"
 
 
 def _log_decision(agent_name: str, action: str, detail: str, outcome: str = "success"):
