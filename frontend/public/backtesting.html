@@ -209,6 +209,7 @@
 
     <div id="resultsArea" style="display:none;">
       <div class="section-title">📊 Backtest Results</div>
+      <div id="dataSourceBadge" style="margin-bottom:12px;"></div>
       <div class="results-metrics" id="metricsGrid"></div>
       <div class="chart-container"><h3 class="section-title">📈 Equity Curve</h3><canvas id="btEquityChart"></canvas></div>
       <div class="card" id="tradesSummary"><h3 class="section-title">📋 Trade Summary</h3></div>
@@ -301,6 +302,21 @@
       document.getElementById('resultsArea').style.display = 'block';
       const metrics = data.metrics || data;
       const grid = document.getElementById('metricsGrid');
+
+      // ── Data source badge ──────────────────────────────────────────────
+      const ds = data.data_source || 'unknown';
+      const bars = data.bars_fetched || 0;
+      const dsBadge = document.getElementById('dataSourceBadge');
+      const isReal = ds === 'bridge' || ds === 'mt5_direct';
+      dsBadge.innerHTML = `
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:600;
+          ${isReal ? 'background:rgba(34,197,94,0.15);color:var(--success);' : 'background:rgba(239,68,68,0.15);color:var(--danger);'}">
+          ${isReal ? '🔵' : '⚠️'}
+          Data: <strong>${ds}</strong> &mdash; ${bars} bars fetched
+        </span>
+      `;
+      // ────────────────────────────────────────────────────────────────────
+
       // Convert decimal rates to percentages for display
       const winRatePct = (metrics.win_rate || 0) * 100;
       const maxDdPct = (metrics.max_drawdown || metrics.max_dd || 0) * 100;
@@ -371,7 +387,12 @@
         }
         renderTradePage(0);
       } else {
-        ts.innerHTML = `<h3 class="section-title">📋 Trade Summary</h3><div class="loading">No trades in this backtest</div>`;
+        ts.innerHTML = `<h3 class="section-title">📋 Trade Summary</h3>
+          <div style="text-align:center;padding:30px;color:var(--text-sec);">
+            <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+            <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;">0 trades generated</div>
+            <div style="font-size:13px;">This strategy produced no trade signals with the current parameters.<br>Try a different <strong>timeframe</strong>, <strong>date range</strong>, or <strong>symbol</strong>.</div>
+          </div>`;
       }
 
       document.getElementById('resultsArea').scrollIntoView({behavior:'smooth'});

@@ -818,5 +818,29 @@
     "detail": "0.01 USDCHF",
     "outcome": "error",
     "metadata": {}
+  },
+  {
+    "id": "dec_1782606077406_6981",
+    "timestamp": "2026-06-28T00:21:17.406183+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger Audusd",
+    "action": "Bot Started",
+    "detail": "Bot 'Bollinger_AUDUSD' started (PID 7128)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
+  },
+  {
+    "id": "dec_1782606795721_2054",
+    "timestamp": "2026-06-28T00:33:15.721550+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger Nzdusd",
+    "action": "Bot Started",
+    "detail": "Bot 'Bollinger_NZDUSD' started (PID 11848)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
   }
 ]

@@ -335,13 +335,38 @@ async def _start_bot_process(name: str, script: Path) -> dict:
 
     try:
         import subprocess
+        import os as _os  # for env setup
+
+        # Build PYTHONPATH so bot scripts can find Hermess utils and modules
+        env = _os.environ.copy()
+        hermess_paths = [r"C:\Hermess", r"C:\Hermess\bots"]
+        existing_pp = env.get("PYTHONPATH", "")
+        for hp in hermess_paths:
+            if hp not in existing_pp:
+                existing_pp = f"{hp};{existing_pp}" if existing_pp else hp
+        env["PYTHONPATH"] = existing_pp
+
+        # Log file for this bot's stderr
+        logs_dir = _os.path.abspath(_os.path.join(_BOTS_DIR, "logs"))
+        _os.makedirs(logs_dir, exist_ok=True)
+        stderr_log = _os.path.join(logs_dir, f"{name}_error.log")
+
+        stderr_fh = open(stderr_log, "a", encoding="utf-8")
+        # Write a timestamp header so we can tell runs apart
+        stderr_fh.write(f"\n{'='*60}\n[{datetime.now(timezone.utc).isoformat()}] Starting bot '{name}'\n{'='*60}\n")
+        stderr_fh.flush()
+
         proc = subprocess.Popen(
             [sys.executable, str(script)],
-            cwd=str(script.parent),
+            cwd=str(_BOTS_DIR),
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr_fh,
+            env=env,
             creationflags=subprocess.DETACHED_PROCESS if hasattr(subprocess, 'DETACHED_PROCESS') else 0,
         )
+        # Close our handle to the file so the subprocess can write to it independently
+        stderr_fh.close()
+
         _bot_processes[name] = proc
         db = get_db()
         db.upsert_bot({
@@ -354,7 +379,7 @@ async def _start_bot_process(name: str, script: Path) -> dict:
         })
         asyncio.create_task(_publish_async(f"bots:{name}", {"type": "bot_status", "status": "running", "pid": proc.pid}))
         # Log decision
-        _log_bot_decision(name, "Bot Started", f"Bot '{name}' started (PID {proc.pid})")
+        _log_bot_decision(name, "Bot Started", f"Bot '{name}' started (PID {proc.pid})", "success")
         return {"name": name, "status": "running", "pid": proc.pid}
     except Exception as e:
         _log_bot_decision(name, "Bot Start Failed", f"Failed to start bot '{name}': {e}", "error")
@@ -398,12 +423,26 @@ def _get_bot_status(name: str) -> dict:
     proc = _bot_processes.get(name)
     running = proc is not None and hasattr(proc, 'poll') and proc.poll() is None
     pid = proc.pid if hasattr(proc, 'pid') and running else None
+    # Read last_error from stderr log (tail of error log file)
+    last_error = None
+    error_log = _BOTS_DIR / "logs" / f"{name}_error.log"
+    if error_log.exists():
+        try:
+            with open(error_log, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            # Find the most recent error lines (skip timestamp headers)
+            error_lines = [l.strip() for l in lines if l.strip() and not l.startswith("=") and not l.startswith("[")]
+            if error_lines:
+                last_error = error_lines[-1]  # Most recent line
+        except Exception:
+            pass
     return {
         "name": name,
         "display_name": name.replace("_", " ").title(),
         "running": running,
         "pid": pid,
         "script": str(BOT_SCRIPTS.get(name, "")),
+        "last_error": last_error,
     }
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
@@ -1190,13 +1229,32 @@ async def test_bot_start():
         if not os.path.exists(pythonw):
             pythonw = sys.executable  # fall back to python if pythonw not found
 
+        # Build PYTHONPATH for Hermess utils
+        env = os.environ.copy()
+        hermess_paths = [r"C:\Hermess", r"C:\Hermess\bots"]
+        existing_pp = env.get("PYTHONPATH", "")
+        for hp in hermess_paths:
+            if hp not in existing_pp:
+                existing_pp = f"{hp};{existing_pp}" if existing_pp else hp
+        env["PYTHONPATH"] = existing_pp
+
+        # Stderr log file
+        logs_dir = os.path.abspath(os.path.join(_BOTS_DIR, "logs"))
+        os.makedirs(logs_dir, exist_ok=True)
+        stderr_log = os.path.join(logs_dir, "test_bot_error.log")
+        stderr_fh = open(stderr_log, "a", encoding="utf-8")
+        stderr_fh.write(f"\n{'='*60}\n[{datetime.now(timezone.utc).isoformat()}] Starting test bot on account {active_id}\n")
+        stderr_fh.flush()
+
         proc = subprocess.Popen(
             [pythonw, str(script), "--account-id", active_id],
             cwd=str(_BOTS_DIR),
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr_fh,
+            env=env,
             creationflags=subprocess.DETACHED_PROCESS if hasattr(subprocess, 'DETACHED_PROCESS') else 0,
         )
+        stderr_fh.close()
         _test_bot_proc = proc
         logger.info("Test bot started on account %s (PID %d)", active_id, proc.pid)
         return {"name": "test_bot", "status": "running", "pid": proc.pid, "account_id": active_id}
@@ -1209,8 +1267,21 @@ async def test_bot_status():
     """Check if the test bot is currently running."""
     global _test_bot_proc
 
+    # Read last_error from error log
+    last_error = None
+    error_log = _BOTS_DIR / "logs" / "test_bot_error.log"
+    if error_log.exists():
+        try:
+            with open(error_log, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            error_lines = [l.strip() for l in lines if l.strip() and not l.startswith("=") and not l.startswith("[")]
+            if error_lines:
+                last_error = error_lines[-1]
+        except Exception:
+            pass
+
     if _test_bot_proc is None:
-        return {"name": "test_bot", "running": False, "pid": None}
+        return {"name": "test_bot", "running": False, "pid": None, "last_error": last_error}
 
     poll = _test_bot_proc.poll()
     running = poll is None
@@ -1219,6 +1290,7 @@ async def test_bot_status():
         "running": running,
         "pid": _test_bot_proc.pid if running else None,
         "exit_code": poll if not running else None,
+        "last_error": last_error,
     }
 
 
@@ -1531,7 +1603,7 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
         if _mod.startswith("data") or _mod.startswith("engine") or _mod.startswith("loader"):
             del _sys.modules[_mod]
     import pandas as pd
-    from data import INSTRUMENTS, fetch
+    from data import INSTRUMENTS, fetch, fetch_with_source
     from engine import run as bt_run
     from loader import list_strategies, PineScriptStrategy
 
@@ -1563,12 +1635,15 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
             # Parse the .pine file and run local backtest
             strategy = PineScriptStrategy.from_pine_file(script_path, None)
             # Need data — fetch it now
-            data = fetch(instrument["ticker"], date_from, date_to, interval=timeframe)
+            _data_source = fetch_with_source(instrument["ticker"], date_from, date_to, interval=timeframe)
+            data = _data_source[0]
+            _ds_src = _data_source[1]
+            _ds_bars = _data_source[2]
             if data is None or len(data) < 20:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Not enough data for {req.symbol} {timeframe} from {date_from} to {date_to}. "
-                           f"Got {len(data) if data is not None else 0} bars.",
+                           f"Got {len(data) if data is not None else 0} bars. Source: {_ds_src}",
                 )
             # Recreate strategy with actual data
             strategy_params = {
@@ -1609,13 +1684,16 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
                 pass
         return local_result
 
-    data = fetch(instrument["ticker"], date_from, date_to, interval=timeframe)
+    _data_source = fetch_with_source(instrument["ticker"], date_from, date_to, interval=timeframe)
+    data = _data_source[0]
+    _ds_src = _data_source[1]
+    _ds_bars = _data_source[2]
     if data is None or len(data) < 20:
         raise HTTPException(
             status_code=400,
-            detail=f"Not enough data for {req.symbol} {timeframe} from {date_from} to {date_to}. "
+            detail=f"Not enough data for {req.symbol} {timeframe} from {date_to} to {date_to}. "
                    f"Try a shorter range (e.g. 1-3 months) or different symbol. "
-                   f"Got {len(data) if data is not None else 0} bars."
+                   f"Got {len(data) if data is not None else 0} bars. Source: {_ds_src}"
         )
 
     strategies = list_strategies()
@@ -1720,6 +1798,9 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
                 "exit_reason": t.get("exit_reason", ""),
             })
 
+        # Track data source metadata for frontend transparency
+        _data_meta = {"source": _ds_src, "bars": _ds_bars}
+
         import numpy as np
         return {
             "metrics": {k: float(v) if isinstance(v, (np.floating,)) else int(v) if isinstance(v, (np.integer,)) else bool(v) if isinstance(v, np.bool_) else v for k, v in result["metrics"].items()},
@@ -1728,6 +1809,8 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
             "ftmo": result.get("ftmo"),
             "ftmo_phase2": result.get("ftmo_phase2"),
             "final_equity": float(result["final_equity"]),
+            "data_source": _ds_src,
+            "bars_fetched": _ds_bars,
         }
 
     # ── Local backtester for built-in strategies ────────────────────────
@@ -1783,6 +1866,9 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
             {"time": date_from[:10] + " 00:00", "equity": start_eq},
             {"time": date_to[:10] + " 00:00", "equity": end_eq},
         ]
+    
+    # Track data source metadata for frontend transparency
+    _data_meta = {"source": _ds_src, "bars": _ds_bars}
 
     # ── Normalise trades: always list of trade objects ──────────────────
     trades_list = []
@@ -1810,6 +1896,8 @@ async def run_backtest(req: RunBacktestRequest, auth=Depends(require_auth)):
         "ftmo": result.get("ftmo"),
         "ftmo_phase2": result.get("ftmo_phase2"),
         "final_equity": float(result["final_equity"]),
+        "data_source": _ds_src,
+        "bars_fetched": _ds_bars,
     }
 
 class OptimizeRequest(PydanticBaseModel):
@@ -2002,6 +2090,8 @@ async def run_custom_backtest(req: CustomBacktestRequest, auth=Depends(require_a
         "ftmo": result.get("ftmo"),
         "ftmo_phase2": result.get("ftmo_phase2"),
         "final_equity": float(result["final_equity"]),
+        "data_source": _ds_src,
+        "bars_fetched": _ds_bars,
     }
 
 @app.post("/api/backtest/compare")

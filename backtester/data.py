@@ -293,6 +293,33 @@ def fetch(
     return None
 
 
+def fetch_with_source(
+    ticker: str,
+    date_from: str,
+    date_to: str,
+    interval: str = "1h",
+    try_synthetic: bool = True,
+) -> tuple:
+    """Like fetch() but returns (dataframe, source_label, bar_count).
+    Source is one of: 'bridge', 'mt5_direct', 'synthetic', or 'none'.
+    This lets callers know whether the data is real or synthetic."""
+    bridge_data = _fetch_from_bridge(ticker, date_from, date_to, interval)
+    if bridge_data is not None and len(bridge_data) >= 20:
+        return (bridge_data, "bridge", len(bridge_data))
+
+    mt5_data = _fetch_from_mt5_direct(ticker, date_from, date_to, interval)
+    if mt5_data is not None and len(mt5_data) >= 20:
+        return (mt5_data, "mt5_direct", len(mt5_data))
+
+    if try_synthetic:
+        syn_data = _generate_synthetic_data(ticker, date_from, date_to, interval)
+        if syn_data is not None:
+            return (syn_data, "synthetic", len(syn_data))
+        return (None, "none", 0)
+
+    return (None, "none", 0)
+
+
 def fetch_with_fallback(
     ticker: str,
     date_from: str,
