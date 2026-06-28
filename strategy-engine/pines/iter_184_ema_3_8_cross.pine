@@ -1,0 +1,57 @@
+//@version=5
+strategy(title="EMA3_8_Cross_RSI_LongOnly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Fast EMA period
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50)    // sweep: 2-10 step 1
+// Slow EMA period
+slowLen = input.int(8, "Slow EMA Length", minval=1, maxval=50)    // sweep: 5-20 step 1
+// RSI period and threshold
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 1
+rsiThreshold = input.int(55, "RSI Threshold (long if >)", minval=1, maxval=100)  // sweep: 40-70 step 5
+// Minimum hold bars
+minHold = input.int(5, "Minimum Hold Bars", minval=1, maxval=50)  // sweep: 3-10 step 1
+// TP/SL multiplier
+tpMultiplier = input.float(2.0, "TP = ATR ×", minval=0.5, maxval=10.0, step=0.5)  // sweep: 1.0-4.0 step 0.5
+slMultiplier = input.float(1.0, "SL = ATR ×", minval=0.5, maxval=10.0, step=0.5)  // sweep: 0.5-2.0 step 0.5
+
+//--- indicators
+// EMAs
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+// ATR for TP/SL distance
+atrVal = ta.atr(14)
+
+//--- entry logic
+// Long condition: EMA fast crosses above slow, RSI > threshold (removed ADX filter — it was too restrictive)
+longEntry = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold
+
+//--- exit management
+// Track bars since entry
+var int barsSinceEntry = 0
+if (strategy.position_size[1] == 0 and strategy.position_size > 0)
+    barsSinceEntry := 0
+if (strategy.position_size > 0)
+    barsSinceEntry := barsSinceEntry + 1
+
+// Exit condition: EMA fast crosses below slow AND minimum hold satisfied
+longExit = ta.crossunder(emaFast, emaSlow) and barsSinceEntry >= minHold
+
+//--- order placement
+// Entry
+if (longEntry)
+    strategy.entry("Long", strategy.long)
+
+// Exit via TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", 
+     loss=int(slMultiplier * atrVal / syminfo.mintick), 
+     profit=int(tpMultiplier * atrVal / syminfo.mintick))
+
+// Exit via EMA crossunder (after min hold)
+if (longExit)
+    strategy.close("Long")
