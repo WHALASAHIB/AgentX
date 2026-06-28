@@ -1,0 +1,77 @@
+//@version=5
+strategy(title="iter_179_chandelier_trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len  = input.int(5,   "Fast EMA",  minval=1, maxval=50)   // sweep: 3-20 step 1
+ema_slow_len  = input.int(13,  "Slow EMA",  minval=1, maxval=100)  // sweep: 8-30 step 1
+rsi_len       = input.int(14,  "RSI Length", minval=5, maxval=30)   // sweep: 7-21 step 2
+rsi_threshold = input.int(55,  "RSI Long >",  minval=30, maxval=80)   // sweep: 40-70 step 5
+adx_len       = input.int(14,  "ADX Length", minval=5, maxval=30)   // sweep: 7-21 step 2
+adx_threshold = input.int(14,  "ADX >",       minval=5, maxval=40)   // sweep: 8-25 step 2
+min_hold      = input.int(4,   "Min Hold Bars", minval=1, maxval=30) // sweep: 1-10 step 1
+trail_mult    = input.float(2.0, "Trail ATR Mult", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.2
+atr_len       = input.int(14,  "ATR Length",  minval=5, maxval=30)   // sweep: 7-21 step 2
+
+//--- indicators
+fast_ema = ta.ema(close, ema_fast_len)
+slow_ema = ta.ema(close, ema_slow_len)
+rsi      = ta.rsi(close, rsi_len)
+
+//--- manual ADX calculation (some platforms don't support ta.adx())
+// Step 1: True Range
+hi_lo    = high - low
+hi_pc    = high - close[1]
+lo_pc    = low  - close[1]
+tr       = math.max(hi_lo, math.max(math.abs(hi_pc), math.abs(lo_pc)))
+atr      = ta.rma(tr, atr_len)
+
+// Step 2: Directional movement
+up_move  = high - high[1]
+down_move = low[1] - low
+plus_dm  = up_move > down_move and up_move > 0  ? up_move  : 0.0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0.0
+
+// Step 3: Smoothed DMs
+s_plus_dm  = ta.rma(plus_dm,  adx_len)
+s_minus_dm = ta.rma(minus_dm, adx_len)
+
+// Step 4: Directional Indicators
+plus_di  = 100.0 * s_plus_dm  / atr
+minus_di = 100.0 * s_minus_dm / atr
+
+// Step 5: DX and ADX
+dx       = 100.0 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val  = ta.rma(dx, adx_len)
+
+//--- entry logic
+// Long entry: EMA5 crosses above EMA13 AND RSI(14) > 55 AND ADX(14) > 14
+go_long = ta.crossover(fast_ema, slow_ema) and rsi > rsi_threshold and adx_val > adx_threshold
+
+if go_long and strategy.position_size == 0
+    strategy.entry("LE", strategy.long)
+
+//--- exit management
+var int   bars_held  = 0
+var float peak_close = na
+var float trail_stop = na
+
+if strategy.position_size > 0
+    bars_held := bars_held + 1
+    // Track highest close since entry (chandelier reference)
+    peak_close := na(peak_close) ? close : math.max(peak_close, close)
+    // Chandelier trailing stop: peak_close - (multiplier * ATR)
+    trail_stop := peak_close - (trail_mult * atr)
+else
+    bars_held  := 0
+    peak_close := na
+    trail_stop := na
+
+// EMA crossunder exit condition (only after minimum hold period)
+ema_crossunder    = ta.crossunder(fast_ema, slow_ema)
+exit_on_crossunder = ema_crossunder and bars_held >= min_hold
+
+// Exit priority: crossunder exit (after min hold) OR chandelier trailing stop
+if exit_on_crossunder
+    strategy.close("LE", comment="XUnder")
+else if strategy.position_size > 0 and not na(trail_stop) and close <= trail_stop
+    strategy.close("LE", comment="ChandTrail")

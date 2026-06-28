@@ -1,6 +1,6 @@
 {
-  "iteration": 179,
-  "last_run": "2026-06-28T11:00:00Z",
+  "iteration": 183,
+  "last_run": "2026-06-28T12:17:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Replace fixed 1.5:1 TP/SL with a CHANDELIER trailing stop (trailing at 2.0xATR below highest close since entry). Same entry: EMA(5,13) cross + RSI(14)>55 + ADX(14)>14 + min_hold=4 + EMA crossunder exit (after min_hold). The manual ADX calc using ta.ema may not match ta.adx's Wilder's RMA — but both give directional signal. Issue with min_hold=4 (iter 178): 23 trades, PF=1.39, Sharpe=0.30 — trade count target met but trade quality suffered. Fixed TP at 1.5xATR capped winning trades too early (avg win=+$110). A trailing stop lets winners run in strong trends while locking in profits on reversals. Should improve PF and Sharpe by increasing avg win size without capping.",
+  "current_hypothesis": "Raise RSI threshold from 50 to 55 on EMA(5,10) crossover + RSI(14)>55 + ADX(14)>14 + min_hold=5 + TP/SL 2:1 (2xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. Rationale: lowering RSI to 50 dropped PF from 1.20 to 0.99 and Sharpe from -0.27 to -0.86. The RSI>50 filter is too loose — it lets low-quality signals through that the ADX>14 gate can't catch. Target: restore PF above 1.3.",
   "evolution_log": [
     {
       "iteration": 169,
@@ -42,14 +42,14 @@
         "trades": 21,
         "net_profit": -40.613541392622
       },
-      "verdict": "rejected (PF=1.29<1.3, Sharpe=-0.30<0.5) — TP/SL ratio change had ZERO effect (metrics identical to iter 169). Root cause: EMA crossunder exit fires before TP/SL targets. Crossunder dominates the exit. Next: remove EMA crossunder exit entirely.",
+      "verdict": "rejected (PF=1.29<1.3, Sharpe=-0.30<0.5) — TP/SL ratio change had ZERO effect. Root cause: EMA crossunder exit fires before TP/SL targets. Crossunder dominates the exit.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-27T00:30:00Z"
     },
     {
       "iteration": 171,
-      "hypothesis": "Remove EMA crossunder exit entirely — exit solely via TP/SL targets (1.5:1 ratio, 1.5xATR TP / 1xATR SL) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 — LONG ONLY XAUUSD 30m.",
+      "hypothesis": "Remove EMA crossunder exit entirely — exit solely via TP/SL targets (1.5:1 ratio) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 0.0,
         "sharpe": -1.30240606,
@@ -58,14 +58,14 @@
         "trades": 1,
         "net_profit": -366.113087337404
       },
-      "verdict": "invalid (low sample, 1 trades) — removing crossunder exit caused only 1 trade. Crossunder exit recycled capital. Without it, positions stay open ~31 days, blocking re-entry. Next: re-add crossunder exit with minimum hold period.",
+      "verdict": "invalid (low sample, 1 trades) — removing crossunder exit caused only 1 trade. Crossunder exit recycled capital. Without it, positions stay open ~31 days, blocking re-entry.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-27T00:45:00Z"
     },
     {
       "iteration": 172,
-      "hypothesis": "Re-add EMA crossunder exit with MINIMUM HOLD PERIOD of 6 bars (3h on 30m) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 — LONG ONLY XAUUSD 30m. Enter with TP/SL at 1.5:1. Crossunder exit blocked for first 6 bars.",
+      "hypothesis": "Re-add EMA crossunder exit with MINIMUM HOLD PERIOD of 6 bars on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.98352572,
         "sharpe": 1.32489111,
@@ -74,14 +74,14 @@
         "trades": 18,
         "net_profit": 166.486411598702
       },
-      "verdict": "invalid (low sample, 18 trades) — min_hold=6 worked: 18 trades, PF=1.98, Sharpe=1.32, DD=3.6%, P&L=+$166. Excellent metrics, 2 trades short of 20. Next: reduce min_hold from 6 to 4.",
+      "verdict": "invalid (low sample, 18 trades) — min_hold=6 worked: 18 trades, PF=1.98, Sharpe=1.32, DD=3.6%, P&L=+$166. 2 trades short of 20.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-27T07:55:00Z"
     },
     {
       "iteration": 173,
-      "hypothesis": "Reduce min hold bars from 6 to 4 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit (after min hold) — LONG ONLY XAUUSD 30m.",
+      "hypothesis": "Reduce min hold bars from 6 to 4 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.35468948,
         "sharpe": 0.01110106,
@@ -90,14 +90,14 @@
         "trades": 19,
         "net_profit": -6.128236542441
       },
-      "verdict": "invalid (low sample, 19 trades) — min_hold=4 increased trade count from 18 to 19 (+1) but win rate dropped from 38.9% to 31.6%. Avg bars in trade decreased from 25.7 to 18.7 (faster recycling). Only 1 trade short of 20 minimum. Next: reduce ADX threshold from 14 to 12 to let in more entries.",
+      "verdict": "invalid (low sample, 19 trades) — 1 trade short of 20 minimum.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-27T08:00:00Z"
     },
     {
       "iteration": 174,
-      "hypothesis": "Reduce ADX threshold from 14 to 12 (ADX period from 14 to 12) on EMA(5,13) crossover + RSI(14)>55 + ADX(12)>12 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit (after min_hold=4) — LONG ONLY XAUUSD 30m. Target: >=20 trades.",
+      "hypothesis": "Reduce ADX threshold from 14 to 12 (ADX period from 14 to 12) on EMA(5,13) crossover + RSI(14)>55 + ADX(12)>12 + TP/SL 1.5:1 + EMA crossunder exit (min_hold=4) — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.39017669,
         "sharpe": 0.30078052,
@@ -106,14 +106,14 @@
         "trades": 23,
         "net_profit": 31.67101519775
       },
-      "verdict": "rejected (PF=1.39 Sharpe=0.30 DD=5.78%) — ADX(12)>12 achieved target: 23 trades (>20 met). But trade quality deteriorated — WR 30.4%, Sharpe 0.30, PF 1.39. Lower ADX threshold let in weak-trend entries. Next: raise ADX threshold to 25 for strong trends only.",
+      "verdict": "rejected (PF=1.39 Sharpe=0.30 DD=5.78%) — target 20+ trades met (23) but trade quality poor.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-27T08:15:00Z"
     },
     {
       "iteration": 175,
-      "hypothesis": "Raise ADX threshold from 12 to 25 (ADX period from 12 to 14 standard) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>25 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit (after min_hold=4) — LONG ONLY XAUUSD 30m.",
+      "hypothesis": "Raise ADX threshold from 12 to 25 (ADX period 14) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>25 + TP/SL 1.5:1 + EMA crossunder exit (min_hold=4) — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.67971757,
         "sharpe": 0.1963735,
@@ -122,14 +122,14 @@
         "trades": 8,
         "net_profit": 14.368651775385
       },
-      "verdict": "invalid (low sample, 8 trades) — ADX(14)>25 too restrictive: only 8 trades in ~60 days, down from 23 at ADX>12. PF=1.68 is good but insufficient sample. Next: lower ADX threshold to 18 — middle ground between 12 (23 trades) and 25 (8 trades).",
+      "verdict": "invalid (low sample, 8 trades) — ADX>25 too restrictive.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-28T02:00:00Z"
     },
     {
       "iteration": 176,
-      "hypothesis": "Lower ADX threshold to 18 (ADX period 14) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>18 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit (after min_hold=4) — LONG ONLY XAUUSD 30m.",
+      "hypothesis": "Lower ADX threshold to 18 (ADX period 14) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>18 + TP/SL 1.5:1 + EMA crossunder exit (min_hold=4) — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.13829178,
         "sharpe": -0.59129719,
@@ -138,14 +138,14 @@
         "trades": 15,
         "net_profit": -78.345437767526
       },
-      "verdict": "invalid (low sample, 15 trades) — ADX>18 got 15 trades (between ADX>12=23 and ADX>25=8) but trade quality is poor: PF=1.14, Sharpe=-0.59, WR=33.3%. ADX>14 + min_hold=6 (iter 172) remains the best trade-quality variant with 18 trades, PF=1.98, Sharpe=1.32. Next: return to ADX>14 with min_hold=5 (split the difference between iter 172's 6 and iter 173's 4) to push trade count to 20+.",
+      "verdict": "invalid (low sample, 15 trades) — ADX>18 got 15 trades, poor quality.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-28T10:25:00Z"
     },
     {
       "iteration": 177,
-      "hypothesis": "Reduce min hold bars from 6 to 5 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit (after min_hold) — LONG ONLY XAUUSD 30m. Iter 172 had the best trade quality (18 trades, PF=1.98, Sharpe=1.32, P&L=+$166) with min_hold=6 and ADX>14 but was 2 trades short of 20. Reducing min_hold by 1 bar should recycle capital faster and push trade count to 20+ while preserving the strong PF and Sharpe.",
+      "hypothesis": "Reduce min hold from 6 to 5 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 + EMA crossunder exit (after min_hold) — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.9791189,
         "sharpe": 1.18978261,
@@ -154,14 +154,14 @@
         "trades": 19,
         "net_profit": 157.638196394193
       },
-      "verdict": "invalid (low sample, 19 trades) — min_hold=5 gave 19 trades (vs iter 172's 18), PF=1.98 unchanged, Sharpe=1.19 slightly down from 1.32, WR=36.8% down from 38.9%. Still excellent quality, just 1 trade short of 20. Next: reduce min_hold from 5 to 4 using the proven exit pattern from iter 172/177.",
+      "verdict": "invalid (low sample, 19 trades) — min_hold=5: 19 trades, PF=1.98, just 1 trade short of 20.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-28T10:30:00Z"
     },
     {
       "iteration": 178,
-      "hypothesis": "Reduce min hold bars from 5 to 4 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 (1.5xATR TP / 1xATR SL) + EMA crossunder exit (after min_hold=4) — LONG ONLY XAUUSD 30m. Iter 177 (min_hold=5) got 19 trades with PF=1.98, Sharpe=1.19 — just 1 trade short of 20. min_hold=4 should recycle capital faster and push trade count to 20+ while maintaining PF and Sharpe.",
+      "hypothesis": "Reduce min hold from 5 to 4 on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + TP/SL 1.5:1 + EMA crossunder exit (min_hold=4) — LONG ONLY XAUUSD 30m.",
       "metrics": {
         "pf": 1.39017669,
         "sharpe": 0.30161952,
@@ -170,13 +170,88 @@
         "trades": 23,
         "net_profit": 31.67101519775
       },
-      "verdict": "rejected (PF=1.39, Sharpe=0.30<0.5, DD=5.78%) — min_hold=4 hit 23 trades (>20 met) but trade quality collapsed. Min hold progression: hold=6 → 18t PF=1.98 Sharpe=1.32; hold=5 → 19t PF=1.98 Sharpe=1.19; hold=4 → 23t PF=1.39 Sharpe=0.30. The 4-bar min hold lets weak crossunder signals close trades before they develop, turning minor pullbacks into losses. The fixed 1.5:1 TP/SL caps winners but the crossunder dominates exits. Next: replace fixed TP/SL with a trailing stop to let winners run in strong trends.",
+      "verdict": "rejected (PF=1.39, Sharpe=0.30<0.5, DD=5.78%) — min_hold=4 hit 23 trades but trade quality collapsed. Next: replace fixed TP/SL with chandelier trailing stop.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-28T11:00:00Z"
+    },
+    {
+      "iteration": 179,
+      "hypothesis": "Replace fixed 1.5:1 TP/SL with CHANDELIER trailing stop (2.0xATR below highest close since entry). Same entry: EMA(5,13) cross + RSI(14)>55 + ADX(14)>14 + min_hold=4 + EMA crossunder exit (after min_hold) — LONG ONLY XAUUSD 30m.",
+      "metrics": {
+        "pf": 1.02865083,
+        "sharpe": -1.24290568,
+        "wr": 28.57142857,
+        "dd": 5.05196869,
+        "trades": 21,
+        "net_profit": -147.398746775896
+      },
+      "verdict": "rejected (PF=1.03<1.3, Sharpe=-1.24<0.5) — chandelier trail at 2.0xATR degraded all metrics.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T11:15:00Z"
+    },
+    {
+      "iteration": 180,
+      "hypothesis": "Revert from chandelier trail to fixed TP/SL with wider 2:1 ratio (2.0xATR TP / 1xATR SL) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + min_hold=5 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
+      "metrics": {
+        "pf": 1.9791189,
+        "sharpe": 1.19015208,
+        "wr": 36.84210526,
+        "dd": 3.59609912,
+        "trades": 19,
+        "net_profit": 157.638196394193,
+        "symbol": "XAUUSD",
+        "timeframe": "30m",
+        "iteration": 180
+      },
+      "verdict": "invalid (low sample, 19 trades) — TP/SL ratio change from 1.5:1 to 2:1 had ZERO effect (identical to iter 177). The EMA crossunder exit dominates — trades are closed by crossunder before TP can be hit. At min_hold=5, trade count stuck at 19.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T02:23:25Z"
+    },
+    {
+      "iteration": 181,
+      "hypothesis": "Faster EMAs: change from EMA(5,13) to EMA(5,10) crossover on XAUUSD 30m LONG ONLY. Same RSI(14)>55, ADX(14)>14, min_hold=5, TP/SL 2:1 (2xATR TP / 1xATR SL), EMA crossunder exit. Rationale: shorter slow EMA (10 vs 13) generates more crossovers → more trade signals.",
+      "metrics": {
+        "pf": 1.19640709,
+        "sharpe": -0.27276959,
+        "wr": 47.36842105,
+        "dd": 3.41232486,
+        "trades": 19,
+        "net_profit": -31.933467103681,
+        "symbol": "XAUUSD",
+        "timeframe": "30m",
+        "iteration": 181
+      },
+      "verdict": "invalid (low sample, 19 trades) — faster EMAs (5,10 vs 5,13) still produced 19 trades. PF dropped from 1.98 to 1.20. The RSI(14)>55 + ADX(14)>14 filter combination is the binding constraint. Next: lower RSI threshold from 55 to 50 to let more signals through.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T02:25:00Z"
+    },
+    {
+      "iteration": 182,
+      "hypothesis": "Lower RSI threshold from 55 to 50 on EMA(5,10) crossover + RSI(14)>50 + ADX(14)>14 + min_hold=5 + TP/SL 2:1 (2xATR TP / 1xATR SL) + EMA crossunder exit — LONG ONLY XAUUSD 30m. Rationale: RSI>55 is too restrictive — it blocks EMA crossovers that happen near neutral levels. RSI>50 still provides a mild bullish bias but lets more signals through. Target: push trade count from 19 to 20+ while keeping PF > 1.3.",
+      "metrics": {
+        "pf": 0.99477505,
+        "sharpe": -0.86378208,
+        "wr": 42.85714286,
+        "dd": 6.52870827,
+        "trades": 21,
+        "net_profit": -171.89647895085
+      },
+      "verdict": "rejected (PF=0.99<1.3, Sharpe=-0.86<0.5) — RSI>50 hit 21 trades (target met) but trade quality collapsed. PF fell below 1.0 (strategy loses money). Lowering RSI let too many low-quality signals through that ADX>14 couldn't filter.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T12:17:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": ["XAUUSD"],
-  "timeframes_explored": ["1h", "30m"]
+  "pairs_explored": [
+    "XAUUSD"
+  ],
+  "timeframes_explored": [
+    "1h",
+    "30m"
+  ]
 }

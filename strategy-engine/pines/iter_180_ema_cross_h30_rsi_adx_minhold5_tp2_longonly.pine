@@ -1,0 +1,81 @@
+//@version=5
+// === Strategy Engineer — Iteration 180 ===
+// Hypothesis: Revert from chandelier trail to fixed TP/SL with wider 2:1 ratio (2.0xATR TP / 1xATR SL) on EMA(5,13) crossover + RSI(14)>55 + ADX(14)>14 + min_hold=5 + EMA crossunder exit — LONG ONLY XAUUSD 30m
+// Changes from iter 179: removed chandelier trail, replaced with fixed TP/SL at 2:1 ratio (2.0xATR TP / 1.0xATR SL)
+// Changes from iter 177: widened TP/SL ratio from 1.5:1 to 2:1
+// Rationale: Iter 179 (chandelier trail) produced PF=1.03, Sharpe=-1.24 — trail too loose, crossunder exit still dominated.
+// Iter 177 had best trade quality (19 trades, PF=1.98, Sharpe=1.19, P&L=+$157.64) at min_hold=5 with 1.5:1 TP/SL.
+// Widening to 2:1 should let winning trades run further while keeping the strong filter setup.
+// Target: maintain 19-20 trades with improved profitability.
+
+strategy(title="EMA_RSI_ADX_TP2_MINHOLD5_XAUUSD_30m", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+ema_fast_len = input.int(5, "EMA Fast Length", minval=1, maxval=50)        // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "EMA Slow Length", minval=1, maxval=100)       // sweep: 8-21 step 1
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)                  // sweep: 7-21 step 1
+rsi_bull_threshold = input.int(55, "RSI Bull Threshold (long if >)", minval=30, maxval=80)  // sweep: 50-60 step 5
+
+// ADX filter (manual calculation)
+adx_len = input.int(14, "ADX Length", minval=2, maxval=50)                  // sweep: 10-20 step 2
+adx_threshold = input.int(14, "ADX Minimum (trend filter)", minval=5, maxval=50)  // sweep: 10-20 step 2
+
+// TP/SL via ATR — widened to 2:1 ratio
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                  // sweep: 10-20 step 2
+tp_sl_ratio = input.float(2.0, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1)  // sweep: 1.0-3.0 step 0.5
+sl_atr_mult = input.float(1.0, "SL = ATR × N", minval=0.5, maxval=5.0, step=0.25)  // sweep: 0.5-2.0 step 0.25
+
+// Minimum hold period before crossunder exit
+min_hold_bars = input.int(5, "Minimum Hold Bars Before Crossunder Exit", minval=1, maxval=50)  // sweep: 3-12 step 2
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+// Manual ADX calculation (DMI-based)
+tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+dm_plus = high - high[1]
+dm_minus = low[1] - low
+dm_plus_pos = dm_plus > dm_minus and dm_plus > 0 ? dm_plus : 0
+dm_minus_pos = dm_minus > dm_plus and dm_minus > 0 ? dm_minus : 0
+tr_smooth = ta.rma(tr, adx_len)
+di_plus_smooth = 100 * ta.rma(dm_plus_pos, adx_len) / tr_smooth
+di_minus_smooth = 100 * ta.rma(dm_minus_pos, adx_len) / tr_smooth
+dx = 100 * math.abs(di_plus_smooth - di_minus_smooth) / (di_plus_smooth + di_minus_smooth)
+adx_val = ta.rma(dx, adx_len)
+
+//--- bar counter for minimum hold period
+var int bars_in_trade = 0
+if strategy.position_size > 0
+    bars_in_trade := bars_in_trade + 1
+else
+    bars_in_trade := 0
+
+//--- entry logic — LONG ONLY
+long_condition = false
+if ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_bull_threshold and adx_val > adx_threshold
+    long_condition := true
+
+//--- exit logic — EMA crossunder (only if min hold period satisfied)
+exit_long = ta.crossunder(ema_fast, ema_slow) and bars_in_trade >= min_hold_bars
+
+//--- position management
+if long_condition and strategy.position_size == 0
+    sl_distance = atr_val * sl_atr_mult
+    tp_distance = sl_distance * tp_sl_ratio
+    sl_ticks = int(sl_distance / syminfo.mintick)
+    tp_ticks = int(tp_distance / syminfo.mintick)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=sl_ticks, profit=tp_ticks)
+
+// Emergency flat on crossunder (only after min hold period) if stop not hit
+if exit_long and strategy.position_size > 0
+    strategy.close("Long")
