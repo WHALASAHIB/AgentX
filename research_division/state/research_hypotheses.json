@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 137,
+    "total_ideas": 139,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -489,6 +489,49 @@
       "failure_mode": "1) Weekend gaps can be driven by thin liquidity rather than genuine conviction \u2014 especially during APAC holidays (Chinese New Year, Golden Week) where the open is AI-generated liquidity near zero. The gap appears valid but has no follow-through. 2) Economic surprises released during the weekend (emergency central bank actions, geopolitical flash events) can cause 'gapping through' \u2014 the gap overshoots every structural level and the continuation fails because the move was one-and-done. 3) Gaps that look aligned with the H4 trend but are actually the EXHAUSTION gap of that trend (final blow-off move) \u2014 the H4 trend reverses immediately after the gap. 4) Gap measurement \u2014 different brokers have different Sunday open times; if the MT5 data feed uses a different Sunday roll, the gap calculation is misaligned with reality.",
       "diversification_value": "All 13 existing breakout ideas trade breakouts that form DURING market hours (London Killzone, Asian Breakout, Bollinger Squeeze, structural levels, volume profile, order blocks, liquidity voids). None trade the WEEKEND GAP that forms while markets are closed \u2014 which represents a fundamentally different type of breakout: one that has already absorbed liquidity before the entry decision is made. The closest is London_Killzone_Breakout (London open breakout of Asian range), but that's a 4-hour range, not a weekend gap. Session_Initial_Balance_Breakout trades the first 60-min range of any session. Neither captures the accumulated weekend institutional flow that gaps through structural levels. This idea operates at a unique temporal frontier \u2014 the session open gap \u2014 that no existing breakout strategy exploits.",
       "self_grade": "A-"
+    },
+    {
+      "name": "Position_Aging_Theta_Decay_Overlay",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Progressive position-size reduction overlay based on time-in-trade, mimicking option theta decay \u2014 reduces exposure 25% at 24h, 50% at 48h, closes at 72h to prevent edge decay on aging positions.",
+      "market_behaviour": "Gold positions that remain open for extended periods suffer from time-decay of the original entry edge. Asian-range breakout trades that survive into London often get stopped out as session flows reverse. Institutional traders routinely freshen positions by taking profit and re-entering rather than holding through calendar rolls and session transitions. This is analogous to option theta: the expected value of any market microstructure edge decays with time, especially in XAUUSD where intraday directional persistence rarely exceeds 6-12 hours.",
+      "entry_logic": "This is an overlay \u2014 it does not generate entry signals. It modifies position sizing for every bot that references it.\n1. Bot signal fires normally (any entry strategy).\n2. Record the entry timestamp when the order is filled.\n3. Calculate hours-in-trade = current_time - entry_time.\n4. Apply decay multiplier to the bot's base position size:\n   - 0-24 hours: 100% of base size (full confidence)\n   - 24-48 hours: 75% of base size (moderate decay)\n   - 48-72 hours: 50% of base size (significant decay)\n   - 72+ hours: Force close position regardless of TP/SL (edge fully decayed)\n5. If the decay-affected size falls below 0.01 lots, close the position early.",
+      "exit_logic": "The overlay's primary exit action is the forced 72-hour close. Regular TP/SL remain active during the decay period.\n- Normal TP/SL: unchanged \u2014 the overlay only modifies size, not exit levels.\n- 72-hour time-stop: force-close the position at market (regardless of P&L).\n- Re-entry allowed: after forced close, the bot may re-enter the same direction on a fresh signal.\n- No trailing modification \u2014 kept simple to avoid interaction with other overlays (VaR, drawdown lock).",
+      "failure_mode": "1. TRENDING MOVE: In a strong 3-day trend (e.g., gold rally from $2,350 to $2,420 over 72h), the overlay forces early exit at 72h, leaving significant unrealised profit on the table. A simple trend continuation filter (ADX > 30 on D1) could waive the time-stop for trending conditions.\n2. CHOPPY RECOVERY: A position that goes -2% immediately, recovers to breakeven at 60h, then gets time-stopped at 72h at breakeven. The overlay consumed the recovery period without adding value.\n3. PARAMETER SENSITIVITY: The 24/48/72 thresholds are arbitrary. In fast markets (NFP week), 24h may be too long; in slow markets (holiday), 72h may be fine. Requires adaptive threshold calibration.",
+      "diversification_value": "Completely orthogonal to all 15 existing risk_overlay ideas. No existing idea addresses time-in-trade position aging. Volatility_Parity_Scale (A-) targets ATR-based sizing, Max_Drawdown_Lock_Protector (A-) targets drawdown regime, and Drawdown_Regime_Recovery_Sizer (A-) targets drawdown-based recovery \u2014 none consider clock time. This fills the OPEN 'time-decay / aging position management' sub-niche within the risk_overlay family (0 existing ideas in this cluster).",
+      "self_grade": "A-",
+      "generated_at": "2026-06-28T04:31:48Z"
+    },
+    {
+      "name": "Portfolio_Correlation_Sizing_Gate",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD",
+        "USDCHF",
+        "USDJPY",
+        "AUDUSD",
+        "NZDUSD",
+        "USDCAD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Portfolio-level risk gate that monitors aggregate USD directional exposure across ALL open positions and caps total net USD exposure to prevent correlated position stacking across independent bots.",
+      "market_behaviour": "When multiple bots independently take positions on USD-correlated pairs, the portfolio can accumulate a dangerously concentrated directional USD bet that no individual bot's risk model detects. For example: Bot A opens USDCHF BUY (long USD), Bot B opens GBPUSD SELL (long USD), Bot C opens NZDUSD SELL (long USD). Each bot sees its own 1% risk, but the portfolio has a 3% net short non-USD position. A single DXY move of 1% hits all three positions simultaneously, producing amplified drawdown.",
+      "entry_logic": "This is a pre-trade gate \u2014 it blocks entry signals that would over-concentrate portfolio USD exposure.\n1. Before ANY bot places an order, call Portfolio_Correlation_Sizing_Gate with the proposed trade (symbol, direction, volume).\n2. Compute implied USD direction for the proposed trade:\n   - USDXXX BUY = long USD, USDXXX SELL = short USD\n   - XXXUSD BUY = short USD, XXXUSD SELL = long USD\n   - XAUUSD BUY = short USD, XAUUSD SELL = long USD\n3. Sum the total net USD exposure across ALL currently open positions + proposed trade.\n   - Convert each position's volume to a 'USD exposure units' (volume * contract_size / base_asset).\n4. If the aggregate net USD exposure exceeds max_exposure (configurable, default = equivalent of 2 standard lots), BLOCK the trade.\n5. If the proposed trade REDUCES aggregate net USD exposure (hedging), always ALLOW.\n6. The gate resets on every new bar \u2014 exposure is recomputed from current open positions only.",
+      "exit_logic": "The gate only blocks NEW entries \u2014 existing open positions are managed normally by their respective bots.\n- No forced closes: existing positions continue to their TP/SL.\n- Gradual unwind: as positions hit TP/SL, the portfolio USD exposure naturally declines, allowing new entries in the opposite direction.\n- Alerting: when the gate blocks 3+ consecutive signals, log an alert 'DXY correlation congestion \u2014 consider manual review'.\n- No position-level intervention \u2014 keeps the overlay transparent and side-effect-free.",
+      "failure_mode": "1. FALSE POSITIVES IN CORRELATION BREAKS: During periods when USD correlation breaks down (e.g., gold decouples from DXY), the gate may block XAUUSD trades that are genuinely non-correlated. Mitigation: monitor rolling 20-day correlation of each pair to DXY and reduce the exposure weight for pairs with |rho| < 0.3.\n2. NON-USD CORRELATION BLIND SPOT: The gate only tracks USD exposure. It misses non-USD correlated risks (e.g., long EURCHF + long GBPCHF when CHF strengthens). A more complete version would track a correlation matrix, but that adds significant complexity.\n3. PARAMETER SENSITIVITY: The '2 standard lots' cap is arbitrary. Too tight blocks too many trades (reduces opportunity), too loose negates the safety benefit. Requires calibration against historical max open position count.",
+      "diversification_value": "Fills the OPEN 'aggregate portfolio correlation exposure' sub-niche within risk_overlay (0 existing ideas). The closest existing idea is Correlation_Collapse_Protector (A-), which monitors correlation STABILITY (whether correlations are breaking down) \u2014 it answers 'are our correlation assumptions valid?' This gate answers 'are we over-concentrated in one direction regardless of correlation?' These are complementary but distinct: one is a correlation-checking lens, the other is a position-accounting lens. All other risk_overlay ideas (15 of them) manage per-position or per-strategy risk, not portfolio-level aggregate exposure.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-28T04:31:48Z"
     }
   ],
   "archived": [
@@ -2637,7 +2680,9 @@
       "Session_Decay_Exposure_Controller",
       "Entropy_Regime_Contingency_Sizer",
       "Skew_Asymmetry_Insurer",
-      "Drawdown_Regime_Recovery_Sizer"
+      "Drawdown_Regime_Recovery_Sizer",
+      "Position_Aging_Theta_Decay_Overlay",
+      "Portfolio_Correlation_Sizing_Gate"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",

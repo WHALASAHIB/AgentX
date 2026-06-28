@@ -1,0 +1,53 @@
+//@version=5
+strategy(title="EMA_Cross_Momentum_RSI_Trend_LongOnly_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50)        // sweep: 2-20 step 1
+slow_len = input.int(10, "Slow EMA Length", minval=5, maxval=100)      // sweep: 8-30 step 2
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)             // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=30, maxval=70)  // sweep: 40-60 step 5
+ema_trend_len = input.int(50, "Trend EMA Length", minval=20, maxval=200)  // sweep: 30-100 step 10
+new_high_bars = input.int(5, "New High Lookback Bars", minval=2, maxval=20)  // sweep: 3-10 step 1
+tp_sl_ratio = input.float(1.0, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.5
+min_hold = input.int(4, "Min Hold Bars", minval=1, maxval=20)          // sweep: 1-10 step 1
+
+//--- indicators
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+trend_ema = ta.ema(close, ema_trend_len)
+new_high = close > ta.highest(close[1], new_high_bars)[1]
+
+//--- entry logic
+ema_cross_over = ta.crossover(fast_ema, slow_ema)
+long_signal = ema_cross_over and rsi_val > rsi_threshold and close > trend_ema and new_high
+
+//--- position tracking
+var int bars_since_entry = 0
+var bool position_just_opened = false
+
+// Entry
+if long_signal and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    position_just_opened := true
+    bars_since_entry := 0
+
+if strategy.position_size > 0
+    bars_since_entry := bars_since_entry + 1
+
+//--- exit management
+ema_cross_under = ta.crossunder(fast_ema, slow_ema)
+
+// ATR-based TP/SL (dynamic stops adapting to volatility)
+atr_val = ta.atr(14)
+sl_ticks = int(atr_val / syminfo.mintick)
+tp_ticks = int(sl_ticks * tp_sl_ratio)
+
+// Place TP/SL OCO order on entry bar
+if position_just_opened
+    strategy.exit("TP_SL", "Long", profit=tp_ticks, loss=sl_ticks)
+    position_just_opened := false
+
+// EMA crossunder exit after minimum hold period
+if ema_cross_under and bars_since_entry >= min_hold and strategy.position_size > 0
+    strategy.close("Long")

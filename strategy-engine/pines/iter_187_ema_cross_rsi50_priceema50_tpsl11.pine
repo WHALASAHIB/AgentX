@@ -1,0 +1,71 @@
+//@version=5
+strategy(title="EMA Crossover RSI50 Trend TP1-1 XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA fast period
+fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=50)       // sweep: 3-20 step 2
+
+// EMA slow period
+slow_len = input.int(10, "Slow EMA Length", minval=5, maxval=100)     // sweep: 8-30 step 2
+
+// RSI period
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)            // sweep: 7-21 step 2
+
+// RSI threshold (long only above this)
+rsi_threshold = input.int(50, "RSI Entry Threshold", minval=30, maxval=70)  // sweep: 45-60 step 5
+
+// Trend filter EMA period
+trend_ema_len = input.int(50, "Trend EMA Length", minval=20, maxval=200)    // sweep: 30-100 step 10
+
+// Minimum hold bars (prevents whipsaw exits)
+min_hold = input.int(4, "Minimum Hold Bars", minval=1, maxval=20)     // sweep: 2-10 step 1
+
+// TP multiplier (TP = TP_SL_ratio * SL_distance)
+tp_sl_ratio = input.float(1.0, "TP:SL Ratio", minval=0.5, maxval=5.0) // sweep: 0.5-3.0 step 0.5
+
+//--- indicator calculations
+
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+trend_ema = ta.ema(close, trend_ema_len)
+
+// Crossover / crossunder signals
+cross_over = ta.crossover(fast_ema, slow_ema)
+cross_under = ta.crossunder(fast_ema, slow_ema)
+
+//--- entry logic
+
+// LONG ONLY: enter when EMA5 crosses above EMA10, RSI > 50, and price > 50EMA
+long_condition = cross_over and rsi_val > rsi_threshold and close > trend_ema
+
+// Exit condition: EMA5 crosses below EMA10
+exit_condition = cross_under
+
+// Track bar since entry for minimum hold
+var int bars_since_entry = 9999
+var bool in_long = false
+
+if long_condition and not in_long
+    // Calculate SL at 1x ATR below entry, TP at tp_sl_ratio * SL_distance
+    atr_val = ta.atr(14)
+    sl_ticks = int(atr_val / syminfo.mintick)
+    tp_ticks = int(sl_ticks * tp_sl_ratio)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+    in_long := true
+    bars_since_entry := 0
+
+// Increment bar counter
+if in_long
+    bars_since_entry := bars_since_entry + 1
+
+// EMA crossunder exit (only after minimum hold)
+if exit_condition and in_long and bars_since_entry >= min_hold
+    strategy.close("Long")
+    in_long := false
+
+// Reset if stopped out
+if strategy.position_size == 0 and in_long
+    in_long := false
