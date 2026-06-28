@@ -1,5 +1,5 @@
 {
-  "iteration": 211,
+  "iteration": 212,
   "last_run": "2026-06-29T01:52:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "WR=32.4% and Sharpe=0.46 are the weakest metrics (<40% and <1.0 respectively). RSI(50) filter from iter 210 improved PF (1.38→1.50) and Sharpe (-0.06→0.46) but WR barely changed. Now raise ADX threshold from 14 to 25 to only enter during strong trends. ADX>25 filters ALL choppy/rangebound entries — trades only fire when the market is meaningfully trending. This should improve WR toward 40%+ and Sharpe above 1.0 by reducing whipsaw entries.",
+  "current_hypothesis": "ADX>25 raised WR from 32.4% to 42.9% (huge improvement!) but slashed trades from 34 to 14 (<20 minimum). The strong-trend filter concept works well for trade quality. Now reduce ADX threshold from 25 to 18 as a middle ground: enough trades (>20) while keeping most of the WR improvement toward 40%+.",
   "evolution_log": [
     {
       "iteration": 207,
@@ -47,6 +47,15 @@
       "hypothesis": "Revert to crossunder-exit structure from iter 207 and ADD RSI(14) filter: enter long only if RSI > 50.",
       "metrics": {"pf": 1.5049796, "sharpe": 0.46174574, "wr": 32.35294118, "dd": 4.06485317, "trades": 34, "net_profit": 58.397729394121},
       "verdict": "rejected (PF=1.50 Sharpe=0.46 WR=32.4% DD=4.06%) — RSI filter improved PF and Sharpe from baseline but WR still sub-40%. Crossunder exit still dominates.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-29T01:52:00Z"
+    },
+    {
+      "iteration": 211,
+      "hypothesis": "Raise ADX threshold from 14 to 25 to only enter during strong trends. ADX>25 filters ALL choppy/rangebound entries — trades only fire when the market is meaningfully trending. Should improve WR toward 40%+ and Sharpe above 1.0 by reducing whipsaw entries.",
+      "metrics": {"pf": 1.06549609, "sharpe": -0.88838916, "wr": 42.85714286, "dd": 3.61659771, "trades": 14, "net_profit": -94.07128739998},
+      "verdict": "invalid (low sample, 14 trades) — ADX>25 raised WR to 42.9% (excellent!) but slashed trade count below 20 minimum. Concept works — now find middle ground.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-29T01:52:00Z"

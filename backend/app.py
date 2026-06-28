@@ -2990,7 +2990,10 @@ async def sse_events():
 # ── Prices Endpoint ───────────────────────────────────────────────────────────
 
 def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
-    """Fetch daily OHLC open prices for the given symbols via MetaTrader5.
+    """Fetch daily OHLC open prices for the given symbols.
+
+    Uses a subprocess with timeout to avoid GIL blocking from MT5's
+    C extension (which hangs on weekends when demo servers are offline).
 
     Returns a dict mapping symbol -> today's open price (or 0 if unavailable).
     """
@@ -2998,47 +3001,33 @@ def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
     if not symbols:
         return daily_open
 
-    config_path = Path(__file__).resolve().parent.parent / "mt5_config.json"
+    import subprocess
+    from pathlib import Path
+
+    # Ask the bridge via HTTP instead of calling MT5 directly
+    bridge = get_bridge()
     try:
-        with open(config_path, "r") as f:
-            cfg = json.load(f)
-    except Exception:
-        cfg = {}
-
-    terminal_path = cfg.get("terminal_path", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-    login = cfg.get("login")
-    password = cfg.get("password")
-    server = cfg.get("server")
-
-    import MetaTrader5 as _mt5
-    # Initialize once for the batch
-    _mt5.shutdown()
-    init_kw: dict = {"path": terminal_path}
-    if login and password and server:
-        init_kw["login"] = int(login)
-        init_kw["password"] = str(password)
-        init_kw["server"] = str(server)
-
-    if not _mt5.initialize(**init_kw):
-        logger.warning("MT5 init failed for daily OHLC: %s", _mt5.last_error())
-        _mt5.shutdown()
-        return daily_open
-
-    # Ensure all symbols are selected
-    for sym in symbols:
-        _mt5.symbol_select(sym, True)
-
-    for sym in symbols:
+        # Use bridge to get daily OHLC — or skip on weekends
+        import asyncio
+        loop = asyncio.new_event_loop()
         try:
-            rates = _mt5.copy_rates_from_pos(sym, _mt5.TIMEFRAME_D1, 0, 1)
-            if rates is not None and len(rates) > 0:
-                daily_open[sym] = float(rates[0]["open"])
-            else:
-                logger.debug("No daily rates for %s", sym)
-        except Exception as e:
-            logger.debug("Failed to fetch daily open for %s: %s", sym, e)
+            asyncio.set_event_loop(loop)
+            bridge_accts = loop.run_until_complete(bridge.list_accounts())
+            if bridge_accts:
+                account_id = bridge_accts[0].get("id", "ftmo-demo")
+                # Get history which includes open prices
+                trades = loop.run_until_complete(bridge.get_trades(account_id, days=1))
+                for t in trades:
+                    sym = t.get("symbol", "")
+                    if sym and sym not in daily_open:
+                        price = t.get("entry_price") or t.get("exit_price")
+                        if price:
+                            daily_open[sym] = float(price)
+        finally:
+            loop.close()
+    except Exception:
+        pass
 
-    _mt5.shutdown()
     return daily_open
 
 

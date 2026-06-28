@@ -37,8 +37,9 @@ DIVISION_VERSION: str = "3.4.2"
 BRIDGE_BASE: str = "http://127.0.0.1:5000"
 
 # Dashboard / Backend API (sentiment, bots status, aggregated stats)
-# Backend moved from 8003→8005→8006 (port escalation due to orphaned PIDs)
-DASHBOARD_BASE: str = "http://127.0.0.1:8006"
+# Backend moved from 8003→8005→8006→8008 (port escalation due to orphaned PIDs)
+# Port 8006 is a zombie (orphaned) — see agentx-platform skill "Port Zombie Problem"
+DASHBOARD_BASE: str = "http://127.0.0.1:8008"
 
 # Sentiment Engine HTTP endpoint (when accessed remotely)
 SENTIMENT_API: str = f"{DASHBOARD_BASE}/api/sentiment/score"
