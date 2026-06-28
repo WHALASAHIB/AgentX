@@ -1,6 +1,6 @@
 {
-  "iteration": 191,
-  "last_run": "2026-06-28T16:16:00Z",
+  "iteration": 194,
+  "last_run": "2026-06-28T05:53:21Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Lower ADX threshold from 25 to 14 on EMA(5,10) crossover + RSI(14)>50 + Manual ADX(14)>14 + price>EMA50 + min_hold=4 + ATR-based TP/SL 1:1.5 + EMA crossunder exit — LONG ONLY XAUUSD 30m. Rationale: trades=7 (<20) is the weakest metric — lowering ADX threshold from 25 to 14 will allow more entry signals while still filtering for mild trend strength.",
+  "current_hypothesis": "Trades=7 is the weakest metric (<20). ADX>25 is too restrictive — same pattern as iter 190 (7 trades). Reduce ADX threshold from 25 to 18 (compromise between 14 and 25) to increase sample size while maintaining better signal quality than ADX>14. Keep all other filters: EMA(5,10) crossover + RSI(14)>50 + price>EMA50 + min_hold=4 + ATR-based TP/SL 1:1.5 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 183,
@@ -44,7 +44,7 @@
     },
     {
       "iteration": 186,
-      "hypothesis": "EMA(5,10) crossover + RSI(14)>50 + ADX(14)>14 on XAUUSD 30m with min_hold=4 and TP/SL 2:1 + EMA crossunder exit — LONG ONLY. Rationale: tight EMA gap (5,10) and lower RSI (50 vs 55) to generate more entry signals while using ADX>14 filter for trade quality. ADX was replaced with price>EMA50 trend filter since ta.adx is not supported by Trader Dev engine.",
+      "hypothesis": "EMA(5,10) crossover + RSI(14)>50 + ADX(14)>14 on XAUUSD 30m with min_hold=4 and TP/SL 2:1 + EMA crossunder exit — LONG ONLY. Rationale: tight EMA gap (5,10) and lower RSI (50 vs 55) to generate more entry signals while using ADX>14 filter for trade quality.",
       "metrics": {"pf": 1.31383528, "sharpe": -0.79088543, "wr": 21.875, "dd": 3.45005859, "trades": 32, "net_profit": -97.964354260095},
       "verdict": "rejected (Sharpe=-0.79<0.5, WR=21.9%<40%)",
       "symbol": "XAUUSD",
@@ -80,12 +80,48 @@
     },
     {
       "iteration": 190,
-      "hypothesis": "Add ADX(14)>25 filter on EMA(5,10) crossover + RSI(14)>50 + price>EMA50 + TP/SL 1:1.5 + min_hold=4 + EMA crossunder exit — LONG ONLY XAUUSD 30m. Rationale: Sharpe=0.13 is the weakest metric — ADX>25 ensures entries only in trending markets, which should improve risk-adjusted returns. (ta.adx not supported — implemented manual ADX calculation using ta.tr + directional movement + ta.rma)",
+      "hypothesis": "Add ADX(14)>25 filter on EMA(5,10) crossover + RSI(14)>50 + price>EMA50 + TP/SL 1:1.5 + min_hold=4 + EMA crossunder exit — LONG ONLY XAUUSD 30m. Rationale: Sharpe=0.13 is the weakest metric — ADX>25 ensures entries only in trending markets.",
       "metrics": {"pf": 3.56485586, "sharpe": 3.18053205, "wr": 57.14285714, "dd": 1.56230571, "trades": 7, "net_profit": 176.536441706912},
-      "verdict": "invalid (low sample, 7 trades) — Manual ADX works! PF=3.56 Sharpe=3.18 WR=57.1% all excellent, but only 7 trades from the 4-condition gate. Lower ADX threshold to allow more entries.",
+      "verdict": "invalid (low sample, 7 trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-28T16:16:00Z"
+    },
+    {
+      "iteration": 191,
+      "hypothesis": "Lower ADX threshold from 25 to 14 on EMA(5,10) crossover + RSI(14)>50 + Manual ADX(14)>14 + price>EMA50 + min_hold=4 + ATR-based TP/SL 1:1.5 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.50910499, "sharpe": 0.70031494, "wr": 34.61538462, "dd": 3.91299745, "trades": 26, "net_profit": 88.201004404043},
+      "verdict": "accepted (incremental)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T17:07:00Z"
+    },
+    {
+      "iteration": 192,
+      "hypothesis": "WR=34.6% is weakest (<40%). Tighten TP/SL — change TP/SL ratio from 1:1.5 (TP=1.5xATR, SL=1xATR) to 1:1 (equal TP and SL at 1xATR each). Keep all other filters: EMA(5,10) crossover + RSI(14)>50 + Manual ADX(14)>14 + price>EMA50 + min_hold=4 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 0.74545085, "sharpe": -7.81687195, "wr": 43.58974359, "dd": 5.3706939, "trades": 39, "net_profit": -480.625884545645},
+      "verdict": "rejected (PF=0.75<1.3, Sharpe=-7.82<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T17:07:00Z"
+    },
+    {
+      "iteration": 193,
+      "hypothesis": "PF=0.745 is the weakest metric (<1.5). Revert TP/SL ratio from 1:1 back to 1:1.5 (TP=1.5xATR, SL=1xATR). Keep all other filters: EMA(5,10) crossover + RSI(14)>50 + ADX(14)>14 + price>EMA50 + min_hold=4 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.1148334, "sharpe": -2.14914145, "wr": 46.42857143, "dd": 2.68479446, "trades": 28, "net_profit": -169.494570375671},
+      "verdict": "rejected (PF=1.11<1.3, Sharpe=-2.15<0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T05:38:41Z"
+    },
+    {
+      "iteration": 194,
+      "hypothesis": "PF=1.115 is the weakest metric (<1.5). Sharpe=-2.149 is also weak (<1.0). Raise ADX threshold from 14 to 25 — entering only in strongly trending markets should improve both PF and Sharpe by filtering out choppy/weak-trend entries that cause whipsaw losses. Keep all other filters: EMA(5,10) crossover + RSI(14)>50 + price>EMA50 + min_hold=4 + ATR-based TP/SL 1:1.5 + EMA crossunder exit — LONG ONLY XAUUSD 30m.",
+      "metrics": {"pf": 1.57582089, "sharpe": -0.12217085, "wr": 57.14285714, "dd": 1.04255108, "trades": 7, "net_profit": -4.946161443748},
+      "verdict": "invalid (low sample, 7 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-28T05:53:21Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

@@ -1,5 +1,5 @@
 {
-  "mt5_was_down": true,
+  "mt5_was_down": false,
   "autotrading_was_off": true,
   "bridge_was_down": false,
   "backend_was_down": true,

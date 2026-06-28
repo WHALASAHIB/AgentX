@@ -1,0 +1,80 @@
+//@version=5
+strategy(title="EMA Cross TP/SL 1:1 - XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- input parameters
+// EMA fast period
+fastLen = input.int(5, "Fast EMA Length", minval=2, maxval=50)       // sweep: 3-10 step 1
+// EMA slow period
+slowLen = input.int(10, "Slow EMA Length", minval=5, maxval=100)      // sweep: 8-25 step 1
+// RSI period
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)             // sweep: 7-21 step 2
+// RSI threshold (above = long only)
+rsiThresh = input.int(50, "RSI Threshold (long if > this)", minval=30, maxval=80) // sweep: 40-65 step 5
+// ADX period
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30)             // sweep: 10-25 step 2
+// ADX threshold (enter only if ADX > this)
+adxThresh = input.int(14, "ADX Threshold", minval=5, maxval=50)       // sweep: 10-25 step 2
+// Minimum bars to hold before allowing exit
+minHold = input.int(4, "Minimum Hold Bars", minval=1, maxval=20)      // sweep: 2-8 step 1
+// ATR multiplier for stop loss
+atrMultSL = input.float(1.0, "ATR Multiplier (SL)", step=0.1)        // sweep: 0.5-2.0 step 0.2
+// ATR multiplier for take profit
+atrMultTP = input.float(1.0, "ATR Multiplier (TP)", step=0.1)        // sweep: 0.5-2.0 step 0.2
+// ATR period
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30)             // sweep: 10-21 step 2
+
+//--- indicator calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Manual ADX calculation
+highPrice = high
+lowPrice = low
+closePrice = close
+tr = math.max(highPrice - lowPrice, math.abs(highPrice - closePrice[1]), math.abs(lowPrice - closePrice[1]))
+atr = ta.sma(tr, adxLen)
+upMove = highPrice - highPrice[1]
+downMove = lowPrice[1] - lowPrice
+plusDM = (upMove > downMove and upMove > 0) ? upMove : 0
+minusDM = (downMove > upMove and downMove > 0) ? downMove : 0
+plusDI = 100 * ta.sma(plusDM, adxLen) / atr
+minusDI = 100 * ta.sma(minusDM, adxLen) / atr
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = ta.sma(dx, adxLen)
+
+// EMA50 for trend filter
+ema50 = ta.ema(close, 50)
+
+// ATR for stops
+stopATR = ta.sma(tr, atrLen)
+
+//--- entry logic
+emaCrossOver = ta.crossover(emaFast, emaSlow)
+priceAboveEma50 = close > ema50
+
+longCondition = emaCrossOver and rsiVal > rsiThresh and adxVal > adxThresh and priceAboveEma50
+
+// Check if we have an entry in the last minHold bars (to enforce min hold)
+barsSinceEntry = ta.barssince(strategy.position_size > 0)
+minHoldMet = barsSinceEntry >= minHold or barsSinceEntry == na
+
+// Exit condition: EMA crossunder (only after min hold)
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+exitCondition = emaCrossUnder and minHoldMet and strategy.position_size > 0
+
+//--- entry
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//--- exit management via ATR-based TP/SL
+if strategy.position_size > 0
+    // Calculate ATR-based levels from entry price
+    atrVal = stopATR
+    slPrice = strategy.position_avg_price - (atrVal * atrMultSL)
+    tpPrice = strategy.position_avg_price + (atrVal * atrMultTP)
+    strategy.exit("XL", "Long", loss=math.round((strategy.position_avg_price - slPrice) / syminfo.mintick), profit=math.round((tpPrice - strategy.position_avg_price) / syminfo.mintick))
+
+// Also exit on EMA crossunder with min hold
+if exitCondition
+    strategy.close("Long")
