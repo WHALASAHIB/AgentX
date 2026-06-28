@@ -1,0 +1,86 @@
+//@version=5
+strategy(title="iter_197_EMA_Cross_30m_RSI_ShortSide", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMAs
+ema_fast_len  = input.int(5,   "Fast EMA Length",  minval=2, maxval=50, step=1)     // sweep: 3-20 step 1
+ema_slow_len  = input.int(10,  "Slow EMA Length",  minval=3, maxval=100, step=1)    // sweep: 8-30 step 1
+ema_trend_len = input.int(50,  "Trend EMA Length", minval=20, maxval=200, step=5)   // sweep: 20-100 step 5
+
+// RSI
+rsi_len       = input.int(14,  "RSI Length",       minval=7, maxval=21, step=1)     // sweep: 7-21 step 2
+rsi_upper     = input.int(50,  "RSI Long Threshold", minval=30, maxval=70, step=5)  // sweep: 40-60 step 5
+rsi_lower     = input.int(50,  "RSI Short Threshold", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+
+// ATR for TP/SL
+atr_len       = input.int(14,  "ATR Length",       minval=7, maxval=30, step=1)     // sweep: 7-30 step 2
+atr_mult_sl   = input.float(1.0, "ATR Multiplier SL", minval=0.5, maxval=3.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+atr_mult_tp   = input.float(1.5, "ATR Multiplier TP", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-5.0 step 0.5
+
+// Min hold bars
+min_hold_bars = input.int(4,   "Min Hold Bars",    minval=1, maxval=20, step=1)     // sweep: 1-10 step 1
+
+//--- indicator calculations
+fast_ema  = ta.ema(close, ema_fast_len)
+slow_ema  = ta.ema(close, ema_slow_len)
+trend_ema = ta.ema(close, ema_trend_len)
+
+rsi_val   = ta.rsi(close, rsi_len)
+
+atr_val   = ta.atr(atr_len)
+
+// Crossover / crossunder detection
+ema_cross_over  = ta.crossover(fast_ema, slow_ema)
+ema_cross_under = ta.crossunder(fast_ema, slow_ema)
+
+//--- entry logic
+// Long condition: EMA(5) crosses ABOVE EMA(10) + RSI > 50 + close > EMA(50)
+long_condition = ema_cross_over and rsi_val > rsi_upper and close > trend_ema
+
+// Short condition: EMA(5) crosses BELOW EMA(10) + RSI < 50 + close < EMA(50)
+short_condition = ema_cross_under and rsi_val < rsi_lower and close < trend_ema
+
+//--- bar counting for min hold
+var int bars_since_long_entry  = 999
+var int bars_since_short_entry = 999
+
+if (strategy.position_size > 0)
+    bars_since_long_entry := bars_since_long_entry + 1
+else
+    bars_since_long_entry := 999
+
+if (strategy.position_size < 0)
+    bars_since_short_entry := bars_since_short_entry + 1
+else
+    bars_since_short_entry := 999
+
+//--- exit management
+// Exit LONG when fast EMA crosses UNDER slow EMA
+long_exit_condition = ema_cross_under and strategy.position_size > 0 and bars_since_long_entry >= min_hold_bars
+
+// Exit SHORT when fast EMA crosses ABOVE slow EMA
+short_exit_condition = ema_cross_over and strategy.position_size < 0 and bars_since_short_entry >= min_hold_bars
+
+//--- TP/SL levels (ATR-based)
+sl_distance_atr = atr_val * atr_mult_sl
+tp_distance_atr = atr_val * atr_mult_tp
+
+//--- trade execution
+if (long_condition and strategy.position_size <= 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long_Exit", "Long",
+         loss=int(sl_distance_atr / syminfo.mintick),
+         profit=int(tp_distance_atr / syminfo.mintick))
+
+if (short_condition and strategy.position_size >= 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short_Exit", "Short",
+         loss=int(sl_distance_atr / syminfo.mintick),
+         profit=int(tp_distance_atr / syminfo.mintick))
+
+//--- exit on EMA cross
+if (long_exit_condition)
+    strategy.close("Long", comment="EMA_x_Exit_L")
+
+if (short_exit_condition)
+    strategy.close("Short", comment="EMA_x_Exit_S")

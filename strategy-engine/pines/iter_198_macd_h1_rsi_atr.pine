@@ -1,0 +1,91 @@
+//@version=5
+strategy(title="MACD H1 RSI ATR XAUUSD", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(12, title="MACD Fast Length", minval=5, maxval=50, tooltip="Sweep: 8-20 step 2")
+slow_len = input.int(26, title="MACD Slow Length", minval=15, maxval=60, tooltip="Sweep: 20-40 step 4")
+sig_len  = input.int(9, title="MACD Signal Length", minval=3, maxval=20, tooltip="Sweep: 5-15 step 2")
+
+// RSI filter
+rsi_len  = input.int(14, title="RSI Length", minval=5, maxval=30, tooltip="Sweep: 10-20 step 2")
+rsi_bull = input.int(50, title="RSI Bullish Threshold (long above)", minval=40, maxval=70, tooltip="Sweep: 40-60 step 5")
+rsi_bear = input.int(50, title="RSI Bearish Threshold (short below)", minval=30, maxval=60, tooltip="Sweep: 30-60 step 5")
+
+// ATR-based TP/SL
+atr_len    = input.int(14, title="ATR Length", minval=7, maxval=30, tooltip="Sweep: 10-20 step 2")
+sl_mult    = input.float(1.0, title="SL Multiplier (ATR)", minval=0.5, maxval=4.0, step=0.25, tooltip="Sweep: 0.5-3.0 step 0.25")
+tp_sl_ratio = input.float(1.5, title="TP:SL Ratio", minval=0.5, maxval=5.0, step=0.25, tooltip="Sweep: 1.0-3.0 step 0.5")
+
+// Minimum hold bars
+min_hold = input.int(3, title="Min Hold Bars", minval=1, maxval=10, tooltip="Sweep: 1-8 step 1")
+
+// Direction toggle
+trade_long  = input.bool(true, title="Allow Long Entries")
+trade_short = input.bool(true, title="Allow Short Entries")
+
+//--- indicators
+[macd_line, signal_line, hist] = ta.macd(close, fast_len, slow_len, sig_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+// MACD histogram flip detection
+hist_positive = hist > 0
+hist_negative = hist < 0
+
+// MACD histogram just turned positive (cross from below to above zero)
+hist_cross_above = ta.crossover(hist, 0)
+// MACD histogram just turned negative (cross from above to below zero)
+hist_cross_below = ta.crossunder(hist, 0)
+
+//--- entry logic
+var int bars_since_entry = 9999
+
+// Long condition: MACD histogram turns positive AND RSI > 50
+long_entry = hist_cross_above and rsi_val > rsi_bull and trade_long
+
+// Short condition: MACD histogram turns negative AND RSI < 50
+short_entry = hist_cross_below and rsi_val < rsi_bear and trade_short
+
+// Entry with explicit direction
+if (long_entry)
+    bars_since_entry := 0
+    strategy.entry("MACD_LONG", strategy.long)
+
+if (short_entry)
+    bars_since_entry := 0
+    strategy.entry("MACD_SHORT", strategy.short)
+
+// Count bars since last entry
+if (strategy.position_size != 0)
+    bars_since_entry := bars_since_entry + 1
+else
+    bars_since_entry := 9999
+
+//--- exit management
+// Exit long on opposite MACD flip (histogram turns negative) OR RSI drops below 50 (after min hold)
+long_exit_hist = hist_cross_below and bars_since_entry >= min_hold
+// Exit short on opposite MACD flip (histogram turns positive) OR RSI rises above 50 (after min hold)
+short_exit_hist = hist_cross_above and bars_since_entry >= min_hold
+
+// Use strategy.exit for PLACED exits (not close — prevents cascade-close)
+// Set fixed SL/TP based on ATR
+if (strategy.position_size > 0 and long_exit_hist)
+    strategy.close("MACD_LONG", comment="HistFlp_L")
+
+if (strategy.position_size < 0 and short_exit_hist)
+    strategy.close("MACD_SHORT", comment="HistFlp_S")
+
+// Also place initial SL/TP after entry using strategy.exit
+if (strategy.position_size[1] == 0 and strategy.position_size != 0)
+    stop_loss   = strategy.position_size > 0 ? close - atr_val * sl_mult : close + atr_val * sl_mult
+    take_profit = strategy.position_size > 0 ? close + atr_val * sl_mult * tp_sl_ratio : close - atr_val * sl_mult * tp_sl_ratio
+    
+    if (strategy.position_size > 0)
+        strategy.exit("XL_MACD_LONG", from_entry="MACD_LONG", stop=stop_loss, limit=take_profit, comment="SL/TP_L")
+    else
+        strategy.exit("XL_MACD_SHORT", from_entry="MACD_SHORT", stop=stop_loss, limit=take_profit, comment="SL/TP_S")
+
+//--- plot for visual reference
+plot(hist, title="MACD Histogram", color=color.new(color.blue, 70), style=plot.style_histogram)
+hline(0, "Zero Line", color=color.new(color.gray, 50))
