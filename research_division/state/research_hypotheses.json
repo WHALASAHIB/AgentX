@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 139,
+    "total_ideas": 141,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -532,6 +532,44 @@
       "diversification_value": "Fills the OPEN 'aggregate portfolio correlation exposure' sub-niche within risk_overlay (0 existing ideas). The closest existing idea is Correlation_Collapse_Protector (A-), which monitors correlation STABILITY (whether correlations are breaking down) \u2014 it answers 'are our correlation assumptions valid?' This gate answers 'are we over-concentrated in one direction regardless of correlation?' These are complementary but distinct: one is a correlation-checking lens, the other is a position-accounting lens. All other risk_overlay ideas (15 of them) manage per-position or per-strategy risk, not portfolio-level aggregate exposure.",
       "self_grade": "A-",
       "generated_at": "2026-06-28T04:31:48Z"
+    },
+    {
+      "name": "Consolidation_Pattern_Measured_Move_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Captures breakout thrusts from classical chart patterns (flags, pennants, symmetrical triangles, wedges) on H1 gold. Measures the pattern height and projects a measured-move target equal to the pattern's widest point, entering on a confirmed close beyond the pattern boundary.",
+      "market_behaviour": "Markets naturally form consolidation patterns (flags, pennants, symmetrical triangles, ascending and descending wedges) as price pauses between directional impulses. These structures represent a temporary equilibrium where buying and selling pressure are balanced after a significant move. When price breaks out of the consolidation with conviction, the prior impulse tends to resume with a measured move approximately equal to the height of the pattern at its widest point. In gold, these patterns are particularly reliable on H1 as they reflect institutional position-building and distribution between the major session transitions (Asian, London, US). The measured-move property is well-documented in classical technical analysis and arises from the structural mechanics of order flow \u2014 breakout liquidity is consumed, and the resulting vacuum draws price to the next liquidity tier.",
+      "entry_logic": "1. Identify a classical consolidation pattern on H1: minimum 5 swing points forming two converging (or parallel for flags) trendlines \u2014 at least 3 touches per side preferred. Patterns: flag (parallel), pennant (converging <15 degrees each side), symmetrical triangle (converging), ascending wedge (both sloping up, convergence), descending wedge (both sloping down, convergence). 2. Measure pattern height at widest point (highest high minus lowest low within the pattern). 3. Wait for a breakout candle (1-hour) that exceeds the pattern boundary by at least 0.5x ATR(14). 4. Enter on close of the breakout candle IF it closed beyond the pattern boundary (closing price outside). 5. Direction: the same direction as the impulse move that preceded the consolidation. 6. Skip if: pattern height < 10 pips, fewer than 5 swing points, or ADX(14) > 40 on H4 (over-extended trend prone to reversal).",
+      "exit_logic": "SL: Opposite side of the pattern boundary (the farthest point of the pattern from entry). TP1: Pattern height added to breakout point (exit 50% position). TP2: 1.5x pattern height (exit remaining 50%). Trail remaining position to breakeven after TP1 is hit. If price fails to reach TP1 within 48 hours, close at market (time-stop). Re-entry allowed only if a new consolidation pattern forms at a different level.",
+      "failure_mode": "1. False breakout \u2014 price breaks the pattern but immediately reverses and closes back inside. Mitigated by requiring the breakout candle to close beyond the boundary (not intra-day spike). 2. Pattern ambiguity \u2014 subjective identification of swing points leads to inconsistent pattern boundaries across traders. Mitigated by requiring minimum 5 swing points with at least 2 touches of each trendline. 3. Low-volatility false patterns \u2014 during holiday periods or pre-news compression, patterns can form with very small height (<10 pips) producing unreliable measured moves. The minimum-height skip condition filters these.",
+      "diversification_value": "Completely orthogonal to all 14 existing breakout ideas. The current breakout family covers session-based breakouts (Opening Gap, London Killzone, Asian Session, Session IB), structural/level breakouts (Order Block Fractal, Structural Level, Liquidity Void, Multi-TF Liquidity Stacked), volume-based breakouts (Accumulation/Distribution, Volume Profile, Volume Climax Fade), indicator-based (Bollinger Squeeze), and anti-breakout (False Breakout Fade). Not a single one uses classical chart pattern recognition \u2014 no flags, pennants, triangles, or wedges. This fills the largest conceptual gap in the breakout family.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-28T16:34:51Z"
+    },
+    {
+      "name": "Options_Market_Regime_Classifier",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H1"
+      ],
+      "description": "Classifies gold market regime using options market structure signals \u2014 GLD put/call volume ratio, gold volatility skew, and max pain proximity. Produces 6 distinct regimes (BULLISH_TRENDING, BULLISH_RANGING, BEARISH_TRENDING, BEARISH_RANGING, HIGH_CONCERN, NEUTRAL) that filter which directional strategies are active. Re-evaluated daily.",
+      "market_behaviour": "Gold options market structure provides leading signals about institutional positioning that precedes spot price moves by 2-24 hours. When put option premiums rise relative to calls (high put/call volume ratio >1.5), dealers who sold the puts must delta-hedge by selling gold futures or spot, creating downward price pressure. Conversely, when call premiums dominate, dealers buy gold to hedge. The volatility skew (difference between out-of-the-money put implied volatility and OTM call implied volatility) indicates the market's fear premium \u2014 a widening skew signals institutional hedging demand that precedes volatility expansion. Max pain (the strike price where most options expire worthless) acts as a magnetic price attractor near expiry. These options-derived signals are leading indicators because options positioning adjusts before spot market execution \u2014 institutions hedge OTC options positions hours before the spot market reflects the imbalance.",
+      "entry_logic": "This is a FILTER strategy \u2014 it does not enter trades directly. Instead it classifies the daily regime and other strategy modules (momentum, mean_reversion, breakout) check the regime before entering. Classification rules (evaluated once daily at 00:00 UTC): 1. Fetch GLD (Gold ETF) put/call volume ratio from prior trading day. 2. Fetch gold volatility skew: 25-delta put IV minus 25-delta call IV from gold options (GVZ or COMEX). 3. Compute regime: If put/call ratio > 1.5 and skew > 3% \u2192 HIGH_CONCERN (extreme hedging, expect volatility expansion). If put/call ratio > 1.3 and skew > 2% \u2192 BEARISH regime. If put/call ratio < 0.7 and skew < -1% \u2192 BULLISH regime. Otherwise \u2192 NEUTRAL regime. 4. Combine with ADX(14) on H1: if regime is BULLISH and ADX > 25 \u2192 TRENDING_BULLISH. If BULLISH and ADX < 25 \u2192 BULLISH_RANGING. Same for BEARISH regime. 5. Regime expiry: end of trading day (23:59 UTC). 6. Fallback: if options data unavailable (weekend, data lag), regime defaults to NEUTRAL. Other strategies should only trade in regimes where their edge matches (momentum strategies only in TRENDING regimes, mean-reversion in RANGING regimes, breakout only in non-HIGH_CONCERN regimes).",
+      "exit_logic": "N/A (this is a filter, not a trade entry system). Regime re-evaluated daily. Any strategy using this filter shares its underlying SL/TP logic. The filter automatically transitions to NEUTRAL if options data is stale (>48 hours old).",
+      "failure_mode": "1. Options data latency \u2014 CBOE GLD put/call ratios are reported with next-day lag. Mitigation: use GVZ (CBOE Gold Volatility Index) as a same-day proxy \u2014 GVZ spikes correlate with high put activity. 2. Regime flips intraday from news events \u2014 a morning BULLISH regime can become BEARISH after surprise FOMC. Mitigation: regime is daily, not intraday. High-impact news days should override to NEUTRAL. 3. Proxy divergence \u2014 GVZ may not perfectly track gold options skew. Mitigation: the regime uses 3 inputs (put/call, skew, ADX) so single-proxy divergence is survivable. 4. Low-correlation regimes \u2014 during risk-on/risk-off regime shifts, options positioning may lead spot by unpredictable intervals.",
+      "diversification_value": "The regime_filter family has 14 ideas covering ATR percentiles (ATR_Regime_Selector), macro regimes (Macro_Regime_Shifter), ML ensembles (ML_Regime_Ensemble_Switch), Hurst exponent (Hurst_Exponent_Regime_Detector), clustering (Volatility_Cluster_Regime_Map, Cluster_Consensus_Regime_Detector), yield curves (YieldCurve_Regime_Switch), intermarket vol (Intermarket_Vol_Regime_Breakdown), dealer gamma (Gamma_Flip_Regime_Divergence), liquidity (Liquidity_Regime_Filter), Minsky moments (Macro_Minsky_Moment_Regime_Shift), ADX-Vol composite (ADX_Volatility_Regime_Composite), and Markov switching (Markov_Switching_Momentum_Regime). None classify regime by options market structure (put/call ratio, volatility skew, max pain proximity). Gamma_Flip_Regime_Divergence is the closest \u2014 it uses dealer gamma positioning from gold options \u2014 but it tracks dealer hedging flow, not the options market's aggregate fear/greed signal. This idea adds an orthogonal input dimension to the regime classification toolkit.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-28T16:34:51Z"
     }
   ],
   "archived": [
@@ -2631,7 +2669,8 @@
       "Index_Structural_Breakout",
       "MultiTimeframe_Liquidity_Stacked_Breakout",
       "Breakout_Volume_Climax_Fade",
-      "Opening_Gap_Breakout_Continuation"
+      "Opening_Gap_Breakout_Continuation",
+      "Consolidation_Pattern_Measured_Move_Breakout"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
@@ -2663,7 +2702,8 @@
       "Macro_Minsky_Moment_Regime_Shift",
       "ADX_Volatility_Regime_Composite",
       "Markov_Switching_Momentum_Regime",
-      "ML_Regime_Ensemble_Switch"
+      "ML_Regime_Ensemble_Switch",
+      "Options_Market_Regime_Classifier"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",

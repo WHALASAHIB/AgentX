@@ -1,6 +1,6 @@
 {
-  "iteration": 212,
-  "last_run": "2026-06-29T01:52:00Z",
+  "iteration": 214,
+  "last_run": "2026-06-29T02:15:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "ADX>25 raised WR from 32.4% to 42.9% (huge improvement!) but slashed trades from 34 to 14 (<20 minimum). The strong-trend filter concept works well for trade quality. Now reduce ADX threshold from 25 to 18 as a middle ground: enough trades (>20) while keeping most of the WR improvement toward 40%+.",
+  "current_hypothesis": "ADX>22 gave 47.1% WR (best WR of all ADX variants!) but only 17 trades — below the 20-trade minimum. Try ADX threshold at 20 — a refined midpoint between ADX>18 (24 trades, 37.5% WR) and ADX>22 (17 trades, 47.1% WR). Expected: ~21-22 trades with WR around 42-44%, potentially crossing both the 20-trade minimum and 40% WR targets simultaneously.",
   "evolution_log": [
     {
       "iteration": 207,
@@ -53,12 +53,30 @@
     },
     {
       "iteration": 211,
-      "hypothesis": "Raise ADX threshold from 14 to 25 to only enter during strong trends. ADX>25 filters ALL choppy/rangebound entries — trades only fire when the market is meaningfully trending. Should improve WR toward 40%+ and Sharpe above 1.0 by reducing whipsaw entries.",
+      "hypothesis": "Raise ADX threshold from 14 to 25 to only enter during strong trends. ADX>25 filters ALL choppy/rangebound entries.",
       "metrics": {"pf": 1.06549609, "sharpe": -0.88838916, "wr": 42.85714286, "dd": 3.61659771, "trades": 14, "net_profit": -94.07128739998},
-      "verdict": "invalid (low sample, 14 trades) — ADX>25 raised WR to 42.9% (excellent!) but slashed trade count below 20 minimum. Concept works — now find middle ground.",
+      "verdict": "invalid (low sample, 14 trades) — ADX>25 raised WR to 42.9% (excellent!) but slashed trade count below 20 minimum.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-29T01:52:00Z"
+    },
+    {
+      "iteration": 212,
+      "hypothesis": "Reduce ADX threshold from 25 to 18 as a middle ground: enough trades (>20) while keeping most of the WR improvement toward 40%+.",
+      "metrics": {"pf": 1.15805564, "sharpe": -0.9034536, "wr": 37.5, "dd": 4.03759018, "trades": 24, "net_profit": -124.620544328898},
+      "verdict": "rejected (PF=1.16 Sharpe=-0.90 DD=4.04%) — ADX>18 gave enough trades (24) but WR slipped back to 37.5%.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-29T02:10:00Z"
+    },
+    {
+      "iteration": 213,
+      "hypothesis": "Raise ADX threshold from 18 to 22 — midpoint between 18 (too loose) and 25 (too tight). Expected: ~18-22 trades with WR approaching 40%+.",
+      "metrics": {"pf": 1.28840038, "sharpe": -0.34270449, "wr": 47.05882353, "dd": 3.43735741, "trades": 17, "net_profit": -46.794323102986},
+      "verdict": "invalid (low sample, 17 trades) — ADX>22 achieved 47.1% WR (best across ALL ADX variants!) but only 17 trades, below 20 minimum. WR target achieved, trades target missed by 3.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-29T02:15:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

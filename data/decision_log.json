@@ -842,5 +842,29 @@
     "metadata": {
       "source": "bot_controller"
     }
+  },
+  {
+    "id": "dec_1782665989240_ade7",
+    "timestamp": "2026-06-28T16:59:49.240099+00:00",
+    "agent_id": "Bollinger_NZDUSD",
+    "agent_name": "Bollinger Nzdusd",
+    "action": "Bot Started",
+    "detail": "Bot 'Bollinger_NZDUSD' started (PID 14592)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
+  },
+  {
+    "id": "dec_1782665991808_4171",
+    "timestamp": "2026-06-28T16:59:51.808852+00:00",
+    "agent_id": "MACD_AUDUSD",
+    "agent_name": "Macd Audusd",
+    "action": "Bot Started",
+    "detail": "Bot 'MACD_AUDUSD' started (PID 3216)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
   }
 ]
