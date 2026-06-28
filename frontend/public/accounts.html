@@ -121,7 +121,7 @@
         ]);
         const accounts = await accountsRes.json();
         const activeData = await activeRes.json();
-        const activeId = activeData.active_account_id || (accounts.find(a=>a.connected)||{}).id || 'default';
+        const activeId = activeData.active_account_id || (accounts.find(a=>a.connected)||{}).id || (accounts[0]?.id || 'ftmo-demo');
 
         // Fetch per-account stats in parallel
         const statsPromises = accounts.map(acct =>
@@ -142,25 +142,12 @@
     }
 
     function renderAccounts(accounts, activeId, statsMap) {
-      // Hide internal "default" account from user display
-      const displayAccounts = accounts.filter(a => a.id !== 'default');
-
-      // When activeId is 'default', find the displayed account that shares
-      // the same login as the hidden default account (they are the same broker account)
-      let resolvedActiveId = activeId;
-      if (activeId === 'default') {
-        const defaultAcct = accounts.find(a => a.id === 'default');
-        if (defaultAcct && defaultAcct.login) {
-          const matchingDisplay = displayAccounts.find(
-            a => String(a.login) === String(defaultAcct.login)
-          );
-          if (matchingDisplay) resolvedActiveId = matchingDisplay.id;
-        }
-      }
+      // No need to filter "default" — it no longer exists in bridge config
+      const displayAccounts = accounts;
 
       const grid = document.getElementById('accountsGrid');
       grid.innerHTML = displayAccounts.map(acct => {
-        const isActive = acct.id === resolvedActiveId;
+        const isActive = acct.id === activeId;
         const s = statsMap[acct.id] || {};
         const balance = acct.balance || s.balance || 0;
         const equity = acct.equity || s.equity || 0;
