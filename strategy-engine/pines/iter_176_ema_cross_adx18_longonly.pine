@@ -1,0 +1,63 @@
+//@version=5
+strategy(title="EMA(5,13)+RSI(55)+ADX(18)+TP:SL 1.5 XAUUSD 30m LONG", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(5, "EMA Fast Length", minval=1, maxval=50)          // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=1, maxval=50)         // sweep: 8-26 step 2
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)                  // sweep: 7-21 step 2
+rsiThresh = input.int(55, "RSI Threshold (long above)", minval=1, maxval=100) // sweep: 40-70 step 5
+adxLen = input.int(14, "ADX Length", minval=7, maxval=30)                  // sweep: 7-21 step 2
+adxThresh = input.int(18, "ADX Threshold (min)", minval=1, maxval=60)      // sweep: 12-25 step 3
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)                  // sweep: 7-21 step 2
+slMult = input.float(1.0, "SL Multiplier (ATR)", minval=0.1, maxval=5.0, step=0.1) // sweep: 0.5-2.0 step 0.5
+tpSlRatio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1)      // sweep: 1.0-3.0 step 0.5
+minHoldBars = input.int(4, "Min Hold Bars (crossunder)", minval=1, maxval=50)       // sweep: 2-12 step 2
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- manual ADX calculation (DMI method) — compatible with all Pine engines
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+upMove = high - high[1]
+downMove = low[1] - low
+plusDm = upMove > downMove and upMove > 0 ? upMove : 0
+minusDm = downMove > upMove and downMove > 0 ? downMove : 0
+smoothedTr = ta.rma(tr, adxLen)
+smoothedPlusDm = ta.rma(plusDm, adxLen)
+smoothedMinusDm = ta.rma(minusDm, adxLen)
+plusDi = 100 * smoothedPlusDm / smoothedTr
+minusDi = 100 * smoothedMinusDm / smoothedTr
+dx = 100 * math.abs(plusDi - minusDi) / (plusDi + minusDi)
+adxVal = ta.rma(dx, adxLen)
+
+//--- bar counter for minimum hold period
+var int barsSinceEntry = 0
+if strategy.position_size != 0
+    barsSinceEntry := barsSinceEntry + 1
+else
+    barsSinceEntry := 0
+
+//--- entry logic: EMA5 crosses above EMA13 + RSI > 55 + ADX > 18
+longEntry = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh and adxVal > adxThresh
+
+//--- exit: EMA crossunder (only after min hold bars)
+longExit = ta.crossunder(emaFast, emaSlow) and barsSinceEntry >= minHoldBars
+
+//--- position management
+if longEntry and strategy.position_size == 0
+    slDistance = slMult * atrVal
+    tpDistance = tpSlRatio * slDistance
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=int(slDistance / syminfo.mintick), profit=int(tpDistance / syminfo.mintick))
+
+if longExit and strategy.position_size > 0
+    strategy.close("Long", comment="Exit_Crossunder")
+
+//--- plots
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+plot(adxVal, "ADX", color=color.purple, linewidth=1)
+hline(adxThresh, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)

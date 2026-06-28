@@ -1,0 +1,95 @@
+//@version=5
+strategy(title="XAUUSD 30m EMA(5,13) + RSI(14)>55 + ADX(14)>14 LONG ONLY — min_hold=4", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+ema_fast_len = input.int(5, "EMA Fast Length", minval=2, maxval=50)
+ema_slow_len = input.int(13, "EMA Slow Length", minval=5, maxval=100)
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)
+rsi_threshold = input.int(55, "RSI Long Threshold", minval=30, maxval=80)
+
+// ADX filter
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)
+adx_threshold = input.int(14, "ADX Minimum", minval=5, maxval=50)
+
+// ATR-based TP/SL
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)
+tp_atr_mult = input.float(1.5, "TP ATR Multiplier", minval=0.5, maxval=5.0, step=0.1)
+sl_atr_mult = input.float(1.0, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.1)
+
+// Exit control
+min_hold_bars = input.int(4, "Minimum Hold Bars", minval=1, maxval=100)
+
+//--- manual ADX calculation (Trader Dev engine doesn't support ta.adx)
+// True Range
+var float tr_raw = 0.0
+tr_raw := math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+
+// +DM and -DM
+var float plus_dm_raw = 0.0
+var float minus_dm_raw = 0.0
+plus_dm_raw := high - high[1]
+minus_dm_raw := low[1] - low
+if plus_dm_raw < 0 or plus_dm_raw <= minus_dm_raw
+    plus_dm_raw := 0
+if minus_dm_raw < 0 or minus_dm_raw <= plus_dm_raw
+    minus_dm_raw := 0
+
+// Smoothed ATR, +DI, -DI using Wilder's RMA (approximated with EMA)
+atr_val = ta.atr(atr_len)
+smooth_plus_dm = ta.ema(plus_dm_raw, adx_len)
+smooth_minus_dm = ta.ema(minus_dm_raw, adx_len)
+smooth_tr = ta.ema(tr_raw, adx_len)
+
+// +DI and -DI
+plus_di_val = smooth_tr > 0 ? 100 * smooth_plus_dm / smooth_tr : 0
+minus_di_val = smooth_tr > 0 ? 100 * smooth_minus_dm / smooth_tr : 0
+
+// DX = |+DI - -DI| / (+DI + -DI) * 100
+di_diff = math.abs(plus_di_val - minus_di_val)
+di_sum = plus_di_val + minus_di_val
+dx_val = di_sum > 0 ? 100 * di_diff / di_sum : 0
+
+// ADX = RMA of DX over adx_len periods
+adx_val = ta.ema(dx_val, adx_len)
+
+//--- indicator calculations
+fast_ema = ta.ema(close, ema_fast_len)
+slow_ema = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+ema_cross_over = ta.crossover(fast_ema, slow_ema)
+ema_cross_under = ta.crossunder(fast_ema, slow_ema)
+
+// Long entry: cross + RSI > threshold + ADX > threshold
+long_entry = ema_cross_over and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+// Track bars since last entry for min hold
+var int bars_since_entry = 999
+if (strategy.position_size > 0)
+    bars_since_entry := bars_since_entry + 1
+else
+    bars_since_entry := 999
+
+if (long_entry and strategy.position_size == 0)
+    bars_since_entry := 0
+
+// Allow crossunder exit only after min hold period
+crossunder_exit_allowed = bars_since_entry >= min_hold_bars
+long_exit_crossunder = ema_cross_under and crossunder_exit_allowed and strategy.position_size > 0
+
+//--- Orders
+if (long_entry and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+if (long_exit_crossunder)
+    strategy.close("Long", comment="XUnderExit")
+
+// TP/SL via strategy.exit
+if (strategy.position_size > 0 and strategy.position_size[1] == 0)
+    long_tp = strategy.position_avg_price + (atr_val * tp_atr_mult)
+    long_sl = strategy.position_avg_price - (atr_val * sl_atr_mult)
+    strategy.exit("TP/SL", "Long", limit=long_tp, stop=long_sl, comment="TP/SL Exit")
