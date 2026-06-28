@@ -1,0 +1,60 @@
+//@version=5
+strategy(title="EMA5/13 Crossover RSI40 ADX14 Long-Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(5, "Fast EMA", minval=3, maxval=15, step=1)            // sweep: 3-10 step 1
+emaSlow = input.int(13, "Slow EMA", minval=8, maxval=30, step=2)           // sweep: 10-20 step 2
+emaTrend = input.int(50, "Trend EMA", minval=20, maxval=100, step=10)      // sweep: 30-80 step 10
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=21)                  // sweep: 7-21 step 7
+rsiMin = input.int(40, "RSI Minimum", minval=20, maxval=60, step=5)        // sweep: 30-50 step 5
+
+// ADX trend filter
+adxLen = input.int(14, "ADX Length", minval=7, maxval=30, step=1)          // sweep: 7-21 step 7
+adxMin = input.int(14, "ADX Minimum", minval=8, maxval=30, step=2)         // sweep: 10-25 step 5
+
+// TP/SL
+atrLen = input.int(14, "ATR Length", minval=7, maxval=30)                  // sweep: 7-21 step 7
+tpMult = input.float(1.5, "TP Multiplier (ATR)", minval=0.5, maxval=4.0)  // sweep: 1.0-3.0 step 0.5
+slMult = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=3.0)  // sweep: 0.5-2.0 step 0.5
+
+//--- indicators
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+emaT = ta.ema(close, emaTrend)
+rsiVal = ta.rsi(close, rsiLen)
+adxVal = ta.adx(high, low, close, adxLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// Bullish crossover
+emaBullCross = ta.crossover(emaF, emaS)
+
+// Filters
+trendOk = close > emaT            // Price above long-term trend
+rsiOk = rsiVal > rsiMin            // Not oversold
+adxOk = adxVal > adxMin           // Trending, not choppy
+
+// No existing position
+noPos = strategy.opentrades == 0
+
+// Entry condition
+enterLong = emaBullCross and trendOk and rsiOk and adxOk and noPos
+
+if enterLong
+    strategy.entry("L", strategy.long)
+
+//--- exit management
+slDist = atrVal * slMult
+tpDist = atrVal * tpMult
+
+if strategy.position_size > 0
+    strategy.exit("X", "L", loss=int(slDist/syminfo.mintick), profit=int(tpDist/syminfo.mintick))
+
+//--- visual
+plot(emaF, "Fast EMA", color=color.green, linewidth=2)
+plot(emaS, "Slow EMA", color=color.red, linewidth=2)
+plot(emaT, "Trend EMA", color=color.blue, linewidth=1)
+plotshape(enterLong, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)

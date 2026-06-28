@@ -1,0 +1,67 @@
+//@version=5
+strategy(title="EMA513 Cross + ADX14 + RSI50 Filter", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+ema_fast = input.int(5, "EMA Fast", minval=2, maxval=50)           // sweep: 3-10 step 1
+// EMA slow period
+ema_slow = input.int(13, "EMA Slow", minval=5, maxval=100)          // sweep: 8-21 step 1
+// ADX period
+adx_len = input.int(14, "ADX Length", minval=5, maxval=30)          // sweep: 10-20 step 2
+// ADX threshold
+adx_threshold = input.int(14, "ADX Threshold", minval=10, maxval=40) // sweep: 12-25 step 2
+// RSI period
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)          // sweep: 7-21 step 2
+// RSI threshold (long only if above this)
+rsi_threshold = input.int(50, "RSI Threshold (long >)", minval=30, maxval=70) // sweep: 40-60 step 5
+// ATR period for SL
+atr_period = input.int(14, "ATR Period", minval=5, maxval=30)       // sweep: 10-20 step 2
+// ATR multiplier for SL
+atr_sl_mult = input.float(1.5, "ATR SL Multiplier", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+// Risk-reward ratio (TP = SL * RR)
+rr_ratio = input.float(2.0, "Risk/Reward Ratio", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//--- calculations
+ema_f = ta.ema(close, ema_fast)
+ema_s = ta.ema(close, ema_slow)
+[di_plus, di_minus, adx] = ta.dmi(adx_len, adx_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_period)
+
+//--- entry logic: long only
+long_condition = ta.crossover(ema_f, ema_s) and adx > adx_threshold and rsi_val > rsi_threshold
+
+//--- exit logic
+var float entry_price = na
+var float sl_price = na
+var float tp_price = na
+var int bars_in_trade = 0
+var bool in_long = false
+
+// Enter long
+if long_condition and not in_long
+    entry_price := close
+    sl_price := close - atr_val * atr_sl_mult
+    tp_price := close + atr_val * atr_sl_mult * rr_ratio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=int((entry_price - sl_price) / syminfo.mintick), profit=int((tp_price - entry_price) / syminfo.mintick))
+    in_long := true
+    bars_in_trade := 0
+
+// Track bars in trade
+if strategy.position_size > 0
+    bars_in_trade := bars_in_trade + 1
+    // Exit on EMA crossunder (trend reversal)
+    if ta.crossunder(ema_f, ema_s) and bars_in_trade >= 4
+        strategy.close("Long", comment="CrossUnder")
+        in_long := false
+        bars_in_trade := 0
+
+// Reset when flat
+if strategy.position_size == 0
+    in_long := false
+    bars_in_trade := 0
+
+//--- exit management
+// Strategy exit is already managed above via strategy.exit()
+// No strategy.close on every bar — prevents cascade-close

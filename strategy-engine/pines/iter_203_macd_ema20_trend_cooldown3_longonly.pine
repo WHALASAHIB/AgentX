@@ -1,0 +1,62 @@
+//@version=5
+strategy(title="MACD EMA20 Trend Cooldown3 Long-Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast Length", minval=5, maxval=30, group="MACD")      // sweep: 8-20 step 2
+slowLen = input.int(26, "MACD Slow Length", minval=10, maxval=50, group="MACD")     // sweep: 18-34 step 4
+signalLen = input.int(9, "MACD Signal Length", minval=3, maxval=20, group="MACD")   // sweep: 5-15 step 2
+
+// EMA trend filter (lighter than RSI — just confirms uptrend)
+emaLen = input.int(20, "EMA Trend Length", minval=10, maxval=50, step=5)            // sweep: 10-40 step 5
+
+// Cooldown to prevent whipsaw re-entry
+coolBars = input.int(3, "Min Bars Between Trades", minval=1, maxval=15)             // sweep: 2-6 step 1
+
+// TP/SL via ATR
+atrLen = input.int(14, "ATR Length", minval=7, maxval=30)                           // sweep: 7-21 step 7
+tpMult = input.float(1.5, "TP Multiplier (ATR)", minval=0.5, maxval=4.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+slMult = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.5) // sweep: 0.5-2.0 step 0.5
+
+//--- indicators
+[macdVal, sigVal, histVal] = ta.macd(close, fastLen, slowLen, signalLen)
+ema20 = ta.ema(close, emaLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// MACD histogram crossover above 0 = bullish momentum shift
+macdCrossAbove = ta.crossover(histVal, 0)
+
+// EMA trend filter: price above EMA(20) = uptrend
+trendOk = close > ema20
+
+// Cooldown: minimum bars since last trade closed
+var int barsSinceLast = 999
+barsSinceLast := barsSinceLast + 1
+if strategy.opentrades == 0 and strategy.closedtrades > 0
+    barsSinceLast := 0
+if strategy.opentrades > 0
+    barsSinceLast := 0
+coolDone = barsSinceLast >= coolBars
+
+// No existing position
+noPos = strategy.opentrades == 0
+
+// Entry: MACD bullish crossover + price above EMA20 + cooldown
+enterLong = macdCrossAbove and trendOk and noPos and coolDone
+
+if enterLong
+    strategy.entry("L", strategy.long)
+
+//--- exit management
+// ATR-based TP/SL with separate multipliers
+slDist = atrVal * slMult
+tpDist = atrVal * tpMult
+
+if strategy.position_size > 0
+    strategy.exit("X", "L", loss=int(slDist/syminfo.mintick), profit=int(tpDist/syminfo.mintick))
+
+//--- visual signals
+plot(ema20, "EMA20", color=color.blue, linewidth=1)
+plotshape(enterLong, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
+hline(0, "Zero", color=color.gray, linestyle=hline.style_dotted)
