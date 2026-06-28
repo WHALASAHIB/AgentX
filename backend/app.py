@@ -3066,13 +3066,22 @@ async def get_prices():
     bridge = get_bridge()
     prices: dict[str, Any] = {}
 
+    # Resolve the account to use: prefer "ftmo-demo" then "mt5-demo" (no hardcoded "default")
+    price_account_id = "ftmo-demo"
+    try:
+        bridge_accts = await bridge.list_accounts()
+        if bridge_accts and len(bridge_accts) > 0:
+            price_account_id = bridge_accts[0].get("id", "ftmo-demo")
+    except Exception:
+        pass
+
     # Fetch daily OHLC open prices for all symbols
     daily_opens = _fetch_daily_opens(symbols)
 
     # Pre-fetch history to build a fallback price lookup per symbol
     last_trade_price: dict[str, float] = {}
     try:
-        trades = await bridge.get_trades("default", days=30)
+        trades = await bridge.get_trades(price_account_id, days=30)
         # Sort by close_time descending so the first entry per symbol is the most recent
         trades_sorted = sorted(trades, key=lambda t: t.get("close_time", ""), reverse=True)
         for t in trades_sorted:
@@ -3090,7 +3099,7 @@ async def get_prices():
         timestamp = None
         error = None
         try:
-            tick = await bridge.get_tick("default", symbol)
+            tick = await bridge.get_tick(price_account_id, symbol)
             bid = tick.get("bid")
             ask = tick.get("ask")
             timestamp = tick.get("time") or tick.get("timestamp")

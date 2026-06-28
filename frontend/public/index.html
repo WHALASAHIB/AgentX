@@ -126,19 +126,20 @@
       <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
     </div>
   </aside>
-  <main class="main-content" id="mainContent">
-    <div class="page-header">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div>
+  <main class="main-content">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div>
           <h1>Dashboard</h1>
           <p id="lastUpdate">Live prices & market overview</p>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sec)">
-        <span id="liveIndicator" class="live-inactive">●</span> Live
-      </div>
+      <div class="header-controls">
+      <span id="liveIndicator" class="live-inactive">○ Offline</span>
     </div>
+  </div>
+  <div id="weekendBanner" style="display:none;"></div>
 
     <div class="section-title">💰 Live Prices <span class="badge">9 pairs</span></div>
     <div class="prices-grid" id="pricesGrid">
@@ -369,14 +370,14 @@
         const res = await fetch(API+'/api/accounts/active', {
           headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
         });
-        if (!res.ok) { activeAccountId = 'default'; return 'default'; }
+        if (!res.ok) { activeAccountId = 'ftmo-demo'; return 'ftmo-demo'; }
         const data = await res.json();
-        activeAccountId = data.active_account_id || 'default';
+        activeAccountId = data.active_account_id || 'ftmo-demo';
         return activeAccountId;
       } catch(e) {
         console.error('fetchActiveAccount error:', e);
-        activeAccountId = 'default';
-        return 'default';
+        activeAccountId = 'ftmo-demo';
+        return 'ftmo-demo';
       }
     }
 
@@ -390,6 +391,21 @@
         const connected = data?.bridge?.connected || data?.bridge?.data?.connected || false;
         const indicator = document.getElementById('liveIndicator');
         indicator.className = connected ? 'live-active' : 'live-inactive';
+
+        // Show weekend / market status banner
+        const isWeekend = data?.bridge?.data?.is_weekend || false;
+        const marketStatus = data?.bridge?.data?.market_status || 'unknown';
+        const weekendBanner = document.getElementById('weekendBanner');
+        if (weekendBanner) {
+          if (isWeekend) {
+            weekendBanner.innerHTML = `<div style="padding:10px 16px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;margin-bottom:16px;font-size:13px;">
+              🕐 <strong>Weekend Mode</strong> — Markets are closed (Sat/Sun). Live prices and trade execution will resume Monday when forex markets open at 10pm UTC Sunday. Account balances shown may be stale.
+            </div>`;
+            weekendBanner.style.display = 'block';
+          } else {
+            weekendBanner.style.display = 'none';
+          }
+        }
       } catch(e) {
         const indicator = document.getElementById('liveIndicator');
         if (indicator) indicator.className = 'live-inactive';
