@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="MACD 30m NoRSI Cooldown5", overlay=true, initial_capital=10000, 
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100, 
+         commission_type=strategy.commission.percent, commission_value=0.04, 
+         process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast", minval=5, maxval=50)       // sweep: 8-20 step 2
+slowLen = input.int(26, "MACD Slow", minval=10, maxval=100)     // sweep: 18-34 step 4
+sigLen  = input.int(9, "MACD Signal", minval=3, maxval=20)      // sweep: 5-15 step 2
+
+// Risk management
+tpSlRatio = input.float(1.5, "TP/SL Ratio", step=0.1)           // sweep: 1.0-3.0 step 0.5
+atrPeriod = input.int(14, "ATR Period", minval=7, maxval=28)    // sweep: 10-20 step 2
+atrMult   = input.float(1.5, "ATR Stop Multiplier", step=0.1)   // sweep: 1.0-3.0 step 0.5
+
+// Cooldown
+cooldownBars = input.int(5, "Cooldown Bars", minval=1, maxval=20) // sweep: 3-12 step 2
+
+//--- indicator calculations
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, sigLen)
+atrVal = ta.atr(atrPeriod)
+
+//--- entry logic
+// MACD histogram crosses above zero — long entry signal
+macdCrossAboveZero = ta.crossover(histLine, 0)
+
+// Cooldown: prevent re-entry within N bars of last entry
+var int barsSinceLastEntry = 999
+if (strategy.position_size == 0)
+    barsSinceLastEntry := 999
+else if (barsSinceLastEntry < 999)
+    barsSinceLastEntry := barsSinceLastEntry + 1
+
+// Entry conditions: MACD crosses above 0, no position, cooldown satisfied
+enterLong = macdCrossAboveZero and strategy.position_size == 0 and barsSinceLastEntry >= cooldownBars
+
+//--- exit management
+// SL = atrMult * ATR, TP = SL * tpSlRatio
+stopLoss   = atrMult * atrVal * syminfo.mintick
+takeProfit = stopLoss * tpSlRatio
+
+//--- strategy execution
+if (enterLong)
+    strategy.entry("Long", strategy.long)
+    barsSinceLastEntry := 0
+
+// Exit using ATR-based stop and target
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=stopLoss, profit=takeProfit)
+
+//--- visual signals
+plot(histLine, "MACD Histogram", color=color.blue, style=plot.style_histogram)
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dotted)
+plotshape(enterLong, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)

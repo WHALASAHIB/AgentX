@@ -1,0 +1,63 @@
+//@version=5
+strategy(title="Iter 200 - MACD + RSI + Cooldown XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(12, "MACD Fast Length", minval=5, maxval=30)       // sweep: 8-20 step 2
+slow_len = input.int(26, "MACD Slow Length", minval=15, maxval=50)      // sweep: 20-40 step 2
+sig_len  = input.int(9, "MACD Signal Length", minval=5, maxval=20)      // sweep: 7-15 step 1
+
+// RSI parameters
+rsi_len  = input.int(14, "RSI Length", minval=7, maxval=28)             // sweep: 10-20 step 2
+rsi_threshold_bull = input.int(50, "RSI Bullish Threshold (long > this)", minval=40, maxval=60)  // sweep: 45-55 step 5
+rsi_threshold_bear = input.int(50, "RSI Bearish Threshold (short < this)", minval=40, maxval=60) // sweep: 45-55 step 5
+
+// Cooldown
+bars_cooldown = input.int(10, "Min Bars Between Trades", minval=5, maxval=30)  // sweep: 5-20 step 5
+
+// ATR-based TP/SL
+atr_len = input.int(14, "ATR Length", minval=7, maxval=28)              // sweep: 10-20 step 2
+sl_mult = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.5)   // sweep: 0.5-2.0 step 0.5
+tp_mult = input.float(1.5, "TP Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+[macd_line, signal_line, hist] = ta.macd(close, fast_len, slow_len, sig_len)
+rsi = ta.rsi(close, rsi_len)
+atr = ta.atr(atr_len)
+
+//--- trade cooldown tracker
+var int bars_since_last_trade = 999
+bars_since_last_trade := bars_since_last_trade + 1
+
+//--- entry logic
+// Bullish: MACD histogram crosses above zero line (from negative to positive) AND RSI > 50
+bullish_entry = ta.crossover(hist, 0) and rsi > rsi_threshold_bull
+// Bearish: MACD histogram crosses below zero line (from positive to negative) AND RSI < 50
+bearish_entry = ta.crossunder(hist, 0) and rsi < rsi_threshold_bear
+
+// Cooldown check - only enter if enough bars since last trade
+can_trade = bars_since_last_trade >= bars_cooldown
+
+//--- exit logic
+// Exit long when MACD histogram crosses below zero (trend reversal on H1)
+exit_long_sig = ta.crossunder(hist, 0)
+// Exit short when MACD histogram crosses above zero (trend reversal on H1)
+exit_short_sig = ta.crossover(hist, 0)
+
+//--- position management
+if (bullish_entry and can_trade and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=int(atr * sl_mult / syminfo.mintick), profit=int(atr * tp_mult / syminfo.mintick))
+    bars_since_last_trade := 0
+
+if (bearish_entry and can_trade and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", loss=int(atr * sl_mult / syminfo.mintick), profit=int(atr * tp_mult / syminfo.mintick))
+    bars_since_last_trade := 0
+
+// Manual exit on opposite filter flip
+if (strategy.position_size > 0 and exit_short_sig)
+    strategy.close("Long")
+
+if (strategy.position_size < 0 and exit_long_sig)
+    strategy.close("Short")

@@ -1,0 +1,88 @@
+//@version=5
+strategy(title="MACD H1 ADX RSI — Iter 199", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len     = input.int(12, "MACD Fast Length", minval=5, maxval=30, step=1)    // sweep: 5-30 step 1
+slow_len     = input.int(26, "MACD Slow Length", minval=10, maxval=50, step=1)   // sweep: 10-50 step 1
+signal_len   = input.int(9, "MACD Signal Length", minval=3, maxval=20, step=1)   // sweep: 3-20 step 1
+
+// RSI filter
+rsi_len      = input.int(14, "RSI Length", minval=7, maxval=21, step=1)          // sweep: 7-21 step 2
+rsi_upper    = input.int(50, "RSI Long Threshold", minval=40, maxval=60, step=5) // sweep: 40-60 step 5
+rsi_lower    = input.int(50, "RSI Short Threshold", minval=40, maxval=60, step=5)// sweep: 40-60 step 5
+
+// ADX trending filter
+adx_len      = input.int(14, "ADX Length", minval=7, maxval=28, step=1)          // sweep: 7-28 step 1
+adx_threshold = input.int(25, "ADX Threshold", minval=15, maxval=40, step=5)     // sweep: 15-40 step 5
+
+// Exit / risk management
+atr_len      = input.int(14, "ATR Length", minval=7, maxval=28, step=1)          // sweep: 7-28 step 1
+tp_sl_ratio  = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-5.0 step 0.5
+min_hold     = input.int(3, "Min Bars Hold", minval=1, maxval=10, step=1)        // sweep: 1-10 step 1
+
+//--- MACD calculation
+[macd_line, signal_line, hist] = ta.macd(close, fast_len, slow_len, signal_len)
+
+//--- RSI
+rsi = ta.rsi(close, rsi_len)
+
+//--- ADX via DMI (ta.adx not supported on this platform)
+[dm_plus, dm_minus, adx] = ta.dmi(high, low, close, adx_len)
+
+//--- ATR for stops
+atr = ta.atr(atr_len)
+
+//--- Entry conditions
+// Long: MACD histogram crosses above 0, RSI > threshold, ADX > threshold
+long_entry_signal  = ta.crossover(hist, 0) and rsi > rsi_upper and adx > adx_threshold
+// Short: MACD histogram crosses below 0, RSI < threshold, ADX > threshold
+short_entry_signal = ta.crossunder(hist, 0) and rsi < rsi_lower and adx > adx_threshold
+
+//--- Exit logic
+// Exit long when MACD hist crosses below 0 OR RSI drops below rsi_lower
+long_exit_signal   = hist < 0 and rsi < 50
+// Exit short when MACD hist crosses above 0 OR RSI rises above rsi_upper
+short_exit_signal  = hist > 0 and rsi > 50
+
+//--- Minimum bars held counter
+var int bars_since_long_entry  = 9999
+var int bars_since_short_entry = 9999
+
+if strategy.position_size > 0
+    bars_since_long_entry := bars_since_long_entry + 1
+else
+    bars_since_long_entry := 9999
+
+if strategy.position_size < 0
+    bars_since_short_entry := bars_since_short_entry + 1
+else
+    bars_since_short_entry := 9999
+
+//--- Entry logic (only if flat)
+if strategy.position_size == 0
+    // Long entry
+    if long_entry_signal
+        bars_since_long_entry := 0
+        strategy.entry("Long", strategy.long)
+        // Set SL and TP using ATR
+        sl_price = close - (atr * 1.0)
+        tp_price = close + (atr * tp_sl_ratio)
+        strategy.exit("Long Exit", "Long", loss=(close - sl_price) / syminfo.mintick, profit=(tp_price - close) / syminfo.mintick)
+
+    // Short entry
+    if short_entry_signal
+        bars_since_short_entry := 0
+        strategy.entry("Short", strategy.short)
+        sl_price = close + (atr * 1.0)
+        tp_price = close - (atr * tp_sl_ratio)
+        strategy.exit("Short Exit", "Short", loss=(sl_price - close) / syminfo.mintick, profit=(close - tp_price) / syminfo.mintick)
+
+//--- Early exit management
+// Exit long if MACD hist goes negative AND RSI < 50, after min_hold bars
+if strategy.position_size > 0 and bars_since_long_entry >= min_hold and long_exit_signal
+    strategy.close("Long")
+
+// Exit short if MACD hist goes positive AND RSI > 50, after min_hold bars
+if strategy.position_size < 0 and bars_since_short_entry >= min_hold and short_exit_signal
+    strategy.close("Short")
