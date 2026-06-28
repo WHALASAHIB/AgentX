@@ -211,7 +211,15 @@
       <div class="section-title">📊 Backtest Results</div>
       <div id="dataSourceBadge" style="margin-bottom:12px;"></div>
       <div class="results-metrics" id="metricsGrid"></div>
-      <div class="chart-container"><h3 class="section-title">📈 Equity Curve</h3><canvas id="btEquityChart"></canvas></div>
+      <div class="chart-container">
+        <h3 class="section-title">📈 Equity Curve
+          <span id="dataSourceInfo" style="margin-left:auto;font-size:12px;"></span>
+        </h3>
+        <div id="zeroTradeWarning" style="display:none;padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-bottom:12px;font-size:13px;color:var(--danger);">
+          ⚠️ <strong>No trades triggered.</strong> This strategy generated 0 signals with the selected parameters, timeframe, and date range. Try a different timeframe, longer date range, or different symbol.
+        </div>
+        <canvas id="btEquityChart"></canvas>
+      </div>
       <div class="card" id="tradesSummary"><h3 class="section-title">📋 Trade Summary</h3></div>
     </div>
   </main>
@@ -336,6 +344,22 @@
       const equity = data.equity_curve || [];
       const ctx = document.getElementById('btEquityChart').getContext('2d');
       if(btChart) btChart.destroy();
+
+      // Show data source indicator
+      const dataSourceDiv = document.getElementById('dataSourceInfo');
+      if (dataSourceDiv) {
+        const source = data.data_source || 'unknown';
+        const bars = data.bars_fetched || 0;
+        const sourceLabels = {
+          'bridge': { label: 'Real (MT5 Bridge)', color: 'var(--success)' },
+          'mt5_direct': { label: 'Real (MT5 Direct)', color: 'var(--success)' },
+          'synthetic': { label: '⚠️ Synthetic (no real data)', color: 'var(--danger)' },
+          'none': { label: 'No data available', color: 'var(--danger)' },
+        };
+        const info = sourceLabels[source] || { label: source, color: 'var(--text-sec)' };
+        dataSourceDiv.innerHTML = `<span style="color:${info.color};font-size:12px;">📡 ${info.label} · ${bars} bars</span>`;
+      }
+
       if(equity.length>0) {
         btChart = new Chart(ctx, {
           type: 'line',
@@ -351,6 +375,10 @@
 
       const trades = data.trades || [];
       const ts = document.getElementById('tradesSummary');
+      const zeroWarning = document.getElementById('zeroTradeWarning');
+      if (zeroWarning) {
+        zeroWarning.style.display = trades.length === 0 ? 'block' : 'none';
+      }
       if(trades.length>0) {
         const PAGE_SIZE = 50;
         let btPage = 0;

@@ -102,7 +102,8 @@
         <div class="test-bot-status" style="margin-top:8px;">
           <span class="status-dot stopped" id="testStatusDot"></span>
           <span id="testStatusText" style="font-size:13px;color:var(--text-sec);">Stopped</span>
-        </div>
+          <div id="testTradeResult"></div>
+          </div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn-start" id="testStartBtn" onclick="startTestBot()">▶ Start Test</button>
@@ -210,8 +211,37 @@
       const dot = document.getElementById('testStatusDot');
       const text = document.getElementById('testStatusText');
       const stopBtn = document.getElementById('testStopBtn');
+      const resultDiv = document.getElementById('testTradeResult');
       dot.className = 'status-dot ' + (running?'running':'stopped');
-      text.textContent = running ? 'Running (PID: '+(data.pid||'?')+')' : 'Stopped';
+      let statusText = running ? 'Running (PID: '+(data.pid||'?')+')' : 'Stopped';
+
+      // Show trade result if available
+      if (data.last_trade_result) {
+        const tr = data.last_trade_result;
+        const statusIcons = {
+          'trade_closed': '✅',
+          'trade_open': '⏳',
+          'trade_failed': '❌',
+          'close_failed': '⚠️',
+          'failed': '❌',
+        };
+        const icon = statusIcons[tr.status] || 'ℹ️';
+        statusText += ` · ${icon} ${tr.detail || tr.status}`;
+        if (resultDiv) {
+          resultDiv.innerHTML = `<div style="font-size:12px;color:var(--text-sec);margin-top:4px;padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;">
+            <strong>Last Run:</strong> ${icon} ${tr.detail || tr.status}
+            ${tr.ticket ? ' · Ticket: '+tr.ticket : ''}
+            ${tr.price ? ' · Price: '+tr.price : ''}
+          </div>`;
+        }
+      }
+
+      // Show error if bot failed to start
+      if (data.last_error && !running) {
+        statusText += ' · ❌ Error: '+data.last_error;
+      }
+
+      text.textContent = statusText;
       stopBtn.disabled = !running;
     }
 

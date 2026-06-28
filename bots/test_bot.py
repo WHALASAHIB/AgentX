@@ -24,6 +24,23 @@ LOT = 0.01
 DEVIATION = 20
 MAGIC = 999001
 
+# ── Status result file ─────────────────────────────────────────────────────
+import json
+from pathlib import Path
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_RESULT_FILE = _SCRIPT_DIR / "logs" / "test_bot_result.json"
+
+def _write_result(status: str, detail: str, **extra):
+    """Write structured trade result to logs/test_bot_result.json."""
+    _RESULT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    data = {
+        "status": status,
+        "detail": detail,
+        "timestamp": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        **extra,
+    }
+    _RESULT_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
 
 def bridge_get(path: str) -> dict:
     """GET request to bridge API, returns parsed JSON."""
@@ -47,6 +64,7 @@ def main():
     account_id = args.account_id
 
     print(f"[TEST_BOT] Starting XAUUSD BUY test (0.01 lot) on account: {account_id}")
+    _write_result("starting", f"Starting test on account {account_id}")
 
     # ── 1. Get account info ────────────────────────────────────────────────
     try:
@@ -55,6 +73,7 @@ def main():
               f"| Balance: {account_info.get('balance', 0):.2f}")
     except Exception as e:
         print(f"[TEST_BOT] Failed to get account info: {e}")
+        _write_result("failed", f"Cannot get account info: {e}")
         sys.exit(1)
 
     # ── 2. Get current tick for XAUUSD ──────────────────────────────────────
@@ -64,10 +83,12 @@ def main():
         bid = float(tick.get("bid", 0))
         if ask <= 0 or bid <= 0:
             print(f"[TEST_BOT] Invalid tick data: {tick}")
+            _write_result("failed", f"Invalid tick data: {tick}")
             sys.exit(1)
         print(f"[TEST_BOT] {SYMBOL} ask={ask} bid={bid}")
     except Exception as e:
         print(f"[TEST_BOT] Failed to get tick for {SYMBOL}: {e}")
+        _write_result("failed", f"Cannot get tick: {e}")
         sys.exit(1)
 
     # ── 3. Open BUY 0.01 lot XAUUSD via bridge ──────────────────────────────
@@ -87,10 +108,12 @@ def main():
     if retcode != 10009:  # TRADE_RETCODE_DONE
         err_msg = result.get("error", result)
         print(f"[TEST_BOT] BUY order FAILED: retcode={retcode} error={err_msg}")
+        _write_result("trade_failed", f"BUY order failed: {err_msg}", retcode=retcode)
         sys.exit(1)
 
     ticket = result.get("order", 0)
     print(f"[TEST_BOT] BUY order placed — Ticket: {ticket}")
+    _write_result("trade_open", f"BUY {SYMBOL} {LOT} lot opened", ticket=ticket, price=ask)
 
     # ── 4. Wait 20 seconds ────────────────────────────────────────────────
     print("[TEST_BOT] Waiting 20 seconds before closing...")
@@ -103,6 +126,7 @@ def main():
         bid = float(tick.get("bid", 0))
     except Exception as e:
         print(f"[TEST_BOT] Cannot get current price to close: {e}")
+        _write_result("failed", f"Cannot get close price: {e}")
         sys.exit(1)
 
     close_request = {
@@ -121,8 +145,10 @@ def main():
     close_retcode = close_result.get("retcode", -1)
     if close_retcode != 10009:
         print(f"[TEST_BOT] Close FAILED: retcode={close_retcode} error={close_result.get('error', close_result)}")
+        _write_result("close_failed", f"Close failed: retcode={close_retcode}", ticket=ticket)
     else:
         print(f"[TEST_BOT] Position {ticket} CLOSED successfully")
+        _write_result("trade_closed", f"Position {ticket} closed", ticket=ticket, close_price=bid)
 
     # ── 6. Exit cleanly ────────────────────────────────────────────────────
     print("[TEST_BOT] Test complete — exiting cleanly")

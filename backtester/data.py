@@ -19,6 +19,14 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# ── Track last data fetch source for API transparency ────────────────────
+_last_fetch_source: str = "unknown"
+_last_fetch_count: int = 0
+
+def get_last_fetch_info() -> dict:
+    """Return info about the most recent fetch call."""
+    return {"source": _last_fetch_source, "bars_fetched": _last_fetch_count}
+
 # ── Instrument metadata ──────────────────────────────────────────────────────
 INSTRUMENTS: dict[str, dict] = {
     "XAUUSD": {"ticker": "XAUUSD", "spread_pips": 1.0, "pip_value": 0.01, "contract_size": 100},
@@ -76,6 +84,7 @@ def _fetch_from_bridge(
     Returns a DataFrame with columns time, open, high, low, close, tick_volume.
     Returns None on failure."""
     import requests
+    global _last_fetch_source, _last_fetch_count
 
     # Use mt5-demo account (has market data access)
     account_id = "mt5-demo"
@@ -112,6 +121,9 @@ def _fetch_from_bridge(
         df = pd.DataFrame(data)
         df["time"] = pd.to_datetime(df["time"])
 
+        _last_fetch_source = "real"
+        _last_fetch_count = len(df)
+
         logger.info(
             "Fetched %d real bars via bridge for %r %s [%s to %s]",
             len(df), ticker, interval, date_from, date_to,
@@ -132,6 +144,7 @@ def _fetch_from_mt5_direct(
     interval: str = "1h",
 ) -> Optional[object]:
     """Direct MT5 fetch as fallback (if bridge is down but MT5 is available)."""
+    global _last_fetch_source, _last_fetch_count
     try:
         import MetaTrader5 as mt5
 
@@ -166,10 +179,13 @@ def _fetch_from_mt5_direct(
         mt5.symbol_select(ticker, True)
         rates = mt5.copy_rates_range(ticker, mt5_tf, dt_from, dt_to)
         mt5.shutdown()
-
         if rates is not None and len(rates) > 0:
             df = pd.DataFrame(rates)
             df["time"] = pd.to_datetime(df["time"], unit="s")
+
+            _last_fetch_source = "mt5_direct"
+            _last_fetch_count = len(df)
+
             logger.info(
                 "Fetched %d direct MT5 bars for %r %s [%s to %s]",
                 len(df), ticker, interval, date_from, date_to,
@@ -210,6 +226,7 @@ def _generate_synthetic_data(
     Generate realistic synthetic OHLC data when MT5 is unavailable.
     Creates a random walk from the base price with realistic volatility.
     """
+    global _last_fetch_source, _last_fetch_count
     base_price = _BASE_PRICES.get(ticker, 100.0)
     tf_minutes = _mt5_timeframe(interval) or 60
 
@@ -258,8 +275,11 @@ def _generate_synthetic_data(
         current_time += timedelta(minutes=tf_minutes)
 
     df = pd.DataFrame(records)
-    logger.info(
-        "Generated %d synthetic bars for %r %s [%s to %s]",
+
+    _last_fetch_source = "synthetic"
+    _last_fetch_count = len(df)
+    logger.warning(
+        "Generated %d SYNTHETIC bars for %r %s [%s to %s] — no real data available",
         len(df), ticker, interval, date_from, date_to,
     )
     return df

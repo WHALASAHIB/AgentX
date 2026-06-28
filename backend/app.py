@@ -1280,8 +1280,18 @@ async def test_bot_status():
         except Exception:
             pass
 
+    # Read last_trade_result from structured result file
+    last_trade_result = None
+    result_file = _BOTS_DIR / "logs" / "test_bot_result.json"
+    if result_file.exists():
+        try:
+            with open(result_file, "r", encoding="utf-8") as f:
+                last_trade_result = json.load(f)
+        except Exception:
+            pass
+
     if _test_bot_proc is None:
-        return {"name": "test_bot", "running": False, "pid": None, "last_error": last_error}
+        return {"name": "test_bot", "running": False, "pid": None, "last_error": last_error, "last_trade_result": last_trade_result}
 
     poll = _test_bot_proc.poll()
     running = poll is None
@@ -1291,6 +1301,7 @@ async def test_bot_status():
         "pid": _test_bot_proc.pid if running else None,
         "exit_code": poll if not running else None,
         "last_error": last_error,
+        "last_trade_result": last_trade_result,
     }
 
 
