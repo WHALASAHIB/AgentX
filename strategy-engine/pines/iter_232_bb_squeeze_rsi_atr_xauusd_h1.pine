@@ -1,0 +1,62 @@
+//@version=5
+strategy(title="BB Squeeze RSI ATR XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands
+bb_length = input.int(20, "BB Length", group="Bollinger Bands")
+bb_mult   = input.float(2.0, "BB StdDev", step=0.1, group="Bollinger Bands")       // sweep: 1.5-3.0 step 0.5
+bb_squeeze_lookback = input.int(100, "Squeeze Lookback Bars", group="Bollinger Bands")  // sweep: 50-200 step 50
+bb_squeeze_threshold = input.float(0.5, "Squeeze Threshold (fraction of SMA BW)", step=0.05, group="Bollinger Bands")  // sweep: 0.3-0.7 step 0.1
+
+// RSI
+rsi_length = input.int(14, "RSI Length", group="RSI Filter")                        // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long above)", group="RSI Filter")     // sweep: 40-60 step 5
+
+// ATR-based TP/SL
+atr_length = input.int(14, "ATR Length", group="Exit Management")                   // sweep: 7-21 step 7
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", step=0.1, group="Exit Management")    // sweep: 1.0-3.0 step 0.5
+sl_atr_mult = input.float(1.5, "SL as ATR Multiple", step=0.5, group="Exit Management")  // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+bb_upper = ta.sma(close, bb_length) + bb_mult * ta.stdev(close, bb_length)
+bb_lower = ta.sma(close, bb_length) - bb_mult * ta.stdev(close, bb_length)
+bb_mid   = ta.sma(close, bb_length)
+bb_bw    = (bb_upper - bb_lower) / bb_mid  // Bandwidth
+
+// Squeeze: bandwidth is below threshold fraction of its SMA over lookback
+bb_bw_sma = ta.sma(bb_bw, bb_squeeze_lookback)
+is_squeeze = bb_bw < (bb_bw_sma * bb_squeeze_threshold)
+
+// Track when squeeze just ended (1 bar after squeeze = false)
+var bool was_squeeze = false
+was_squeeze := is_squeeze
+squeeze_breakout = not is_squeeze and was_squeeze[1]
+
+// RSI
+rsi_val = ta.rsi(close, rsi_length)
+rsi_ok_long = rsi_val > rsi_threshold
+
+// ATR
+atr_val = ta.atr(atr_length)
+sl_pips  = int(sl_atr_mult * atr_val / syminfo.mintick)
+tp_pips  = int(tp_sl_ratio * sl_pips)
+
+//--- entry logic
+var bool in_trade = false
+long_signal = squeeze_breakout and close > bb_upper and rsi_ok_long
+short_signal = squeeze_breakout and close < bb_lower and rsi_val < (100 - rsi_threshold)
+
+if long_signal and not in_trade
+    in_trade := true
+    strategy.entry("Long", strategy.long)
+
+if short_signal and not in_trade
+    in_trade := true
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+if strategy.position_size != 0
+    strategy.exit("XL", "Long", loss=sl_pips, profit=tp_pips)
+    strategy.exit("XS", "Short", loss=sl_pips, profit=tp_pips)
+else
+    in_trade := false

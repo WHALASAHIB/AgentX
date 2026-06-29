@@ -1,0 +1,55 @@
+//@version=5
+strategy(title="BTC 30m EMA5/13 + RSI>50 + ADX>25 Long Only", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=20,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(5, "EMA Fast", minval=2, maxval=30, step=1, group="EMA")  // sweep: 3-10 step 1
+emaSlow = input.int(13, "EMA Slow", minval=5, maxval=50, step=1, group="EMA")   // sweep: 10-30 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=28, step=1, group="RSI")     // sweep: 7-21 step 7
+rsiMin = input.int(50, "RSI Minimum (Long)", minval=30, maxval=70, step=5, group="RSI")  // sweep: 40-60 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=7, maxval=28, step=1, group="ADX") // sweep: 7-21 step 7
+adxMin = input.int(25, "ADX Minimum", minval=15, maxval=40, step=5, group="ADX")  // sweep: 15-35 step 5
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length", minval=7, maxval=28, step=1, group="ATR") // sweep: 7-21 step 7
+slMulti = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.25, group="ATR") // sweep: 0.5-2.0 step 0.25
+tpMulti = input.float(1.5, "TP Multiplier (ATR)", minval=0.5, maxval=4.0, step=0.25, group="ATR") // sweep: 1.0-3.0 step 0.25
+
+// Trailing stop
+trailActPct = input.float(1.0, "Trailing Activation (ATR)", minval=0.5, maxval=3.0, step=0.25, group="Trailing") // sweep: 0.5-2.0 step 0.25
+trailOffPct = input.float(0.5, "Trailing Offset (ATR)", minval=0.25, maxval=2.0, step=0.25, group="Trailing") // sweep: 0.25-1.0 step 0.25
+
+//--- indicator calculations
+ema_fast = ta.ema(close, emaFast)
+ema_slow = ta.ema(close, emaSlow)
+rsi_val = ta.rsi(close, rsiLen)
+[di_plus, di_minus, adx] = ta.dmi(high, low, close, adxLen)
+atr_val = ta.atr(atrLen)
+
+//--- entry signals
+// EMA crossover + RSI>50 + ADX>25 (trending market filter)
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsiMin and adx > adxMin
+
+//--- entry logic
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management (via strategy.exit for TP/SL with trailing)
+if strategy.position_size > 0
+    sl_dist = slMulti * atr_val / syminfo.mintick
+    tp_dist = tpMulti * atr_val / syminfo.mintick
+    strategy.exit("XL", "Long",
+         loss=math.round(sl_dist),
+         profit=math.round(tp_dist),
+         trail_price=strategy.position_avg_price + trailActPct * atr_val,
+         trail_offset=math.round(trailOffPct * atr_val / syminfo.mintick))

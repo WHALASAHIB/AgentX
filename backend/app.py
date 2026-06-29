@@ -997,17 +997,32 @@ async def active_account_route(auth=Depends(require_auth)):
 async def switch_account(account_id: str, auth=Depends(require_auth)):
     bridge = get_bridge()
     db = get_db()
+
+    # Step 1: Call bridge's terminal-switch endpoint (kills & restarts MT5
+    # terminal with the target account's credentials). This bypasses the
+    # mt5.login() limitation by fully restarting the terminal process.
+    try:
+        switch_result = await bridge._post(f"/api/v1/accounts/{account_id}/switch-terminal")
+        logger.info("Terminal switched to %s: %s", account_id, switch_result.get("status"))
+    except HTTPException as e:
+        logger.warning("Bridge terminal switch failed for %s: %s", account_id, e.detail)
+        # Fall through — still switch the DB active account
+    except Exception as e:
+        logger.warning("Bridge terminal switch error for %s: %s", account_id, e)
+
+    # Step 2: Update DB active account
+    db.set_active_account(account_id)
+
+    # Step 3: Return the account info
     try:
         info = await bridge.get_account(account_id)
     except HTTPException:
         db_acct = db.get_account(account_id)
         if not db_acct:
             raise HTTPException(status_code=404, detail=f"Account '{account_id}' not found")
-        info = {"login": db_acct["login"], "name": db_acct["name"], "server": db_acct["server"], "connected": False, "stale": True}
-        info["id"] = db_acct["id"]
-        info["enabled"] = db_acct.get("enabled", True)
-        db.set_active_account(account_id)
-        return {"status": "switched", "active_account_id": account_id, "account": info}
+        info = {"login": db_acct["login"], "name": db_acct["name"], "server": db_acct["server"],
+                "connected": False, "stale": True}
+
     try:
         bridge_health = await bridge.health()
         is_connected = (
@@ -1019,11 +1034,12 @@ async def switch_account(account_id: str, auth=Depends(require_auth)):
         info["stale"] = not is_connected
     except Exception:
         pass
+
     db_acct = db.get_account(account_id)
     if db_acct:
         info["id"] = db_acct["id"]
         info["enabled"] = db_acct.get("enabled", True)
-    db.set_active_account(account_id)
+
     return {"status": "switched", "active_account_id": account_id, "account": info}
 
 @app.get("/api/accounts/{account_id}")

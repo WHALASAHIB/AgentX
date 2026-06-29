@@ -114,6 +114,21 @@ class BridgeClient:
                 logger.warning("Bridge connection failed: %s", e)
                 raise HTTPException(status_code=503, detail=f"Bridge unreachable: {e}")
 
+    async def _post(self, path: str, data: dict | None = None) -> Any:
+        """Generic POST request to bridge."""
+        import httpx
+        url = f"{self.base_url}{path}"
+        async with httpx.AsyncClient(timeout=90.0) as client:  # 90s timeout for terminal restart
+            try:
+                resp = await client.post(url, json=data)
+                if resp.status_code == 404:
+                    raise HTTPException(status_code=404, detail=resp.json().get("detail", "Not found"))
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.RequestError as e:
+                logger.warning("Bridge POST failed: %s", e)
+                raise HTTPException(status_code=503, detail=f"Bridge unreachable: {e}")
+
 
 _bridge_client = BridgeClient()
 
