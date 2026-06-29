@@ -1,0 +1,35 @@
+//@version=5
+strategy(title="EMA Cross BTC 30m Reduced Size", overlay=true, initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=20,
+     commission_type=strategy.commission.percent, commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(3, "Fast EMA", minval=1, maxval=50)           // sweep: 1-10 step 1
+ema_slow = input.int(8, "Slow EMA", minval=2, maxval=100)          // sweep: 5-20 step 1
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)         // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=30, maxval=70) // sweep: 40-60 step 5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)         // sweep: 10-20 step 2
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.5
+sl_mult = input.float(1.0, "SL Multiplier (×ATR)", minval=0.3, maxval=3.0, step=0.1) // sweep: 0.5-2.0 step 0.25
+min_bars_hold = input.int(4, "Min Bars Hold", minval=1, maxval=30) // sweep: 2-8 step 1
+
+//--- indicators
+fast_ma = ta.ema(close, ema_fast)
+slow_ma = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA crossover + RSI > threshold (long only)
+buy_signal = ta.crossover(fast_ma, slow_ma) and rsi_val > rsi_threshold
+
+//--- exit logic: ATR-based TP/SL with trailing stop
+if (buy_signal)
+    entry_price = close
+    sl_price = entry_price - atr_val * sl_mult
+    tp_price = entry_price + atr_val * sl_mult * tp_sl_ratio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=int((entry_price - sl_price) / syminfo.mintick),
+         profit=int((tp_price - entry_price) / syminfo.mintick),
+         trail_price=entry_price + atr_val * 1.0,
+         trail_offset=int(atr_val * 0.5 / syminfo.mintick))

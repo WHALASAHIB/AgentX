@@ -1,0 +1,49 @@
+//@version=5
+strategy(title="EMA Cross ADX18 RSI50 Trail XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen    = input.int(5,   "EMA Fast",     minval=1, maxval=50)     // sweep: 3-10 step 1
+emaSlowLen    = input.int(13,  "EMA Slow",     minval=1, maxval=50)     // sweep: 10-26 step 2
+adxLen        = input.int(14,  "ADX Length",   minval=1, maxval=30)     // sweep: 10-25 step 2
+adxThresh     = input.int(18,  "ADX Threshold", minval=1, maxval=40)    // sweep: 14-25 step 2
+rsiLen        = input.int(14,  "RSI Length",   minval=1, maxval=30)     // sweep: 10-20 step 2
+rsiMin        = input.int(50,  "RSI Min (long only)", minval=1, maxval=100) // sweep: 40-60 step 5
+atrLen        = input.int(14,  "ATR Length",   minval=1, maxval=50)     // sweep: 10-20 step 2
+tpMultiplier  = input.float(2.0, "TP Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+slMultiplier  = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-2.0 step 0.5
+trailActivate = input.float(1.0, "Trail Activate (ATR)", minval=0.5, maxval=3.0, step=0.25) // sweep: 1.0-2.0 step 0.5
+trailOffset   = input.float(1.5, "Trail Offset (ATR)", minval=0.5, maxval=3.0, step=0.25) // sweep: 1.0-2.0 step 0.5
+minHoldBars   = input.int(8,   "Min Bars Hold", minval=1, maxval=50)    // sweep: 4-12 step 2
+useTrailStop  = input.bool(true, "Use Trailing Stop")                   // sweep: true/false
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- plot EMAs
+plot(emaFast, "EMA Fast", color.blue, 2)
+plot(emaSlow, "EMA Slow", color.red, 2)
+
+//--- entry conditions
+longCondition = ta.crossover(emaFast, emaSlow) and adx >= adxThresh and rsi > rsiMin
+shortCondition = ta.crossunder(emaFast, emaSlow) and adx >= adxThresh and rsi < (100 - rsiMin)
+
+//--- entry logic — long only (XAUUSD is gold, biased long due to USD debasement trend)
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+longTP = close + (atr * tpMultiplier)
+longSL = close - (atr * slMultiplier)
+
+if strategy.position_size > 0
+    barsSinceEntry = bar_index - strategy.opentrades.entry_bar_index(0)
+    if barsSinceEntry >= minHoldBars
+        if useTrailStop
+            trailSL = close - (atr * trailOffset)
+            strategy.exit("Long Exit", "Long", profit=ta.truncate((longTP - close) / syminfo.mintick), loss=ta.truncate((close - longSL) / syminfo.mintick), trail_offset=ta.truncate(atr * trailOffset / syminfo.mintick))
+        else
+            strategy.exit("Long Exit", "Long", profit=ta.truncate((longTP - close) / syminfo.mintick), loss=ta.truncate((close - longSL) / syminfo.mintick))

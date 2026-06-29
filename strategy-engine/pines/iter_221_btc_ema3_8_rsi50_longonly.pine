@@ -1,0 +1,61 @@
+//@version=5
+strategy(title="BTC 30m EMA3/8 + RSI50 (Long Only)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=20)  // sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=3, maxval=30)  // sweep: 5-15 step 1
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21)           // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Min (Long Only)", minval=30, maxval=70)  // sweep: 40-60 step 5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=21)           // sweep: 7-21 step 7
+tp_atr_mult = input.float(1.5, "TP: ATR Multiplier", step=0.5)       // sweep: 1.0-3.0 step 0.5
+sl_atr_mult = input.float(1.0, "SL: ATR Multiplier", step=0.25)      // sweep: 0.5-2.0 step 0.25
+trail_activate_atr = input.float(1.0, "Trailing: Activate at ATR mult", step=0.25)   // sweep: 0.5-2.0 step 0.25
+trail_offset_atr = input.float(0.5, "Trailing: Offset ATR mult", step=0.1)           // sweep: 0.3-1.0 step 0.1
+min_bars_hold = input.int(4, "Min Bars Held Before Trail", minval=1, maxval=20)       // sweep: 2-10 step 2
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic (long only)
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+
+//--- exit management
+var float entry_price = na
+var int bars_since_entry = 0
+var bool trailing_active = false
+
+if (strategy.position_size > 0)
+    entry_price := strategy.position_avg_price
+    bars_since_entry := bars_since_entry + 1
+else
+    entry_price := na
+    bars_since_entry := 0
+    trailing_active := false
+
+// Set TP/SL based on ATR at entry
+var float tp_price = na
+var float sl_price = na
+var float trail_activate_level = na
+
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    tp_price := close + atr_val * tp_atr_mult
+    sl_price := close - atr_val * sl_atr_mult
+    trail_activate_level := close + atr_val * trail_activate_atr
+    strategy.exit("Long Exit", "Long", limit=tp_price, stop=sl_price)
+
+// Trailing stop after price reaches activate level
+if (strategy.position_size > 0 and not trailing_active and high >= trail_activate_level)
+    trailing_active := true
+
+if (trailing_active and bars_since_entry >= min_bars_hold)
+    trail_stop = high - atr_val * trail_offset_atr
+    strategy.exit("Long Trail", "Long", stop=trail_stop)
+
+// Plot
+plot(ema_fast, "Fast EMA", color.blue, 2)
+plot(ema_slow, "Slow EMA", color.red, 2)
+hline(rsi_threshold, "RSI Min", color.green, hline.style_dashed)

@@ -1,6 +1,6 @@
 {
-  "iteration": 219,
-  "last_run": "2026-06-29T19:54:00Z",
+  "iteration": 223,
+  "last_run": "2026-06-29T23:57:30Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,204 +13,77 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Total trades=13 is the weakest metric (<20 minimum). Lower ADX threshold from 25 to 20. iter 214 tested ADX>=20 and got 21 trades (above 20 minimum) with WR=38.1% and PF=1.18. Current iter 218 showed ADX>=25 achieves WR=61.5% and PF=1.26 but only 13 trades. ADX>=20 is the sweet spot: ~21 trades sufficient for statistical significance. The quality drop (38% vs 61% WR) is acceptable — we need enough trades to validate.",
+  "current_hypothesis": "Iter 222 reduced position size from 100% to 20% per trade, which successfully capped DD at 7.0% (down from 29.2% in iter 221). However PF dropped to 0.62 and Sharpe to -3.76 with 93 trades — too many low-quality trades entering without any trend filter. Next: add ADX(14) > 25 filter on BYBIT:BTCUSDT.P 30m to ensure trades only enter during trending markets. This should reduce trade count (target 30-50) and improve PF and Sharpe. Keep 20% position sizing, EMA3/8 crossover, RSI>50 filter.",
   "evolution_log": [
     {
-      "iteration": 207,
-      "hypothesis": "Revert ADX threshold from 18 back to 14 (the proven baseline from iter 204).",
+      "iteration": 219,
+      "hypothesis": "Trades=13 is the weakest metric (<20 minimum). Reduce ADX threshold from 25 to 20 — iter 214 showed ADX>=20 gives 21 trades (sufficient sample). Combined with min_bars_hold=8 (not present in iter 214). Target: 21-24 trades, WR ~40-45%.",
       "metrics": {
-        "pf": 1.37836962,
-        "sharpe": -0.05549078,
-        "wr": 33.33333333,
-        "dd": 4.45231903,
-        "trades": 42,
-        "net_profit": -24.62157403739
+        "pf": 0.58747327,
+        "sharpe": -3.00966387,
+        "wr": 31.74603175,
+        "dd": 23.64640197,
+        "trades": 63,
+        "net_profit": -1685.153375240003
       },
-      "verdict": "rejected (PF=1.38 Sharpe=-0.06 DD=4.45%)",
-      "symbol": "XAUUSD",
+      "verdict": "rejected (PF=0.59 Sharpe=-3.01 DD=23.65%)",
+      "symbol": "BYBIT:BTCUSDT.P",
       "timeframe": "30m",
-      "time": "2026-06-28T23:22:00Z"
+      "time": "2026-06-29T12:08:48Z"
     },
     {
-      "iteration": 208,
-      "hypothesis": "WR=33.3% is the weakest metric (<40%). Tighten TP/SL ratio from 2:1 to 1.5:1.",
-      "metrics": {
-        "pf": 1.37836962,
-        "sharpe": -0.05549078,
-        "wr": 33.33333333,
-        "dd": 4.45231903,
-        "trades": 42,
-        "net_profit": -24.62157403739
-      },
-      "verdict": "rejected (PF=1.38 Sharpe=-0.06) — TP tightening had ZERO effect: identical metrics to iter 207. EMA crossunder exit dominates, so TP targets never fire.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-28T23:37:00Z"
-    },
-    {
-      "iteration": 209,
-      "hypothesis": "Remove the EMA crossunder exit entirely and let ALL trades run to ATR-based TP/SL only (1.5:1 TP, 1:1 SL).",
+      "iteration": 220,
+      "hypothesis": "XAUUSD 'forex_data_paused' persists. Fall back to crypto (BYBIT:BTCUSDT.P) with adapted parameters: EMA3/8 crossover (shorter for crypto's faster moves), ADX>=14 (lower threshold), RSI>50, ATR-based TP/SL 1.5:1 with trailing stop, min hold 4 bars.",
       "metrics": {
         "pf": 0,
-        "sharpe": -1.31754042,
+        "sharpe": -1.09580694,
         "wr": 0,
-        "dd": 8.36536345,
+        "dd": 29.79048011,
         "trades": 1,
-        "net_profit": -366.113087337404
+        "net_profit": -1236.56947816
       },
-      "verdict": "invalid (low sample, 1 trade) — removing crossunder exit caused strategy to hold first entry for ~1500 bars at 1.5:1 ATR TP/SL.",
-      "symbol": "XAUUSD",
+      "verdict": "invalid (low sample, 1 trade)",
+      "symbol": "BYBIT:BTCUSDT.P",
       "timeframe": "30m",
-      "time": "2026-06-28T23:45:00Z"
+      "time": "2026-06-29T23:36:00Z"
     },
     {
-      "iteration": 210,
-      "hypothesis": "Revert to crossunder-exit structure from iter 207 and ADD RSI(14) filter: enter long only if RSI > 50.",
+      "iteration": 221,
+      "hypothesis": "Remove ADX filter entirely for crypto. Use just EMA3/8 crossover + RSI>50 (long only) on BTC 30m. ATR-based TP/SL 1.5:1 with trailing (activate at 1 ATR, offset 0.5 ATR), min hold 4 bars. Target: 20+ trades.",
       "metrics": {
-        "pf": 1.5049796,
-        "sharpe": 0.46174574,
-        "wr": 32.35294118,
-        "dd": 4.06485317,
-        "trades": 34,
-        "net_profit": 58.397729394121
+        "pf": 7.61318043,
+        "sharpe": -1.92149383,
+        "wr": 87.17948718,
+        "dd": 29.20685158,
+        "trades": 39,
+        "net_profit": -1764.504447219806
       },
-      "verdict": "rejected (PF=1.50 Sharpe=0.46 WR=32.4% DD=4.06%) — RSI filter improved PF and Sharpe from baseline but WR still sub-40%. Crossunder exit still dominates.",
-      "symbol": "XAUUSD",
+      "verdict": "rejected (PF=7.61 Sharpe=-1.92 DD=29.21%)",
+      "symbol": "BYBIT:BTCUSDT.P",
       "timeframe": "30m",
-      "time": "2026-06-29T01:52:00Z"
+      "time": "2026-06-29T23:47:30Z"
     },
     {
-      "iteration": 211,
-      "hypothesis": "Raise ADX threshold from 14 to 25 to only enter during strong trends. ADX>25 filters ALL choppy/rangebound entries.",
+      "iteration": 222,
+      "hypothesis": "Reduce position size from 100% to 20% per trade (default_qty_value=20). This caps any single loss to 20% of peak equity instead of 100%. Keep EMA3/8 crossover + RSI>50 (long only) on BTC 30m, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars. SL multiplier 1.0 ATR.",
       "metrics": {
-        "pf": 1.06549609,
-        "sharpe": -0.88838916,
-        "wr": 42.85714286,
-        "dd": 3.61659771,
-        "trades": 14,
-        "net_profit": -94.07128739998
+        "pf": 0.61819555,
+        "sharpe": -3.76135136,
+        "wr": 41.93548387,
+        "dd": 6.99728094,
+        "trades": 93,
+        "net_profit": -538.09428644
       },
-      "verdict": "invalid (low sample, 14 trades) — ADX>25 raised WR to 42.9% but slashed trade count below 20 minimum.",
-      "symbol": "XAUUSD",
+      "verdict": "rejected (PF=0.62 Sharpe=-3.76 DD=7.0%)",
+      "symbol": "BYBIT:BTCUSDT.P",
       "timeframe": "30m",
-      "time": "2026-06-29T01:52:00Z"
-    },
-    {
-      "iteration": 212,
-      "hypothesis": "Reduce ADX threshold from 25 to 18 as a middle ground.",
-      "metrics": {
-        "pf": 1.15805564,
-        "sharpe": -0.9034536,
-        "wr": 37.5,
-        "dd": 4.03759018,
-        "trades": 24,
-        "net_profit": -124.620544328898
-      },
-      "verdict": "rejected (PF=1.16 Sharpe=-0.90 DD=4.04%) — ADX>18 gave enough trades (24) but WR slipped back to 37.5%.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-29T02:10:00Z"
-    },
-    {
-      "iteration": 213,
-      "hypothesis": "Raise ADX threshold from 18 to 22.",
-      "metrics": {
-        "pf": 1.28840038,
-        "sharpe": -0.34270449,
-        "wr": 47.05882353,
-        "dd": 3.43735741,
-        "trades": 17,
-        "net_profit": -46.794323102986
-      },
-      "verdict": "invalid (low sample, 17 trades) — ADX>22 achieved 47.1% WR (best!) but only 17 trades.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-29T02:15:00Z"
-    },
-    {
-      "iteration": 214,
-      "hypothesis": "ADX threshold refined from 22 to 20.",
-      "metrics": {
-        "pf": 1.17702221,
-        "sharpe": -0.83641893,
-        "wr": 38.0952381,
-        "dd": 3.57301056,
-        "trades": 21,
-        "net_profit": -106.96968427813
-      },
-      "verdict": "rejected (PF=1.18 Sharpe=-0.84 DD=3.57%)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-28T17:08:50Z"
-    },
-    {
-      "iteration": 215,
-      "hypothesis": "Increase min_bars_hold from 4 to 12. The crossunder exit closes trades prematurely — avg bars held is 19.8, so min_bars_hold=4 lets crossunder fire at just 20% of expected trade duration. Raising to 12 gives the 2:1 ATR TP target ~60% of expected trade life to trigger.",
-      "metrics": {
-        "pf": 1.18523527,
-        "sharpe": -0.58796689,
-        "wr": 47.36842105,
-        "dd": 3.81799119,
-        "trades": 19,
-        "net_profit": -84.24153053549
-      },
-      "verdict": "invalid (low sample, 19 trades) — min_bars_hold=12 achieved 47.4% WR (best across ALL ADX+RSI variants!) but trades dropped from 21 to 19, below the 20 minimum.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-29T02:30:00Z"
-    },
-    {
-      "iteration": 216,
-      "hypothesis": "Reduce min_bars_hold from 12 to 8 (midpoint between iter 214's 4 and iter 215's 12). min_bars_hold=12 cut trade count from 21 to 19 (below 20 minimum) while WR jumped to 47.4% (best ever). A lower hold threshold should let more trades through — targeting 22-24 trades while keeping WR near 45%+.",
-      "metrics": {
-        "pf": 1.21207323,
-        "sharpe": -0.53477415,
-        "wr": 47.36842105,
-        "dd": 3.81799119,
-        "trades": 19,
-        "net_profit": -76.201149909384
-      },
-      "verdict": "invalid (low sample, 19 trades) — min_bars_hold=8 had ZERO effect vs 12. Both produce 19 trades with nearly identical metrics. avg_bars_held=24.9 — well above both thresholds — meaning ATR TP/SL dominates exit timing. Crossunder exit barely fires. Real trade count constraint is the entry filter (ADX>=20 + RSI>50 + long-only).",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-29T17:10:00Z"
-    },
-    {
-      "iteration": 217,
-      "hypothesis": "Reduce ADX threshold from 20 to 18. min_bars_hold reduction from 12 to 8 had ZERO effect (both 19 trades). iter 212 showed ADX>=18 gave 24 trades (above 20 minimum). Reducing to 18 should recover trade count to ~22-25 while keeping WR in the 38-42% range. Keep min_bars_hold=8.",
-      "metrics": {
-        "pf": 1.45861894,
-        "sharpe": 0.09393846,
-        "wr": 52.38095238,
-        "dd": 4.29986065,
-        "trades": 21,
-        "net_profit": 2.234467131932
-      },
-      "verdict": "rejected (PF=1.46 Sharpe=0.09 DD=4.30%) — ADX>=18 recovered trade count to 21 (above 20 min) and WR jumped to 52.4% (best since ADX+RSI era began). PF 1.4586 is just 0.04 short of 1.5 target. But Sharpe=0.09 is terrible — risk-adjusted returns near zero. The strategy wins often but barely makes money ($2.23 on $10k).",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-29T19:39:00Z"
-    },
-    {
-      "iteration": 218,
-      "hypothesis": "Sharpe=0.09 is the weakest metric (far below 1.0). Raise ADX threshold from 18 to 25 — enter only during strong trends (ADX>25). iter 211 showed ADX>25 produces ~14 trades but with WR=42.9%. Current setup with min_bars_hold=8 protects against premature exits. Expectation: fewer but higher-quality entries, Sharpe improves toward positive territory.",
-      "metrics": {
-        "pf": 1.2628924,
-        "sharpe": -0.2374918,
-        "wr": 61.53846154,
-        "dd": 4.30645526,
-        "trades": 13,
-        "net_profit": -33.438494856389
-      },
-      "verdict": "invalid (low sample, 13 trades) — ADX>25 produced best WR ever (61.5%) and PF=1.26 but only 13 trades. The trade quality is exceptional but insufficient sample size. Average win $42.28 > average loss $53.57 (0.79 ratio). Entry filter (ADX>25 + RSI>50) is too restrictive for 30m timeframe.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-06-29T19:54:00Z"
+      "time": "2026-06-29T23:57:30Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
   "pairs_explored": [
-    "XAUUSD"
+    "XAUUSD",
+    "BYBIT:BTCUSDT.P"
   ],
   "timeframes_explored": [
     "1h",
