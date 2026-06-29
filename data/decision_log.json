@@ -866,5 +866,29 @@
     "metadata": {
       "source": "bot_controller"
     }
+  },
+  {
+    "id": "dec_1782666105128_00ab",
+    "timestamp": "2026-06-28T17:01:45.128805+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger Audusd",
+    "action": "Bot Stopped",
+    "detail": "Bot 'Bollinger_AUDUSD' stopped (PID 14592)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
+  },
+  {
+    "id": "dec_1782666106521_6e79",
+    "timestamp": "2026-06-28T17:01:46.521193+00:00",
+    "agent_id": "Bollinger_AUDUSD",
+    "agent_name": "Bollinger Audusd",
+    "action": "Bot Started",
+    "detail": "Bot 'Bollinger_AUDUSD' started (PID 12324)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
   }
 ]
