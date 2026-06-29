@@ -1,0 +1,88 @@
+//@version=5
+strategy(title="EMA5_13_RSI60_40_Bidirectional BTC 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=1, maxval=50)        // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=1, maxval=50)       // sweep: 8-26 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)                 // sweep: 7-21 step 2
+rsi_bull_threshold = input.int(60, "RSI Bullish Min", minval=30, maxval=80) // sweep: 50-70 step 5
+rsi_bear_threshold = input.int(40, "RSI Bearish Max", minval=20, maxval=70) // sweep: 30-50 step 5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                // sweep: 7-21 step 2
+tp_sl_ratio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0)    // sweep: 1.0-3.0 step 0.5
+sl_atr_mult = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=5.0) // sweep: 0.5-2.0 step 0.25
+trailing_activate = input.bool(true, "Enable Trailing Stop")              // sweep: true/false
+trail_offset_atr = input.float(0.5, "Trail Offset (ATR)", minval=0.1, maxval=3.0) // sweep: 0.3-1.0 step 0.1
+min_hold_bars = input.int(4, "Min Hold Bars", minval=1, maxval=20)       // sweep: 2-8 step 1
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+var int bars_since_entry = 0
+var float entry_price = na
+var bool in_long = false
+var bool in_short = false
+
+// Track position state
+if strategy.position_size > 0
+    in_long := true
+    in_short := false
+    bars_since_entry := bars_since_entry + 1
+    if na(entry_price)
+        entry_price := strategy.position_avg_price
+else if strategy.position_size < 0
+    in_long := false
+    in_short := true
+    bars_since_entry := bars_since_entry + 1
+    if na(entry_price)
+        entry_price := strategy.position_avg_price
+else
+    in_long := false
+    in_short := false
+    bars_since_entry := 0
+    entry_price := na
+
+// Crossover conditions
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+bearish_cross = ta.crossunder(ema_fast, ema_slow)
+
+// Long entry: EMA fast crosses above slow, RSI > bull threshold
+long_condition = bullish_cross and rsi_val > rsi_bull_threshold and strategy.position_size <= 0
+
+// Short entry: EMA fast crosses below slow, RSI < bear threshold
+short_condition = bearish_cross and rsi_val < rsi_bear_threshold and strategy.position_size >= 0
+
+//--- entry
+if long_condition
+    strategy.entry("Long", strategy.long)
+    entry_price := close
+    bars_since_entry := 0
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+    entry_price := close
+    bars_since_entry := 0
+
+//--- exit management
+if strategy.position_size > 0 and not na(entry_price)
+    // Fixed TP/SL
+    sl_price = entry_price - (atr_val * sl_atr_mult)
+    tp_price = entry_price + (atr_val * sl_atr_mult * tp_sl_ratio)
+    
+    if trailing_activate and bars_since_entry >= min_hold_bars
+        // Trailing stop only activates after min hold
+        strategy.exit("XL", "Long", stop=sl_price, limit=tp_price, trail_offset=atr_val * trail_offset_atr)
+    else
+        strategy.exit("XL", "Long", stop=sl_price, limit=tp_price)
+
+if strategy.position_size < 0 and not na(entry_price)
+    sl_price = entry_price + (atr_val * sl_atr_mult)
+    tp_price = entry_price - (atr_val * sl_atr_mult * tp_sl_ratio)
+    
+    if trailing_activate and bars_since_entry >= min_hold_bars
+        strategy.exit("XS", "Short", stop=sl_price, limit=tp_price, trail_offset=atr_val * trail_offset_atr)
+    else
+        strategy.exit("XS", "Short", stop=sl_price, limit=tp_price)

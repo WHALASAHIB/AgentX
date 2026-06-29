@@ -1,0 +1,71 @@
+//@version=5
+strategy(title="EMA5/13 Bidirectional RSI BTC 30m", overlay=true, initial_capital=10000, 
+     default_qty_type=strategy.percent_of_equity, default_qty_value=20, 
+     commission_type=strategy.commission.percent, commission_value=0.04, 
+     process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "EMA Fast Length", minval=2, maxval=30, step=1)        // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "EMA Slow Length", minval=5, maxval=50, step=1)       // sweep: 10-20 step 1
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=1)                 // sweep: 7-21 step 7
+rsi_upper = input.int(50, "RSI Upper (long)", minval=30, maxval=70, step=5)        // sweep: 40-60 step 5
+rsi_lower = input.int(50, "RSI Lower (short)", minval=30, maxval=70, step=5)       // sweep: 40-60 step 5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=21, step=1)                 // sweep: 7-21 step 7
+tp_sl_ratio = input.float(1.5, "TP/SL Ratio", minval=1.0, maxval=3.0, step=0.1)   // sweep: 1.0-2.5 step 0.25
+atr_mult_sl = input.float(1.0, "ATR Multiplier for SL", minval=0.5, maxval=3.0, step=0.1) // sweep: 0.5-2.0 step 0.25
+trailing_offset = input.float(0.5, "Trailing Stop ATR Offset", minval=0.1, maxval=2.0, step=0.1) // sweep: 0.3-1.0 step 0.1
+min_bars_hold = input.int(4, "Min Bars Hold", minval=1, maxval=20, step=1)         // sweep: 2-8 step 1
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry conditions
+// Long: EMA5 > EMA13 (uptrend) + RSI > upper (momentum up)
+long_condition = ema_fast > ema_slow and rsi_val > rsi_upper
+
+// Short: EMA5 < EMA13 (downtrend) + RSI < lower (momentum down)
+short_condition = ema_fast < ema_slow and rsi_val < rsi_lower
+
+//--- position management
+var int bars_since_entry = 0
+var int entry_bar_index = 0
+
+// Track bars since entry
+if (strategy.position_size != 0)
+    bars_since_entry := bar_index - entry_bar_index
+else
+    bars_since_entry := 0
+
+//--- entry logic
+if (strategy.position_size == 0)
+    if (long_condition)
+        strategy.entry("Long", strategy.long)
+        entry_bar_index := bar_index
+        
+    if (short_condition)
+        strategy.entry("Short", strategy.short)
+        entry_bar_index := bar_index
+
+//--- exit management
+if (strategy.position_size > 0 and bars_since_entry >= min_bars_hold)
+    sl_price = close - (atr_val * atr_mult_sl)
+    tp_price = close + (atr_val * atr_mult_sl * tp_sl_ratio)
+    
+    strategy.exit("XL", "Long", 
+         loss=int((close - sl_price) / syminfo.mintick),
+         profit=int((tp_price - close) / syminfo.mintick),
+         trail_price=close - (atr_val * atr_mult_sl),
+         trail_offset=int((atr_val * trailing_offset) / syminfo.mintick))
+
+if (strategy.position_size < 0 and bars_since_entry >= min_bars_hold)
+    sl_price = close + (atr_val * atr_mult_sl)
+    tp_price = close - (atr_val * atr_mult_sl * tp_sl_ratio)
+    
+    strategy.exit("XS", "Short",
+         loss=int((sl_price - close) / syminfo.mintick),
+         profit=int((close - tp_price) / syminfo.mintick),
+         trail_price=close + (atr_val * atr_mult_sl),
+         trail_offset=int((atr_val * trailing_offset) / syminfo.mintick))

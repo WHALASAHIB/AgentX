@@ -1,6 +1,6 @@
 {
-  "iteration": 227,
-  "last_run": "2026-06-29T14:55:00Z",
+  "iteration": 231,
+  "last_run": "2026-06-29T22:58:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,11 +13,11 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Iter 226 lowered ADX threshold from 25 to 18 on BYBIT:BTCUSDT.P 30m — got 365 trades but PF=0.58 (terrible). The PF < 1.5 is the weakest metric. ADX>18 let through too many weak signals (365 trades over ~3 months). Next: add SHORT entries (short when EMA5<EMA13 and RSI<50 and ADX>18) to make the strategy bidirectional — this should improve net profit by capturing both directional moves. Keep EMA5/13, 20% position sizing, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars. Target: 50-100 trades, PF>1.0.",
+  "current_hypothesis": "Iter 230 lowered RSI from 60 to 50 on BYBIT:BTCUSDT.P 30m — got 148 trades (more sample) but PF dropped to 0.42, Sharpe to -10.86. PF=0.42 is the critical weakness. Per rules: PF<1.5->add RSI filter already present (RSI>50). Next weakest rule: Sharpe=-10.86 < 1.0 -> add ADX(14) filter (enter only if ADX>25) to restrict trades to trending markets. This should cut choppy-market losing trades and improve both Sharpe and PF. Keep: EMA5/13 crossover, RSI>50, long-only, ATR-based TP/SL 1.5:1 with trailing, 20% position sizing.",
   "evolution_log": [
     {
       "iteration": 219,
-      "hypothesis": "Trades=13 is the weakest metric (<20 minimum). Reduce ADX threshold from 25 to 20 — iter 214 showed ADX>=20 gives 21 trades (sufficient sample). Combined with min_bars_hold=8 (not present in iter 214). Target: 21-24 trades, WR ~40-45%.",
+      "hypothesis": "Trades=13 is the weakest metric (<20 minimum). Reduce ADX threshold from 25 to 20.",
       "metrics": {
         "pf": 0.58747327,
         "sharpe": -3.00966387,
@@ -33,7 +33,7 @@
     },
     {
       "iteration": 220,
-      "hypothesis": "XAUUSD 'forex_data_paused' persists. Fall back to crypto (BYBIT:BTCUSDT.P) with adapted parameters: EMA3/8 crossover (shorter for crypto's faster moves), ADX>=14 (lower threshold), RSI>50, ATR-based TP/SL 1.5:1 with trailing stop, min hold 4 bars.",
+      "hypothesis": "XAUUSD 'forex_data_paused' persists. Fall back to crypto (BYBIT:BTCUSDT.P) with adapted parameters: EMA3/8 crossover.",
       "metrics": {
         "pf": 0,
         "sharpe": -1.09580694,
@@ -49,7 +49,7 @@
     },
     {
       "iteration": 221,
-      "hypothesis": "Remove ADX filter entirely for crypto. Use just EMA3/8 crossover + RSI>50 (long only) on BTC 30m. ATR-based TP/SL 1.5:1 with trailing (activate at 1 ATR, offset 0.5 ATR), min hold 4 bars. Target: 20+ trades.",
+      "hypothesis": "Remove ADX filter entirely for crypto. Use just EMA3/8 crossover + RSI>50.",
       "metrics": {
         "pf": 7.61318043,
         "sharpe": -1.92149383,
@@ -65,7 +65,7 @@
     },
     {
       "iteration": 222,
-      "hypothesis": "Reduce position size from 100% to 20% per trade (default_qty_value=20). This caps any single loss to 20% of peak equity instead of 100%. Keep EMA3/8 crossover + RSI>50 (long only) on BTC 30m, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars. SL multiplier 1.0 ATR.",
+      "hypothesis": "Reduce position size from 100% to 20% per trade.",
       "metrics": {
         "pf": 0.61819555,
         "sharpe": -3.76135136,
@@ -81,7 +81,7 @@
     },
     {
       "iteration": 223,
-      "hypothesis": "Add SMA50 trend filter (price > SMA50) on BYBIT:BTCUSDT.P 30m to reduce trade count from 93 (iter 222) to 30-50. Keep 20% position sizing, EMA3/8 crossover, RSI>50 filter, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars.",
+      "hypothesis": "Add SMA50 trend filter (price > SMA50).",
       "metrics": {
         "pf": 0,
         "sharpe": -1.21415623,
@@ -97,7 +97,7 @@
     },
     {
       "iteration": 224,
-      "hypothesis": "Remove SMA50 trend filter and widen EMA crossover to EMA5/13 (from EMA3/8). EMA3/8 (iter 222) produced 93 trades which was too many — widened crossover should reduce frequency. Target: 30-50 trades. Keep RSI>50, 20% position sizing, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars.",
+      "hypothesis": "Remove SMA50 filter, widen EMA crossover to EMA5/13.",
       "metrics": {
         "pf": null,
         "sharpe": -1.64559526,
@@ -113,7 +113,7 @@
     },
     {
       "iteration": 225,
-      "hypothesis": "Add ADX(14)>25 filter to EMA5/13 crossover + RSI>50 (long only) on BYBIT:BTCUSDT.P 30m. Iter 224 had negative Sharpe (-1.65) — ADX filter ensures only trending entries, which should improve Sharpe by removing trades in choppy markets. Keep 20% position sizing, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars.",
+      "hypothesis": "Add ADX(14)>25 filter to EMA5/13 crossover + RSI>50.",
       "metrics": {
         "pf": 0,
         "sharpe": null,
@@ -129,7 +129,7 @@
     },
     {
       "iteration": 226,
-      "hypothesis": "Lower ADX threshold from 25 to 18 on BYBIT:BTCUSDT.P 30m. Keep EMA5/13 crossover, RSI>50 (long only), 20% position sizing, ATR-based TP/SL 1.5:1 with trailing stop, min hold 4 bars. Target: 20-40 trades.",
+      "hypothesis": "Lower ADX threshold from 25 to 18.",
       "metrics": {
         "pf": 0.58251277,
         "sharpe": -12.33110177,
@@ -142,6 +142,70 @@
       "symbol": "BYBIT:BTCUSDT.P",
       "timeframe": "30m",
       "time": "2026-06-29T14:55:00Z"
+    },
+    {
+      "iteration": 227,
+      "hypothesis": "Add SHORT entries (bidirectional EMA5/13 + RSI>50/RSI<50).",
+      "metrics": {
+        "pf": 0.694564,
+        "sharpe": -13.91383801,
+        "wr": 31.9803198,
+        "dd": 22.4736552,
+        "trades": 813,
+        "net_profit": -2231.45592136
+      },
+      "verdict": "rejected (PF=0.69 Sharpe=-13.91 DD=22.47%)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T15:10:00Z"
+    },
+    {
+      "iteration": 228,
+      "hypothesis": "Tighten RSI to >60 for longs and <40 for shorts.",
+      "metrics": {
+        "pf": 0.85794891,
+        "sharpe": -2.30904226,
+        "wr": 35.13513514,
+        "dd": 1.42470052,
+        "trades": 37,
+        "net_profit": -86.581489505712
+      },
+      "verdict": "rejected (PF=0.86 Sharpe=-2.31 DD=1.42%)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T15:36:00Z"
+    },
+    {
+      "iteration": 229,
+      "hypothesis": "Remove SHORT entries entirely (long-only). Keep EMA5/13, RSI>60.",
+      "metrics": {
+        "pf": 0.76032252,
+        "sharpe": -2.53570736,
+        "wr": 33.33333333,
+        "dd": 0.63825568,
+        "trades": 21,
+        "net_profit": -54.82534668
+      },
+      "verdict": "rejected (PF=0.76 Sharpe=-2.54 DD=0.64%)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T16:00:00Z"
+    },
+    {
+      "iteration": 230,
+      "hypothesis": "Lower RSI threshold from 60 to 50 on BYBIT:BTCUSDT.P 30m. PF is weakest metric at 0.76. Per rules: PF<1.5 -> add RSI(14) filter (long if RSI>50). Already had RSI>60, lowering to 50 increases trade count (148 vs 21) but catches earlier entries. Keep: EMA5/13 crossover, long-only, ATR-based TP/SL 1.5:1 with trailing, 20% position sizing, no min hold.",
+      "metrics": {
+        "pf": 0.42156478,
+        "sharpe": -10.85714546,
+        "wr": 34.45945946,
+        "dd": 6.55737021,
+        "trades": 148,
+        "net_profit": -635.491025759997
+      },
+      "verdict": "rejected (PF=0.42 Sharpe=-10.86 DD=6.56%)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T22:58:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
