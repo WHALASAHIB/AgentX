@@ -941,7 +941,7 @@ async def list_accounts(auth=Depends(require_auth)):
                 "last_error": "Not configured in bridge",
                 "enabled": a.get("enabled", True),
             }
-    # Enrich with balance/equity from bridge account details
+    # Enrich with balance/equity and trade_allowed from bridge account details
     for acct in merged.values():
         if acct.get("connected"):
             try:
@@ -950,6 +950,7 @@ async def list_accounts(auth=Depends(require_auth)):
                     acct["balance"] = float(info.get("balance", 0) or 0)
                     acct["equity"] = float(info.get("equity", 0) or 0)
                     acct["profit"] = float(info.get("profit", 0) or 0)
+                    acct["trade_allowed"] = info.get("trade_allowed", None)
             except Exception as exc:
                 logger.warning("Failed to fetch account detail for %s: %s", acct["id"], exc)
     return list(merged.values())
@@ -2989,45 +2990,77 @@ async def sse_events():
 
 # ── Prices Endpoint ───────────────────────────────────────────────────────────
 
-def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
+async def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
     """Fetch daily OHLC open prices for the given symbols.
 
-    Uses a subprocess with timeout to avoid GIL blocking from MT5's
-    C extension (which hangs on weekends when demo servers are offline).
+    Uses the bridge's historical data endpoint to get today's D1 bar,
+    then extracts the 'open' price. This is the proper way to get
+    daily open prices — unlike deriving them from trade entry prices.
 
-    Returns a dict mapping symbol -> today's open price (or 0 if unavailable).
-    """
+    Returns a dict mapping symbol -> today's open price (or None)."""
     daily_open: dict[str, float] = {}
     if not symbols:
         return daily_open
 
-    import subprocess
-    from pathlib import Path
-
-    # Ask the bridge via HTTP instead of calling MT5 directly
     bridge = get_bridge()
+
+    # Resolve which account to use for price data
+    account_id = "ftmo-demo"
     try:
-        # Use bridge to get daily OHLC — or skip on weekends
-        import asyncio
-        loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(loop)
-            bridge_accts = loop.run_until_complete(bridge.list_accounts())
-            if bridge_accts:
-                account_id = bridge_accts[0].get("id", "ftmo-demo")
-                # Get history which includes open prices
-                trades = loop.run_until_complete(bridge.get_trades(account_id, days=1))
-                for t in trades:
-                    sym = t.get("symbol", "")
-                    if sym and sym not in daily_open:
-                        price = t.get("entry_price") or t.get("exit_price")
-                        if price:
-                            daily_open[sym] = float(price)
-        finally:
-            loop.close()
+        bridge_accts = await bridge.list_accounts()
+        if bridge_accts:
+            account_id = bridge_accts[0].get("id", "ftmo-demo")
     except Exception:
         pass
 
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    async def fetch_one(symbol: str) -> None:
+        """Fetch today's D1 bar open price for one symbol."""
+        try:
+            # Use the bridge's history endpoint with timeframe=1d
+            # The bridge's `fetch_history` returns OHLC bars
+            # We request just today's bar
+            bars = await bridge.get(
+                f"/api/v1/history/{account_id}/{symbol}",
+                params={
+                    "date_from": today_str,
+                    "date_to": today_str,
+                    "timeframe": "1d",
+                }
+            )
+            if bars and isinstance(bars, list) and len(bars) > 0:
+                bar = bars[0]  # Today's D1 bar (or closest)
+                open_price = float(bar.get("open", 0))
+                if open_price > 0:
+                    daily_open[symbol] = open_price
+                    logger.debug("Daily open for %s: %s", symbol, open_price)
+                    return
+
+            # Fallback: try last 7 days for the most recent D1 bar
+            seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+            bars = await bridge.get(
+                f"/api/v1/history/{account_id}/{symbol}",
+                params={
+                    "date_from": seven_days_ago,
+                    "date_to": today_str,
+                    "timeframe": "1d",
+                }
+            )
+            if bars and isinstance(bars, list) and len(bars) > 0:
+                bar = bars[-1]  # Most recent bar
+                open_price = float(bar.get("open", 0))
+                if open_price > 0:
+                    daily_open[symbol] = open_price
+                    logger.debug("Daily open for %s (fallback 7d): %s from bar %s",
+                                 symbol, open_price, bar.get("time", "?"))
+
+        except HTTPException as e:
+            logger.debug("Bridge history unavailable for %s: %s", symbol, e.detail if hasattr(e, 'detail') else e)
+        except Exception as e:
+            logger.debug("Failed to fetch daily open for %s: %s", symbol, e)
+
+    await asyncio.gather(*(fetch_one(sym) for sym in symbols))
     return daily_open
 
 
@@ -3065,7 +3098,7 @@ async def get_prices():
         pass
 
     # Fetch daily OHLC open prices for all symbols
-    daily_opens = _fetch_daily_opens(symbols)
+    daily_opens = await _fetch_daily_opens(symbols)
 
     # Pre-fetch history to build a fallback price lookup per symbol
     last_trade_price: dict[str, float] = {}

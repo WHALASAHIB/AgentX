@@ -58,10 +58,53 @@
     @keyframes spin{to{transform:rotate(360deg);}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
     .fade-in{animation:fadeIn 0.3s ease;}
+
+    /* Account management buttons */
+    .header-actions{display:flex;gap:10px;align-items:center;margin-left:auto;}
+    .header-actions button{display:flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+    .btn-add{background:var(--accent);color:#050508;}
+    .btn-add:hover{background:var(--accent-hover);}
+    .btn-refresh{background:var(--card);color:var(--text);border:1px solid var(--border) !important;}
+    .btn-refresh:hover{background:var(--border);}
+    .btn-delete{background:transparent;border:1px solid rgba(239,68,68,0.3);color:var(--danger);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;margin-top:8px;width:100%;}
+    .btn-delete:hover{background:rgba(239,68,68,0.12);border-color:var(--danger);}
+    .btn-cancel{background:var(--card);color:var(--text);border:1px solid var(--border);padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+    .btn-cancel:hover{background:var(--border);}
+    .btn-submit{background:var(--accent);color:#050508;border:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+    .btn-submit:hover{opacity:0.9;}
+    .btn-submit:disabled{opacity:0.4;cursor:not-allowed;}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;}
+    .modal-overlay.show{display:flex;}
+    .modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+    .modal h2{font-size:20px;font-weight:700;margin-bottom:4px;}
+    .modal .modal-sub{font-size:13px;color:var(--text-sec);margin-bottom:20px;}
+    .modal .form-group{margin-bottom:16px;}
+    .modal .form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;}
+    .modal .form-group input,.modal .form-group select{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
+    .modal .form-group input:focus,.modal .form-group select:focus{border-color:var(--accent);}
+    .modal .form-group input::placeholder{color:var(--text-sec);opacity:0.6;}
+    .modal .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
+    .modal .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-sec);font-size:20px;cursor:pointer;}
+
+    /* Status badges */
+    .status-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-left:6px;vertical-align:middle;}
+    .status-badge.allowed{background:rgba(34,197,94,0.15);color:var(--success);}
+    .status-badge.disallowed{background:rgba(239,68,68,0.15);color:var(--danger);}
+    .status-badge.connected{background:rgba(34,197,94,0.15);color:var(--success);}
+    .status-badge.stale{background:rgba(245,158,11,0.15);color:var(--warning);}
+    .status-badge.error{background:rgba(239,68,68,0.15);color:var(--danger);}
+
+    /* Confirmation dialog */
+    .confirm-text{font-size:14px;color:var(--text);margin-bottom:8px;line-height:1.5;}
+    .confirm-acct-name{font-weight:700;color:var(--accent);}
+
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.overlay.show{display:block;}
       .main-content{margin-left:0;padding:16px;}.hamburger{display:block;}
       .accounts-grid{grid-template-columns:1fr;}
+      .modal{padding:24px;margin:16px;}.header-actions{flex-wrap:wrap;}
     }
   </style>
 </head>
@@ -93,12 +136,55 @@
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <h1>Current Account</h1>
       </div>
+      <div class="header-actions">
+        <button class="btn-refresh" onclick="refreshAccounts()" title="Refresh account list">🔄 Refresh</button>
+        <button class="btn-add" onclick="showAddAccountModal()">＋ Add Account</button>
+      </div>
     </div>
 
     <div class="accounts-grid" id="accountsGrid"><div class="loading">Loading accounts...</div></div>
     <div class="card positions-section" id="positionsSection" style="display:none;">
       <h3 class="section-title">📊 Open Positions</h3>
       <table><thead><tr><th>Symbol</th><th>Type</th><th>Volume</th><th>Entry</th><th>Current</th><th>P&L</th></tr></thead><tbody id="positionsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody></table>
+    </div>
+
+    <!-- Add Account Modal -->
+    <div class="modal-overlay" id="addAccountModal">
+      <div class="modal" style="position:relative;">
+        <button class="modal-close" onclick="closeAddAccountModal()">✕</button>
+        <h2>➕ Add MT5 Account</h2>
+        <p class="modal-sub">Enter the account details to connect a new MetaTrader 5 account.</p>
+        <form id="addAccountForm" onsubmit="submitAddAccount(event)">
+          <div class="form-group">
+            <label for="acct_id">Account ID</label>
+            <input type="text" id="acct_id" placeholder="ftmo-prod" required>
+          </div>
+          <div class="form-group">
+            <label for="acct_name">Name</label>
+            <input type="text" id="acct_name" placeholder="FTMO Live Account" required>
+          </div>
+          <div class="form-group">
+            <label for="acct_login">Login</label>
+            <input type="text" id="acct_login" placeholder="12345678" required>
+          </div>
+          <div class="form-group">
+            <label for="acct_password">Password</label>
+            <input type="password" id="acct_password" placeholder="Account password" required>
+          </div>
+          <div class="form-group">
+            <label for="acct_server">Server</label>
+            <input type="text" id="acct_server" placeholder="FTMO-Demo" required>
+          </div>
+          <div class="form-group">
+            <label for="acct_terminal">Terminal Path</label>
+            <input type="text" id="acct_terminal" placeholder="C:/Program Files/MetaTrader 5/terminal64.exe">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeAddAccountModal()">Cancel</button>
+            <button type="submit" class="btn-submit" id="submitAddBtn">Add Account</button>
+          </div>
+        </form>
+      </div>
     </div>
   </main>
 
@@ -153,12 +239,37 @@
         const equity = acct.equity || s.equity || 0;
         const netPnl = s.net_profit || s.total_pnl || acct.profit || 0;
         const winRate = s.win_rate || 0;
+
+        // Trade allowed badge
+        const tradeAllowed = acct.trade_allowed;
+        let tradeBadge = '';
+        if (tradeAllowed === true) {
+          tradeBadge = '<span class="status-badge allowed">TRADING</span>';
+        } else if (tradeAllowed === false) {
+          tradeBadge = '<span class="status-badge disallowed">NO TRADE</span>';
+        }
+
+        // Connection status
+        let connBadge = '';
+        const connected = acct.connected;
+        const lastError = acct.last_error;
+        if (connected === true) {
+          connBadge = '<span class="status-badge connected">● CONNECTED</span>';
+        } else if (lastError) {
+          connBadge = '<span class="status-badge error">⚠ ERROR</span>';
+        } else if (connected === false) {
+          connBadge = '<span class="status-badge stale">○ STALE</span>';
+        }
+
+        // Determine if there's an error to show
+        const errorHtml = lastError ? `<div style="margin-top:8px;font-size:12px;color:var(--danger);">${lastError}</div>` : '';
+
         return `
           <div class="account-card ${isActive?'active':''} fade-in">
             <div class="acct-header">
               <div>
-                <div class="acct-name">${acct.name}</div>
-                <div class="acct-server">${acct.server} · Login: ${acct.login||'N/A'}</div>
+                <div class="acct-name">${acct.name} ${tradeBadge}</div>
+                <div class="acct-server">${acct.server} · Login: ${acct.login||'N/A'} ${connBadge}</div>
               </div>
               <span class="acct-badge ${isActive?'active-badge':'inactive-badge'}">${isActive?'● Active':'○ Inactive'}</span>
             </div>
@@ -169,7 +280,8 @@
               <div class="acct-detail"><div class="detail-label">Win Rate</div><div class="detail-value">${fmt(winRate,1)}%</div></div>
             </div>
             <button class="btn-switch" onclick="switchAccount('${acct.id}')" ${isActive?'disabled':''}>${isActive?'✓ Active':'Switch'}</button>
-            ${acct.last_error ? `<div style="margin-top:8px;font-size:12px;color:var(--danger);">${acct.last_error}</div>` : ''}
+            <button class="btn-delete" onclick="deleteAccount('${acct.id}','${acct.name.replace(/'/g,"\\'")}')">🗑 Remove</button>
+            ${errorHtml}
           </div>
         `;
       }).join('');
@@ -217,6 +329,77 @@
       } catch(e) {
         document.getElementById('positionsSection').style.display='none';
       }
+    }
+
+    /* ─── Account Management ─── */
+
+    function showAddAccountModal() {
+      document.getElementById('addAccountModal').classList.add('show');
+    }
+
+    function closeAddAccountModal() {
+      document.getElementById('addAccountModal').classList.remove('show');
+      document.getElementById('addAccountForm').reset();
+    }
+
+    async function submitAddAccount(event) {
+      event.preventDefault();
+      const btn = document.getElementById('submitAddBtn');
+      btn.disabled = true;
+      btn.textContent = 'Adding...';
+
+      const payload = {
+        id: document.getElementById('acct_id').value.trim(),
+        name: document.getElementById('acct_name').value.trim(),
+        login: document.getElementById('acct_login').value.trim(),
+        password: document.getElementById('acct_password').value,
+        server: document.getElementById('acct_server').value.trim(),
+        terminal_path: document.getElementById('acct_terminal').value.trim()
+      };
+
+      try {
+        const res = await fetch(API+'/api/accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          closeAddAccountModal();
+          loadAccounts();
+        } else {
+          alert('Failed to add account: ' + (data.detail || data.message || res.statusText));
+        }
+      } catch(e) {
+        alert('Error adding account: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add Account';
+      }
+    }
+
+    async function deleteAccount(id, name) {
+      const confirmMsg = 'Are you sure you want to remove the account "' + name + '" (' + id + ')?\n\nThis action cannot be undone.';
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(API+'/api/accounts/'+id, { method: 'DELETE' });
+        if (res.ok) {
+          loadAccounts();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          alert('Failed to delete account: ' + (data.detail || data.message || res.statusText));
+        }
+      } catch(e) {
+        alert('Error deleting account: ' + e.message);
+      }
+    }
+
+    async function refreshAccounts() {
+      const btn = document.querySelector('.btn-refresh');
+      if (btn) btn.textContent = '⟳ Refreshing...';
+      await loadAccounts();
+      if (btn) setTimeout(() => btn.textContent = '🔄 Refresh', 500);
     }
 
     authCheck(); loadAccounts();

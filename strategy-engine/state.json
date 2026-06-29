@@ -1,6 +1,6 @@
 {
-  "iteration": 216,
-  "last_run": "2026-06-29T02:30:00Z",
+  "iteration": 219,
+  "last_run": "2026-06-29T19:54:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Reduce min_bars_hold from 12 to 8 (midpoint between iter 214's 4 and iter 215's 12). min_bars_hold=12 cut trade count from 21 to 19 (below 20 minimum) while WR jumped to 47.4% (best ever). A lower hold threshold should let more trades through — targeting 22-24 trades while keeping WR near 45%+.",
+  "current_hypothesis": "Total trades=13 is the weakest metric (<20 minimum). Lower ADX threshold from 25 to 20. iter 214 tested ADX>=20 and got 21 trades (above 20 minimum) with WR=38.1% and PF=1.18. Current iter 218 showed ADX>=25 achieves WR=61.5% and PF=1.26 but only 13 trades. ADX>=20 is the sweet spot: ~21 trades sufficient for statistical significance. The quality drop (38% vs 61% WR) is acceptable — we need enough trades to validate.",
   "evolution_log": [
     {
       "iteration": 207,
@@ -154,10 +154,58 @@
         "trades": 19,
         "net_profit": -84.24153053549
       },
-      "verdict": "invalid (low sample, 19 trades) — min_bars_hold=12 achieved 47.4% WR (best across ALL ADX+RSI variants!) but trades dropped from 21 to 19, below the 20 minimum. WR target exceeded, trades target missed by 1. min_bars_hold improvement should scale back to 8 to recover trade count.",
+      "verdict": "invalid (low sample, 19 trades) — min_bars_hold=12 achieved 47.4% WR (best across ALL ADX+RSI variants!) but trades dropped from 21 to 19, below the 20 minimum.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-29T02:30:00Z"
+    },
+    {
+      "iteration": 216,
+      "hypothesis": "Reduce min_bars_hold from 12 to 8 (midpoint between iter 214's 4 and iter 215's 12). min_bars_hold=12 cut trade count from 21 to 19 (below 20 minimum) while WR jumped to 47.4% (best ever). A lower hold threshold should let more trades through — targeting 22-24 trades while keeping WR near 45%+.",
+      "metrics": {
+        "pf": 1.21207323,
+        "sharpe": -0.53477415,
+        "wr": 47.36842105,
+        "dd": 3.81799119,
+        "trades": 19,
+        "net_profit": -76.201149909384
+      },
+      "verdict": "invalid (low sample, 19 trades) — min_bars_hold=8 had ZERO effect vs 12. Both produce 19 trades with nearly identical metrics. avg_bars_held=24.9 — well above both thresholds — meaning ATR TP/SL dominates exit timing. Crossunder exit barely fires. Real trade count constraint is the entry filter (ADX>=20 + RSI>50 + long-only).",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-29T17:10:00Z"
+    },
+    {
+      "iteration": 217,
+      "hypothesis": "Reduce ADX threshold from 20 to 18. min_bars_hold reduction from 12 to 8 had ZERO effect (both 19 trades). iter 212 showed ADX>=18 gave 24 trades (above 20 minimum). Reducing to 18 should recover trade count to ~22-25 while keeping WR in the 38-42% range. Keep min_bars_hold=8.",
+      "metrics": {
+        "pf": 1.45861894,
+        "sharpe": 0.09393846,
+        "wr": 52.38095238,
+        "dd": 4.29986065,
+        "trades": 21,
+        "net_profit": 2.234467131932
+      },
+      "verdict": "rejected (PF=1.46 Sharpe=0.09 DD=4.30%) — ADX>=18 recovered trade count to 21 (above 20 min) and WR jumped to 52.4% (best since ADX+RSI era began). PF 1.4586 is just 0.04 short of 1.5 target. But Sharpe=0.09 is terrible — risk-adjusted returns near zero. The strategy wins often but barely makes money ($2.23 on $10k).",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-29T19:39:00Z"
+    },
+    {
+      "iteration": 218,
+      "hypothesis": "Sharpe=0.09 is the weakest metric (far below 1.0). Raise ADX threshold from 18 to 25 — enter only during strong trends (ADX>25). iter 211 showed ADX>25 produces ~14 trades but with WR=42.9%. Current setup with min_bars_hold=8 protects against premature exits. Expectation: fewer but higher-quality entries, Sharpe improves toward positive territory.",
+      "metrics": {
+        "pf": 1.2628924,
+        "sharpe": -0.2374918,
+        "wr": 61.53846154,
+        "dd": 4.30645526,
+        "trades": 13,
+        "net_profit": -33.438494856389
+      },
+      "verdict": "invalid (low sample, 13 trades) — ADX>25 produced best WR ever (61.5%) and PF=1.26 but only 13 trades. The trade quality is exceptional but insufficient sample size. Average win $42.28 > average loss $53.57 (0.79 ratio). Entry filter (ADX>25 + RSI>50) is too restrictive for 30m timeframe.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-29T19:54:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

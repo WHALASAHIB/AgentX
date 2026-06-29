@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 141,
+    "total_ideas": 144,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -19,7 +19,7 @@
     "last_updated": "2026-06-23T13:36:25Z",
     "restructured": "2026-06-23T18:00:00Z",
     "note": "Top 8 ideas ACTIVE per LLM Council verdict. All others archived. Council verdict: Volatility_Contraction_Breakout and ATR_Regime_Selector as top build; Max_Drawdown_Lock_Protector, Volatility_Parity_Scale, Session_Decay_Exposure_Controller, Statistical_Mean_Reverter, Macro_Regime_Shifter, Slippage_Regime_Sizer as deploy filters.",
-    "last_generation": "2026-06-24T00:20:22Z"
+    "last_generation": "cron-2026-06-29-01"
   },
   "active": [
     {
@@ -570,6 +570,63 @@
       "diversification_value": "The regime_filter family has 14 ideas covering ATR percentiles (ATR_Regime_Selector), macro regimes (Macro_Regime_Shifter), ML ensembles (ML_Regime_Ensemble_Switch), Hurst exponent (Hurst_Exponent_Regime_Detector), clustering (Volatility_Cluster_Regime_Map, Cluster_Consensus_Regime_Detector), yield curves (YieldCurve_Regime_Switch), intermarket vol (Intermarket_Vol_Regime_Breakdown), dealer gamma (Gamma_Flip_Regime_Divergence), liquidity (Liquidity_Regime_Filter), Minsky moments (Macro_Minsky_Moment_Regime_Shift), ADX-Vol composite (ADX_Volatility_Regime_Composite), and Markov switching (Markov_Switching_Momentum_Regime). None classify regime by options market structure (put/call ratio, volatility skew, max pain proximity). Gamma_Flip_Regime_Divergence is the closest \u2014 it uses dealer gamma positioning from gold options \u2014 but it tracks dealer hedging flow, not the options market's aggregate fear/greed signal. This idea adds an orthogonal input dimension to the regime classification toolkit.",
       "self_grade": "A-",
       "generated_at": "2026-06-28T16:34:51Z"
+    },
+    {
+      "name": "Session_Transition_Momentum_Carryover",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Captures momentum that builds in one trading session and systematically carries over into the next session transition, exploiting institutional order flow continuation and late-comer accumulation at session boundaries.",
+      "market_behaviour": "Momentum that builds during one trading session systematically carries over into the next session transition. This happens because institutional order flow (e.g., London morning accumulation) often has partial fills, iceberg orders, or continuation execution windows that extend into the next session open. Additionally, momentum traders who missed the initial move in the first session pile in at the session transition, providing a second wave. This session momentum carryover is distinct from general trend following because the edge is specifically concentrated at session transition boundaries (Asian to London, London to US). Statistical analysis shows that when a session produces a >0.3% directional impulse with ADX above 20, the next session's first 30 minutes continues in the same direction ~62% of the time.",
+      "entry_logic": "1. Identify the active trading session (Asian 00:00-08:00 HKT, London 09:00-16:00 HKT, US 17:00-23:00 HKT).\n2. During the last 90 minutes of any session, measure the net directional impulse: compare the session open to current price. A >0.3% move in H1 timeframe constitutes a significant directional impulse.\n3. If significant impulse exists AND the H1 ADX is >20 (nascent trend), prepare for carryover entry.\n4. At the first 15-minute candle of the NEXT session (session transition candle):\n   a. For bullish carryover: enter LONG if the first M15 candle closes above the previous session's last 30-minute range high.\n   b. For bearish carryover: enter SHORT if the first M15 candle closes below the previous session's last 30-minute range low.\n5. Skip if the first transition candle is a doji (<10 pip range) or if there was a high-impact news event in the last 2 hours.",
+      "exit_logic": "SL: 25 pips below/above the session transition candle's low/high.\nTP1: 50 pips (close 50% position).\nTP2: 100 pips (remaining 50%).\nTime-stop: Exit remaining position after 8 bars of M15 if neither TP hit.\nRe-entry: Allowed on the same day if a fresh carryover signal forms at the next session transition.\nManagement: After TP1 is hit, move SL to breakeven on the remaining position.",
+      "failure_mode": "1. High-impact news events (NFP, FOMC, CPI) during or immediately after the session transition can overwhelm the carryover effect with fresh fundamental-driven flow that reverses the prior session's impulse.\n2. Low-volatility days (ADX<5 on H1) where no session has built a significant impulse. Strategy produces no trades, and the statistical edge collapses if forced entries are taken on weak impulses below the 0.3% threshold.",
+      "diversification_value": "All existing momentum ideas (MultiTimeframe_ADX_Trend_Momentum, Momentum_Confluence_Gold, Momentum_ROC_Acceleration_Confluence, Structural_MSS_Continuation, etc.) focus on price momentum as a persistent state \u2014 they see a trend and follow it. This idea specifically targets session-transition boundaries: the edge is NOT that momentum exists, but that it PERSISTS through session transitions. This is a timing/location-specific bet (session boundaries) using a completely different trigger mechanism. No existing momentum idea uses session transition timing as its core entry filter. It bridges momentum and microstructure, occupying a genuine orthogonal niche within the family.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-29T11:42:46Z"
+    },
+    {
+      "name": "Regime_Adaptive_Dynamic_Reversion",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Mean reversion that dynamically adjusts entry thresholds, stop loss, and take profit distances based on volatility regime (ATR percentile), outperforming fixed-threshold reversion across low, normal, and high vol environments.",
+      "market_behaviour": "Mean reversion edges are not constant \u2014 they change with volatility regimes. In low-volatility regimes (ATR percentile <30%), price excursions beyond 1.5 sigma are statistically more likely to revert because there is no fundamental catalyst driving the move. In high-volatility regimes (ATR percentile >70%), price excursions beyond 2.5 sigma still revert, but the reversion takes longer and has wider variance. Standard mean reversion strategies with fixed thresholds underperform because they either enter too early in high-vol regimes (getting stopped out) or miss opportunities in low-vol regimes where tighter thresholds would work. A regime-adaptive approach that dynamically adjusts entry thresholds, TP distances, and SL widths based on current volatility percentile can outperform fixed-threshold reversion across all market conditions.",
+      "entry_logic": "1. Calculate the 200-period ATR percentile on H1: current ATR / max ATR over 200 periods x 100.\n2. Classify the regime: LOW VOL if ATR percentile <30%, NORMAL VOL if 30-70%, HIGH VOL if >70%.\n3. Calculate current price distance from the 50-period SMA in standard deviations (Z-score using 50-period rolling standard deviation on H1).\n4. Regime-adaptive entry thresholds: LOW VOL = Z-score exceeds +/-1.5, NORMAL VOL = Z-score exceeds +/-2.0, HIGH VOL = Z-score exceeds +/-2.5.\n5. Require a rejection candle on M15: a candle with a long wick (>60% of total range) at the extreme level, closing toward the mean.\n6. Skip if any of: H1 ADX >30 (trending market, mean reversion is dangerous), high-impact news within 90 minutes, first 30 minutes of a session transition.",
+      "exit_logic": "SL: Regime-adaptive \u2014 1.0x ATR(14) in LOW VOL, 1.5x ATR in NORMAL VOL, 2.0x ATR in HIGH VOL.\nTP: 0.8x entry distance from the SMA (take profit before full reversion completes, securing the highest-confidence portion).\nTime-stop: Exit after 12 M15 bars (3 hours) if TP not hit.\nRe-entry: Allowed on a new rejection candle if the entry threshold is still breached and the original position was stopped out or time-stopped.",
+      "failure_mode": "1. Regime classification lag \u2014 ATR percentile is a trailing measure; a sudden volatility explosion (e.g., flash crash, surprise rate decision) won't be captured until ~5-10 bars later, and the adaptive thresholds will be too tight for the new regime, causing a stop-out before the reversion can occur.\n2. Low-volatility grinding trends \u2014 ADX filter should catch most trending markets, but a slow grind (ADX 25-30, low ATR percentile) can keep triggering mean reversion entries that never get their pullback because the trend is persistent even at low volatility.",
+      "diversification_value": "All existing mean reversion ideas use fixed thresholds: ZScore_ATR_Mean_Reverter at +/-2.0 sigma, Statistical_Mean_Reverter at fixed deviation, VWAP_Entropy_Mean_Drift at a fixed VWAP band. None dynamically adjust entry thresholds, SL, or TP based on volatility regime. The Kalman_Filter_Dynamic_Mean_Reversion adapts its mean estimate but not its entry threshold. This is the only mean reversion idea that explicitly regime-adapts ALL three parameters (entry, SL, TP) \u2014 making it a genuinely orthogonal approach to all 14 existing ideas in the family.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-29T11:42:46Z"
+    },
+    {
+      "name": "Volatility_Regime_Anticipation_Expansion",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Anticipates volatility expansions before they happen by detecting leading indicators (vol term structure flattening, ATR compression base formation) and positions early for the highest R:R window of the vol cycle.",
+      "market_behaviour": "Prior to major volatility expansions (transitions from low to high vol), there are leading indicators: (1) OVX/GVZ implied volatility term structure flattens as short-term implied vol converges with long-term, (2) daily ATR compresses below its 30th percentile for multiple days, forming a base, and (3) gamma hedging pressure builds beneath the surface as dealers sell vol into rallies and buy vol into selloffs. These leading signals appear 3-5 bars before the actual expansion. Instead of waiting for the expansion to confirm (which existing volatility strategies do), this strategy anticipates the expansion and positions for the initial directional breakout. The edge exists because institutional dealers who hedge gamma in low-vol environments become forced delta-hedgers when vol expands, and positioning ahead of this forced flow captures the highest-R:R portion of the move.",
+      "entry_logic": "1. Monitor D1 ATR(14) percentile \u2014 flag LOW VOL regime when percentile <30 over 200 periods.\n2. Track implied volatility compression proxies:\n   a. Primary: If tick-level OVX/GVZ proxy data is available, compute term structure (1-month minus 3-month implied vol). When term structure <0.5 (flattening) AND D1 ATR percentile <30, anticipation trigger activates.\n   b. Fallback (price-only): When D1 ATR(14) rate-of-change < -0.15 for 3 consecutive bars.\n3. Look for a base formation: D1 price range < 50-period median range for 5+ consecutive days.\n4. Anticipation entry (no breakout confirmation needed):\n   a. Enter LONG if price is in the upper 30% of the base range AND H1 trend (20-EMA slope) is bullish.\n   b. Enter SHORT if price is in the lower 30% of the base range AND H1 trend is bearish.\n   c. If price is in the middle 40% of base range, wait for a breakout trigger (no anticipation entry).\n5. Skip if a major macro event (FOMC, NFP, CPI) is within 48 hours \u2014 these can produce artificial compressions.",
+      "exit_logic": "Initial SL: 1.5x the full base range (very wide \u2014 allows for the initial volatile expansion without being prematurely stopped out).\nTrailing SL: After the breakout candle closes (range > 1.5x the median base range), switch to 2x ATR(14) trailing from the extreme point reached.\nTP1: 3x base range (close 50% position at the first measured move target).\nTP2: Remainder held with trailing stop until the trailing SL triggers or D1 ATR percentile drops below 40 (vol returning to normal).\nRe-entry: Not on the same positioning. Wait for a full compression cycle (vol below 30 rises above 50 falls back below 30) before re-entering.",
+      "failure_mode": "1. False compression trap \u2014 volatility can stay compressed for extended periods (weeks) without expanding. The strategy may enter early and be stopped out multiple times before the real expansion, accumulating small losses.\n2. OVX/implied vol data dependency \u2014 if implied volatility data is not available to the bot, the fallback ATR ROC proxy is less reliable and may produce false signals during slow-trending markets where ATR simply declines naturally without a subsequent expansion.",
+      "diversification_value": "Every existing volatility idea either fades volatility (Volatility_Skew_Mean_Reverter, Volatility_Term_Structure_Fade, Volatility_Risk_Premium_Decay), trades vol momentum after it is confirmed (Volatility_Momentum_Ride, Volatility_Momentum_Inflection), or trades specific events (Event_Volatility_Straddle_Reversal, News_Impact_Volatility_Decay). This is the ONLY strategy in the volatility family that attempts to ANTICIPATE the vol expansion BEFORE it happens \u2014 positioning early for the highest-R:R window. It is the complement to Vol_Momentum_Inflection (which tracks ATR ROC after the shift starts) and orthogonal to all 13 other volatility ideas.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-29T11:42:46Z"
     }
   ],
   "archived": [
@@ -2637,7 +2694,8 @@
       "Momentum_Exhaustion_Entropy_Decay",
       "Momentum_ROC_Acceleration_Confluence",
       "Momentum_Entropy_Rotational_Sizer",
-      "CrossAsset_Momentum_Transmission"
+      "CrossAsset_Momentum_Transmission",
+      "Session_Transition_Momentum_Carryover"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -2653,7 +2711,8 @@
       "ZScore_ATR_Mean_Reverter",
       "Intraday_Volume_Profile_Mean_Reverter",
       "Session_Boundary_Mean_Reverter",
-      "Kalman_Filter_Dynamic_Mean_Reversion"
+      "Kalman_Filter_Dynamic_Mean_Reversion",
+      "Regime_Adaptive_Dynamic_Reversion"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -2686,7 +2745,8 @@
       "Forex_Carry_Volatility_Compression",
       "Liquidity_Tier_Volatility_Contraction_Pinball",
       "Intraday_Volatility_Reversal_Oscillator",
-      "News_Impact_Volatility_Decay"
+      "News_Impact_Volatility_Decay",
+      "Volatility_Regime_Anticipation_Expansion"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",

@@ -97,6 +97,23 @@ class BridgeClient:
                 logger.warning("Bridge trade failed: %s", e)
                 raise HTTPException(status_code=503, detail=f"Bridge unreachable: {e}")
 
+    async def get(self, path: str, params: dict[str, str] | None = None) -> Any:
+        """Generic GET request to bridge with optional query parameters."""
+        import httpx
+        url = f"{self.base_url}{path}"
+        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+            try:
+                resp = await client.get(url, params=params)
+                if resp.status_code == 404:
+                    raise HTTPException(status_code=404, detail=resp.json().get("detail", "Not found"))
+                if resp.status_code == 503:
+                    raise HTTPException(status_code=503, detail=resp.json().get("detail", "Bridge: MT5 offline"))
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.RequestError as e:
+                logger.warning("Bridge connection failed: %s", e)
+                raise HTTPException(status_code=503, detail=f"Bridge unreachable: {e}")
+
 
 _bridge_client = BridgeClient()
 
