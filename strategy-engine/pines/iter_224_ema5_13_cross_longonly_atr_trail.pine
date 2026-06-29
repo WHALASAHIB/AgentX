@@ -1,0 +1,80 @@
+//@version=5
+strategy(title="Iter 224 — EMA5/13 Cross Long Only BTC 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== INPUTS ===
+
+// EMA parameters
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=30)           // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=50)          // sweep: 10-20 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=28)                   // sweep: 7-21 step 7
+rsiThreshold = input.int(50, "RSI Bullish Threshold", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length", minval=7, maxval=28)                   // sweep: 7-21 step 7
+tpSlRatio = input.float(1.5, "TP:SL Ratio", minval=1.0, maxval=4.0)        // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=3.0) // sweep: 0.5-2.0 step 0.25
+
+// Trailing stop
+useTrailing = input.bool(true, "Use Trailing Stop")
+trailActivatePct = input.float(1.0, "Trail Activation (ATR)", minval=0.3, maxval=3.0)  // sweep: 0.5-2.0 step 0.25
+trailOffsetPct = input.float(0.5, "Trail Offset (ATR)", minval=0.2, maxval=2.0)       // sweep: 0.25-1.0 step 0.25
+
+// Minimum hold bars
+minHoldBars = input.int(4, "Min Hold Bars", minval=1, maxval=20)            // sweep: 1-10 step 1
+
+//=== ENTRY LOGIC ===
+
+// Calculate indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+// Crossover conditions
+emaCrossOver = ta.crossover(emaFast, emaSlow)
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+
+// Bullish: EMA fast > slow AND RSI > threshold
+longCondition = emaCrossOver and rsi > rsiThreshold
+
+// Plot EMAs for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+
+// Exit on bearish cross or RSI turning bearish
+exitLong = emaCrossUnder or (rsi < rsiThreshold)
+
+// Track bars since entry for min hold
+var int barsSinceEntry = 9999
+var float entryPrice = 0.0
+var int lastEntryBar = -1
+
+if (longCondition and strategy.position_size == 0)
+    barsSinceEntry := 0
+    entryPrice := close
+    lastEntryBar := bar_index
+    strategy.entry("Long", strategy.long)
+    
+    // Calculate SL and TP levels
+    slPrice = close - (atr * slMultiplier)
+    tpPrice = close + (atr * slMultiplier * tpSlRatio)
+    
+    strategy.exit("Long Exit", "Long", loss=int((close - slPrice) / syminfo.mintick), profit=int((tpPrice - close) / syminfo.mintick))
+
+// Update bars since entry when in position
+if (strategy.position_size > 0)
+    if (lastEntryBar != bar_index)
+        barsSinceEntry := barsSinceEntry + 1
+
+// Apply trailing stop after activation threshold
+if (strategy.position_size > 0 and useTrailing)
+    // Price must move in our favor by trailActivatePct * ATR from entry
+    trailActivateDistance = atr * trailActivatePct
+    trailOffset = atr * trailOffsetPct
+    trailStop = close - trailOffset
+    
+    if (close >= entryPrice + trailActivateDistance)
+        // Cancel old exit and set new one with trailing
+        strategy.exit("Trail Exit", "Long", stop=trailStop)

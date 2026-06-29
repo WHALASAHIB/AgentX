@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="EMA3_8_RSI50_ADX25_LongOnly BTC 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len  = input.int(3,   "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+ema_slow_len  = input.int(8,   "Slow EMA Length", minval=2, maxval=50)       // sweep: 5-20 step 2
+rsi_len       = input.int(14,  "RSI Length",      minval=2, maxval=50)       // sweep: 7-21 step 7
+rsi_threshold = input.int(50,  "RSI Min (Long)",  minval=1, maxval=100)      // sweep: 30-70 step 10
+adx_len       = input.int(14,  "ADX Length",      minval=5, maxval=30)       // sweep: 10-30 step 5
+adx_threshold = input.int(25,  "ADX Min",         minval=10, maxval=50)      // sweep: 20-35 step 5
+atr_len       = input.int(14,  "ATR Length",      minval=5, maxval=30)       // sweep: 10-20 step 5
+tp_sl_ratio   = input.float(1.5, "TP/SL Ratio",   minval=0.5, maxval=5.0)   // sweep: 1.0-3.0 step 0.5
+sl_atr_mult   = input.float(1.0, "SL ATR Mult",   minval=0.5, maxval=5.0)   // sweep: 0.5-2.0 step 0.5
+trail_act_atr = input.float(1.0, "Trail Activate (ATR)", minval=0.1, maxval=5.0) // sweep: 0.5-2.0 step 0.5
+trail_off_atr = input.float(0.5, "Trail Offset (ATR)",   minval=0.1, maxval=3.0) // sweep: 0.3-1.0 step 0.2
+min_hold_bars = input.int(4,   "Min Hold Bars",   minval=1, maxval=20)       // sweep: 2-8 step 2
+
+//--- indicators
+ema_fast  = ta.ema(close, ema_fast_len)
+ema_slow  = ta.ema(close, ema_slow_len)
+rsi       = ta.rsi(close, rsi_len)
+adx       = ta.adx(high, low, close, adx_len)
+atr       = ta.atr(atr_len)
+
+//--- entry logic
+is_uptrend  = ema_fast > ema_slow                    // EMA crossover (fast above slow)
+rsi_ok      = rsi > rsi_threshold                     // RSI above threshold (bullish)
+trend_ok    = adx > adx_threshold                     // ADX above threshold (trending market)
+bars_since_entry = ta.barssince(strategy.position_size > 0)
+
+// Long entry condition — strong trend + bullish momentum
+long_entry  = is_uptrend and rsi_ok and trend_ok and (strategy.position_size == 0)
+
+// Exit conditions
+trail_active = false
+if (strategy.position_size > 0)
+    entry_price = strategy.position_avg_price
+    atr_val = atr
+    sl_pips = int(sl_atr_mult * atr_val / syminfo.mintick)
+    tp_pips = int(tp_sl_ratio * sl_atr_mult * atr_val / syminfo.mintick)
+    trail_activate_pips = int(trail_act_atr * atr_val / syminfo.mintick)
+    trail_offset_pips  = int(trail_off_atr * atr_val / syminfo.mintick)
+
+    // Exit check: only after min hold bars
+    if (bars_since_entry >= min_hold_bars)
+        strategy.exit("XL", "L", loss=sl_pips, profit=tp_pips, trail_points=trail_activate_pips, trail_offset=trail_offset_pips)
+
+//--- entry
+if (long_entry)
+    strategy.entry("L", strategy.long)
+
+//--- plot
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)
+plotchar(adx, "ADX", "", location=location.bottom, color=color.purple, display=display.data_window)

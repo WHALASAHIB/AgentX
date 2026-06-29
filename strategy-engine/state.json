@@ -1,6 +1,6 @@
 {
-  "iteration": 223,
-  "last_run": "2026-06-29T23:57:30Z",
+  "iteration": 227,
+  "last_run": "2026-06-29T14:55:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Iter 222 reduced position size from 100% to 20% per trade, which successfully capped DD at 7.0% (down from 29.2% in iter 221). However PF dropped to 0.62 and Sharpe to -3.76 with 93 trades — too many low-quality trades entering without any trend filter. Next: add ADX(14) > 25 filter on BYBIT:BTCUSDT.P 30m to ensure trades only enter during trending markets. This should reduce trade count (target 30-50) and improve PF and Sharpe. Keep 20% position sizing, EMA3/8 crossover, RSI>50 filter.",
+  "current_hypothesis": "Iter 226 lowered ADX threshold from 25 to 18 on BYBIT:BTCUSDT.P 30m — got 365 trades but PF=0.58 (terrible). The PF < 1.5 is the weakest metric. ADX>18 let through too many weak signals (365 trades over ~3 months). Next: add SHORT entries (short when EMA5<EMA13 and RSI<50 and ADX>18) to make the strategy bidirectional — this should improve net profit by capturing both directional moves. Keep EMA5/13, 20% position sizing, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars. Target: 50-100 trades, PF>1.0.",
   "evolution_log": [
     {
       "iteration": 219,
@@ -78,6 +78,70 @@
       "symbol": "BYBIT:BTCUSDT.P",
       "timeframe": "30m",
       "time": "2026-06-29T23:57:30Z"
+    },
+    {
+      "iteration": 223,
+      "hypothesis": "Add SMA50 trend filter (price > SMA50) on BYBIT:BTCUSDT.P 30m to reduce trade count from 93 (iter 222) to 30-50. Keep 20% position sizing, EMA3/8 crossover, RSI>50 filter, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": -1.21415623,
+        "wr": 0,
+        "dd": 6.89833111,
+        "trades": 1,
+        "net_profit": -251.1523192
+      },
+      "verdict": "invalid (low sample, 1 trade)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T13:08:58Z"
+    },
+    {
+      "iteration": 224,
+      "hypothesis": "Remove SMA50 trend filter and widen EMA crossover to EMA5/13 (from EMA3/8). EMA3/8 (iter 222) produced 93 trades which was too many — widened crossover should reduce frequency. Target: 30-50 trades. Keep RSI>50, 20% position sizing, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars.",
+      "metrics": {
+        "pf": null,
+        "sharpe": -1.64559526,
+        "wr": 95.65217391,
+        "dd": 5.19669151,
+        "trades": 23,
+        "net_profit": -267.238275979769
+      },
+      "verdict": "rejected (PF=inf Sharpe=-1.65 DD=5.2%)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T13:18:00Z"
+    },
+    {
+      "iteration": 225,
+      "hypothesis": "Add ADX(14)>25 filter to EMA5/13 crossover + RSI>50 (long only) on BYBIT:BTCUSDT.P 30m. Iter 224 had negative Sharpe (-1.65) — ADX filter ensures only trending entries, which should improve Sharpe by removing trades in choppy markets. Keep 20% position sizing, ATR-based TP/SL 1.5:1 with trailing, min hold 4 bars.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": null,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T14:41:00Z"
+    },
+    {
+      "iteration": 226,
+      "hypothesis": "Lower ADX threshold from 25 to 18 on BYBIT:BTCUSDT.P 30m. Keep EMA5/13 crossover, RSI>50 (long only), 20% position sizing, ATR-based TP/SL 1.5:1 with trailing stop, min hold 4 bars. Target: 20-40 trades.",
+      "metrics": {
+        "pf": 0.58251277,
+        "sharpe": -12.33110177,
+        "wr": 38.08219178,
+        "dd": 14.10828763,
+        "trades": 365,
+        "net_profit": -1400.33018284
+      },
+      "verdict": "rejected (PF=0.58 Sharpe=-12.33 DD=14.11%)",
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "time": "2026-06-29T14:55:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

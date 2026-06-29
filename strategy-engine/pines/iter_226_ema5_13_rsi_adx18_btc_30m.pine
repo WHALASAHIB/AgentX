@@ -1,0 +1,95 @@
+//@version=5
+strategy(title="EMA5_13_RSI_ADX18_BTC_30m", overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=20,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+// ============================================================
+// --- INPUTS (with sweep ranges in comments)
+// ============================================================
+
+// --- Moving Average Parameters
+fast_len      = input.int(5,  "Fast EMA Length",  minval=1, maxval=50)   // sweep: 3-10 step 1
+slow_len      = input.int(13, "Slow EMA Length",  minval=1, maxval=50)   // sweep: 10-20 step 1
+
+// --- RSI Filter
+rsi_len       = input.int(14, "RSI Length",       minval=2, maxval=50)   // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold",    minval=1, maxval=100)  // sweep: 40-60 step 5
+
+// --- ADX Trend Filter
+adx_len       = input.int(14, "ADX Length",       minval=2, maxval=50)   // sweep: 7-21 step 7
+adx_threshold = input.float(18, "ADX Threshold",  step=1)                 // sweep: 14-25 step 2
+
+// --- ATR-based TP/SL
+atr_len       = input.int(14, "ATR Length",       minval=2, maxval=50)   // sweep: 10-20 step 2
+sl_atr        = input.float(1.0, "SL Multiplier (ATR)", step=0.1)        // sweep: 0.5-2.0 step 0.25
+tp_ratio      = input.float(1.5, "TP/SL Ratio",   step=0.1)              // sweep: 1.0-3.0 step 0.5
+
+// --- Trailing Stop
+use_trailing  = input.bool(true, "Use Trailing Stop")
+trail_activate = input.float(1.0, "Trail Activation (ATR)", step=0.1)    // sweep: 0.5-2.0 step 0.25
+trail_offset  = input.float(0.5, "Trail Offset (ATR)", step=0.1)         // sweep: 0.25-1.0 step 0.25
+
+// --- Risk Controls
+min_hold_bars = input.int(4, "Minimum Hold Bars", minval=1, maxval=20) // sweep: 2-8 step 2
+
+// ============================================================
+// --- CALCULATIONS
+// ============================================================
+
+// EMAs
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+// ADX + DI (Directional Movement Index)
+[adx_val, di_plus, di_minus] = ta.dmi(adx_len, adx_len)
+
+// ATR for dynamic stops/targets
+atr_val = ta.atr(atr_len)
+
+// ============================================================
+// --- ENTRY LOGIC
+// ============================================================
+
+// Long only: EMA5 > EMA13 (trend follow), RSI > 50 (momentum), ADX > threshold (trend strength)
+long_condition = fast_ema > slow_ema and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+// Track bars held since entry (enforces minimum hold period)
+var int bars_held = 999
+if strategy.position_size > 0
+    bars_held := bars_held + 1
+else
+    bars_held := 0
+
+// Enter long when conditions met and flat
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+// ============================================================
+// --- EXIT MANAGEMENT
+// ============================================================
+
+// Place exit order only after minimum hold period
+if strategy.position_size > 0 and bars_held >= min_hold_bars
+    stop_ticks   = int(atr_val * sl_atr / syminfo.mintick)
+    profit_ticks = int(stop_ticks * tp_ratio)
+
+    if use_trailing
+        // Trailing: activate after price moves trail_activate * ATR, offset trail_offset * ATR
+        trail_ticks   = int(trail_activate * atr_val / syminfo.mintick)
+        offset_ticks  = int(trail_offset * atr_val / syminfo.mintick)
+        strategy.exit("XL", "Long",
+                      loss=stop_ticks,
+                      profit=profit_ticks,
+                      trail_points=trail_ticks,
+                      trail_offset=offset_ticks)
+    else
+        strategy.exit("XL", "Long",
+                      loss=stop_ticks,
+                      profit=profit_ticks)
