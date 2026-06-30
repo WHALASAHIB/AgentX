@@ -1,0 +1,38 @@
+//@version=5
+strategy(title="Iter 236 - EMA5/13 Crossover RSI ADX LongOnly H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA", minval=2, maxval=20, step=1)        // sweep: 2-20 step 1
+ema_slow_len = input.int(13, "Slow EMA", minval=5, maxval=50, step=1)        // sweep: 5-50 step 1
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=1)           // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long >)", minval=40, maxval=60, step=5)  // sweep: 40-60 step 5
+adx_len = input.int(14, "ADX Length", minval=7, maxval=21, step=1)           // sweep: 7-21 step 2
+adx_threshold = input.int(20, "ADX Threshold (>", minval=15, maxval=35, step=5)  // sweep: 15-35 step 5
+tp_sl_ratio = input.float(1.0, "TP/SL Ratio", minval=0.5, maxval=3.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=21, step=1)           // sweep: 7-21 step 2
+atr_mult_sl = input.float(1.5, "ATR Multiplier for SL", minval=0.5, maxval=3.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+
+//--- calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+[di_plus, di_minus, adx_val] = ta.dmi(high, low, close, adx_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// Long only: EMA5 > EMA13 crossover, RSI > threshold, ADX > threshold
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+// Exit when EMA5 crosses below EMA13
+exit_long_condition = ta.crossunder(ema_fast, ema_slow)
+
+//--- exit management
+if (long_condition)
+    stop_loss = close - atr_val * atr_mult_sl
+    take_profit = close + atr_val * atr_mult_sl * tp_sl_ratio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=math.round((close - stop_loss) / syminfo.mintick), profit=math.round((take_profit - close) / syminfo.mintick))
+
+// Fallback exit if EMA cross occurs before TP/SL hit
+if (exit_long_condition)
+    strategy.close("Long", comment="EMA Cross Exit")

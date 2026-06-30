@@ -1,6 +1,6 @@
 {
-  "iteration": 236,
-  "last_run": "2026-06-30T00:50:00Z",
+  "iteration": 240,
+  "last_run": "2026-06-30T09:52:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Iter 235 BB touch + RSI + ADX on XAUUSD H1 produced PF 0.45, Sharpe -9.40, WR 29% — adding ADX > 25 filter made things worse (dropped trades from 52 to 31, PF fell from 1.01 to 0.45). The BB touch approach on H1 is fundamentally flawed. Switching to a completely different setup: go long-only on H1 with EMA5 > EMA13 crossover as entry, only when RSI(14) > 50 and ADX(14) > 20. TP/SL = 1:1 (equal) to maximize win rate. Exit when EMA5 crosses below EMA13.",
+  "current_hypothesis": "Iter 239 EMA5/13 + manual ADX(14)>25 + RSI(14)>50 on XAUUSD 30m produced 26 trades (halved from 49) but PF only improved from 1.03 to 1.07 — ADX filter removed half the trades but did not meaningfully improve quality. WR is 30.77% (<40%) — the weakest metric now. Tighten TP/SL ratio from 1:1 to 1:1.5 (SL=1.0×ATR, TP=1.5×ATR). Wider TP should let winners run further, improving WR and PF. Remove ADX filter (it killed too many trades). Next: EMA5/13 crossover + RSI(14)>50 on XAUUSD 30m with 1:1.5 ATR-based TP/SL.",
   "evolution_log": [
     {
       "iteration": 232,
@@ -71,6 +71,70 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-06-30T00:50:00Z"
+    },
+    {
+      "iteration": 236,
+      "hypothesis": "EMA5/13 crossover long-only on XAUUSD H1 with RSI(14)>50 and ADX(14)>20 filters. TP/SL 1:1 with ATR-based stops. Exit on EMA crossunder.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": null,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades) — EMA5/13 crossover + RSI>50 + ADX>20 too restrictive, 0 trades in 777 bars",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-30T01:00:00Z"
+    },
+    {
+      "iteration": 237,
+      "hypothesis": "Drop ADX filter entirely. Keep EMA5/13 crossover + RSI(14)>50 for long entries on XAUUSD H1. 1:1 TP/SL with ATR-based stops. Exit on EMA crossunder.",
+      "metrics": {
+        "pf": 0.06193879,
+        "sharpe": -5.7176953,
+        "wr": 12.5,
+        "dd": 4.81156204,
+        "trades": 8,
+        "net_profit": -427.935927154265
+      },
+      "verdict": "invalid (low sample, 8 trades) — PF 0.06, removing ADX barely helped (8 vs 0 trades), still too restrictive and bad performance",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-06-30T01:15:00Z"
+    },
+    {
+      "iteration": 238,
+      "hypothesis": "EMA5/13 crossover on XAUUSD 30m: faster timeframe provides more bars and crossover signals. Same EMA5/13 crossover + RSI(14)>50 filter (long only), 1:1 ATR-based TP/SL, exit on EMA crossunder.",
+      "metrics": {
+        "pf": 1.03392244,
+        "sharpe": -2.51633978,
+        "wr": 24.48979592,
+        "dd": 4.71018105,
+        "trades": 49,
+        "net_profit": -352.221412225586
+      },
+      "verdict": "rejected (PF=1.03 Sharpe=-2.52 DD=4.71%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T09:37:00Z"
+    },
+    {
+      "iteration": 239,
+      "hypothesis": "EMA5/13 crossover + manual ADX(14)>25 + RSI(14)>50 on XAUUSD 30m. ADX filter should eliminate ranging-market trades, improving Sharpe and PF. 1:1 ATR-based TP/SL, exit on EMA crossunder.",
+      "metrics": {
+        "pf": 1.06712753,
+        "sharpe": -1.73346148,
+        "wr": 30.76923077,
+        "dd": 4.13579741,
+        "trades": 26,
+        "net_profit": -166.436702709449
+      },
+      "verdict": "rejected (PF=1.07 Sharpe=-1.73 DD=4.14%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T09:52:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

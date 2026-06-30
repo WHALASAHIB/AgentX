@@ -1,0 +1,48 @@
+//@version=5
+strategy(title="EMA5/13 XAUUSD 30m RSI+ADX Long-Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=30)      // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=50)     // sweep: 10-30 step 2
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)               // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (Long)", minval=30, maxval=70) // sweep: 40-60 step 5
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)               // sweep: 10-20 step 2
+adx_threshold = input.int(25, "ADX Threshold", minval=15, maxval=40)     // sweep: 20-30 step 5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)               // sweep: 10-20 step 2
+atr_mult_sl = input.float(1.0, "ATR Multiplier for SL", minval=0.5, maxval=3.0, step=0.5)  // sweep: 0.5-2.0 step 0.5
+atr_mult_tp = input.float(1.0, "ATR Multiplier for TP", minval=0.5, maxval=5.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- manual ADX calculation (ta.adx not available on Trader Dev)
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+tr_smooth = ta.sma(tr, adx_len)
+plus_di = 100 * ta.sma(plus_dm, adx_len) / tr_smooth
+minus_di = 100 * ta.sma(minus_dm, adx_len) / tr_smooth
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.sma(dx, adx_len)
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi > rsi_threshold and adx_val > adx_threshold
+
+//--- exit logic
+exit_condition = ta.crossunder(ema_fast, ema_slow)
+
+//--- execute
+if long_condition and strategy.position_size == 0
+    stop_loss = close - atr_val * atr_mult_sl
+    take_profit = close + atr_val * atr_mult_tp
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=close - stop_loss, profit=take_profit - close)
+
+if exit_condition and strategy.position_size > 0
+    strategy.close("Long", comment="EMA Crossunder")
