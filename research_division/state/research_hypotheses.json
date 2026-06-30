@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 146,
+    "total_ideas": 148,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -665,6 +665,45 @@
       "diversification_value": "Distinct from London_Open_Gap_Retracement_Timer [A-] (which fades the London open gap from Asian close \u2014 a different price action entirely). Distinct from Session_Flow_Exhaustion [B] (cumulative tick-direction dominance over full session). Distinct from Gap_Exhaustion_Fade_Reverter [B+] (large gaps at any open, not IB-specific). This idea targets a specific statistical pattern based on the London Initial Balance range extension \u2014 a different measurement window (post-IB intraday extension vs session open gap), different entry trigger (distance from IB boundary vs gap size), and different confirmation (RSI overextension + IB range normalcy filter). No overlap with the existing structural/technical analytics sub-niche idea Structural_Break_Momentum_Flux [B].",
       "self_grade": "A-",
       "generated_at": "2026-06-29T16:35:28Z"
+    },
+    {
+      "name": "Regime_Transition_Velocity_Detector",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Measures the SPEED of regime transitions \u2014 fast transitions (within 1-3 bars) signal a strong new regime likely to persist, while slow transitions (drift over 10+ bars) indicate a fragile new regime prone to reversal. Uses a 3-classifier consensus (ADX, ATR percentile, Hurst exponent) and only trades fast transitions aligned with H4 trend.",
+      "market_behaviour": "Market regimes do not snap between states instantaneously \u2014 they transition with measurable velocity. A market moving from low-volatility ranging into high-volatility trending in just 1-3 bars signals genuine capital rotation driven by institutional conviction (e.g., a rate surprise or geopolitical shock). Conversely, a regime change that takes 10+ bars represents gradual, tentative repositioning \u2014 the new regime is fragile and likely to reverse. This velocity-of-transition signal is invisible to standard regime classifiers, which only label 'before' and 'after' states. Institutional traders observe this: fast transitions are accompanied by volume expansion and order-flow aggression; slow transitions show reluctant, hedging-driven positioning.",
+      "entry_logic": "1. Compute three independent regime classifiers every 15 minutes on H1 data: (a) ADX(14): <20 = ranging, 20-40 = trending, >40 = strong trending. (b) ATR(14) percentile over 200 bars: <30th = low vol, 30-70 = normal, >70 = high vol. (c) Hurst exponent (R/S analysis, 50-bar window): <0.45 = mean-reverting, 0.45-0.55 = random walk, >0.55 = trending. 2. Assign each classifier a regime state value (0, 1, or 2) and track it historically. 3. When \u22652 of 3 classifiers transition between states within a 3-bar window, compute transition velocity = (new_regime_value - old_regime_value) / number_of_bars_since_last_regime_change. 4. If velocity \u2265 0.67 (full regime change in \u22643 bars) \u2192 'Fast Transition'. Enter in the direction implied by the new regime (e.g., trending regime = enter in H4 trend direction; high-vol regime = enter in breakout direction). 5. If velocity is between 0.2-0.67 (change over 4-10 bars) \u2192 'Slow Transition'. Do NOT enter. The new regime is fragile \u2014 wait for re-confirmation after 10 more bars. 6. Entry direction must align with H4 trend (50 EMA slope). 7. SKIP: transition occurs within 2 hours of NFP, FOMC, or CPI release \u2014 fast transitions during macro news are noise, not signal. 8. SKIP: if tick volume is below its 20-bar average during the transition window (low-conviction fast transitions).",
+      "exit_logic": "SL: 1.5 \u00d7 ATR(14) from entry price \u2014 wider than normal because regime-scale moves have extended follow-through. TP: 3 \u00d7 ATR(14) \u2014 targeting regime-scale structural moves. Trailing stop: activate after price reaches 2 \u00d7 ATR(14) in profit, trail at 1 \u00d7 ATR(14). Time stop: exit after 48 H1 bars if no trailing stop has been triggered (regime transition failed to sustain). Re-entry: allowed if velocity conditions re-trigger after 24+ bars cooldown.",
+      "failure_mode": "1. The velocity threshold of 0.67 is instrument-specific \u2014 what constitutes 'fast' on XAUUSD H1 may differ on EURUSD M15, requiring per-instrument calibration or a percentile-based adaptive threshold. 2. False fast transitions during pre-event compression: ADX may be artificially low before NFP/CPI, then spike from 8 to 28 immediately after the release, producing a high-velocity reading that is purely event noise. The 2-hour news window filter mitigates this but will miss legitimate fast transitions occurring near (but unrelated to) scheduled events. 3. The Hurst exponent's 50-bar window naturally lags ADX's 14-bar window \u2014 in fast transitions, the 3-classifier consensus may never trigger because Hurst hasn't registered the change yet. Removing Hurst as a required trigger (requiring only 2 of 3 instead of all 3) partially addresses this, but a Hurst-only slow transition that is actually fast by ADX standards will be misclassified.",
+      "diversification_value": "No existing regime_filter idea measures regime transition velocity. The closest ideas are Regime_Fractal_Phase_Transition (which detects transitions exist via fractal dimension changes but does not measure their speed) and ADX_Volatility_Regime_Composite (which labels the current regime quadrant but ignores how we arrived there). This idea introduces an entirely new sub-niche \u2014 'regime change dynamics' \u2014 within the regime_filter family. It is orthogonal to all existing macro, volatility, options, and liquidity regime filters.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-30T04:35:10Z"
+    },
+    {
+      "name": "Options_Realized_Vol_Regime_Spread",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD",
+        "GLD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Classifies gold market regime by monitoring the spread between implied volatility regime (from GLD options) and realized volatility regime (from XAUUSD spot). When implied vol is in a high percentile regime but realized vol remains low/normal, the dislocation signals an impending regime adjustment. The direction of spread convergence (narrowing vs widening) determines whether to enter and in which direction.",
+      "market_behaviour": "The volatility risk premium \u2014 the persistent gap between implied volatility (what options market expects) and realized volatility (what actually occurs) \u2014 is a well-documented anomaly in gold markets. But the REGIME-LEVEL spread between these two has additional predictive content. When implied volatility enters a high regime (above the 70th percentile of its 200-day range) while realized volatility remains in a low or normal regime (below the 50th percentile), the market is pricing risks that have not materialized. Historically, such dislocations resolve through one of two mechanisms: either realized volatility expands to 'meet' the implied regime (signaling an impending high-vol regime shift in spot), or implied volatility contracts back toward realized (a 'false alarm' where the priced risk dissipates). The direction of the spread's movement over 5-10 sessions discriminates between these scenarios. This is economically grounded in the vol risk premium literature \u2014 gold's vol risk premium is largest during geopolitical uncertainty, precisely when implied spiked but spot hasn't yet moved.",
+      "entry_logic": "1. Estimate gold implied volatility by fetching GLD 30-day at-the-money implied volatility (from Yahoo Finance options chain, or via any free options data API). Annualize the mid IV. 2. Calculate XAUUSD H4 20-day realized volatility: std(log(close/close_prev)) \u00d7 sqrt(252 \u00d7 6 H4 bars per day). 3. Compute rolling 200-day percentiles for both: impl_vol_pct = current_implied_vol_percentile, real_vol_pct = current_realized_vol_percentile. 4. Define REGIME DISLOCATION signal when impl_vol_pct \u2265 70 AND real_vol_pct \u2264 50 (options market expecting significantly more turbulence than spot is delivering). 5. Track the spread (impl_vol_pct - real_vol_pct) over 5 trading days: (a) If spread is NARROWING (declining by \u22655 percentage points in 5 days) \u2192 the market is converging \u2192 volatility regime shift is incoming. Enter anticipating the shift. (b) If spread is WIDENING (increasing by \u22655 points) \u2192 dislocation unresolved \u2192 do NOT enter, continue monitoring. (c) If spread is stable (within \u00b15 points) \u2192 do NOT enter \u2014 wait for a clear convergence signal. 6. Entry direction: if DXY is below its 50-day SMA AND gold is above its 50-day EMA \u2192 LONG (expecting vol expansion to the upside, as rising gold with falling dollar has historically preceded vol expansion). If DXY above its 50-day SMA AND gold below its 50-day EMA \u2192 SHORT. 7. If both conditions are mixed (e.g., DXY bullish but gold bullish) \u2192 take NO trade \u2014 the cross-asset signal is ambiguous.",
+      "exit_logic": "SL: 1.5 \u00d7 ATR(28) from entry \u2014 structural moves overshoot. Initial TP: 2 \u00d7 ATR(28). Trailing stop: activate at 1.5\u00d7 ATR(28) profit, trail at 1\u00d7 ATR(14). Time stop: exit after 10 trading days if the expected vol expansion has not materialized (the dislocation was a false alarm). Re-entry: allowed if the regime dislocation signal reconverges after 10+ trading days of absence.",
+      "failure_mode": "1. DATA DEPENDENCY: Requires live GLD options chain data. If Yahoo Finance options API is blocked or deprecated, the implied vol estimation fails. Using GLD options as a proxy for XAUUSD OTC vol introduces basis risk \u2014 GLD IV may diverge from OTC XAU vol during stress periods. 2. 'Cry wolf' persistence: Regime dislocations can persist for 3-6 weeks during prolonged geopolitical standoffs (e.g., waiting for a US debt ceiling resolution). The strategy may trigger and get stopped out 3-4 times during these 'waiting' periods, accumulating losses before the real move arrives. 3. The 50-day SMA directional filter introduces a strong trend-following bias that may conflict with the mean-reverting nature of vol spread convergence. If gold has been in a prolonged downtrend (below 50-day EMA) but the vol dislocation signals an upside regime shift, the filter blocks the entry \u2014 a necessary safety trade-off that will occasionally miss correct calls.",
+      "diversification_value": "The Options/Gamma sub-niche within regime_filter has only 2 ideas: Options_Market_Regime_Classifier (which classifies regimes based on absolute options structure levels \u2014 put/call ratios, skew levels) and Gamma_Flip_Regime_Divergence (which uses dealer gamma positioning). Neither measures the REGIME-LEVEL SPREAD between implied and realized volatility. This idea targets the dislocation between market expectations and spot reality \u2014 a fundamentally different signal source that complements both existing options-based regime filters. It can also be used as an overlay on either existing idea to confirm/deny the regime classification.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-30T04:35:10Z"
     }
   ],
   "archived": [
@@ -2801,7 +2840,9 @@
       "ADX_Volatility_Regime_Composite",
       "Markov_Switching_Momentum_Regime",
       "ML_Regime_Ensemble_Switch",
-      "Options_Market_Regime_Classifier"
+      "Options_Market_Regime_Classifier",
+      "Regime_Transition_Velocity_Detector",
+      "Options_Realized_Vol_Regime_Spread"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",

@@ -1,0 +1,68 @@
+//@version=5
+strategy(title="Iter 248 — EMA5/13 Crossover + RSI + DMI ADX 24h 2:1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast  = input.int(5,  "Fast EMA",  minval=2,  maxval=50)   // sweep: 3-20 step 2
+ema_slow  = input.int(13, "Slow EMA",  minval=5,  maxval=100)  // sweep: 8-50 step 5
+rsi_len   = input.int(14, "RSI Length", minval=5, maxval=30)   // sweep: 7-21 step 2
+rsi_th    = input.int(50, "RSI Threshold (long > this, short < this)", minval=30, maxval=70) // sweep: 40-60 step 5
+adx_len   = input.int(14, "ADX Length", minval=5, maxval=30)   // sweep: 7-21 step 2
+adx_th    = input.int(15, "ADX Threshold (enter only if ADX > this)", minval=5, maxval=40) // sweep: 10-25 step 5
+atr_len   = input.int(14, "ATR Length", minval=5, maxval=30)   // sweep: 7-21 step 2
+tp_atr    = input.float(2.0, "Take Profit (x ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-4.0 step 0.5
+sl_atr    = input.float(1.0, "Stop Loss (x ATR)", minval=0.3, maxval=5.0, step=0.1)  // sweep: 0.5-2.0 step 0.25
+
+//--- manual ADX calculation (DMI)
+// True Range
+tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+atr_val = ta.rma(tr, atr_len)
+
+// Directional Movement
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+// Smoothed DMs
+s_plus_dm = ta.rma(plus_dm, adx_len)
+s_minus_dm = ta.rma(minus_dm, adx_len)
+
+// True Range for ADX smoothing
+tr_adx = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+atr_adx = ta.rma(tr_adx, adx_len)
+
+// Directional Indicators
+plus_di = 100 * s_plus_dm / atr_adx
+minus_di = 100 * s_minus_dm / atr_adx
+
+// Directional Index
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx, adx_len)
+
+//--- indicators
+ema_fast_val  = ta.ema(close, ema_fast)
+ema_slow_val  = ta.ema(close, ema_slow)
+rsi_val       = ta.rsi(close, rsi_len)
+
+//--- signal conditions (no session filter — trade 24h)
+long_condition  = ta.crossover(ema_fast_val, ema_slow_val) and rsi_val > rsi_th and adx_val > adx_th
+short_condition = ta.crossunder(ema_fast_val, ema_slow_val) and rsi_val < (100 - rsi_th) and adx_val > adx_th
+
+//--- entry logic
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "Long",  loss = int((atr_val * sl_atr) / syminfo.mintick), profit = int((atr_val * tp_atr) / syminfo.mintick))
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss = int((atr_val * sl_atr) / syminfo.mintick), profit = int((atr_val * tp_atr) / syminfo.mintick))
+
+//--- plot
+plot(ema_fast_val, "Fast EMA", color.blue)
+plot(ema_slow_val, "Slow EMA", color.red)
+hline(rsi_th, "RSI Threshold", color.gray, hline.style_dashed)
