@@ -1,7 +1,7 @@
 # 🏛️ AGENTX INFRASTRUCTURE BASELINE — IMMUTABLE
 
-> **Last verified:** 2026-06-23 23:30 HKT
-> **Status:** ✅ ALL SYSTEMS OPERATIONAL
+> **Last verified:** 2026-07-01 03:45 HKT
+> **Status:** ✅ ALL SYSTEMS OPERATIONAL (3 accounts)
 > **This document is the single source of truth for all infrastructure. Do NOT modify any setting below without explicit Commander approval.**
 
 ---
@@ -60,9 +60,14 @@
 
 ### Connected Accounts
 
-| Login | Server | Balance | Connected |
-|-------|--------|---------|-----------|
-| `1513767391` | FTMO-Demo | ~$10,021.19 | ✅ Yes |
+| ID | Login | Server | Balance | Connected |
+|----|-------|--------|---------|-----------|
+| `mt5-demo` | 5051185832 | MetaQuotes-Demo | ~$97,107.53 | ✅ Active |
+| `ftmo-10k` | 1513767391 | FTMO-Demo | $9,076.69 | When switched |
+| `ftmo-100k` | 1513845007 | FTMO-Demo | $100,000.00 | When switched |
+
+**Note:** Coordinator runs in single-account mode. Only the active account is refreshed.
+Switch accounts via the website's Switch button — terminal restarts with chosen account.
 
 ---
 
@@ -142,6 +147,11 @@
 | 5 | Scanner blocker: .php/wp-/xmlrpc → 404 | `backend/app.py` | 2026-06-23 |
 | 6 | Page routing: serve `{path}.html` before `index.html` fallback | `backend/app.py` | 2026-06-23 |
 | 7 | Cloudflare SSL: toggled Universal SSL off→on to force issue | Cloudflare Dashboard | 2026-06-23 |
+| 8 | Coordinator: single-account mode (no auto-cycling) | `bridge/subprocess_coordinator.py` | 2026-06-30 |
+| 9 | Set-active API endpoint on bridge | `bridge/server.py` | 2026-06-30 |
+| 10 | Switch-terminal updates coordinator active account | `bridge/server.py` | 2026-06-30 |
+| 11 | Coordinator created synchronously (race fix) | `bridge/mt5_manager.py` | 2026-06-30 |
+| 12 | Lifespan sets initial active to mt5-demo | `bridge/server.py` | 2026-06-30 |
 
 ---
 

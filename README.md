@@ -1,17 +1,45 @@
 # 📊 AgentX — Algorithmic Trading Dashboard
 
-> **Full-stack algorithmic trading web platform** — monitor, control, and analyze your trading bots in real-time.
-> The website interface for the [Hermess](https://github.com/WHALASAHIB/Hermess.git) trading intelligence system.
+> **Full-stack algorithmic trading web platform** — monitor, control, and analyze live trading bots in real-time across multiple MT5 accounts.
+>
+> 🟢 **Live:** [`inventra.website`](https://inventra.website) — powered by FastAPI + SPA frontend + Cloudflare Tunnel
+> 🔌 **Local:** `http://localhost:8005`
+> ⚙️ **Bridge:** `http://127.0.0.1:5000` (Hermess)
 
 ---
 
 ## 🎯 What This Is
 
-AgentX is the **web cockpit** for a professional algorithmic trading system. This repo contains ONLY the website — the FastAPI backend that serves the dashboard and the SPA frontend that renders it.
+AgentX is the **web cockpit** for a professional algorithmic trading system. This repo contains the FastAPI backend (serving a pre-rendered SPA dashboard) plus infrastructure config.
 
-**Live at:** `inventra.website` (via Cloudflare tunnel)
-**Temporary:** `https://leader-sega-mit-ottawa.trycloudflare.com`
-**Local:** `http://localhost:8005`
+**The trading intelligence — bots, research, DevOps, AI agents — lives in the [Hermess](https://github.com/WHALASAHIB/Hermess.git) repo.**
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.12+
+- MT5 Bridge running on port 5000 (see [Hermess](https://github.com/WHALASAHIB/Hermess.git))
+- Cloudflared tunnel (for public access)
+
+### Local Dev
+```bash
+git clone git@github.com:WHALASAHIB/AgentX.git
+cd AgentX
+pip install -r requirements.txt
+python -m backend --host 0.0.0.0 --port 8005
+# Open → http://localhost:8005
+```
+
+### Production (via Cloudflare Tunnel)
+```bash
+# Backend
+python -m backend --host 0.0.0.0 --port 8005
+
+# Tunnel (separate terminal)
+cloudflared.exe tunnel run da2cf48b
+```
 
 ---
 
@@ -21,9 +49,10 @@ AgentX is the **web cockpit** for a professional algorithmic trading system. Thi
 |-------|-----------|
 | **Backend** | Python 3.12, FastAPI, Uvicorn |
 | **Frontend** | Vanilla JS SPA, Chart.js, CSS3 |
-| **Database** | SQLite (with connection pooling) |
-| **Auth** | Google OAuth 2.0 + Access Codes |
-| **Infrastructure** | Cloudflare Tunnel, Docker (optional) |
+| **Database** | JSON file store + SQLite |
+| **Auth** | Google OAuth 2.0 + Dev-mode bypass + Access Codes |
+| **Infrastructure** | Cloudflare Tunnel (da2cf48b), Cloudflare SSL (Flexible) |
+| **Bridge** | MT5 Bridge (Hermess) — single-account subprocess coordinator |
 
 ---
 
@@ -31,119 +60,130 @@ AgentX is the **web cockpit** for a professional algorithmic trading system. Thi
 
 | # | Section | Purpose |
 |:-:|---------|---------|
-| 1 | 📊 **Command Center** | Real-time trading overview, KPI cards, equity chart |
+| 1 | 📊 **Command Center** | Real-time trading overview, KPI cards, equity chart, daily change % |
 | 2 | 💼 **Portfolio** | Account positions, strategy allocation, risk metrics |
 | 3 | 📓 **Trade Journal** | Complete trade history with smart filters, export |
 | 4 | 🧪 **Backtesting Lab** | Strategy validation, Monte Carlo, Walk-Forward |
 | 5 | 🤖 **Bot Control** | Start/stop/monitor/edit trading bots |
 | 6 | 📝 **Script Editor** | Monaco editor with deploy flow |
 | 7 | 🧠 **AI Orchestrator** | Multi-agent status and commands |
-| 8 | 🏦 **Account Manager** | Multi-account, zero tolerance for disconnections |
+| 8 | 🏦 **Account Manager** | Multi-account switching (mt5-demo, ftmo-10k, ftmo-100k) |
 | 9 | 🏆 **FTMO Challenge** | Challenge progress, DD tracking, compliance |
 | 10 | 📈 **Analytics** | Deep metrics, strategy comparison, risk analysis |
 | 11 | ⚙️ **Settings** | Configuration, integrations, security |
 | 12 | 📄 **File Converter** | PDF/DOCX/XLSX → Markdown |
 
+Each page dynamically resolves the active account — switching accounts updates **all** pages automatically.
+
 ---
 
-## 🚀 Quick Start
+## 🌐 Infrastructure
 
-### Prerequisites
-- Python 3.12+
-- MT5 Bridge running on port 5000 (see Hermess repo)
-- Redis (optional, for caching)
-
-### Setup
-```bash
-# Clone
-git clone git@github.com:WHALASAHIB/AgentX.git
-cd AgentX
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run backend
-uvicorn backend.app:app --host 0.0.0.0 --port 8005
-
-# Open in browser
-open http://localhost:8005
+```
+Browser ──► Cloudflare ──► Tunnel ──► FastAPI (:8005)
+                                          │
+                                    ┌─────┴─────┐
+                                    │           │
+                                 SQLite      JSON Store
+                                    │
+                              MT5 Bridge (:5000)
+                                    │
+                              MetaTrader 5
+                                    │
+                          mt5-demo | ftmo-10k | ftmo-100k
 ```
 
-### With Docker
-```bash
-docker build -t agentx-backend .
-docker run -p 8005:8005 -v $(pwd)/backend/db:/app/backend/db agentx-backend
-```
+| Component | Port | Tech | Status |
+|-----------|------|------|--------|
+| **Backend** | `0.0.0.0:8005` | FastAPI + Uvicorn | ✅ Active |
+| **HTTPS (self-signed)** | `0.0.0.0:8443` | FastAPI + SSL | ✅ Active |
+| **MT5 Bridge** | `127.0.0.1:5000` | FastAPI Subprocess | ✅ Connected |
+| **Cloudflare Tunnel** | → `localhost:8005` | cloudflared da2cf48b | ✅ Running |
+| **Domain** | `inventra.website` | Cloudflare proxied + Flexible SSL | ✅ Online |
+
+### Connected Accounts
+
+| ID | Login | Server | Balance |
+|----|-------|--------|---------|
+| `mt5-demo` | 5051185832 | MetaQuotes-Demo | ~$97,107 |
+| `ftmo-10k` | 1513767391 | FTMO-Demo | $9,076 |
+| `ftmo-100k` | 1513845007 | FTMO-Demo | $100,000 |
+
+Bridge runs in **single-account mode** — only refreshes the active account to avoid hangs. Switch via the website's Switch button (restarts MT5 terminal with chosen credentials).
 
 ---
 
 ## 🛡️ API Endpoints
 
-The backend serves 75+ REST endpoints plus SSE real-time streaming:
-
 | Category | Base Path | Key Endpoints |
 |----------|-----------|---------------|
-| **Health** | `/api/health` | System health, bridge status |
+| **Health** | `/api/health` | System health + bridge status |
+| **Auth** | `/api/auth/*` | signin, signup, logout, OAuth me |
+| **Accounts** | `/api/accounts` | Multi-account list, active account |
 | **Stats** | `/api/stats` | Trading statistics |
 | **Positions** | `/api/positions` | Open positions |
 | **Trades** | `/api/trades` | Trade history, filtering, tagging |
 | **Bots** | `/api/bots` | Bot CRUD, start/stop |
 | **Backtest** | `/api/backtest/*` | Run, optimize, compare, Monte Carlo |
-| **Accounts** | `/api/accounts` | Multi-account management |
 | **FTMO** | `/api/ftmo/*` | Challenge tracking, compliance |
 | **Analytics** | `/api/analytics/*` | Strategy comparison, risk metrics |
 | **Editor** | `/api/editor/*` | Script editing, deploy |
 | **Settings** | `/api/settings` | System configuration |
 | **Events (SSE)** | `/api/events` | Real-time streaming |
+| **WebSocket** | `/api/ws/{path}` | Proxy → MT5 Bridge |
 
-Full API docs: See `backend/app.py` or the Hermess docs.
-
----
-
-## 🔗 Architecture
-
-```
-Browser ──► Cloudflare ──► FastAPI (:8005) ──► MT5 Bridge (:5000) ──► MetaTrader 5
-                          │
-                          ├── SQLite (trades, positions, accounts)
-                          ├── Redis (cache, pub/sub)
-                          └── Hermess (bots, research, SRE)
-```
-
-The website communicates with the trading system through the backend. All bot logic, research, and DevOps run in the [Hermess](https://github.com/WHALASAHIB/Hermess.git) repo.
-
----
-
-## 🔧 Deployment
-
-### Production (current)
-- FastAPI backend runs on VM (`10.10.10.100:8005`)
-- Cloudflare tunnel provides secure public access
-- MT5 Bridge on host (`10.10.10.1:5000`)
-
-### Docker Compose (recommended)
-```yaml
-services:
-  backend:
-    build: .
-    ports: ["8005:8005"]
-    volumes: ["./backend/db:/app/backend/db"]
-    environment:
-      - MT5_BRIDGE_URL=http://host.docker.internal:5000
-```
-
-### Kubernetes (future)
-See `k8s/` directory for deployment manifests.
+**75+ REST endpoints** + SSE real-time streaming + WebSocket proxy.
 
 ---
 
 ## 🔒 Security
 
-- Google OAuth 2.0 (primary auth)
-- Access Codes (secondary auth)
-- JWT sessions with Redis
-- No secrets in code (all in `.env.*` gitignored files)
-- CORS restricted to known origins
+- **Google OAuth 2.0** (primary auth)
+- **Access Codes** (secondary auth)
+- **JWT sessions** with Redis support
+- **Dev-mode bypass** (auto signin as Commander)
+- **Scanner blocker** — blocks `.php`, `/wp-`, `/xmlrpc` requests with 404
+- **No secrets in code** — all in `.env.*` (gitignored)
+- **CORS** — open for dev (`allow_origins=["*"]`), restrict for production
+
+---
+
+## 📂 Project Structure
+
+```
+AgentX/
+├── backend/
+│   ├── app.py            # Main FastAPI application (141KB)
+│   ├── auth.py           # Auth handlers (OAuth, dev-mode)
+│   ├── models.py         # Pydantic models
+│   ├── bridge_client.py  # Bridge API client
+│   ├── ftmo_manager.py   # FTMO challenge logic
+│   ├── redis_client.py   # Redis caching layer
+│   ├── db/               # SQLite databases
+│   ├── ssl/              # Self-signed SSL certs
+│   └── tests/            # Test suite
+├── frontend/
+│   └── public/           # 12 pre-rendered SPA pages
+├── bots/                 # Bot strategy configs
+├── devops/               # DevOps/SRE configs
+├── strategy-engine/      # Pine Script strategy engine
+└── BASELINE.md           # Infrastructure immutable baseline
+```
+
+---
+
+## 🔧 Deployment
+
+### Current Setup (Windows VM)
+| Service | Command |
+|---------|---------|
+| **Backend** | `python -m backend --host 0.0.0.0 --port 8005` |
+| **HTTPS** | `python -m backend --host 0.0.0.0 --port 8443` (with --ssl-*) |
+| **Tunnel** | `./cloudflared.exe tunnel run da2cf48b` |
+| **Watchdog** | Cron job checks bridge/backend/tunnel every 1h — silent unless broken |
+
+### Auto-Sync
+GitHub auto-sync runs every hour via cron (`auto-sync: HH:00 UTC`).
 
 ---
 
@@ -151,8 +191,8 @@ See `k8s/` directory for deployment manifests.
 
 | Repo | What It Has |
 |------|-------------|
-| **[Hermess](https://github.com/WHALASAHIB/Hermess.git)** | Bot strategies, research, DevOps, SRE, RAG pipeline, agents, config |
+| **[Hermess](https://github.com/WHALASAHIB/Hermess.git)** | Bot strategies, AI agents, research pipeline, DevOps/SRE, RAG knowledge base, MT5 Bridge, config |
 
 ---
 
-*AgentX v3 — Trading Dashboard. Part of Project PropMillion.*
+*AgentX v3 — Trading Dashboard. Part of Project PropMillion: $1M in 12 months via algorithmic trading.*
