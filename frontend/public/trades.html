@@ -125,10 +125,12 @@
       try {
         // Fetch active account
         try {
-          const actRes = await fetch(API+'/api/accounts/active');
+          const actRes = await fetch(API+'/api/accounts/active', {
+              headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+          });
           const actData = await actRes.json();
-          activeId = actData.active_account_id || (actData.id) || 'default';
-        } catch(e) { activeId = 'default'; }
+          activeId = actData.active_account_id || (actData.id) || 'mt5-demo';
+        } catch(e) { activeId = 'mt5-demo'; }
         document.getElementById('activeAccount').textContent = 'Account: ' + activeId;
 
         // Fetch bots for filter dropdown

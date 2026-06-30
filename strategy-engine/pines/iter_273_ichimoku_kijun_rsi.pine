@@ -1,0 +1,91 @@
+//@version=5
+strategy(title="Ichimoku Kijun-sen + RSI — XAUUSD 30m", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// Ichimoku Kijun-sen (Base Line) period
+kijunPeriod = input.int(26, title="Kijun-sen Period", minval=10, maxval=60, step=1)
+// sweep: 20-40 step 2
+
+// RSI filter thresholds
+rsiPeriod = input.int(14, title="RSI Period", minval=7, maxval=28, step=1)
+// sweep: 7-21 step 2
+
+rsiLongMin = input.int(40, title="RSI Minimum for Long", minval=30, maxval=50, step=5)
+// sweep: 35-50 step 5
+
+rsiShortMax = input.int(60, title="RSI Maximum for Short", minval=50, maxval=70, step=5)
+// sweep: 50-70 step 5
+
+// ATR-based stops
+atrPeriod = input.int(14, title="ATR Period", minval=7, maxval=28, step=1)
+// sweep: 10-20 step 2
+
+slMultiplier = input.float(1.5, title="SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.5)
+// sweep: 1.0-2.5 step 0.5
+
+tpMultiplier = input.float(1.0, title="TP Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.5)
+// sweep: 0.5-2.0 step 0.5
+
+// Session filter
+sessionStart = input.int(8, title="Session Start Hour (UTC)", minval=0, maxval=23, step=1)
+sessionEnd = input.int(16, title="Session End Hour (UTC)", minval=0, maxval=23, step=1)
+// sweep: 7-10, 15-17
+
+// Use close-based percentage stops (not ATR ticks)
+usePercentStops = input.bool(true, title="Use % Stops (instead of ATR tick-based)")
+
+//--- calculate indicators
+
+// Ichimoku Kijun-sen (Base Line): (highest high + lowest low) / 2 over period
+kijunValue = (ta.highest(high, kijunPeriod) + ta.lowest(low, kijunPeriod)) / 2
+
+// RSI
+rsiValue = ta.rsi(close, rsiPeriod)
+
+// ATR for reference
+atrValue = ta.atr(atrPeriod)
+
+//--- entry logic
+
+// Check if we're within trading session
+inSession = (hour >= sessionStart and hour < sessionEnd)
+
+// Kijun-sen cross conditions
+kijunCrossAbove = ta.crossover(close, kijunValue)   // price crosses above Kijun = bullish
+kijunCrossBelow = ta.crossunder(close, kijunValue)  // price crosses below Kijun = bearish
+
+// RSI filter: wider thresholds (40/60) to allow more entries than strict 50/50
+rsiBullish = rsiValue > rsiLongMin
+rsiBearish = rsiValue < rsiShortMax
+
+// Combined entry signals
+longCondition = kijunCrossAbove and rsiBullish and inSession
+shortCondition = kijunCrossBelow and rsiBearish and inSession
+
+//--- position sizing
+stopPercent = slMultiplier * (atrValue / close) * 100
+takePercent = tpMultiplier * (atrValue / close) * 100
+
+//--- entry management
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management (fixed % stops)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", 
+                 loss=usePercentStops ? close * (stopPercent / 100) / syminfo.mintick : na,
+                 profit=usePercentStops ? close * (takePercent / 100) / syminfo.mintick : na)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short",
+                 loss=usePercentStops ? close * (stopPercent / 100) / syminfo.mintick : na,
+                 profit=usePercentStops ? close * (takePercent / 100) / syminfo.mintick : na)

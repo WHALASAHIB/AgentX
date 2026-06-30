@@ -250,7 +250,9 @@
 
     async function loadStrategies() {
       try {
-        const res = await fetch(API+'/api/backtest/strategies');
+        const res = await fetch(API+'/api/backtest/strategies', {
+            headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+        });
         const strategies = await res.json();
         const sel = document.getElementById('strategySelect');
         sel.innerHTML = '<option value="">Select a strategy...</option>';

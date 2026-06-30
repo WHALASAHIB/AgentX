@@ -863,7 +863,7 @@ async def consolidated_stats(account_id: Optional[str] = None):
     except Exception:
         # Fallback: calculate stats from trade history directly (excluding deposits)
         try:
-            trades_raw = await bridge.get_trades(account_id, days=365)
+            trades_raw = await bridge.get_trades(account_id, days=30)
             trades = [t for t in (trades_raw or [])
                       if t.get("symbol") and t.get("type") in ("BUY", "SELL")]
             if trades and isinstance(trades, list) and len(trades) > 0:
@@ -1230,8 +1230,16 @@ async def test_account_connection(account_id: str, auth=Depends(require_auth)):
 async def all_positions(account_id: Optional[str] = None, auth=Depends(require_auth)):
     bridge = get_bridge()
     db = get_db()
-    if account_id is None:
+    # Resolve account_id: if None, "null", "None" or empty string, check DB active or fallback to first bridge account
+    if account_id is None or account_id in ("null", "None", ""):
         account_id = db.get_active_account()
+    if account_id is None or account_id == "default":
+        try:
+            bridge_accts = await bridge.list_accounts()
+            if bridge_accts and len(bridge_accts) > 0:
+                account_id = bridge_accts[0].get("id", "mt5-demo")
+        except Exception:
+            account_id = "mt5-demo"
     positions = await bridge.get_positions(account_id)
     # Normalize to ensure PnL (profit) is present per position
     normalized = []
@@ -1267,18 +1275,31 @@ async def test_bot_start():
     if _test_bot_proc is not None and _test_bot_proc.poll() is None:
         raise HTTPException(status_code=409, detail="Test bot is already running")
 
-    # Read active account from DB
+    # Read active account from DB, with fallback to first bridge account
     db = get_db()
+    bridge = get_bridge()
     active_id = db.get_active_account()
+    if not active_id:
+        # Fallback to first connected bridge account
+        try:
+            bridge_accts = await bridge.list_accounts()
+            logger.info("TestBot fallback: bridge accounts=%s", bridge_accts)
+            if bridge_accts and len(bridge_accts) > 0:
+                active_id = bridge_accts[0].get("id", "mt5-demo")
+                logger.info("Fallback: using first bridge account '%s' for test bot", active_id)
+        except Exception as e:
+            logger.error("TestBot fallback: bridge.list_accounts() failed: %s", e)
     if not active_id:
         raise HTTPException(status_code=400, detail="No active account selected. Switch to an account first.")
 
-    # Verify account exists in bridge
-    bridge = get_bridge()
+    # Verify account exists in bridge (non-fatal — bot self-verifies too)
     try:
         acct = await bridge.get_account(active_id)
-    except HTTPException:
-        raise HTTPException(status_code=400, detail=f"Active account '{active_id}' not found in bridge")
+        logger.info("TestBot: verified account '%s' on bridge: %s", active_id, acct.get("login"))
+    except HTTPException as e:
+        logger.warning("TestBot: could not verify account '%s' on bridge (proceeding anyway): %s", active_id, e)
+    except Exception as e:
+        logger.warning("TestBot: unexpected error checking account '%s' (proceeding anyway): %s", active_id, e)
 
     script = _BOTS_DIR / "test_bot.py"
     if not script.exists():

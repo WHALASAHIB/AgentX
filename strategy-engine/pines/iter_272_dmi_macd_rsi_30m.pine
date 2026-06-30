@@ -1,0 +1,75 @@
+//@version=5
+strategy(title="DMI MACD RSI 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(8, "MACD Fast Length", minval=2, maxval=50, step=1)     // sweep: 2-20 step 2
+slow_len = input.int(17, "MACD Slow Length", minval=5, maxval=50, step=1)     // sweep: 8-30 step 4
+signal_len = input.int(9, "MACD Signal Length", minval=2, maxval=30, step=1)  // sweep: 3-15 step 3
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30, step=1)           // sweep: 7-21 step 7
+rsi_upper = input.int(50, "RSI Long Threshold", minval=30, maxval=70, step=5) // sweep: 30-70 step 10
+rsi_lower = input.int(50, "RSI Short Threshold", minval=30, maxval=70, step=5) // sweep: 30-70 step 10
+
+// DMI parameters
+dmi_len = input.int(14, "DMI Length", minval=7, maxval=28, step=7)            // sweep: 7-28 step 7
+
+// ATR stops
+atr_len = input.int(14, "ATR Length", minval=7, maxval=21, step=7)           // sweep: 7-21 step 7
+tp_atr = input.float(1.0, "Take Profit (ATR multiple)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+sl_atr = input.float(1.5, "Stop Loss (ATR multiple)", minval=0.5, maxval=5.0, step=0.5)   // sweep: 0.5-3.0 step 0.5
+
+// Session filter
+session_start = input.int(8, "Session Start (hour UTC)", minval=0, maxval=23, step=1)
+session_end = input.int(16, "Session End (hour UTC)", minval=0, maxval=23, step=1)
+
+//--- indicator calculations
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, signal_len)
+macd_cross_bull = ta.crossover(macd_line, signal_line)
+macd_cross_bear = ta.crossunder(macd_line, signal_line)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+// DMI (Directional Movement Index)
+[di_plus, di_minus, adx_val] = ta.dmi(close, high, low, dmi_len)
+dmi_bullish = di_plus > di_minus
+dmi_bearish = di_minus > di_plus
+
+// ATR
+atr_val = ta.atr(atr_len)
+
+// Session filter
+is_trading_hour = (hour >= session_start) and (hour <= session_end)
+
+//--- entry logic
+long_condition = false
+short_condition = false
+
+// Long: MACD bullish cross + RSI > threshold + DMI bullish (DI+ > DI-)
+if macd_cross_bull and rsi_val > rsi_upper and dmi_bullish and is_trading_hour
+    long_condition := true
+
+// Short: MACD bearish cross + RSI < threshold + DMI bearish (DI- > DI+)
+if macd_cross_bear and rsi_val < rsi_lower and dmi_bearish and is_trading_hour
+    short_condition := true
+
+//--- trade management
+// Calculate ATR-based stop and TP in price terms
+atr_dist_sl = atr_val * sl_atr
+atr_dist_tp = atr_val * tp_atr
+
+// Entrance stops in ticks
+sl_ticks = math.round(atr_dist_sl / syminfo.mintick)
+tp_ticks = math.round(atr_dist_tp / syminfo.mintick)
+
+// Entry conditions
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if short_condition and strategy.position_size == 0
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)

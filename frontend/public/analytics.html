@@ -102,11 +102,11 @@
         });
         if (res.ok) {
           const data = await res.json();
-          activeAccountId = data.active_account_id || 'default';
+          activeAccountId = data.active_account_id || 'mt5-demo';
         } else {
-          activeAccountId = 'default';
+          activeAccountId = 'mt5-demo';
         }
-      } catch(e) { console.error('fetchActiveAccount error:', e); activeAccountId = 'default'; }
+      } catch(e) { console.error('fetchActiveAccount error:', e); activeAccountId = 'mt5-demo'; }
     }
 
     async function loadAll() {

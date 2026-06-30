@@ -370,14 +370,14 @@
         const res = await fetch(API+'/api/accounts/active', {
           headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
         });
-        if (!res.ok) { activeAccountId = 'ftmo-demo'; return 'ftmo-demo'; }
+        if (!res.ok) { activeAccountId = 'mt5-demo'; return 'mt5-demo'; }
         const data = await res.json();
-        activeAccountId = data.active_account_id || 'ftmo-demo';
+        activeAccountId = data.active_account_id || 'mt5-demo';
         return activeAccountId;
       } catch(e) {
         console.error('fetchActiveAccount error:', e);
-        activeAccountId = 'ftmo-demo';
-        return 'ftmo-demo';
+        activeAccountId = 'mt5-demo';
+        return 'mt5-demo';
       }
     }
 
