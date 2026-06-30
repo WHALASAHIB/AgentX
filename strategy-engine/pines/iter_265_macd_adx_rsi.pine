@@ -1,0 +1,90 @@
+//@version=5
+strategy(title="MACD ADX RSI — XAUUSD 30m", overlay=true, initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+     commission_type=strategy.commission.percent, commission_value=0.04,
+     process_orders_on_close=true)
+
+//———————————————————————————————
+//--- inputs
+//———————————————————————————————
+
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50, step=1)  // sweep: 5-20 step 1
+slowLen = input.int(17, "MACD Slow Length", minval=5, maxval=100, step=1)  // sweep: 10-50 step 2
+signalLen = input.int(9, "MACD Signal Smoothing", minval=2, maxval=30, step=1)  // sweep: 5-20 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30, step=1)  // sweep: 7-21 step 2
+
+// ADX trending filter (via DMI)
+dmiLen = input.int(14, "DMI/ADX Length", minval=5, maxval=30, step=1)  // sweep: 7-21 step 2
+adxThresh = input.int(25, "ADX Threshold", minval=10, maxval=40, step=1)  // sweep: 15-35 step 5
+
+// ATR-based stop/target
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30, step=1)  // sweep: 10-20 step 2
+slMult = input.float(1.5, "ATR Stop Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+tpMult = input.float(2.0, "ATR Take-Profit Multiplier", minval=0.5, maxval=10.0, step=0.5)  // sweep: 1.0-4.0 step 0.5
+
+// Entry controls
+useLong = input.bool(true, "Allow Long Entries")
+useShort = input.bool(true, "Allow Short Entries")
+
+//———————————————————————————————
+//--- indicator calculations
+//———————————————————————————————
+
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, signalLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Compute ADX from DMI: +DI, -DI, ADX
+[diPlus, diMinus, adxVal] = ta.dmi(high, low, close, dmiLen)
+
+// ATR for dynamic stop and target
+atrVal = ta.atr(atrLen)
+
+// MACD crossover / crossunder signals
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// Condition: trending market (ADX > threshold)
+trending = adxVal > adxThresh
+
+// RSI bias filter: long only if RSI > 50, short only if RSI < 50
+rsiLongOk = rsiVal > 50
+rsiShortOk = rsiVal < 50
+
+//———————————————————————————————
+//--- entry logic
+//———————————————————————————————
+
+// Long: MACD bull crossover + trending market + RSI > 50
+longCondition = macdCrossOver and trending and rsiLongOk and useLong
+
+// Short: MACD bear crossunder + trending market + RSI < 50
+shortCondition = macdCrossUnder and trending and rsiShortOk and useShort
+
+// Entry prices
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+
+//———————————————————————————————
+//--- exit management
+//———————————————————————————————
+
+// ATR-based stop-loss and take-profit on entry bar
+if (strategy.position_size > 0 and strategy.position_size[1] == 0)
+    // Long exit: stop below entry, profit above entry
+    stopPrice = strategy.position_avg_price - atrVal * slMult
+    profitPrice = strategy.position_avg_price + atrVal * tpMult
+    strategy.exit("XL", "Long", loss=int((strategy.position_avg_price - stopPrice) / syminfo.mintick),
+         profit=int((profitPrice - strategy.position_avg_price) / syminfo.mintick))
+
+if (strategy.position_size < 0 and strategy.position_size[1] == 0)
+    // Short exit: stop above entry, profit below entry
+    stopPrice = strategy.position_avg_price + atrVal * slMult
+    profitPrice = strategy.position_avg_price - atrVal * tpMult
+    strategy.exit("XS", "Short", loss=int((stopPrice - strategy.position_avg_price) / syminfo.mintick),
+         profit=int((strategy.position_avg_price - profitPrice) / syminfo.mintick))

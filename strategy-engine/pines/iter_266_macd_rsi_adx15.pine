@@ -1,0 +1,77 @@
+//@version=5
+strategy(title="MACD RSI ADX15 XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macdFastLen = input.int(8, "MACD Fast Length", minval=3, maxval=30)       // sweep: 5-20 step 3
+macdSlowLen = input.int(17, "MACD Slow Length", minval=10, maxval=50)      // sweep: 12-30 step 5
+macdSignalLen = input.int(9, "MACD Signal Length", minval=3, maxval=20)    // sweep: 5-15 step 2
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=28)                  // sweep: 10-21 step 5
+rsiBullThreshold = input.float(50, "RSI Bullish Threshold", minval=30, maxval=70) // sweep: 40-60 step 5
+rsiBearThreshold = input.float(50, "RSI Bearish Threshold", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length", minval=7, maxval=28)                  // sweep: 10-21 step 5
+adxThreshold = input.float(15, "ADX Threshold", minval=5, maxval=40)       // sweep: 10-25 step 5
+
+// Risk management
+atrLen = input.int(14, "ATR Length", minval=7, maxval=28)                  // sweep: 10-21 step 5
+slMultiplier = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=4.0)  // sweep: 1.0-3.0 step 0.5
+tpMultiplier = input.float(2.0, "TP ATR Multiplier", minval=0.5, maxval=6.0)  // sweep: 1.0-4.0 step 0.5
+
+// Direction controls
+useLong = input.bool(true, "Enable Long Entries")
+useShort = input.bool(true, "Enable Short Entries")
+
+//--- indicator calculations
+[macdLine, signalLine, _] = ta.macd(close, macdFastLen, macdSlowLen, macdSignalLen)
+rsiValue = ta.rsi(close, rsiLen)
+[diPlus, diMinus, adxValue] = ta.dmi(close, high, low, adxLen)
+atrValue = ta.atr(atrLen)
+
+//--- entry logic
+// MACD crossover = MACD line crosses above signal line (bullish)
+// MACD crossunder = MACD line crosses below signal line (bearish)
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// RSI filter: long only if RSI > threshold (bullish momentum)
+rsiBullish = rsiValue > rsiBullThreshold
+rsiBearish = rsiValue < rsiBearThreshold
+
+// ADX filter: only enter when ADX > threshold (trending market)
+adxTrending = adxValue > adxThreshold
+
+// Combined entry signals
+longEntry = useLong and macdCrossOver and rsiBullish and adxTrending
+shortEntry = useShort and macdCrossUnder and rsiBearish and adxTrending
+
+//--- exit management
+// ATR-based stop loss and take profit
+stopDistance = slMultiplier * atrValue / syminfo.mintick
+profitDistance = tpMultiplier * atrValue / syminfo.mintick
+
+// Entry execution
+if (longEntry)
+    strategy.entry("MACD-Long", strategy.long)
+
+if (shortEntry)
+    strategy.entry("MACD-Short", strategy.short)
+
+// Exit management - use strategy.exit with explicit profit/loss targets
+if (strategy.position_size > 0)
+    strategy.exit("XL", "MACD-Long", loss=stopDistance, profit=profitDistance)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "MACD-Short", loss=stopDistance, profit=profitDistance)
+
+//--- plot indicators for visual reference
+plot(macdLine, "MACD Line", color=color.blue)
+plot(signalLine, "Signal Line", color=color.orange)
+hline(0, "Zero Line", color=color.gray)
+plot(rsiValue, "RSI", color=color.purple, display=display.none)
+hline(rsiBullThreshold, "RSI Threshold", color=color.green, linestyle=hline.style_dashed, display=display.none)
+plot(adxValue, "ADX", color=color.red, display=display.none)
+hline(adxThreshold, "ADX Threshold", color=color.blue, linestyle=hline.style_dashed, display=display.none)

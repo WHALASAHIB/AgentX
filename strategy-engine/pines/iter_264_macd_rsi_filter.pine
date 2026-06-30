@@ -1,0 +1,76 @@
+//@version=5
+strategy(title="MACD 8/17/9 + RSI 50 Filter - XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macd_fast      = input.int(8,    "MACD Fast Length")      // sweep: 6-14 step 2
+macd_slow      = input.int(17,   "MACD Slow Length")      // sweep: 14-26 step 3
+macd_signal    = input.int(9,    "MACD Signal Smoothing") // sweep: 5-13 step 2
+
+// RSI filter
+rsi_length     = input.int(14,   "RSI Length")             // sweep: 10-20 step 2
+rsi_long_min   = input.int(50,   "RSI Min (Long)", tooltip="Long only if RSI > this value")   // sweep: 40-60 step 5
+rsi_short_max  = input.int(50,   "RSI Max (Short)", tooltip="Short only if RSI < this value") // sweep: 40-60 step 5
+
+// ATR stops
+atr_length     = input.int(14,   "ATR Length")            // sweep: 10-20 step 2
+sl_atr         = input.float(1.5, "Stop Loss (ATR multi)") // sweep: 1.0-2.5 step 0.5
+tp_atr         = input.float(2.0, "Take Profit (ATR multi)") // sweep: 1.0-3.0 step 0.5
+
+// Trade control
+use_long       = input.bool(true, "Allow Long Entries")
+use_short      = input.bool(true, "Allow Short Entries")
+
+//--- calculations
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_length)
+
+// ATR
+atr_val = ta.atr(atr_length)
+
+//--- entry logic
+// MACD crossover = bullish, MACD crossunder = bearish
+macd_crosses_over  = ta.crossover(macd_line, signal_line)
+macd_crosses_under = ta.crossunder(macd_line, signal_line)
+
+// RSI filter: long only if RSI > threshold, short only if RSI < threshold
+rsi_ok_long  = rsi_val > rsi_long_min
+rsi_ok_short = rsi_val < rsi_short_max
+
+// Entry conditions
+long_condition  = macd_crosses_over and use_long  and rsi_ok_long
+short_condition = macd_crosses_under and use_short and rsi_ok_short
+
+//--- exit management
+// Calculate SL/TP levels based on ATR at entry
+// We use strategy.exit with loss/profit in ticks
+// loss = sl_atr * atr_val / syminfo.mintick
+// profit = tp_atr * atr_val / syminfo.mintick
+
+var int last_long_trade_id  = 0
+var int last_short_trade_id = 0
+
+// Entry: long
+if long_condition
+    strategy.entry("Long", strategy.long)
+    last_long_trade_id := last_long_trade_id + 1
+
+// Entry: short
+if short_condition
+    strategy.entry("Short", strategy.short)
+    last_short_trade_id := last_short_trade_id + 1
+
+// Exit management — dynamically set SL/TP based on ATR at entry
+// Using strategy.exit with loss and profit in ticks
+if strategy.position_size > 0
+    strategy.exit("XL", "Long",
+         loss = int(sl_atr * atr_val / syminfo.mintick),
+         profit = int(tp_atr * atr_val / syminfo.mintick))
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short",
+         loss = int(sl_atr * atr_val / syminfo.mintick),
+         profit = int(tp_atr * atr_val / syminfo.mintick))
