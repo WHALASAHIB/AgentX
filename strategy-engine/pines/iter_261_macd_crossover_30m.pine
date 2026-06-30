@@ -1,0 +1,74 @@
+//@version=5
+strategy(title="MACD Crossover XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD params
+macd_fast_len = input.int(12, "MACD Fast Length", minval=2, maxval=50, group="MACD")            // sweep: 6-20 step 2
+macd_slow_len = input.int(26, "MACD Slow Length", minval=5, maxval=100, group="MACD")           // sweep: 18-34 step 4
+macd_signal_len = input.int(9, "MACD Signal Length", minval=2, maxval=30, group="MACD")         // sweep: 5-15 step 2
+
+// ATR-based risk management
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50, group="Risk Management")             // sweep: 10-20 step 2
+atr_sl_mult = input.float(1.5, "ATR Stop Loss Multiplier", minval=0.5, maxval=5.0, step=0.5, group="Risk Management")  // sweep: 1.0-3.0 step 0.5
+atr_tp_mult = input.float(2.0, "ATR Take Profit Multiplier", minval=0.5, maxval=10.0, step=0.5, group="Risk Management") // sweep: 1.0-4.0 step 0.5
+
+// Trade management
+min_hold_bars = input.int(4, "Minimum Hold Bars", minval=0, maxval=20, group="Trade Management") // sweep: 2-8 step 2
+use_long = input.bool(true, "Allow Long Entries", group="Trade Direction")
+use_short = input.bool(false, "Allow Short Entries", group="Trade Direction")
+
+// Session filter
+use_session_filter = input.bool(false, "Use Session Filter (8-16 UTC)", group="Session Filter") // sweep: on/off
+session_start = input.int(8, "Session Start (UTC)", minval=0, maxval=23, group="Session Filter")
+session_end = input.int(16, "Session End (UTC)", minval=0, maxval=23, group="Session Filter")
+
+//--- indicator calculations
+[macd_line, signal_line, hist_line] = ta.macd(close, macd_fast_len, macd_slow_len, macd_signal_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+is_in_session = not use_session_filter or (hour >= session_start and hour < session_end)
+
+// MACD crossover conditions
+macd_bullish = ta.crossover(macd_line, signal_line)
+macd_bearish = ta.crossunder(macd_line, signal_line)
+
+// Minimum hold — track bars since entry
+var int bars_since_entry = 9999
+if strategy.position_size != strategy.position_size[1]
+    bars_since_entry := 0
+else
+    bars_since_entry := bars_since_entry + 1
+
+// Can exit profit target after min hold
+can_exit = bars_since_entry >= min_hold_bars
+
+//--- entry
+if is_in_session
+    // Long entry: MACD line crosses above signal line
+    if macd_bullish and use_long and strategy.position_size <= 0
+        stop_loss = close - atr_val * atr_sl_mult
+        take_profit = close + atr_val * atr_tp_mult
+        strategy.entry("MACD_LONG", strategy.long)
+        strategy.exit("MACD_LONG_EXIT", "MACD_LONG", loss=close - stop_loss, profit=take_profit - close, comment="L_TP_SL")
+
+    // Short entry: MACD line crosses below signal line
+    if macd_bearish and use_short and strategy.position_size >= 0
+        stop_loss = close + atr_val * atr_sl_mult
+        take_profit = close - atr_val * atr_tp_mult
+        strategy.entry("MACD_SHORT", strategy.short)
+        strategy.exit("MACD_SHORT_EXIT", "MACD_SHORT", loss=stop_loss - close, profit=close - take_profit, comment="S_TP_SL")
+
+//--- exit management
+// Exit long when MACD crosses bearish (signal reversal)
+if strategy.position_size > 0 and macd_bearish and can_exit
+    strategy.close("MACD_LONG", comment="MACD_BEARISH_EXIT")
+
+// Exit short when MACD crosses bullish (signal reversal)
+if strategy.position_size < 0 and macd_bullish and can_exit
+    strategy.close("MACD_SHORT", comment="MACD_BULLISH_EXIT")
+
+//--- plot
+plot(macd_line, "MACD Line", color=color.blue, linewidth=1)
+plot(signal_line, "Signal Line", color=color.orange, linewidth=1)
+hline(0, "Zero", color=color.gray, linestyle=hline.style_dotted)

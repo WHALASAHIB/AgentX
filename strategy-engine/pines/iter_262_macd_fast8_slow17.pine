@@ -1,0 +1,46 @@
+//@version=5
+strategy(title="iter_262_MACD_fast8_slow17", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50)       // sweep: 2-20 step 2
+slowLen = input.int(17, "MACD Slow Length", minval=5, maxval=100)      // sweep: 10-30 step 5
+signalLen = input.int(9, "MACD Signal Length", minval=2, maxval=30)    // sweep: 5-15 step 2
+
+// ATR-based stop/target
+atrPeriod = input.int(14, "ATR Period", minval=5, maxval=50)           // sweep: 7-21 step 2
+slMult = input.float(1.5, "SL Multiplier (×ATR)", step=0.1)            // sweep: 1.0-2.5 step 0.3
+tpMult = input.float(2.0, "TP Multiplier (×ATR)", step=0.1)            // sweep: 1.0-3.0 step 0.5
+
+// Trade controls
+useLong = input.bool(true, "Allow Long Entries")
+useShort = input.bool(false, "Allow Short Entries")                    // shorts disabled for this iteration
+minHoldBars = input.int(4, "Minimum Bars to Hold", minval=1, maxval=20)// sweep: 2-10 step 2
+
+//--- indicator calculations
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, signalLen)
+atr = ta.atr(atrPeriod)
+
+//--- entry logic
+// Long: MACD line crosses above signal line
+longEntry = ta.crossover(macdLine, signalLine)
+// Short: MACD line crosses below signal line
+shortEntry = ta.crossunder(macdLine, signalLine)
+
+// Minimum hold check — prevent exiting before minHoldBars
+barsSinceEntry = ta.barssince(strategy.position_size != strategy.position_size[1])
+canExit = barsSinceEntry >= minHoldBars or barsSinceEntry == na
+
+// Long entry
+if longEntry and useLong and strategy.position_size <= 0
+    slPrice = close - (atr * slMult)
+    tpPrice = close + (atr * tpMult)
+    strategy.entry("MACD_L", strategy.long)
+    strategy.exit("MACD_L_X", "MACD_L", loss=int((close - slPrice) / syminfo.mintick), profit=int((tpPrice - close) / syminfo.mintick))
+
+// Short entry (disabled for this iteration, but logic kept)
+if shortEntry and useShort and strategy.position_size >= 0
+    slPrice = close + (atr * slMult)
+    tpPrice = close - (atr * tpMult)
+    strategy.entry("MACD_S", strategy.short)
+    strategy.exit("MACD_S_X", "MACD_S", loss=int((slPrice - close) / syminfo.mintick), profit=int((close - tpPrice) / syminfo.mintick))

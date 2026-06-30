@@ -1,0 +1,81 @@
+//@version=5
+strategy(title="EMA5/13 ATR Trail Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=30)       // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=50)      // sweep: 10-26 step 1
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=21)                // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// ATR trailing stop parameters
+atr_len = input.int(14, "ATR Length", minval=7, maxval=21)                // sweep: 10-20 step 2
+trail_offset_atr = input.float(2.0, "Trail Offset (ATR multiples)", minval=0.5, maxval=5.0) // sweep: 1.0-3.0 step 0.5
+activation_atr = input.float(1.0, "Trail Activation (ATR from entry)", minval=0.5, maxval=3.0) // sweep: 0.5-2.0 step 0.25
+
+// Min hold bars
+min_hold_bars = input.int(4, "Min Hold Bars Before Trail", minval=1, maxval=20) // sweep: 2-10 step 2
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+
+//--- entry
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management with ATR trailing stop
+// Track bar count since entry and trailing stop level
+var float entry_price = 0.0
+var float highest_close = 0.0
+var int trade_bar_count = 0
+var bool trail_active = false
+var float trail_stop = 0.0
+
+// Track trade state
+if strategy.position_size > 0
+    if strategy.position_size[1] <= 0
+        // New entry this bar
+        entry_price := close
+        highest_close := close
+        trade_bar_count := 0
+        trail_active := false
+        trail_stop := 0.0
+    else
+        // Existing position - update tracking
+        trade_bar_count := trade_bar_count + 1
+        if close > highest_close
+            highest_close := close
+        // Check if trail should activate
+        if not trail_active
+            if close >= entry_price + (activation_atr * atr_val)
+                trail_active := true
+                trail_stop := close - (trail_offset_atr * atr_val)
+        else
+            // Update trailing stop (never lower)
+            new_stop = close - (trail_offset_atr * atr_val)
+            if new_stop > trail_stop
+                trail_stop := new_stop
+    // Exit via trailing stop if active and min hold passed
+    if trail_active and trade_bar_count >= min_hold_bars
+        if close <= trail_stop
+            strategy.close("Long", comment="TrailExit")
+else
+    // Flat - reset tracking
+    entry_price := 0.0
+    highest_close := 0.0
+    trade_bar_count := 0
+    trail_active := false
+    trail_stop := 0.0
+
+//--- visual plots
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)
+plotshape(trail_active ? trail_stop : na, "Trail Stop", shape.triangledown, location.absolute, color=color.orange, size=size.small)

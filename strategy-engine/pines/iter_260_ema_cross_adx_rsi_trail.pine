@@ -1,0 +1,109 @@
+//@version=5
+strategy(title="EMA5/13 Cross ADX RSI ATR Trail XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen = input.int(5, "Fast EMA Length", minval=1, maxval=50, step=1)       // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "Slow EMA Length", minval=5, maxval=50, step=1)      // sweep: 10-20 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30, step=1)              // sweep: 7-21 step 7
+rsiThreshold = input.int(50, "RSI Threshold (long above)", minval=30, maxval=70, step=5)  // sweep: 40-60 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=7, maxval=30, step=1)              // sweep: 7-21 step 7
+adxThreshold = input.int(25, "ADX Threshold (trending above)", minval=15, maxval=40, step=5)  // sweep: 15-35 step 5
+
+// Trailing stop parameters
+trailActivationPct = input.float(0.5, "Trail Activation (ATR mult)", minval=0.1, maxval=5.0, step=0.1)   // sweep: 0.3-1.5 step 0.2
+trailOffsetPct = input.float(1.2, "Trail Offset (ATR mult)", minval=0.3, maxval=5.0, step=0.1)          // sweep: 0.5-2.0 step 0.2
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30, step=1)               // sweep: 7-21 step 7
+
+// Minimum bar hold
+minHoldBars = input.int(4, "Minimum Hold Bars", minval=1, maxval=20, step=1)   // sweep: 2-8 step 2
+
+//--- indicator calculations
+
+// EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// RSI
+rsi = ta.rsi(close, rsiLen)
+
+// ADX
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+// ATR
+atr = ta.atr(atrLen)
+
+//--- entry logic
+
+// Crossover condition: fast EMA crosses above slow EMA
+emaCrossOver = ta.crossover(emaFast, emaSlow)
+// Crossunder condition: fast EMA crosses below slow EMA
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+
+// Long entry: EMA crossover AND RSI > threshold AND ADX > threshold (trending)
+longCondition = emaCrossOver and rsi > rsiThreshold and adx > adxThreshold
+
+// Short entry: EMA crossunder AND RSI < (100 - threshold) AND ADX > threshold (trending)
+shortCondition = emaCrossUnder and rsi < (100 - rsiThreshold) and adx > adxThreshold
+
+//--- trailing stop management
+
+// Track entry bar index for each position
+var int entryBarLong = na
+var int entryBarShort = na
+var float trailLevelLong = na
+var float trailLevelShort = na
+var bool trailActiveLong = false
+var bool trailActiveShort = false
+
+//--- entry execution
+
+// Long entry
+if longCondition
+    strategy.entry("Long", strategy.long)
+    entryBarLong := bar_index
+    trailActiveLong := false
+    trailLevelLong := na
+
+// Short entry
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    entryBarShort := bar_index
+    trailActiveShort := false
+    trailLevelShort := na
+
+//--- trailing stop management (using strategy.exit with trail parameters)
+
+// Calculate trail offset in ticks
+trailOffsetTicksLong = int(trailOffsetPct * atr / syminfo.mintick)
+trailOffsetTicksShort = int(trailOffsetPct * atr / syminfo.mintick)
+// Calculate trail activation in ticks
+trailActivationTicksLong = int(trailActivationPct * atr / syminfo.mintick)
+trailActivationTicksShort = int(trailActivationPct * atr / syminfo.mintick)
+
+// Long trail exit: only after min hold bars and trail offset > 0
+if strategy.position_size > 0 and bar_index - entryBarLong >= minHoldBars and trailOffsetTicksLong > 0
+    strategy.exit("Trail Long", "Long", trail_offset=trailOffsetTicksLong, trail_activation_offset=trailActivationTicksLong)
+
+// Short trail exit
+if strategy.position_size < 0 and bar_index - entryBarShort >= minHoldBars and trailOffsetTicksShort > 0
+    strategy.exit("Trail Short", "Short", trail_offset=trailOffsetTicksShort, trail_activation_offset=trailActivationTicksShort)
+
+//--- visual markers
+
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+
+// Entry signals on chart
+plotshape(longCondition, "Long Signal", style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
+plotshape(shortCondition, "Short Signal", style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small)
+
+//--- alert
+
+alertcondition(longCondition, "Long Entry", "EMA5/13 Long: Fast EMA crossed above Slow EMA with RSI>50 and ADX>25")
+alertcondition(shortCondition, "Short Entry", "EMA5/13 Short: Fast EMA crossed below Slow EMA with RSI<50 and ADX>25")
