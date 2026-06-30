@@ -814,8 +814,14 @@ async def consolidated_stats(account_id: Optional[str] = None):
     # Use active account or provided account ID
     if account_id is None:
         account_id = db.get_active_account()
-    if account_id is None:
-        account_id = "default"
+    if account_id is None or account_id == "default":
+        # Fall back to first available bridge account
+        try:
+            bridge_accts = await bridge.list_accounts()
+            if bridge_accts and len(bridge_accts) > 0:
+                account_id = bridge_accts[0].get("id", "mt5-demo")
+        except Exception:
+            account_id = "mt5-demo"
     
     stats = {
         "total_positions": 0,
