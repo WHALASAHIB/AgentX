@@ -1,0 +1,33 @@
+//@version=5
+strategy(title="EMA3_8_RSI40 XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)        // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=2, maxval=100)       // sweep: 5-21 step 2
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)                // sweep: 7-21 step 2
+rsiThreshold = input.int(40, "RSI Threshold (long if RSI >)", minval=20, maxval=80)  // sweep: 30-60 step 5
+atrLen = input.int(14, "ATR Length", minval=5, maxval=50)                // sweep: 10-21 step 2
+tpMult = input.float(2.0, "TP (ATR multiple)", minval=0.5, maxval=5.0, step=0.5)     // sweep: 1.0-3.0 step 0.5
+slMult = input.float(1.5, "SL (ATR multiple)", minval=0.5, maxval=5.0, step=0.5)     // sweep: 1.0-3.0 step 0.5
+tradeLong = input.bool(true, "Enable Long Trades")
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- entry logic: EMA3 crossover EMA8 AND RSI(14) > 40 (filter out extreme bearish weakness)
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold
+
+if longCondition and tradeLong
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: ATR-based stop loss and take profit
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=int(slMult * atr / syminfo.mintick), profit=int(tpMult * atr / syminfo.mintick))
+
+//--- plot for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+hline(50, "RSI Mid", color=color.gray, linestyle=hline.style_dashed)

@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="iter_280_EMA3_8_RSI50_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50)        // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "Slow EMA Length", minval=1, maxval=50)        // sweep: 5-20 step 1
+
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)                // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold (long above)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+tpMultiplier = input.float(2.0, "TP (ATR multiplier)", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.5, "SL (ATR multiplier)", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30)                // sweep: 10-20 step 2
+
+tradeSession = input.string("0000-0000", "Trading Session (0000-2400 UTC)", group="Session") // 24h
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- Plot EMAs
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsiThreshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dotted)
+
+//--- entry logic
+isUpTrend = close > emaSlow     // price above slow EMA = bullish bias
+isRsiBullish = rsi > rsiThreshold  // RSI > threshold = bullish momentum
+
+// Long-only: EMA crossover AND RSI > threshold AND price above slow EMA
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold and isUpTrend
+
+// Exit condition: EMA cross below slow EMA
+exitLong = ta.crossunder(emaFast, emaSlow)
+
+//--- Position management
+var float entryPrice = 0.0
+var float entryATR = 0.0
+
+if (longCondition and strategy.position_size == 0)
+    entryPrice := close
+    entryATR := atr
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slMultiplier * entryATR / syminfo.mintick, profit=tpMultiplier * entryATR / syminfo.mintick)
+
+// If no position, reset tracking
+if (strategy.position_size == 0)
+    entryPrice := 0.0
+    entryATR := 0.0
+
+//--- Plot entry/exit markers
+plotshape(longCondition, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)

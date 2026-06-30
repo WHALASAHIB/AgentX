@@ -1,0 +1,33 @@
+//@version=5
+strategy(title="EMA3/8 + RSI40 TP1 ATR SL1.5 ATR XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)  // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=50)  // sweep: 5-20 step 1
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)           // sweep: 7-21 step 2
+rsi_threshold = input.int(40, "RSI Bullish Threshold", minval=20, maxval=80)  // sweep: 30-50 step 5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)           // sweep: 7-21 step 2
+tp_mult = input.float(1.0, "Take Profit (ATR multiples)", minval=0.5, maxval=5.0, step=0.25)  // sweep: 0.5-3.0 step 0.25
+sl_mult = input.float(1.5, "Stop Loss (ATR multiples)", minval=0.5, maxval=5.0, step=0.25)  // sweep: 0.5-3.0 step 0.25
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA3/8 crossover + RSI > threshold (long only)
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+
+//--- exit management: ATR-based TP/SL
+entry_price = strategy.position_avg_price
+long_sl = entry_price - (atr_val * sl_mult * syminfo.mintick)
+long_tp = entry_price + (atr_val * tp_mult * syminfo.mintick)
+
+//--- execute entry on condition
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//--- set exit on TP/SL for open long positions
+if strategy.position_size > 0
+    strategy.exit("TP/SL", "Long", loss=sl_mult * atr_val / syminfo.mintick, profit=tp_mult * atr_val / syminfo.mintick)
