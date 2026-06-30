@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 144,
+    "total_ideas": 146,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -627,6 +627,44 @@
       "diversification_value": "Every existing volatility idea either fades volatility (Volatility_Skew_Mean_Reverter, Volatility_Term_Structure_Fade, Volatility_Risk_Premium_Decay), trades vol momentum after it is confirmed (Volatility_Momentum_Ride, Volatility_Momentum_Inflection), or trades specific events (Event_Volatility_Straddle_Reversal, News_Impact_Volatility_Decay). This is the ONLY strategy in the volatility family that attempts to ANTICIPATE the vol expansion BEFORE it happens \u2014 positioning early for the highest-R:R window. It is the complement to Vol_Momentum_Inflection (which tracks ATR ROC after the shift starts) and orthogonal to all 13 other volatility ideas.",
       "self_grade": "A-",
       "generated_at": "2026-06-29T11:42:46Z"
+    },
+    {
+      "name": "Monthly_Option_MaxPain_Gravity_Target",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Exploits the statistical gravitational pull of gold toward the 'max pain' option strike in the 24-48 hours before monthly options expiry, driven by dealer delta-hedging dynamics that favour settlement at the strike with maximum open interest.",
+      "market_behaviour": "Gold exhibits a statistically significant drift toward the 'max pain' strike price in the 24-48 hours before monthly and quarterly options expiry (3rd Friday of each month). This is caused by dealer delta hedging dynamics: market makers who sold options benefit when the underlying price settles at the strike where the maximum number of options expire worthless. As expiry approaches, dealers hedge their gamma exposure by buying/selling the underlying, creating a gravitational pull. This effect is strongest during quarterly expiry (triple witching) when futures, options, and options on futures all expire simultaneously. The edge is independent of directional market bias \u2014 it is a pure microstructure settlement effect.",
+      "entry_logic": "1. On the Wednesday before monthly options expiry (3rd Friday), identify the gold futures (GC) option chain.\n2. Calculate the 'max pain' strike \u2014 the strike price with the highest total open interest across all expiry-month puts and calls.\n3. Measure current spot price distance from the max pain strike as a multiple of ATR(14).\n4. If spot is >0.5xATR(14) away from max pain strike AND expiry is <= 48 hours away: enter fade trade toward max pain.\n5. If spot is >1.5xATR(14) away from max pain strike: stronger conviction entry (statistically higher retracement probability).\n6. If spot is already within 0.3xATR(14) of max pain: skip (too close, insufficient edge).\n7. Skip if a major macro event (FOMC, NFP, CPI) falls within the 48h expiry window \u2014 event flow overwhelms max pain gravity.",
+      "exit_logic": "SL: 0.5xATR(14) beyond max pain strike on the entry side.\nTP: Within 0.1xATR(14) of max pain strike.\nTime stop: Expiry (3rd Friday 13:30 UTC gold options settlement) \u2014 exit any remaining position 15 minutes before settlement.\nRe-entry: If price reverses away from max pain before expiry, re-enter once beyond 0.5xATR(14) again.\nManagement: Trail SL to breakeven when price reaches within 0.3xATR(14) of max pain.",
+      "failure_mode": "1. FOMC/NFP/CPI events during expiry week: directional macro flow overwhelms the max pain gravity, price breaks decisively through max pain and continues in the event direction.\n2. Strong trending markets: dealers dynamically re-hedge and abandon the max pain target \u2014 the gravitational pull weakens as delta hedging becomes directional.\n3. Data lag: option chain OI data must be near-real-time; stale Friday-afternoon data shows incorrect max pain calculation.\n4. Low-open-interest months: when total OI across all strikes is below the 3-month average, the max pain effect weakens significantly.",
+      "diversification_value": "The only existing 'other' family idea in the options/derivatives sub-niche is Gamma_Exposure_Floor_Ceiling_Liquidity [C+], which identifies dealer long/short gamma zones from positioning. This idea targets the distinct max-pain gravitational pull during expiry windows \u2014 a completely different mechanism driven by dealer P&L incentive at settlement rather than gamma hedging zones. Different timing (48h expiry window vs continuous), different entry trigger (distance from max pain vs gamma threshold), and different underlying data source (option chain OI vs gamma exposure estimates). Does not overlap with any existing seasonal, volatility, or regime_filter ideas.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-29T16:35:28Z"
+    },
+    {
+      "name": "Range_Extension_Statistical_Trap",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades intraday price extensions beyond the London Initial Balance (first 60-min range) by more than 1xATR(15), exploiting the statistical tendency (62%) for price to revert within that range within 3 hours due to positioning unwinding.",
+      "market_behaviour": "When XAUUSD intraday price extends beyond the London Initial Balance range (first 60 minutes: 07:00-08:00 UTC) by more than 1 standard deviation of the average London-day extension, there is a ~62% statistical probability of a reversal back within that range within the next 3 hours. This pattern arises from over-aggressive early-session positioning by retail and algo traders who front-run the London open, which gets systematically unwound during the London-US overlap (12:00-16:00 UTC) as institutional flow enters with genuine size. The effect is a pure statistical microstructure anomaly \u2014 not a fundamental reversal signal \u2014 and is strongest on normal-volatility days where the IB range is within normal bounds.",
+      "entry_logic": "1. Calculate Initial Balance (IB) = High - Low range of first 60 minutes of London session (07:00-08:00 UTC).\n2. On M15 chart, track whether price has extended beyond IB by >1.0xATR(15).\n3. If price extends >1.0xATR(15) above IB high: prepare short fade.\n4. If price extends >1.0xATR(15) below IB low: prepare long fade.\n5. Confirm with RSI(7) > 70 (for above-IB extension) or RSI(7) < 30 (for below-IB extension) \u2014 extension is statistically overdone.\n6. Enter only between 08:00-14:00 UTC (before US cash open, when reversal probability is highest).\n7. Skip if today's IB range is >2x the 20-day average IB (unusual volatility \u2014 breakdown of statistical edge).\n8. Skip on NFP/FOMC/CPI days \u2014 event-driven moves overwhelm the microstructure pattern.",
+      "exit_logic": "TP1 (50%): Return to IB high/low (the range boundary).\nTP2 (50%): IB midpoint (50% retracement of the extension).\nSL: 0.5xATR(15) beyond the extension extreme.\nTime stop: Exit any remaining position 3 hours from entry.\nRe-entry: No re-entry on the same day once the fade triggers \u2014 the window of statistical edge closes after one attempt.\nManagement: Move SL to breakeven when TP1 is hit.",
+      "failure_mode": "1. Strong directional trend day: the extension is the first leg of a multi-session move, and fading it misses a 200+ pip trend. Detecting trend vs noise days is the key challenge.\n2. Heavy news day (FOMC, NFP): the extension is driven by fundamental flow, not positioning noise \u2014 the statistical edge breaks down entirely.\n3. Low-liquidity holiday periods: the IB range is artificially small and extensions are uninformative.\n4. Consecutive fade losses: after two consecutive losses, the pattern may be regime-shifted \u2014 skip the next 3 trading days.",
+      "diversification_value": "Distinct from London_Open_Gap_Retracement_Timer [A-] (which fades the London open gap from Asian close \u2014 a different price action entirely). Distinct from Session_Flow_Exhaustion [B] (cumulative tick-direction dominance over full session). Distinct from Gap_Exhaustion_Fade_Reverter [B+] (large gaps at any open, not IB-specific). This idea targets a specific statistical pattern based on the London Initial Balance range extension \u2014 a different measurement window (post-IB intraday extension vs session open gap), different entry trigger (distance from IB boundary vs gap size), and different confirmation (RSI overextension + IB range normalcy filter). No overlap with the existing structural/technical analytics sub-niche idea Structural_Break_Momentum_Flux [B].",
+      "self_grade": "A-",
+      "generated_at": "2026-06-29T16:35:28Z"
     }
   ],
   "archived": [
@@ -2840,7 +2878,9 @@
       "Market_Microstructure_Depth_Reversal",
       "London_Open_Gap_Retracement_Timer",
       "Tick_Volume_Climax_Reversal",
-      "Correlation_Decoupling_Trend_Capture"
+      "Correlation_Decoupling_Trend_Capture",
+      "Monthly_Option_MaxPain_Gravity_Target",
+      "Range_Extension_Statistical_Trap"
     ]
   }
 }
