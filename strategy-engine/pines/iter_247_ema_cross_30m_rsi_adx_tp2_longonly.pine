@@ -1,0 +1,79 @@
+//@version=5
+strategy(title="iter_247_ema_513_rsi_adx_tp2_longonly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(5, "EMA Fast Length", minval=1, maxval=50)      // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=1, maxval=100)     // sweep: 8-26 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)               // sweep: 7-21 step 2
+rsiMin = input.int(50, "RSI Minimum (long only)", minval=1, maxval=100) // sweep: 40-60 step 5
+
+// ADX filter — manual calculation
+adxLen = input.int(14, "ADX Length", minval=2, maxval=50)               // sweep: 7-21 step 2
+adxMin = input.int(15, "ADX Minimum", minval=1, maxval=50)              // sweep: 10-25 step 5
+
+// TP/SL via ATR
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)               // sweep: 7-21 step 2
+tpMulti = input.float(2.0, "Take Profit (ATR multiplier)", minval=0.1, maxval=10.0, step=0.1)  // sweep: 1.0-4.0 step 0.5
+slMulti = input.float(1.0, "Stop Loss (ATR multiplier)", minval=0.1, maxval=10.0, step=0.5)    // sweep: 0.5-2.0 step 0.5
+
+// Session filter
+sessionStart = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23)  // sweep: 6-12 step 1
+sessionEnd = input.int(16, "Session End Hour (UTC)", minval=0, maxval=23)     // sweep: 14-20 step 1
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- Manual ADX calculation (v5 safe)
+// Directional movement
+upMove = high - high[1]
+downMove = low[1] - low
+
+plusDM = na(upMove) ? na : (upMove > downMove and upMove > 0 ? upMove : 0)
+minusDM = na(downMove) ? na : (downMove > upMove and downMove > 0 ? downMove : 0)
+trur = ta.tr(true)
+
+plusDI = 100 * ta.rma(plusDM, adxLen) / ta.rma(trur, adxLen)
+minusDI = 100 * ta.rma(minusDM, adxLen) / ta.rma(trur, adxLen)
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = ta.rma(dx, adxLen)
+
+//--- crossover detection
+emaCrossOver = ta.crossover(emaFast, emaSlow)
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+
+//--- session check
+currentHour = hour(time)
+inSession = currentHour >= sessionStart and currentHour < sessionEnd
+
+//--- entry conditions
+longCondition = emaCrossOver and rsiVal > rsiMin and adxVal > adxMin and inSession
+
+//--- entry management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (strategy.position_size > 0)
+    entryPrice = strategy.position_avg_price
+    strategy.exit("XL", "Long", loss=int(slMulti * atrVal / syminfo.mintick), profit=int(tpMulti * atrVal / syminfo.mintick))
+
+//--- plot indicators for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+
+// Plot ADX background
+adxColor = adxVal > adxMin ? color.new(color.green, 90) : color.new(color.red, 90)
+bgcolor(adxColor, title="ADX Background")
+
+// Plot session overlay
+sessionColor = inSession ? color.new(color.blue, 95) : na
+bgcolor(sessionColor, title="Session Background")
+
+// Plot buy signals
+plotshape(longCondition, "Long Signal", shape.triangleup, location.belowbar, color.green, size=size.small)

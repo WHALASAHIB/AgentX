@@ -1,0 +1,50 @@
+//@version=5
+strategy(title="iter_244_EMA5_13_RSI_ADX_ATR_LongOnly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fastLen = input.int(5, "Fast EMA Length", minval=2, maxval=50, step=1)   // sweep: 3-10 step 1
+slowLen = input.int(13, "Slow EMA Length", minval=5, maxval=100, step=1)  // sweep: 10-30 step 2
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30, step=1)         // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold (long only above)", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+adxLen = input.int(14, "ADX Length", minval=7, maxval=30, step=1)         // sweep: 10-21 step 2
+adxThreshold = input.int(25, "ADX Threshold (trending)", minval=15, maxval=40, step=5) // sweep: 20-30 step 5
+atrLen = input.int(14, "ATR Length", minval=7, maxval=30, step=1)         // sweep: 7-21 step 2
+tpRatio = input.float(1.0, "Take Profit (ATR multiple)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+slRatio = input.float(1.5, "Stop Loss (ATR multiple)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+tradeSession = input.string("0800-1600", "Trade Session (UTC)", group="Session Settings")
+
+//--- manual ADX calculation (ta.adx is not available on this engine)
+trueRange = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = upMove > downMove and upMove > 0 ? upMove : 0.0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0.0
+smoothedTR = ta.rma(trueRange, adxLen)
+smoothedPlus = ta.rma(plusDM, adxLen)
+smoothedMinus = ta.rma(minusDM, adxLen)
+plusDI = 100.0 * smoothedPlus / smoothedTR
+minusDI = 100.0 * smoothedMinus / smoothedTR
+dx = 100.0 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = ta.rma(dx, adxLen)
+
+//--- indicator calculations
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+inSession = time(timeframe.period, tradeSession)
+longCondition = ta.crossover(fastMA, slowMA) and rsiVal > rsiThreshold and adxVal > adxThreshold and inSession
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management (ATR-based TP/SL)
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=int(atrVal * slRatio / syminfo.mintick), profit=int(atrVal * tpRatio / syminfo.mintick))
+
+//--- plots
+plot(fastMA, "Fast EMA", color=color.blue, linewidth=1)
+plot(slowMA, "Slow EMA", color=color.red, linewidth=1)
+hline(adxThreshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)

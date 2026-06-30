@@ -1,0 +1,80 @@
+//@version=5
+strategy(title="EMA5_13_RSI_ADX15_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fastLen = input.int(5, "Fast EMA Length", minval=2, maxval=50)       // sweep: 3-20 step 1
+slowLen = input.int(13, "Slow EMA Length", minval=5, maxval=100)      // sweep: 8-26 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)             // sweep: 7-21 step 1
+rsiThreshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80) // sweep: 40-60 step 5
+
+// ADX filter (manual calculation)
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30)             // sweep: 7-21 step 1
+adxThreshold = input.int(15, "ADX Minimum (trend filter)", minval=5, maxval=50) // sweep: 10-30 step 5
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length", minval=5, maxval=50)             // sweep: 7-21 step 1
+slMultiplier = input.float(1.5, "SL Multiplier (×ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+tpMultiplier = input.float(1.0, "TP Multiplier (×ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+
+// Session filter
+sessionStart = input.int(8, "Session Start (UTC hour)", minval=0, maxval=23)  // sweep: 0-23 step 1
+sessionEnd = input.int(16, "Session End (UTC hour)", minval=0, maxval=23)     // sweep: 8-20 step 1
+
+//--- manual ADX calculation (ta.adx not available in all engines)
+up = high - high[1]
+down = low[1] - low
+
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+
+tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+
+smoothedTR = ta.ema(tr, adxLen)
+smoothedPlusDM = ta.ema(plusDM, adxLen)
+smoothedMinusDM = ta.ema(minusDM, adxLen)
+
+plusDI = 100 * smoothedPlusDM / (smoothedTR + 1e-10)
+minusDI = 100 * smoothedMinusDM / (smoothedTR + 1e-10)
+
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI + 1e-10)
+adxValue = ta.ema(dx, adxLen)
+
+//--- calculations
+fastEMA = ta.ema(close, fastLen)
+slowEMA = ta.ema(close, slowLen)
+
+rsiValue = ta.rsi(close, rsiLen)
+
+atrValue = ta.atr(atrLen)
+
+//--- entry conditions
+inSession = (hour >= sessionStart) and (hour < sessionEnd)
+bullishCross = ta.crossover(fastEMA, slowEMA)
+bearishCross = ta.crossunder(fastEMA, slowEMA)
+
+// Long entry: EMA5 crosses above EMA13, RSI > 50, ADX > 15, within session
+longCondition = bullishCross and (rsiValue > rsiThreshold) and (adxValue > adxThreshold) and inSession
+
+// Short entry: EMA5 crosses below EMA13, RSI < 50, ADX > 15, within session
+shortCondition = bearishCross and (rsiValue < (100 - rsiThreshold)) and (adxValue > adxThreshold) and inSession
+
+//--- entry logic
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long", 
+     loss=int(atrValue * slMultiplier / syminfo.mintick), 
+     profit=int(atrValue * tpMultiplier / syminfo.mintick))
+
+if (strategy.position_size < 0)
+    strategy.exit("Short Exit", "Short", 
+     loss=int(atrValue * slMultiplier / syminfo.mintick), 
+     profit=int(atrValue * tpMultiplier / syminfo.mintick))
