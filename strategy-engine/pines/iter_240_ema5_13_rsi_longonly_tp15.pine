@@ -1,0 +1,40 @@
+//@version=5
+strategy(title="iter_240_EMA5_13_RSI_Longonly_TP15", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== inputs ===
+ema_fast_len   = input.int(5,   "Fast EMA Length",   minval=2, maxval=50, step=1)     // sweep: 3-10 step 1
+ema_slow_len   = input.int(13,  "Slow EMA Length",   minval=5, maxval=100, step=1)    // sweep: 10-30 step 5
+rsi_len        = input.int(14,  "RSI Length",        minval=5, maxval=30, step=1)     // sweep: 10-21 step 2
+rsi_threshold  = input.int(50,  "RSI Long Threshold", minval=30, maxval=70, step=5)   // sweep: 40-60 step 5
+atr_len        = input.int(14,  "ATR Length",        minval=5, maxval=30, step=1)     // sweep: 10-21 step 2
+atr_mult_sl    = input.float(1.0, "ATR Multiplier SL", minval=0.5, maxval=3.0, step=0.25) // sweep: 0.5-2.0 step 0.25
+tp_sl_ratio    = input.float(1.5, "TP/SL Ratio",     minval=1.0, maxval=3.0, step=0.5)   // sweep: 1.0-2.5 step 0.5
+use_long       = input.bool(true,  "Enable Long Trades")
+
+//=== indicator calculations ===
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+atr_val  = ta.atr(atr_len)
+
+//--- crossover signals
+cross_over  = ta.crossover(ema_fast, ema_slow)
+cross_under = ta.crossunder(ema_fast, ema_slow)
+
+//=== entry logic ===
+// Long: EMA fast crosses above slow + RSI above threshold
+long_condition = use_long and cross_over and rsi_val > rsi_threshold
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//=== exit management ===
+// Set ATR-based SL/TP on new positions
+if strategy.position_size > 0 and strategy.position_size[1] <= 0
+    sl_pips = atr_val * atr_mult_sl / syminfo.mintick
+    tp_pips = sl_pips * tp_sl_ratio
+    strategy.exit("XL", "Long", loss=math.round(sl_pips), profit=math.round(tp_pips))
+
+// Exit on EMA crossunder (trend reversal)
+if cross_under and strategy.position_size > 0
+    strategy.close("Long")

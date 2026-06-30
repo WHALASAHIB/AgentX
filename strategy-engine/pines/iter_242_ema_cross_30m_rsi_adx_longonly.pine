@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="EMA5/13 Crossover + RSI(14)>50 + ADX(14)>25 — XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- Manual ADX function (ta.adx not supported on Trader Dev engine)
+manualAdx(len) =>
+    up = high - high[1]
+    down = low[1] - low
+    plusDM = up > down and up > 0 ? up : 0
+    minusDM = down > up and down > 0 ? down : 0
+    tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+    smoothedTR = ta.rma(tr, len)
+    smoothedPlusDM = ta.rma(plusDM, len)
+    smoothedMinusDM = ta.rma(minusDM, len)
+    plusDI = 100 * smoothedPlusDM / smoothedTR
+    minusDI = 100 * smoothedMinusDM / smoothedTR
+    dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+    ta.rma(dx, len)
+
+//--- inputs
+emaFastLen   = input.int(5,   "EMA Fast Length",    minval=1, maxval=50, step=1)    // sweep: 3-10 step 1
+emaSlowLen   = input.int(13,  "EMA Slow Length",    minval=5, maxval=50, step=1)    // sweep: 8-21 step 1
+rsiLen       = input.int(14,  "RSI Length",         minval=2, maxval=30, step=1)    // sweep: 7-21 step 2
+rsiThreshold = input.int(50,  "RSI Threshold (Bullish)", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+adxLen       = input.int(14,  "ADX Length",         minval=5, maxval=30, step=1)    // sweep: 10-20 step 2
+adxThreshold = input.int(25,  "ADX Threshold",      minval=15, maxval=40, step=5)   // sweep: 20-30 step 5
+atrLen       = input.int(14,  "ATR Length",         minval=5, maxval=30, step=1)    // sweep: 10-20 step 2
+slMultiplier = input.float(1.0, "SL × ATR",          minval=0.5, maxval=3.0, step=0.1) // sweep: 0.5-2.0 step 0.1
+tpMultiplier = input.float(1.5, "TP × ATR",          minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.1
+
+//--- indicator calculations
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+rsiVal   = ta.rsi(close, rsiLen)
+adxVal   = manualAdx(adxLen)
+atrVal   = ta.atr(atrLen)
+
+//--- entry logic
+// Bullish conditions: EMA fast crossed above slow, RSI > threshold, ADX > threshold
+bullishCrossover = ta.crossover(emaFast, emaSlow)
+bullishFilter    = rsiVal > rsiThreshold and adxVal > adxThreshold
+longEntry        = bullishCrossover and bullishFilter
+
+//--- entry
+if longEntry
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// Use ATR-based TP/SL via strategy.exit (no cascade close)
+if strategy.position_size > 0
+    stopLossPips  = atrVal * slMultiplier
+    takeProfitPips = atrVal * tpMultiplier
+    strategy.exit("XL", "Long",
+         loss=stopLossPips / syminfo.mintick,
+         profit=takeProfitPips / syminfo.mintick)

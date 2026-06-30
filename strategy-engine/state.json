@@ -1,6 +1,6 @@
 {
-  "iteration": 240,
-  "last_run": "2026-06-30T09:52:00Z",
+  "iteration": 244,
+  "last_run": "2026-06-30T10:45:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,128 +13,39 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Iter 239 EMA5/13 + manual ADX(14)>25 + RSI(14)>50 on XAUUSD 30m produced 26 trades (halved from 49) but PF only improved from 1.03 to 1.07 — ADX filter removed half the trades but did not meaningfully improve quality. WR is 30.77% (<40%) — the weakest metric now. Tighten TP/SL ratio from 1:1 to 1:1.5 (SL=1.0×ATR, TP=1.5×ATR). Wider TP should let winners run further, improving WR and PF. Remove ADX filter (it killed too many trades). Next: EMA5/13 crossover + RSI(14)>50 on XAUUSD 30m with 1:1.5 ATR-based TP/SL.",
+  "current_hypothesis": "Revert EMA4/10 back to EMA5/13 — EMA4/10 (PF=0.59, WR 30.4%, 23 trades) performed worse than EMA5/13 (PF=0.82 in iter 242). The faster EMAs introduced more noise. Keep RSI(14)>50 and ADX(14)>25 (tighten from 20 back to 25 to filter weak trends). Pure ATR TP/SL 1:1.5. XAUUSD 30m.",
   "evolution_log": [
     {
-      "iteration": 232,
-      "hypothesis": "Bollinger Bands squeeze breakout + RSI(14)>50 filter + ATR-based TP/SL 1.5:1 on XAUUSD H1.",
+      "iteration": 242,
+      "hypothesis": "EMA5/13 crossover + RSI(14)>50 + ADX(14)>25 on XAUUSD 30m. ADX>25 filters ranging markets so EMA crossovers happen in trending conditions. Pure ATR TP/SL 1:1.5 (no exit-on-crossunder). Long only.",
       "metrics": {
-        "pf": 0.1889411,
-        "sharpe": -5.03383893,
-        "wr": 16.66666667,
-        "dd": 5.01915652,
-        "trades": 6,
-        "net_profit": -442.599198900796
+        "pf": 0.81943973,
+        "sharpe": -2.85432639,
+        "wr": 38.46153846,
+        "dd": 2.14427475,
+        "trades": 13,
+        "net_profit": -150.809890820314
       },
-      "verdict": "invalid (low sample, 6 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-30T00:08:00Z"
-    },
-    {
-      "iteration": 233,
-      "hypothesis": "Drop squeeze entirely. Trade directly when price closes above upper BB + RSI>50 (long) or below lower BB + RSI<50 (short). Keep ATR-based TP/SL 1.5:1.",
-      "metrics": {},
-      "verdict": "auth_failed - API key pk_G0P628bcenPilOUGjIdJLV5OggU-RAYE rejected by server. Server returned HTML instead of JSON on /me endpoint. Trader Dev auth infrastructure may be down or key expired. Retry next tick.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-30T00:20:00Z"
-    },
-    {
-      "iteration": 234,
-      "hypothesis": "Drop squeeze entirely. Trade directly when price closes above upper BB + RSI>50 (long) or below lower BB + RSI<50 (short). Keep ATR-based TP/SL 1.5:1 on XAUUSD H1.",
-      "metrics": {
-        "pf": 1.01333921,
-        "sharpe": -3.22536381,
-        "wr": 44.23076923,
-        "dd": 4.70717216,
-        "trades": 52,
-        "net_profit": -392.933968766198
-      },
-      "verdict": "rejected (PF=1.01 Sharpe=-3.23 DD=4.71%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-30T00:35:00Z"
-    },
-    {
-      "iteration": 235,
-      "hypothesis": "BB Touch + RSI + ADX(14)>25 filter on XAUUSD H1. Only enter long when close > upper BB AND RSI > 50 AND ADX > 25; only enter short when close < lower BB AND RSI < 50 AND ADX > 25. ATR-based TP/SL at 1.5:1.",
-      "metrics": {
-        "pf": 0.44541356,
-        "sharpe": -9.39548369,
-        "wr": 29.03225806,
-        "dd": 5.15847032,
-        "trades": 31,
-        "net_profit": -500.243589946165
-      },
-      "verdict": "rejected (PF=0.45 Sharpe=-9.40 DD=5.16%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-30T00:50:00Z"
-    },
-    {
-      "iteration": 236,
-      "hypothesis": "EMA5/13 crossover long-only on XAUUSD H1 with RSI(14)>50 and ADX(14)>20 filters. TP/SL 1:1 with ATR-based stops. Exit on EMA crossunder.",
-      "metrics": {
-        "pf": 0,
-        "sharpe": null,
-        "wr": 0,
-        "dd": 0,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades) — EMA5/13 crossover + RSI>50 + ADX>20 too restrictive, 0 trades in 777 bars",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-30T01:00:00Z"
-    },
-    {
-      "iteration": 237,
-      "hypothesis": "Drop ADX filter entirely. Keep EMA5/13 crossover + RSI(14)>50 for long entries on XAUUSD H1. 1:1 TP/SL with ATR-based stops. Exit on EMA crossunder.",
-      "metrics": {
-        "pf": 0.06193879,
-        "sharpe": -5.7176953,
-        "wr": 12.5,
-        "dd": 4.81156204,
-        "trades": 8,
-        "net_profit": -427.935927154265
-      },
-      "verdict": "invalid (low sample, 8 trades) — PF 0.06, removing ADX barely helped (8 vs 0 trades), still too restrictive and bad performance",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-06-30T01:15:00Z"
-    },
-    {
-      "iteration": 238,
-      "hypothesis": "EMA5/13 crossover on XAUUSD 30m: faster timeframe provides more bars and crossover signals. Same EMA5/13 crossover + RSI(14)>50 filter (long only), 1:1 ATR-based TP/SL, exit on EMA crossunder.",
-      "metrics": {
-        "pf": 1.03392244,
-        "sharpe": -2.51633978,
-        "wr": 24.48979592,
-        "dd": 4.71018105,
-        "trades": 49,
-        "net_profit": -352.221412225586
-      },
-      "verdict": "rejected (PF=1.03 Sharpe=-2.52 DD=4.71%)",
+      "verdict": "invalid (low sample, 13 trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-06-30T09:37:00Z"
+      "time": "2026-06-30T10:35:00Z"
     },
     {
-      "iteration": 239,
-      "hypothesis": "EMA5/13 crossover + manual ADX(14)>25 + RSI(14)>50 on XAUUSD 30m. ADX filter should eliminate ranging-market trades, improving Sharpe and PF. 1:1 ATR-based TP/SL, exit on EMA crossunder.",
+      "iteration": 243,
+      "hypothesis": "Reduce ADX threshold from 25 to 20 and shorten EMAs from 5/13 to 4/10 to generate more crossover signals. Keep RSI(14)>50 filter and pure ATR TP/SL 1:1.5. XAUUSD 30m.",
       "metrics": {
-        "pf": 1.06712753,
-        "sharpe": -1.73346148,
-        "wr": 30.76923077,
-        "dd": 4.13579741,
-        "trades": 26,
-        "net_profit": -166.436702709449
+        "pf": 0.58901186,
+        "sharpe": -7.56175364,
+        "wr": 30.43478261,
+        "dd": 3.83064119,
+        "trades": 23,
+        "net_profit": -372.409091501388
       },
-      "verdict": "rejected (PF=1.07 Sharpe=-1.73 DD=4.14%)",
+      "verdict": "rejected (PF=0.59 Sharpe=-7.56 DD=3.83%)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-06-30T09:52:00Z"
+      "time": "2026-06-30T10:45:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

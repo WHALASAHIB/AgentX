@@ -1,0 +1,104 @@
+//@version=5
+strategy(title="EMA4/10 Cross + RSI(14)>50 + ADX(20) — Long Only XAUUSD 30m",
+         overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- Manual ADX function (ta.adx not supported on Trader Dev engine)
+manualAdx(len) =>
+    up = high - high[1]
+    down = low[1] - low
+    plusDM = up > down and up > 0 ? up : 0
+    minusDM = down > up and down > 0 ? down : 0
+    tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+    smoothedTR = ta.rma(tr, len)
+    smoothedPlusDM = ta.rma(plusDM, len)
+    smoothedMinusDM = ta.rma(minusDM, len)
+    plusDI = 100 * smoothedPlusDM / smoothedTR
+    minusDI = 100 * smoothedMinusDM / smoothedTR
+    dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+    ta.rma(dx, len)
+
+//====================================================================
+//--- inputs
+//====================================================================
+
+// EMA parameters
+emaFastLen = input.int(4, "Fast EMA Length", minval=2, maxval=30, step=1)     // sweep: 2-12 step 1
+emaSlowLen = input.int(10, "Slow EMA Length", minval=5, maxval=50, step=1)     // sweep: 8-26 step 2
+
+// RSI filter
+rsiLen     = input.int(14, "RSI Length", minval=7, maxval=28, step=1)          // sweep: 7-28 step 7
+rsiMin     = input.int(50, "RSI Minimum (long only if RSI > this)", minval=20, maxval=80, step=5) // sweep: 30-70 step 10
+
+// ADX trend filter
+adxLen     = input.int(14, "ADX Length", minval=7, maxval=28, step=1)          // sweep: 7-28 step 7
+adxMin     = input.int(20, "ADX Minimum (trend filter)", minval=5, maxval=40, step=5) // sweep: 10-30 step 5
+
+// ATR-based TP/SL
+atrLen     = input.int(14, "ATR Length", minval=7, maxval=28, step=1)          // sweep: 7-28 step 7
+slMult     = input.float(1.0, "SL Multiplier (×ATR)", minval=0.5, maxval=3.0, step=0.25)  // sweep: 0.5-2.0 step 0.25
+tpMult     = input.float(1.5, "TP Multiplier (×ATR)", minval=0.5, maxval=4.0, step=0.25)  // sweep: 0.5-3.0 step 0.25
+
+// Trade settings
+useTradeFilter = input.bool(true, "Enable RSI + ADX Filters")                  // toggle to test filter impact
+
+//====================================================================
+//--- indicator calculations
+//====================================================================
+
+// EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+// Manual ADX (compatible with Trader Dev engine)
+adxVal = manualAdx(adxLen)
+
+// ATR for TP/SL
+atrVal = ta.atr(atrLen)
+
+// Crossover signals
+emaCrossOver  = ta.crossover(emaFast, emaSlow)
+
+// State
+inLong = strategy.position_size > 0
+
+//====================================================================
+//--- entry logic (long only)
+//====================================================================
+
+// Entry condition: EMA4 crosses above EMA10 + RSI > 50 + ADX > 20
+longEntry = emaCrossOver
+if useTradeFilter
+    longEntry := longEntry and rsiVal > rsiMin and adxVal > adxMin
+
+// Enter long when all conditions met — let TP/SL handle the exit, no cascade close
+if longEntry and not inLong
+    strategy.entry("Long", strategy.long)
+
+// ATR-based TP/SL exit (every bar while in position to maintain adaptive levels)
+if inLong
+    stopLossPips   = int(atrVal * slMult / syminfo.mintick)
+    takeProfitPips = int(atrVal * tpMult / syminfo.mintick)
+    strategy.exit("Long Exit", "Long",
+                  loss=stopLossPips,
+                  profit=takeProfitPips,
+                  comment="TP/SL")
+
+//====================================================================
+//--- visual plot
+//====================================================================
+
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=2)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=2)
+
+// Buy signal marker
+plotshape(longEntry and not inLong, title="Buy Signal", location=location.belowbar,
+         color=color.green, style=shape.triangleup, size=size.small)
