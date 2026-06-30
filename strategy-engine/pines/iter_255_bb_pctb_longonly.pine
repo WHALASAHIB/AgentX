@@ -1,0 +1,45 @@
+//@version=5
+strategy(title="BB %B Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(20, "Bollinger Bands Length", minval=5, maxval=100, step=1)  // sweep: 10-50 step 5
+bb_mult   = input.float(2.0, "Bollinger Bands StdDev", minval=1.0, maxval=4.0, step=0.1)  // sweep: 1.5-3.0 step 0.25
+atr_length = input.int(14, "ATR Length", minval=5, maxval=50, step=1)  // sweep: 7-21 step 7
+atr_mult   = input.float(1.5, "ATR Stop Multiplier", minval=0.5, maxval=3.0, step=0.25)  // sweep: 1.0-2.5 step 0.5
+use_tp     = input.bool(false, "Enable Take Profit (close on upper band)")  // if true, exit via %B<1; if false, trail via ATR stop
+
+//--- indicators
+[bb_mid, bb_upper, bb_lower] = ta.bb(close, bb_length, bb_mult)
+atr_val = ta.atr(atr_length)
+
+//--- %B calculation
+pct_b = (close - bb_lower) / (bb_upper - bb_lower)
+
+//--- entry signal: %B crosses above 0 (price bounces off lower band)
+long_entry = ta.crossover(pct_b, 0)
+
+//--- exit signal: %B crosses below 1 (price touches upper band, mean reversion)
+long_exit = ta.crossunder(pct_b, 1)
+
+//--- entry logic
+if (long_entry)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (use_tp)
+    // Exit when %B crosses below 1 (price came back from upper band)
+    if (long_exit)
+        strategy.close("Long", comment="TP_%B<1")
+else
+    // ATR-based trailing stop: strategy.exit with loss parameter
+    if (strategy.position_size > 0)
+        strategy.exit("XL", "Long", loss=int(atr_val * atr_mult / syminfo.mintick))
+
+//--- visual plots
+plot(bb_upper, "Upper BB", color=color.new(color.blue, 50))
+plot(bb_mid, "Middle BB", color=color.new(color.purple, 50))
+plot(bb_lower, "Lower BB", color=color.new(color.blue, 50))
+hline(0, "%B Lower", color=color.new(color.green, 70), linestyle=hline.style_dashed)
+hline(1, "%B Upper", color=color.new(color.red, 70), linestyle=hline.style_dashed)
+plotshape(long_entry, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
+plotshape(long_exit, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small)

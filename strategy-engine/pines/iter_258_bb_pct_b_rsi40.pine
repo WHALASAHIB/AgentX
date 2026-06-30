@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="BB %B RSI40 (10,2,14)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(10, "BB Length", minval=5, maxval=30, step=1)       // sweep: 5-30 step 5
+bb_std = input.float(2.0, "BB StdDev", minval=1.0, maxval=3.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+rsi_length = input.int(14, "RSI Length", minval=7, maxval=21, step=1)       // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Threshold", minval=30, maxval=50, step=5) // sweep: 30-50 step 5 — LOWERED from 50 to 40
+atr_mult = input.float(1.5, "ATR Multiplier (SL)", minval=0.5, maxval=3.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+use_tp_mode = input.bool(true, "Enable TP (%B<1 exit)", group="Exit Settings")
+
+//--- Bollinger Bands %B calculation
+basis = ta.sma(close, bb_length)
+dev = ta.stdev(close, bb_length) * bb_std
+upper = basis + dev
+lower = basis - dev
+
+// %B = (close - lower) / (upper - lower)
+pct_b = (close - lower) / (upper - lower)
+
+//--- RSI
+rsi_val = ta.rsi(close, rsi_length)
+
+//--- ATR for stop loss
+atr_val = ta.atr(14)
+
+//--- entry logic
+// Long signal: %B crosses above 0 (close crosses above lower band) AND RSI > threshold
+long_entry = ta.crossover(pct_b, 0) and rsi_val > rsi_threshold
+
+//--- exit management
+// TP condition: %B crosses below 1 (close crosses below upper band) — only if TP mode enabled
+tp_exit = ta.crossunder(pct_b, 1)
+
+//--- strategy execution
+if long_entry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+// Exit conditions
+if strategy.position_size > 0
+    // Stop loss: 1.5 ATR entry
+    strategy.exit("Long Exit", "Long", loss=int(atr_val * atr_mult / syminfo.mintick), stop=strategy.position_avg_price - atr_val * atr_mult)
+
+    // TP exit: %B crosses below 1 (price crosses below upper band)
+    if use_tp_mode and tp_exit
+        strategy.close("Long", comment="TP_BB")
+
+//--- plot
+plot(basis, "BB Mid", color=color.yellow)
+p1 = plot(upper, "BB Upper", color=color.gray)
+p2 = plot(lower, "BB Lower", color=color.gray)
+fill(p1, p2, color=color.new(color.gray, 90))
+hline(0, "%B=0", color=color.new(color.green, 70))
+hline(1, "%B=1", color=color.new(color.red, 70))

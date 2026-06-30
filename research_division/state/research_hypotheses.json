@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 148,
+    "total_ideas": 151,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -704,6 +704,63 @@
       "diversification_value": "The Options/Gamma sub-niche within regime_filter has only 2 ideas: Options_Market_Regime_Classifier (which classifies regimes based on absolute options structure levels \u2014 put/call ratios, skew levels) and Gamma_Flip_Regime_Divergence (which uses dealer gamma positioning). Neither measures the REGIME-LEVEL SPREAD between implied and realized volatility. This idea targets the dislocation between market expectations and spot reality \u2014 a fundamentally different signal source that complements both existing options-based regime filters. It can also be used as an overlay on either existing idea to confirm/deny the regime classification.",
       "self_grade": "A-",
       "generated_at": "2026-06-30T04:35:10Z"
+    },
+    {
+      "name": "OVX_GVZ_Cross_Volatility_Divergence",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Trades the mean-reverting divergence between gold volatility (GVZ) and oil volatility (OVX). When OVX surges due to oil-specific shocks but GVZ stays calm, gold's suppressed volatility tends to catch up, creating a mean-reversion opportunity.",
+      "market_behaviour": "Gold volatility (GVZ - CBOE Gold VIX) and oil volatility (OVX - CBOE Crude Oil VIX) tend to correlate during broad macro risk events (correlation ~0.6-0.8) but diverge during commodity-specific shocks. When OVX surges from an oil supply disruption (e.g., OPEC cuts, Middle East shipping disruption) but GVZ remains calm, it signals that the volatility source is oil-specific rather than macro. Gold in this environment trades with artificially suppressed volatility relative to the broader commodity complex. This divergence historically mean-reverts within 5-10 trading days as either gold vol catches up or OVX subsides, creating a tradable re-convergence opportunity.",
+      "entry_logic": "1. Calculate rolling 20-day Pearson correlation between GVZ (CBOE Gold VIX) and OVX (CBOE Crude Oil VIX) using daily closing values. 2. When correlation drops below 0.3 (significant divergence) AND OVX 20-day percentile exceeds 80 (oil vol is genuinely elevated, not just random noise). 3. Check gold ADX(14) on D1: if ADX > 25 (strong trend), skip entry \u2014 divergence may persist during strong directional moves. 4. If gold ADX < 25 (no clear trend), identify the short-term gold direction using H4 50-EMA slope. 5. Enter in the direction of H4 trend if H4 ADX > 20; if H4 ADX < 20, do not enter (chop risk). 6. Position size: 0.75 standard risk (elevated uncertainty from vol regime). 7. Volume confirmation: require gold daily volume > 20-day average.",
+      "exit_logic": "Stop Loss: 1.5 x ATR(14) on H4 chart. Take Profit: 3 x ATR(14) on H4. Time stop: Exit after 10 trading days if not hit either SL or TP (divergence should resolve by then). Early exit: Close position early if OVX-GVZ correlation re-converges above 0.6 \u2014 the signal has invalidated. Re-entry allowed 10 days after exit if divergence persists.",
+      "failure_mode": "Scenario 1 \u2014 Sustained decoupling: A prolonged oil supply crisis (e.g., major Middle East conflict) keeps OVX elevated while gold's safe-haven bid independently drives gold vol higher through a different channel, so both rise and the divergence never mean-reverts because the correlation was never actually broken \u2014 just a transitional regime. Scenario 2 \u2014 Broad risk-off: A global equity crash sends both GVZ and OVX soaring together \u2014 entering on a false divergence signal (no real divergence, just both rising). Scenario 3 \u2014 Data availability: GVZ and OVX are daily indices; intraday variants may not be available without a Bloomberg terminal. Strategy is D1-only, limiting trade frequency.",
+      "diversification_value": "This is the ONLY cross-asset volatility divergence idea in the volatility family. Existing volatility ideas either: (a) depend on gold's OWN volatility (contraction/expansion, term structure, skew), (b) trade news events directly, or (c) use VIX for risk-on/risk-off regimes. None compare TWO different commodity implied volatility indices for mean reversion. It's orthogonal to Volatility_Momentum_Inflection (speed of gold's own vol change), News_Impact_Volatility_Decay (event-based gold vol fade), and Volatility_Skew_Mean_Reverter (gold's own ATR percentile). This introduces a genuinely new signal chain: cross-asset implied vol divergence.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-30T11:05:17Z"
+    },
+    {
+      "name": "Asian_Session_Vol_Carry_Harvest",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "M5"
+      ],
+      "description": "Harvests the volatility risk premium during Asian session when gold's volatility is predictably lowest. Range-trades the tight Asian session range and exits before London open, collecting the theta/implied-vol premium embedded in Asian session option prices.",
+      "market_behaviour": "Gold volatility follows a reliable intraday pattern driven by global market session transitions. Asian session (00:00-09:00 HKT) consistently exhibits the lowest ATR across all sessions \u2014 often 40-50% lower than London/US session volatility. This is driven by lower participation (Japanese and Chinese markets active but European/US liquidity absent), tighter spreads, and reduced news flow. Market makers quote wider bid-ask spreads and charge elevated implied volatility for Asian session options relative to the actual realized volatility during this window. This creates a persistent volatility risk premium: options priced for Asian session expiry carry implied vol ~15-25% above realized vol. The edge comes from collecting this premium through providing liquidity (range-trading) rather than consuming it.",
+      "entry_logic": "1. Confirm current market session is Asian (00:00-09:00 HKT / 16:00-01:00 UTC). 2. Measure the first 2 hours of Asian session to establish the initial range: record the session high and low for the first 120 minutes. 3. Check ATR(14) on M15: must be in the bottom 30% of its 5-day Asian-session-only range (ensures vol is genuinely low, not elevated by overnight news). 4. Check spread: bid-ask spread must be < 0.3 pips (normal Asian session conditions). 5. Entry: BUY when price touches within 2 pips of the session low; SELL when price touches within 2 pips of the session high. 6. Position size: 0.5 standard risk (range is tight \u2014 standard risk at 1% would overleverage small-range conditions). 7. Max 2 round-trip trades per Asian session to prevent over-trading.",
+      "exit_logic": "Stop Loss: 2 x Asian-session average range (calculated from prior 10 days). Take Profit: 1 x Asian-session average range. Time stop: ALL positions must be closed by 08:00 UTC (1 hour before London open) regardless of P&L \u2014 volatility expands sharply at London open and the edge disappears. Re-entry: Only on the NEXT Asian session (not intra-session re-entry after a TP hit). Do NOT re-enter if already stopped out in the same session.",
+      "failure_mode": "Scenario 1 \u2014 Overnight news shock: A geopolitical event or central bank surprise during Asian hours (e.g., BOJ intervention, Asia-Pacific conflict escalation) expands the range far beyond normal. The 2x average range SL may not be sufficient if the shock is 5x normal. Scenario 2 \u2014 Holiday liquidity vacuum: During Asian holidays (Chinese New Year, Japanese Golden Week, Diwali), liquidity drops further and spreads blow out. The spread filter (<0.3 pips) prevents entry in most cases, but if the filter is barely passed, slippage on entry/exit can kill profitability. Scenario 3 \u2014 NFP/CPI week vol leak: During high-impact data weeks, volatility leaks into Asian session as traders position early. The ATR percentile filter should prevent entry, but borderline cases could produce false signals. Scenario 4 \u2014 Trend day: If a strong trend develops during Asian session (e.g., gap-and-go on Monday open), the range-trading approach catches a falling knife.",
+      "diversification_value": "This is distinct from every existing volatility idea. Intraday_Volatility_Reversal_Oscillator trades the multi-peak vol pattern across ALL sessions \u2014 it's a session-transition timing tool, not a carry-harvest. Volatility_Risk_Premium_Decay trades vol risk premium decay during session transitions (the inflection point), not the accumulation phase. News_Impact_Volatility_Decay targets the immediate post-event vol spike, not the pre-event low-vol period. This idea is unique in: (a) targeting ONLY Asian session, (b) harvesting the carry premium (not trading vol expansion/contraction), and (c) using range-trading mechanics rather than volatility breakout/fade. It's also the highest-frequency idea in the volatility family (M15/M5).",
+      "self_grade": "B+",
+      "generated_at": "2026-06-30T11:05:17Z"
+    },
+    {
+      "name": "EM_Currency_Gold_Transmission_Divergence",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Exploits the predictive lead-lag relationship between emerging market currency baskets and gold. When EM currencies weaken but gold holds steady, the divergence signals non-EM gold drivers at play, which tends to resolve with gold correcting toward the EM signal.",
+      "market_behaviour": "Gold has a well-documented positive correlation with emerging market currencies, driven by two mechanisms: (1) EM central banks (China, India, Turkey, Brazil) are among the world's largest gold buyers \u2014 when their currencies weaken, their local-currency gold buying power decreases, eventually reducing physical demand; (2) EM consumers drive ~60% of annual physical gold demand, so EM currency purchasing power is a fundamental driver of gold's demand floor. The typical correlation between an EM FX basket (USDINR, USDCNY, USDTRY, USDBRL) and gold is 0.6-0.8 on D1. When this correlation breaks down \u2014 EM currencies weakening but gold holding steady \u2014 it signals that gold's price is being supported by non-EM factors (geopolitical premium, real yield compression, USD weakness against developed currencies). This divergence is unsustainable: either gold corrects toward the EM signal, or EM currencies recover. The edge is that EM currencies act as a canary in the coal mine, leading gold by 2-5 days during divergence events.",
+      "entry_logic": "1. Construct a simple equal-weighted EM FX basket: (USDINR + USDCNY + USDTRY + USDBRL) / 4. A rising basket = EM currencies weakening vs USD (bad for gold demand). 2. Compute rolling 20-day Pearson correlation between gold daily return and EM basket daily return. 3. When correlation drops below 0.5 (from typical baseline of 0.6-0.8) AND remains below 0.5 for 3+ consecutive days. 4. Direction assessment: If EM basket is rising (EM weakening) but gold is flat or positive \u2192 gold is 'overvalued' relative to EM demand, expect gold to correct down. If EM basket is falling (EM strengthening) but gold is flat or negative \u2192 gold is 'undervalued', expect gold to rally. 5. Confirm with gold ADX(14) on H4: must be above 20 (trending, not choppy). 6. Enter in the direction suggested by step 4. 7. Position size: 1 standard risk.",
+      "exit_logic": "Stop Loss: 2 x ATR(14) on H4. Take Profit: 4 x ATR(14) on H4. Correlation re-convergence exit: Close position early if the 5-day rolling correlation re-crosses above 0.6 \u2014 the divergence has resolved. Time exit: Close after 10 trading days if neither SL nor TP is hit (most divergence events resolve within 1-2 weeks). No re-entry until a new divergence event triggers (minimum 20-day cooldown).",
+      "failure_mode": "Scenario 1 \u2014 Structural decoupling: A period where EM currencies face country-specific crises simultaneously (e.g., Turkey lira crisis + China property crash + Brazil political turmoil + India inflation shock). In this case, EM weakness is structural, not cyclical, and gold may not correct because the EM demand loss is offset by global safe-haven flows into gold. Scenario 2 \u2014 Risk-off paradox: During a global risk-off event, gold rallies (safe haven) but EM currencies also weaken (risk-off capital outflow). Both can happen simultaneously, creating a false divergence signal \u2014 gold isn't diverging from EM on fundamentals, both are reacting to the same shock differently. Scenario 3 \u2014 Data frequency mismatch: EM FX rates are 24/5 but some have limited liquidity during Asian/overnight hours. The correlation calculation on stale data could produce false signals.",
+      "diversification_value": "This is the ONLY idea in cross_asset that uses an EM currency basket as a leading indicator for gold direction. Existing cross_asset ideas cover: DXY correlation (DXY_Valence_Correlation, DXY_Deviation_Regime_Scalp), real yields (Real_Yield_Gold_Inverse_Corr), equities (Cross_Asset_Gamma_Flip, VIX_Gold_Regime_Divergence), commodities (CRB_Gold_Momentum_Spread, Gold_Silver_Ratio_Rotation), options flows (Cross_Asset_Vanna_Flow_Proxy), and BTC (Gold_Bitcoin_Divergence_Rotator). None track the EM FX channel \u2014 which is arguably the most fundamental demand-side driver for gold. This fills a genuine OPEN sub-niche: the EM currency transmission mechanism.",
+      "self_grade": "A-",
+      "generated_at": "2026-06-30T11:05:17Z"
     }
   ],
   "archived": [
@@ -2823,7 +2880,9 @@
       "Liquidity_Tier_Volatility_Contraction_Pinball",
       "Intraday_Volatility_Reversal_Oscillator",
       "News_Impact_Volatility_Decay",
-      "Volatility_Regime_Anticipation_Expansion"
+      "Volatility_Regime_Anticipation_Expansion",
+      "OVX_GVZ_Cross_Volatility_Divergence",
+      "Asian_Session_Vol_Carry_Harvest"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -2877,7 +2936,8 @@
       "USD_Liquidity_Tide_Index",
       "Gold_USD_Cross_Rate_Carry_Trade_Proxy",
       "VIX_Gold_Regime_Divergence",
-      "Gold_Bitcoin_Divergence_Rotator"
+      "Gold_Bitcoin_Divergence_Rotator",
+      "EM_Currency_Gold_Transmission_Divergence"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
