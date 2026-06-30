@@ -1,0 +1,48 @@
+//@version=5
+strategy(title="iter_276_ema5_13_cross_rsi50_adx12_longonly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=1, maxval=50)       // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=1, maxval=50)      // sweep: 10-26 step 2
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)                 // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Minimum (long only)", minval=30, maxval=70) // sweep: 40-60 step 5
+adx_len = input.int(14, "ADX Length", minval=5, maxval=30)                 // sweep: 7-21 step 2
+adx_threshold = input.float(12.0, "ADX Minimum", minval=5, maxval=50, step=1) // sweep: 8-20 step 2
+atr_len = input.int(14, "ATR Length", minval=5, maxval=30)                 // sweep: 10-20 step 2
+tp_atr_mult = input.float(1.0, "TP (ATR multiple)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+sl_atr_mult = input.float(1.5, "SL (ATR multiple)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+session_start = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23)  // sweep: 6-12 step 1
+session_end = input.int(16, "Session End Hour (UTC)", minval=0, maxval=23)     // sweep: 14-20 step 1
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+// ADX via ta.dmi (DI+/DI-/ADX)
+[diPlus, diMinus, adx_val] = ta.dmi(high, low, close, adx_len)
+
+//--- session filter
+current_hour = hour(time)
+in_session = current_hour >= session_start and current_hour < session_end
+
+//--- entry conditions
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold and adx_val > adx_threshold and in_session
+
+//--- entry logic
+if long_condition
+    stop_loss = close - (sl_atr_mult * atr_val)
+    take_profit = close + (tp_atr_mult * atr_val)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=syminfo.mintick * math.floor((close - stop_loss) / syminfo.mintick), profit=syminfo.mintick * math.floor((take_profit - close) / syminfo.mintick))
+
+//--- exit on opposite crossover or RSI flip
+if strategy.position_size > 0
+    if ta.crossunder(ema_fast, ema_slow) or rsi_val < 50
+        strategy.close("Long")
+
+//--- plot
+plot(ema_fast, "Fast EMA", color=color.blue)
+plot(ema_slow, "Slow EMA", color=color.red)
+hline(rsi_threshold, "RSI Threshold", color=color.gray)

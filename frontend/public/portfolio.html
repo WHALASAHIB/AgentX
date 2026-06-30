@@ -122,7 +122,7 @@
     function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';return(d===0?n.toFixed(0):n.toFixed(d)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
     function fmtUsd(n){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const sign=n>=0?'':'−';return sign+'$'+fmt(Math.abs(n));}
 
-    let activeAccountId = 'default';
+    let activeAccountId = null;
 
     async function fetchActiveAccount() {
       try {
@@ -131,11 +131,11 @@
         });
         if(res.ok) {
           const data = await res.json();
-          activeAccountId = data.active_account_id || 'default';
+          activeAccountId = data.active_account_id;
         } else {
-          activeAccountId = 'default';
+          activeAccountId = null;
         }
-      } catch(e) { console.error('fetchActiveAccount error:', e); activeAccountId = 'default'; }
+      } catch(e) { console.error('fetchActiveAccount error:', e); activeAccountId = null; }
     }
 
     async function loadData() {

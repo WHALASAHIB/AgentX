@@ -448,7 +448,7 @@ def _get_bot_status(name: str) -> dict:
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
 def _seed_accounts_from_store():
-    """Ensure mt5-demo and ftmo-demo accounts exist in the DB store."""
+    """Ensure stored accounts exist in the DB store."""
     store_path = Path(__file__).resolve().parent / "db" / "agentx_store.json"
     if not store_path.exists():
         logger.warning("agentx_store.json not found at %s", store_path)
@@ -803,6 +803,50 @@ async def get_magic_numbers():
         "gold_phoenix": 777888,
     }
 
+# ── Account Resolution Helper ────────────────────────────────────────────────
+
+async def _resolve_account_id(account_id: Optional[str], bridge=None) -> Optional[str]:
+    """
+    Resolve an account ID from various sources. Priority:
+    1. Provided account_id (if not None/empty/default)
+    2. DB active account
+    3. First account from bridge list
+    4. None (caller handles this)
+    Never returns a hardcoded string.
+    """
+    if account_id and account_id not in ("null", "None", "", "default"):
+        return account_id
+    try:
+        db = get_db()
+        active = db.get_active_account()
+        if active and active not in ("null", "None", "", "default"):
+            return active
+    except Exception:
+        pass
+    if bridge is None:
+        bridge = get_bridge()
+    try:
+        bridge_accts = await bridge.list_accounts()
+        if bridge_accts and len(bridge_accts) > 0:
+            first = bridge_accts[0].get("id")
+            if first and first not in ("null", "None", "", "default"):
+                return first
+    except Exception:
+        pass
+    return None
+
+
+def _empty_stats_response() -> dict:
+    """Return a zeroed stats response (used when no account is resolved)."""
+    return {
+        "total_positions": 0, "open_positions": 0, "total_trades": 0,
+        "win_rate": 0.0, "profit_factor": 0.0, "net_pnl": 0.0,
+        "total_volume": 0.0, "balance": 0.0, "equity": 0.0,
+        "max_drawdown": 0.0, "best_account": {"name": "", "balance": 0.0, "equity": 0.0},
+        "equity_history": [], "bot_statuses": [],
+    }
+
+
 # ── Consolidated Stats ────────────────────────────────────────────────────────
 
 @app.get("/api/stats")
@@ -812,16 +856,9 @@ async def consolidated_stats(account_id: Optional[str] = None):
     db = get_db()
     
     # Use active account or provided account ID
+    account_id = await _resolve_account_id(account_id, bridge)
     if account_id is None:
-        account_id = db.get_active_account()
-    if account_id is None or account_id == "default":
-        # Fall back to first available bridge account
-        try:
-            bridge_accts = await bridge.list_accounts()
-            if bridge_accts and len(bridge_accts) > 0:
-                account_id = bridge_accts[0].get("id", "mt5-demo")
-        except Exception:
-            account_id = "mt5-demo"
+        return _empty_stats_response()
     
     stats = {
         "total_positions": 0,
@@ -1230,16 +1267,8 @@ async def test_account_connection(account_id: str, auth=Depends(require_auth)):
 async def all_positions(account_id: Optional[str] = None, auth=Depends(require_auth)):
     bridge = get_bridge()
     db = get_db()
-    # Resolve account_id: if None, "null", "None" or empty string, check DB active or fallback to first bridge account
-    if account_id is None or account_id in ("null", "None", ""):
-        account_id = db.get_active_account()
-    if account_id is None or account_id == "default":
-        try:
-            bridge_accts = await bridge.list_accounts()
-            if bridge_accts and len(bridge_accts) > 0:
-                account_id = bridge_accts[0].get("id", "mt5-demo")
-        except Exception:
-            account_id = "mt5-demo"
+    # Resolve account_id dynamically
+    account_id = await _resolve_account_id(account_id, bridge)
     positions = await bridge.get_positions(account_id)
     # Normalize to ensure PnL (profit) is present per position
     normalized = []
@@ -1523,7 +1552,65 @@ async def proxy_positions(account_id: str, auth=Depends(require_auth)):
 @app.get("/api/bridge/accounts/{account_id}/stats")
 async def proxy_stats(account_id: str, days: int = 30, auth=Depends(require_auth)):
     bridge = get_bridge()
-    return await bridge.get_stats(account_id, days)
+    try:
+        bstats = await bridge.get_stats(account_id, days)
+        # If bridge returned real data, return it
+        if bstats and bstats.get("total_trades", 0) > 0:
+            return bstats
+    except HTTPException:
+        pass
+    except Exception:
+        pass
+
+    # Fallback: compute stats from trade history (bridge doesn't cache stats)
+    try:
+        trades = await bridge.get_trades(account_id, days)
+        trades = [t for t in (trades or [])
+                  if isinstance(t, dict) and t.get("symbol")
+                  and t.get("type") in ("BUY", "SELL")]
+        if not trades:
+            return {"total_trades": 0, "wins": 0, "losses": 0, "win_rate": 0.0,
+                    "gross_profit": 0.0, "gross_loss": 0.0, "net_profit": 0.0,
+                    "profit_factor": 0.0, "max_drawdown": 0.0, "best_trade": 0.0,
+                    "worst_trade": 0.0, "avg_profit": 0.0, "daily_pnl": 0.0,
+                    "message": "No trades found"}
+
+        total = len(trades)
+        wins = sum(1 for t in trades if t.get("net_profit", 0) > 0)
+        losses = sum(1 for t in trades if t.get("net_profit", 0) < 0)
+        net_pnl = sum(t.get("net_profit", 0) for t in trades)
+        gross_profit = sum(t.get("net_profit", 0) for t in trades if t.get("net_profit", 0) > 0)
+        gross_loss = abs(sum(t.get("net_profit", 0) for t in trades if t.get("net_profit", 0) < 0))
+        profits = [t.get("net_profit", 0) for t in trades]
+        best = max(profits) if profits else 0.0
+        worst = min(profits) if profits else 0.0
+        avg = net_pnl / total if total > 0 else 0.0
+        pf = round(gross_profit / gross_loss, 2) if gross_loss > 0 else round(gross_profit, 2) if gross_profit > 0 else 0.0
+
+        logger.info("proxy_stats fallback: %d trades, net_pnl=%.2f, win_rate=%.1f%%", total, net_pnl, (wins/total*100) if total else 0)
+
+        return {
+            "total_trades": total,
+            "wins": wins,
+            "losses": losses,
+            "win_rate": round((wins / total) * 100, 1) if total > 0 else 0.0,
+            "gross_profit": round(gross_profit, 2),
+            "gross_loss": round(gross_loss, 2),
+            "net_profit": round(net_pnl, 2),
+            "profit_factor": pf,
+            "max_drawdown": 0.0,
+            "best_trade": round(best, 2),
+            "worst_trade": round(worst, 2),
+            "avg_profit": round(avg, 2),
+            "daily_pnl": round(net_pnl / max(days, 1), 2),
+        }
+    except Exception as e:
+        logger.warning("proxy_stats fallback failed: %s", e)
+        return {"total_trades": 0, "wins": 0, "losses": 0, "win_rate": 0.0,
+                "gross_profit": 0.0, "gross_loss": 0.0, "net_profit": 0.0,
+                "profit_factor": 0.0, "max_drawdown": 0.0, "best_trade": 0.0,
+                "worst_trade": 0.0, "avg_profit": 0.0, "daily_pnl": 0.0,
+                "error": str(e)}
 
 @app.get("/api/bridge/accounts/{account_id}/tick/{symbol}")
 async def proxy_tick(account_id: str, symbol: str, auth=Depends(require_auth)):
@@ -1582,10 +1669,11 @@ async def filter_trades(
     symbol: Optional[str] = None,
     bot_magic: Optional[int] = None,
     outcome: Optional[str] = None,
-    account_id: str = "default",
+    account_id: Optional[str] = None,
     auth=Depends(require_auth),
 ):
     bridge = get_bridge()
+    account_id = await _resolve_account_id(account_id, bridge)
     raw_trades = await bridge.get_trades(account_id, days)
 
     # Merge magic and bot_magic params
@@ -3086,13 +3174,10 @@ async def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
     bridge = get_bridge()
 
     # Resolve which account to use for price data
-    account_id = "ftmo-demo"
-    try:
-        bridge_accts = await bridge.list_accounts()
-        if bridge_accts:
-            account_id = bridge_accts[0].get("id", "ftmo-demo")
-    except Exception:
-        pass
+    account_id = await _resolve_account_id(None, bridge)
+    if account_id is None:
+        logger.warning("_fetch_daily_opens: no account resolved, skipping")
+        return daily_open
 
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -3169,14 +3254,11 @@ async def get_prices():
     bridge = get_bridge()
     prices: dict[str, Any] = {}
 
-    # Resolve the account to use: prefer "ftmo-demo" then "mt5-demo" (no hardcoded "default")
-    price_account_id = "ftmo-demo"
-    try:
-        bridge_accts = await bridge.list_accounts()
-        if bridge_accts and len(bridge_accts) > 0:
-            price_account_id = bridge_accts[0].get("id", "ftmo-demo")
-    except Exception:
-        pass
+    # Resolve the account to use: always resolve dynamically
+    price_account_id = await _resolve_account_id(None, bridge)
+    if price_account_id is None:
+        logger.warning("_fetch_current_prices: no account resolved, returning empty prices")
+        return {}
 
     # Fetch daily OHLC open prices for all symbols
     daily_opens = await _fetch_daily_opens(symbols)

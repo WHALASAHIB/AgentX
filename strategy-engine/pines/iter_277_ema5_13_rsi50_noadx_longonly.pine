@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="EMA5/13 + RSI50 No ADX - Long Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+ema_fast = input.int(5, "Fast EMA", minval=2, maxval=30)       // sweep: 3-10 step 1
+ema_slow = input.int(13, "Slow EMA", minval=5, maxval=50)       // sweep: 10-26 step 2
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)      // sweep: 7-21 step 2
+rsi_min = input.int(50, "RSI Minimum (long)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// ATR-based TP/SL
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)      // sweep: 10-20 step 2
+tp_mult = input.float(2.0, "TP Multiplier (ATR)", step=0.1)     // sweep: 1.0-3.0 step 0.5
+sl_mult = input.float(1.5, "SL Multiplier (ATR)", step=0.1)     // sweep: 1.0-2.5 step 0.5
+
+// Strategy switches
+use_rsi_filter = input.bool(true, "Enable RSI Filter")           // sweep: true/false
+
+//--- calculations
+ema_fast_val = ta.ema(close, ema_fast)
+ema_slow_val = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry conditions
+// EMA crossover (fast crosses above slow)
+ema_cross_up = ta.crossover(ema_fast_val, ema_slow_val)
+
+// RSI filter: long only if RSI > minimum threshold
+rsi_ok = not use_rsi_filter or rsi_val > rsi_min
+
+// Entry signal: EMA crossover + RSI filter
+enter_long = ema_cross_up and rsi_ok
+
+//--- exit conditions
+// EMA crossunder (fast crosses below slow) - trailing exit signal but we also use ATR stops
+ema_cross_down = ta.crossunder(ema_fast_val, ema_slow_val)
+
+//--- execution
+if (enter_long and strategy.position_size == 0)
+    // Calculate ATR-based stop loss and take profit
+    stop_loss_price = close - (atr_val * sl_mult)
+    take_profit_price = close + (atr_val * tp_mult)
+    
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=close - stop_loss_price, profit=take_profit_price - close, comment="ATREXIT")
+
+//--- plot EMAs
+plot(ema_fast_val, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow_val, "Slow EMA", color=color.red, linewidth=1)
+//--- plot RSI in a separate pane alert
+hline(rsi_min, "RSI Min", color=color.gray, linestyle=hline.style_dashed)

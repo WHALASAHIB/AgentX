@@ -1,0 +1,88 @@
+//@version=5
+strategy(title="Ichimoku Kijun-Sen RSI50 ADX25 TP1.0 SL1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+kijunPeriod = input.int(26, "Kijun-sen Period", minval=9, maxval=60, step=1)  // sweep: 9-60 step 1
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=21, step=1)          // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold", minval=30, maxval=70, step=5)   // sweep: 30-70 step 5
+adxLength = input.int(14, "ADX Length", minval=7, maxval=28, step=7)          // sweep: 7-28 step 7
+adxThreshold = input.int(25, "ADX Threshold", minval=15, maxval=40, step=5)   // sweep: 15-40 step 5
+atrLength = input.int(14, "ATR Length", minval=7, maxval=28, step=7)          // sweep: 7-28 step 7
+tpMultiplier = input.float(1.0, "TP Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.5)   // sweep: 0.5-3.0 step 0.5
+slMultiplier = input.float(1.5, "SL Multiplier (ATR)", minval=0.5, maxval=3.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+sessionStart = input.int(8, "Session Start (UTC)", minval=0, maxval=23, step=1)  // sweep: 0-23 step 1
+sessionEnd = input.int(16, "Session End (UTC)", minval=0, maxval=23, step=1)    // sweep: 0-23 step 1
+
+//--- Ichimoku components
+tenkanSenPeriod = 9
+senkouSpanBPeriod = 52
+displacement = 26
+
+// Tenkan-sen (conversion line)
+tenkanHigh = ta.highest(high, tenkanSenPeriod)
+tenkanLow = ta.lowest(low, tenkanSenPeriod)
+tenkanSen = (tenkanHigh + tenkanLow) / 2
+
+// Kijun-sen (base line)
+kijunHigh = ta.highest(high, kijunPeriod)
+kijunLow = ta.lowest(low, kijunPeriod)
+kijunSen = (kijunHigh + kijunLow) / 2
+
+// Senkou Span A (leading span A)
+senkouSpanA = math.avg(tenkanSen, kijunSen)
+
+// Senkou Span B (leading span B)
+senkouHigh = ta.highest(high, senkouSpanBPeriod)
+senkouLow = ta.lowest(low, senkouSpanBPeriod)
+senkouSpanB = (senkouHigh + senkouLow) / 2
+
+// Chikou Span (lagging span)
+chikouSpan = close
+
+//--- Fill cloud for visualisation (not used for signals)
+plot(tenkanSen, "Tenkan-sen", color=#0496ff, linewidth=1)
+plot(kijunSen, "Kijun-sen", color=#ff6f00, linewidth=2)
+plot(close, offset=-displacement, "Chikou Span", color=#808080)
+p3 = plot(senkouSpanA, "Senkou Span A", offset=displacement, color=#00ff00)
+p4 = plot(senkouSpanB, "Senkou Span B", offset=displacement, color=#ff0000)
+fill(p3, p4, title="Cloud", color=senkouSpanA > senkouSpanB ? color.new(#00ff00, 90) : color.new(#ff0000, 90))
+
+//--- Indicators
+rsi = ta.rsi(close, rsiLength)
+atr = ta.atr(atrLength)
+
+// ADX — trending market filter via ta.dmi (DI+/DI-/ADX tuple)
+[diPlus, diMinus, adxValue] = ta.dmi(high, low, close, adxLength)
+isTrending = adxValue > adxThreshold
+
+//--- Entry logic
+isSession = hour(time) >= sessionStart and hour(time) < sessionEnd
+
+// Price crossing Kijun-sen
+bullishCross = ta.crossover(close, kijunSen)
+bearishCross = ta.crossunder(close, kijunSen)
+
+// RSI filter — tight 50/50
+rsiBullish = rsi > rsiThreshold
+rsiBearish = rsi < (100 - rsiThreshold)
+
+// Entry conditions — with ADX trending filter
+longCondition = bullishCross and rsiBullish and isSession and isTrending
+shortCondition = bearishCross and rsiBearish and isSession and isTrending
+
+//--- Entry logic
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- Exit management: ATR-based TP and SL
+slPoints = int(slMultiplier * atr / syminfo.mintick)
+tpPoints = int(tpMultiplier * atr / syminfo.mintick)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=slPoints, profit=tpPoints)

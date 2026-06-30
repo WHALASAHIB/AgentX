@@ -1,0 +1,61 @@
+//@version=5
+strategy(title="EMA3/8 Crossover + RSI50 Long-Only — XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Fast EMA period — faster than EMA5 to catch more entries
+fast_ema_len = input.int(3, "Fast EMA Length", minval=1, maxval=20, step=1)  // sweep: 2-10 step 1
+// Slow EMA period  
+slow_ema_len = input.int(8, "Slow EMA Length", minval=3, maxval=50, step=1)   // sweep: 5-20 step 1
+// RSI threshold (long only if RSI > this value)
+rsi_lower = input.int(50, "RSI Lower Threshold (Long)", minval=20, maxval=70, step=5)  // sweep: 40-60 step 5
+// RSI period
+rsi_period = input.int(14, "RSI Period", minval=5, maxval=30, step=1)         // sweep: 10-20 step 2
+// ATR multiplier for stop loss
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+// ATR multiplier for take profit
+tp_atr_mult = input.float(2.0, "TP ATR Multiplier", minval=0.5, maxval=10.0, step=0.5) // sweep: 1.0-4.0 step 0.5
+// ATR period
+atr_period = input.int(14, "ATR Period", minval=5, maxval=30, step=1)          // sweep: 10-20 step 2
+// Long only toggle
+long_only = input.bool(true, "Long Only")
+
+//--- indicator calculations
+fast_ema = ta.ema(close, fast_ema_len)
+slow_ema = ta.ema(close, slow_ema_len)
+rsi_val = ta.rsi(close, rsi_period)
+atr_val = ta.atr(atr_period)
+
+//--- entry logic
+// Crossover: fast EMA crosses above slow EMA + RSI above threshold
+long_condition = ta.crossover(fast_ema, slow_ema) and rsi_val > rsi_lower
+// Crossunder: fast EMA crosses below slow EMA (for display, not used in long-only)
+short_condition = ta.crossunder(fast_ema, slow_ema) and rsi_val < (100 - rsi_lower)
+
+//--- position management
+var float entry_price = na
+var float sl_price = na
+var float tp_price = na
+var int bar_entry = na
+
+// Calculate stop and take profit levels
+if (long_condition and long_only and strategy.position_size == 0)
+    entry_price := close
+    sl_price := close - (atr_val * sl_atr_mult)
+    tp_price := close + (atr_val * tp_atr_mult)
+    bar_entry := bar_index
+    strategy.entry("Long", strategy.long, comment="EMA CROSS RSI")
+    strategy.exit("XL", "Long", loss=math.round((close - sl_price) / syminfo.mintick), profit=math.round((tp_price - close) / syminfo.mintick))
+
+// Short entry (if not long-only)
+if (short_condition and not long_only and strategy.position_size == 0)
+    entry_price := close
+    sl_price := close + (atr_val * sl_atr_mult)
+    tp_price := close - (atr_val * tp_atr_mult)
+    bar_entry := bar_index
+    strategy.entry("Short", strategy.short, comment="EMA CROSS RSI")
+    strategy.exit("XS", "Short", loss=math.round((sl_price - close) / syminfo.mintick), profit=math.round((close - tp_price) / syminfo.mintick))
+
+//--- plots for visual reference
+plot(fast_ema, "Fast EMA", color=color.blue, linewidth=1)
+plot(slow_ema, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_lower, "RSI Lower", color=color.green, linestyle=hline.style_dashed)

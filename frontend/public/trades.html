@@ -117,7 +117,7 @@
     function fmt(n,d=2){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';return(d===0?n.toFixed(0):n.toFixed(d)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
     function fmtUsd(n){if(n===null||n===undefined)return'--';if(typeof n==='string')n=parseFloat(n);if(isNaN(n))return'--';const sign=n>=0?'':'−';return sign+'$'+fmt(Math.abs(n));}
 
-    let activeId = 'default';
+    let activeId = null;
     let allTrades = [];
     let allBots = [];
 
@@ -129,8 +129,8 @@
               headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
           });
           const actData = await actRes.json();
-          activeId = actData.active_account_id || (actData.id) || 'mt5-demo';
-        } catch(e) { activeId = 'mt5-demo'; }
+          activeId = actData.active_account_id || (actData.id) || null;
+        } catch(e) { activeId = null; }
         document.getElementById('activeAccount').textContent = 'Account: ' + activeId;
 
         // Fetch bots for filter dropdown

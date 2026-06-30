@@ -105,13 +105,22 @@ def _fetch_from_bridge(
     }
 
     try:
-        resp = requests.get(url, params=params, timeout=30)
+        resp = requests.get(url, params=params, timeout=60)
         if resp.status_code != 200:
+            # Cold-start retry: subprocess may need extra time for MT5 init
             logger.warning(
-                "Bridge history returned %d for %r %s",
+                "Bridge history returned %d for %r %s — retrying once...",
                 resp.status_code, ticker, interval,
             )
-            return None
+            import time as _t
+            _t.sleep(2)
+            resp = requests.get(url, params=params, timeout=60)
+            if resp.status_code != 200:
+                logger.warning(
+                    "Bridge history returned %d for %r %s (after retry)",
+                    resp.status_code, ticker, interval,
+                )
+                return None
 
         data = resp.json()
         if not isinstance(data, list) or len(data) == 0:
@@ -119,7 +128,8 @@ def _fetch_from_bridge(
             return None
 
         df = pd.DataFrame(data)
-        df["time"] = pd.to_datetime(df["time"])
+        # Time comes as unix epoch string from bridge (e.g. "1782349200")
+        df["time"] = pd.to_datetime(df["time"].astype(int), unit="s")
 
         _last_fetch_source = "real"
         _last_fetch_count = len(df)

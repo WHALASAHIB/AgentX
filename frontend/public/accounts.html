@@ -207,7 +207,7 @@
         ]);
         const accounts = await accountsRes.json();
         const activeData = await activeRes.json();
-        const activeId = activeData.active_account_id || (accounts.find(a=>a.connected)||{}).id || (accounts[0]?.id || 'ftmo-demo');
+        const activeId = activeData.active_account_id || (accounts.find(a=>a.connected)||{}).id || (accounts[0]?.id || null);
 
         // Fetch per-account stats in parallel
         const statsPromises = accounts.map(acct =>
@@ -228,7 +228,6 @@
     }
 
     function renderAccounts(accounts, activeId, statsMap) {
-      // No need to filter "default" — it no longer exists in bridge config
       const displayAccounts = accounts;
 
       const grid = document.getElementById('accountsGrid');
