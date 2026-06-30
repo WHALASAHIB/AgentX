@@ -855,7 +855,26 @@ async def consolidated_stats(account_id: Optional[str] = None):
         stats["equity"] = bstats.get("equity", 0.0)
         stats["max_drawdown"] = bstats.get("max_drawdown", 0.0)
     except Exception:
-        pass
+        # Fallback: calculate stats from trade history directly
+        try:
+            trades = await bridge.get_trades(account_id, days=365)
+            if trades and isinstance(trades, list) and len(trades) > 0:
+                wins = sum(1 for t in trades if t.get("net_profit", 0) > 0)
+                losses = sum(1 for t in trades if t.get("net_profit", 0) < 0)
+                total = len(trades)
+                net_pnl = sum(t.get("net_profit", 0) for t in trades)
+                volume = sum(float(t.get("volume", 0) or 0) for t in trades)
+                gross_profit = sum(t.get("net_profit", 0) for t in trades if t.get("net_profit", 0) > 0)
+                gross_loss = abs(sum(t.get("net_profit", 0) for t in trades if t.get("net_profit", 0) < 0))
+                pf = round(gross_profit / gross_loss, 2) if gross_loss > 0 else round(gross_profit, 2) if gross_profit > 0 else 0.0
+                stats["total_trades"] = total
+                stats["win_rate"] = round((wins / total) * 100, 1) if total > 0 else 0.0
+                stats["profit_factor"] = pf
+                stats["net_pnl"] = round(net_pnl, 2)
+                stats["total_volume"] = round(volume, 2)
+                logger.info("Stats fallback: %d trades, net_pnl=%.2f, win_rate=%.1f%%", total, net_pnl, stats["win_rate"])
+        except Exception as e2:
+            logger.warning("Stats fallback also failed: %s", e2)
 
     # ── Account Info (get balance/equity for requested account) ─────────────
     try:
