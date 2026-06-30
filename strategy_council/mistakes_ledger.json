@@ -60,6 +60,16 @@
       "root_cause": "7-day review of FTMO account: 106 trades, -$860.11 PnL. MACD multi-pair bots (M200100/M200200) went 0-for-23 trades with 0% WR and -$356 combined PnL. Propfirm pass variant bots (M780003-M780008) collectively: 36 trades, -$100.76, 15.3% WR. The only positive contributor was Gold Phoenix (M777888): 2 trades, +$39.96, 100% WR.",
       "fix": "Only Gold Phoenix has shown any edge. All other bots (MACD multi-pair, SMA, propfirm pass variants) are destroying equity at 0% WR. Stop all non-performing bots on this account.",
       "prevention_rule": "Any bot with <30% WR over 10+ consecutive trades on the FTMO account should auto-disable."
+    },
+    {
+      "date": "2026-06-30",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded — 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: bot launched via cron at 12:50 UTC, immediately hit (-10001, 'IPC send failed') because the MT5 terminal is logged into MetaQuotes-Demo (5051185832) while the bot config specifies FTMO-Demo (1513767391). The API cannot switch accounts — this is a wrong-account rejection disguised as IPC failure.",
+      "fix": "Terminal must be manually logged into FTMO-Demo before the bot can connect. OR the bot config must be updated to match the active MetaQuotes-Demo account. Cannot be fixed programmatically — mt5.initialize() with different credentials hangs/fails when the running terminal is on a different account.",
+      "prevention_rule": "Before deploying a bot to a specific broker account, verify the MT5 terminal is logged into that account. mt5.account_info().login must match the config. If they differ, the terminal must be manually switched via MT5 GUI."
     }
   ],
   "lessons_learned": [

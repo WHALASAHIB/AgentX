@@ -1,6 +1,6 @@
 {
-  "iteration": 271,
-  "last_run": "2026-06-30T22:53:00Z",
+  "iteration": 272,
+  "last_run": "2026-06-30T23:00:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "ADX(15) still produced 0 trades on XAUUSD 30m — DMI/ADX values on Polygon forex data rarely exceed even 15. Remove the ADX filter entirely. Keep MACD 8/17/9 crossover + RSI(14)>50/<50 filter only. TP=1.0 ATR, SL=1.5 ATR (1:1.5 ratio), London/NY session 8-16 UTC. XAUUSD 30m.",
+  "current_hypothesis": "Sharpe Ratio is worst metric at -1.63. Standard fix (ADX>25) produced 0 trades on Polygon data. Try DMI directional filter instead: DI+ > DI- confirms bullish trend, DI- > DI+ confirms bearish. DMI values are meaningful on Polygon data even when ADX is low. Keep MACD 8/17/9 crossover + RSI(14)>50/<50 filter, TP=1.0 ATR, SL=1.5 ATR (1:1.5), London/NY session 8-16 UTC. XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 267,
@@ -50,6 +50,15 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-30T22:53:00Z"
+    },
+    {
+      "iteration": 271,
+      "hypothesis": "Remove ADX filter entirely. Keep MACD 8/17/9 crossover + RSI(14)>50/<50 filter only. TP=1.0 ATR, SL=1.5 ATR (1:1.5 ratio), London/NY session 8-16 UTC. XAUUSD 30m.",
+      "metrics": {"pf": 1.25713831, "sharpe": -1.62757427, "wr": 58.06451613, "dd": 2.57150225, "trades": 31, "net_profit": -109.325723216105},
+      "verdict": "rejected (PF=1.26 Sharpe=-1.63 DD=2.57%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T23:00:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

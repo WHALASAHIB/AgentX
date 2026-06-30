@@ -861,9 +861,11 @@ async def consolidated_stats(account_id: Optional[str] = None):
         stats["equity"] = bstats.get("equity", 0.0)
         stats["max_drawdown"] = bstats.get("max_drawdown", 0.0)
     except Exception:
-        # Fallback: calculate stats from trade history directly
+        # Fallback: calculate stats from trade history directly (excluding deposits)
         try:
-            trades = await bridge.get_trades(account_id, days=365)
+            trades_raw = await bridge.get_trades(account_id, days=365)
+            trades = [t for t in (trades_raw or [])
+                      if t.get("symbol") and t.get("type") in ("BUY", "SELL")]
             if trades and isinstance(trades, list) and len(trades) > 0:
                 wins = sum(1 for t in trades if t.get("net_profit", 0) > 0)
                 losses = sum(1 for t in trades if t.get("net_profit", 0) < 0)
@@ -879,6 +881,23 @@ async def consolidated_stats(account_id: Optional[str] = None):
                 stats["net_pnl"] = round(net_pnl, 2)
                 stats["total_volume"] = round(volume, 2)
                 logger.info("Stats fallback: %d trades, net_pnl=%.2f, win_rate=%.1f%%", total, net_pnl, stats["win_rate"])
+
+                # ── Equity History (from trade history) ────────────────────
+                # Sort trades by close_time ascending, build cumulative equity curve
+                sorted_trades = sorted(trades, key=lambda t: t.get("close_time", ""))
+                running_pnl = 0.0
+                initial_balance = 100000.0  # Demo account initial deposit
+                equity_points = []
+                for t in sorted_trades:
+                    running_pnl += t.get("net_profit", 0)
+                    equity_points.append({
+                        "time": t.get("close_time", ""),
+                        "equity": round(initial_balance + running_pnl, 2),
+                        "pnl": round(running_pnl, 2),
+                    })
+                if equity_points:
+                    stats["equity_history"] = equity_points
+                    logger.info("Equity curve built: %d points, final_pnl=%.2f", len(equity_points), running_pnl)
         except Exception as e2:
             logger.warning("Stats fallback also failed: %s", e2)
 
