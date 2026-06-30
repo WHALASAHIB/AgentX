@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="MACD RSI ADX Tight TP - XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len    = input.int(8,     "MACD Fast Length",    minval=2, maxval=50, step=1)    // sweep: 5-20 step 1
+slow_len    = input.int(17,    "MACD Slow Length",    minval=5, maxval=100, step=1)   // sweep: 10-30 step 1
+signal_len  = input.int(9,     "MACD Signal Length",  minval=2, maxval=30, step=1)    // sweep: 5-15 step 1
+
+// RSI parameters
+rsi_len     = input.int(14,    "RSI Length",          minval=5, maxval=30, step=1)    // sweep: 7-21 step 2
+rsi_upper   = input.int(50,    "RSI Long Threshold",  minval=30, maxval=70, step=5)   // sweep: 40-60 step 5
+rsi_lower   = input.int(50,    "RSI Short Threshold", minval=30, maxval=70, step=5)   // sweep: 40-60 step 5
+
+// DMI / ADX parameters
+dmi_len     = input.int(14,    "DMI Length",          minval=7, maxval=30, step=1)    // sweep: 10-20 step 2
+adx_thresh  = input.int(25,    "ADX Min Threshold",   minval=10, maxval=50, step=5)   // sweep: 15-30 step 5
+
+// Risk management
+atr_len     = input.int(14,    "ATR Length",          minval=7, maxval=30, step=1)    // sweep: 10-20 step 2
+sl_atr      = input.float(1.5, "SL Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+tp_atr      = input.float(1.0, "TP Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+
+// Session filter
+trade_start = input.int(8,     "Trade Start Hour (UTC)", minval=0, maxval=23, step=1)  // sweep: 6-10 step 1
+trade_end   = input.int(16,    "Trade End Hour (UTC)",   minval=0, maxval=23, step=1)  // sweep: 14-20 step 1
+
+//--- indicator calculations
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, signal_len)
+rsi_val    = ta.rsi(close, rsi_len)
+[di_plus, di_minus, adx_val] = ta.dmi(high, low, close, dmi_len)
+atr_val    = ta.atr(atr_len)
+current_hour = hour(time)
+
+//--- entry logic
+long_condition  = close > open and ta.crossover(macd_line, signal_line) and rsi_val > rsi_upper and adx_val > adx_thresh and current_hour >= trade_start and current_hour <= trade_end
+short_condition = close < open and ta.crossunder(macd_line, signal_line) and rsi_val < rsi_lower and adx_val > adx_thresh and current_hour >= trade_start and current_hour <= trade_end
+
+if long_condition and strategy.position_size == 0
+    strategy.entry("LONG", strategy.long)
+    stop_loss_price  = close - (atr_val * sl_atr)
+    take_profit_price = close + (atr_val * tp_atr)
+    strategy.exit("LONG_EXIT", "LONG", loss=close - stop_loss_price, profit=take_profit_price - close)
+
+if short_condition and strategy.position_size == 0
+    strategy.entry("SHORT", strategy.short)
+    stop_loss_price   = close + (atr_val * sl_atr)
+    take_profit_price = close - (atr_val * tp_atr)
+    strategy.exit("SHORT_EXIT", "SHORT", loss=stop_loss_price - close, profit=close - take_profit_price)
+
+// Clear any stale exits if flat
+if strategy.position_size == 0
+    strategy.cancel("LONG_EXIT")
+    strategy.cancel("SHORT_EXIT")

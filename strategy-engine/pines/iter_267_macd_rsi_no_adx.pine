@@ -1,0 +1,62 @@
+//@version=5
+strategy(title="MACD RSI No ADX XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(8, "MACD Fast Length", minval=2, maxval=50, step=1)       // sweep: 5-20 step 1
+slowLen = input.int(17, "MACD Slow Length", minval=5, maxval=100, step=1)      // sweep: 10-30 step 1
+signalLen = input.int(9, "MACD Signal Length", minval=2, maxval=30, step=1)    // sweep: 5-20 step 1
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, step=1)              // sweep: 7-21 step 1
+rsiBullThreshold = input.int(50, "RSI Bullish Threshold (above = long)", minval=30, maxval=70, step=5)   // sweep: 40-60 step 5
+rsiBearThreshold = input.int(50, "RSI Bearish Threshold (below = short)", minval=30, maxval=70, step=5)   // sweep: 40-60 step 5
+
+// ATR-based stop/target
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30, step=1)              // sweep: 10-20 step 2
+stopMult = input.float(1.5, "Stop Loss (ATR)", minval=0.5, maxval=5.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+tpMult = input.float(2.0, "Take Profit (ATR)", minval=0.5, maxval=10.0, step=0.5)  // sweep: 1.0-5.0 step 0.5
+
+// Trade direction filter
+allowLong = input.bool(true, "Allow Long Trades")
+allowShort = input.bool(true, "Allow Short Trades")
+
+//--- indicator calculations
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, signalLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- entry logic
+// MACD crossover = bullish, crossunder = bearish
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// RSI filter: long if RSI > threshold, short if RSI < threshold
+rsiBull = rsi > rsiBullThreshold
+rsiBear = rsi < rsiBearThreshold
+
+// Combined signals
+longSignal = macdCrossOver and rsiBull and allowLong
+shortSignal = macdCrossUnder and rsiBear and allowShort
+
+//--- exit management
+// Calculate ATR-based levels for stop loss and take profit
+longStop = stopMult * atr
+longTp = tpMult * atr
+shortStop = stopMult * atr
+shortTp = tpMult * atr
+
+// Entry: long
+if (longSignal)
+    strategy.entry("Long", strategy.long)
+
+// Entry: short
+if (shortSignal)
+    strategy.entry("Short", strategy.short)
+
+// Exit: attach ATR-based stop loss and take profit to positions
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=longStop / syminfo.mintick, profit=longTp / syminfo.mintick)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=shortStop / syminfo.mintick, profit=shortTp / syminfo.mintick)

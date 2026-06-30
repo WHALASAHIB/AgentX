@@ -1,6 +1,6 @@
 {
-  "iteration": 267,
-  "last_run": "2026-06-30T22:00:00Z",
+  "iteration": 271,
+  "last_run": "2026-06-30T22:53:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,16 +13,43 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Remove ADX(14) filter entirely. MACD 8/17/9 crossover + RSI(14)>50/<50 only (no ADX filter). ADX(14)>15 + RSI combined was still too restrictive producing 0 trades for the second consecutive iteration. MACD alone generated 116 trades at iter 263. Adding RSI(14)>50/<50 filter keeps directional momentum bias while removing the ADX trending gate that blocks all entries. Keep ATR stop 1.5 ATR, TP 2.0 ATR, long and short, XAUUSD 30m.",
+  "current_hypothesis": "ADX(15) still produced 0 trades on XAUUSD 30m — DMI/ADX values on Polygon forex data rarely exceed even 15. Remove the ADX filter entirely. Keep MACD 8/17/9 crossover + RSI(14)>50/<50 filter only. TP=1.0 ATR, SL=1.5 ATR (1:1.5 ratio), London/NY session 8-16 UTC. XAUUSD 30m.",
   "evolution_log": [
     {
-      "iteration": 266,
-      "hypothesis": "ADX(14) > 25 filter on top of MACD 8/17/9 crossover + RSI(14)>50/<50 was too restrictive — 0 trades. Lower ADX threshold from 25 to 15 to allow more entry signals while still filtering out zero-trend chop. Trader Dev's DMI/ADX computation may return lower values than expected. Keep MACD 8/17/9, RSI(14)>50/<50 filter, ATR stop 1.5 ATR, TP 2.0 ATR, long and short. XAUUSD 30m.",
-      "metrics": {"pf": 0.0, "sharpe": null, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0},
+      "iteration": 267,
+      "hypothesis": "Remove ADX(14) filter entirely. MACD 8/17/9 crossover + RSI(14)>50/<50 only (no ADX filter). Keep ATR stop 1.5 ATR, TP 2.0 ATR, long and short, XAUUSD 30m.",
+      "metrics": {"pf": 0.99047729, "sharpe": -4.00358263, "wr": 36.36363636, "dd": 8.0867273, "trades": 77, "net_profit": -515.505976936236},
+      "verdict": "rejected (PF=0.99 Sharpe=-4.0 DD=8.09%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T22:15:00Z"
+    },
+    {
+      "iteration": 268,
+      "hypothesis": "Tighten TP/SL ratio from 2:1 to 1:1.5 to improve win rate above 40%. Set TP=1.0 ATR (was 2.0 ATR), keep SL=1.5 ATR. Same MACD 8/17/9 crossover + RSI(14)>50/<50 filter. XAUUSD 30m.",
+      "metrics": {"pf": 1.24537807, "sharpe": -3.23110347, "wr": 57.69230769, "dd": 4.13910434, "trades": 78, "net_profit": -303.112244165643},
+      "verdict": "rejected (PF=1.25 Sharpe=-3.23 DD=4.14%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T22:30:00Z"
+    },
+    {
+      "iteration": 269,
+      "hypothesis": "Add ADX(14) > 25 filter on MACD 8/17/9 + RSI(14)>50/<50 with tight 1:1.5 TP/SL (TP=1.0 ATR, SL=1.5 ATR). XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
       "verdict": "invalid (no trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-06-30T22:00:00Z"
+      "time": "2026-06-30T22:45:00Z"
+    },
+    {
+      "iteration": 270,
+      "hypothesis": "Lower ADX(14) threshold from 25 to 15 to allow entries while still filtering out the weakest chop. MACD 8/17/9 crossover + RSI(14)>50/<50 filter, TP=1.0 ATR (1:1.5 ratio), SL=1.5 ATR, London/NY session 8-16 UTC. XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T22:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
