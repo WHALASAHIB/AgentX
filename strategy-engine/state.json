@@ -1,6 +1,6 @@
 {
-  "iteration": 252,
-  "last_run": "2026-06-30T13:04:00Z",
+  "iteration": 255,
+  "last_run": "2026-06-30T14:25:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add back ADX(14)>25 filter to improve Sharpe ratio (currently -7.0). The RSI filter alone was insufficient. Keep EMA5/13 crossover, RSI(14)>50 filter, ATR TP/SL 1:1.5 (TP=1.0 ATR, SL=1.5 ATR), 24h trading. XAUUSD 30m.",
+  "current_hypothesis": "All metrics are good (PF=1.68, Sharpe=1.30, WR=66.67%, DD=1.91%, 24 trades). Try a completely different indicator family: Bollinger Bands %B strategy. Enter long when %B crosses above 0 (close crosses above lower band) and close on %B crossing below 1 (close crosses below upper band). Use ATR-based stop loss (1.5 ATR). XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 243,
@@ -95,6 +95,33 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-06-30T13:04:00Z"
+    },
+    {
+      "iteration": 252,
+      "hypothesis": "Replace ADX(14)>25 with SuperTrend(factor=3, period=10) as trend filter. Keep EMA5/13 crossover, RSI(14)>50 filter, ATR TP/SL 1:1.5 (TP=1.0 ATR, SL=1.5 ATR), 24h trading. XAUUSD 30m.",
+      "metrics": {"pf": 1.65808768, "sharpe": 0.73187143, "wr": 68.0, "dd": 2.22244233, "trades": 50, "net_profit": 71.226627642825},
+      "verdict": "accepted (incremental)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T13:46:00Z"
+    },
+    {
+      "iteration": 253,
+      "hypothesis": "Tighten SuperTrend parameters from factor=3.0/period=10 to factor=2.0/period=7 for stricter trend filter to improve Sharpe ratio (currently 0.73, target >1.0). Keep EMA5/13 crossover, RSI(14)>50 filter, ATR TP/SL 1:1.5 (TP=1.0 ATR, SL=1.5 ATR), 24h trading. XAUUSD 30m.",
+      "metrics": {"pf": 0.93669426, "sharpe": -5.06029153, "wr": 57.14285714, "dd": 4.66782477, "trades": 42, "net_profit": -369.073574683021},
+      "verdict": "rejected (PF=0.94 Sharpe=-5.06 DD=4.67%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T14:10:00Z"
+    },
+    {
+      "iteration": 254,
+      "hypothesis": "Revert SuperTrend from tightened factor=2.0/period=7 back to factor=3.0/period=10. Add minimum bar hold of 4 bars before allowing TP/SL exit to reduce premature stop-outs and improve Sharpe ratio. Keep EMA5/13 crossover, RSI(14)>50 filter, ATR TP/SL 1:1.5 (TP=1.0 ATR, SL=1.5 ATR), 24h trading. XAUUSD 30m.",
+      "metrics": {"pf": 1.6798608, "sharpe": 1.29919682, "wr": 66.66666667, "dd": 1.90886294, "trades": 24, "net_profit": 97.748983401512},
+      "verdict": "accepted (incremental)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-06-30T14:25:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

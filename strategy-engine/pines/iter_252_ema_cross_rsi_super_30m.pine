@@ -1,0 +1,51 @@
+//@version=5
+strategy(title="EMA5_13_RSI50_SUPERTREND_ATR151_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(5, "Fast EMA Length", minval=2, maxval=50)      // sweep: 3-20 step 2
+emaSlow = input.int(13, "Slow EMA Length", minval=5, maxval=100)     // sweep: 8-50 step 5
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=21)            // sweep: 7-21 step 2
+
+// SuperTrend parameters (trend filter — replaces ADX)
+stFactor = input.float(3.0, "SuperTrend Factor", minval=1.0, maxval=10.0)  // sweep: 1.0-7.0 step 1.0
+stPeriod = input.int(10, "SuperTrend ATR Period", minval=5, maxval=30)     // sweep: 5-30 step 5
+
+// ATR TP/SL parameters
+atrLen = input.int(14, "ATR Length", minval=7, maxval=21)            // sweep: 7-21 step 2
+tpMultiplier = input.float(1.0, "Take Profit (ATR multiple)", minval=0.5, maxval=5.0)  // sweep: 0.5-3.0 step 0.5
+slMultiplier = input.float(1.5, "Stop Loss (ATR multiple)", minval=0.5, maxval=5.0)    // sweep: 0.5-3.0 step 0.5
+
+//--- indicator calculations
+fastMA = ta.ema(close, emaFast)
+slowMA = ta.ema(close, emaSlow)
+rsiVal = ta.rsi(close, rsiLen)
+[stVal, stDir] = ta.supertrend(stFactor, stPeriod)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// Long: EMA5 crosses above EMA13, RSI > 50, SuperTrend direction=+1 (uptrend)
+longCondition = ta.crossover(fastMA, slowMA) and rsiVal > 50 and stDir == 1
+// Short: EMA5 crosses below EMA13, RSI < 50, SuperTrend direction=-1 (downtrend)
+shortCondition = ta.crossunder(fastMA, slowMA) and rsiVal < 50 and stDir == -1
+
+// ATR-based TP/SL levels in ticks
+slTicks = int(atrVal * slMultiplier / syminfo.mintick)
+tpTicks = int(atrVal * tpMultiplier / syminfo.mintick)
+
+// Enter long
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+// Enter short
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)

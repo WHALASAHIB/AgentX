@@ -1,0 +1,76 @@
+//@version=5
+strategy(title="EMA5_13_RSI_SuperTrend_Hold", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen = input.int(5, title="EMA Fast Length", minval=1, maxval=50)     // sweep: 3-10 step 1
+emaSlowLen = input.int(13, title="EMA Slow Length", minval=1, maxval=50)    // sweep: 10-20 step 1
+
+// RSI filter
+rsiLen = input.int(14, title="RSI Length", minval=1, maxval=50)            // sweep: 7-21 step 1
+rsiThreshold = input.int(50, title="RSI Threshold", minval=0, maxval=100)  // sweep: 40-60 step 5
+
+// SuperTrend trend filter
+stFactor = input.float(3.0, title="SuperTrend Factor", minval=0.5, maxval=10.0)   // sweep: 1.0-5.0 step 0.5
+stPeriod = input.int(10, title="SuperTrend Period", minval=1, maxval=50)          // sweep: 5-20 step 1
+
+// ATR-based TP/SL
+atrLen = input.int(14, title="ATR Length", minval=1, maxval=50)           // sweep: 7-21 step 1
+tpMultiplier = input.float(1.0, title="TP Multiplier (ATR)", minval=0.1, maxval=10.0)  // sweep: 0.5-3.0 step 0.5
+slMultiplier = input.float(1.5, title="SL Multiplier (ATR)", minval=0.1, maxval=10.0)  // sweep: 0.5-3.0 step 0.5
+
+// Minimum bars to hold before allowing exit
+minBarsHold = input.int(4, title="Min Bars to Hold", minval=0, maxval=20)  // sweep: 0-10 step 1
+
+//--- calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+// SuperTrend
+[supertrendVal, supertrendDir] = ta.supertrend(stFactor, stPeriod)
+isUptrend = supertrendDir == 1  // 1 = uptrend (green), -1 = downtrend (red)
+
+//--- entry logic
+
+// Entry conditions for LONG
+longSignal = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold and isUptrend
+
+//--- exit management
+
+// Track bars since entry using bar_index
+var int barsSinceEntry = na
+var int entryBar = na
+
+// Reset entry bar when in no position
+if strategy.position_size == 0
+    entryBar := na
+    barsSinceEntry := na
+
+// On entry, record the bar index
+if strategy.position_size > 0 and na(entryBar)
+    entryBar := bar_index
+
+// Update bars since entry
+if not na(entryBar)
+    barsSinceEntry := bar_index - entryBar
+
+// Entry
+if longSignal and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    entryBar := bar_index
+    barsSinceEntry := 0
+
+// Exit conditions: only allow TP/SL exit after minBarsHold bars
+allowExit = na(barsSinceEntry) ? false : barsSinceEntry >= minBarsHold
+
+if strategy.position_size > 0 and allowExit
+    strategy.exit("Long Exit", "Long", loss=int(slMultiplier * atrVal / syminfo.mintick), profit=int(tpMultiplier * atrVal / syminfo.mintick))
+
+//--- plot
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+plot(supertrendVal, "SuperTrend", color=isUptrend ? color.green : color.red, style=plot.style_linebr)
+hline(rsiThreshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)
