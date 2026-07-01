@@ -1,0 +1,61 @@
+# =============================================================================
+# OKF Bundle: AgentX Trading System Knowledge Base
+# Specification: https://google.github.io/open-knowledge-format/
+# Generated: 2026-07-01
+# =============================================================================
+bundle:
+  name: agentx-trading-knowledge
+  version: 1.0.0
+  description: Complete knowledge base for the AgentX algorithmic trading platform,
+    covering infrastructure, bot strategies, FTMO challenge rules, deployment,
+    key decisions, and API reference.
+  created_at: 2026-07-01
+  updated_at: 2026-07-01
+
+knowledge_base:
+  concepts:
+    - id: infrastructure
+      title: System Architecture
+      path: concepts/infrastructure.md
+      tags: [baseline, architecture, networking, backend, mt5-bridge]
+      description: Network topology, backend servers, MT5 bridge, frontend routing,
+        Cloudflare tunnel configuration, and hard rules.
+    - id: ftmo-rules
+      title: FTMO Challenge Rules
+      path: concepts/ftmo-rules.md
+      tags: [ftmo, prop-firm, challenge, drawdown, risk]
+      description: FTMO challenge compliance requirements, drawdown limits,
+        account details, and the Propfirm Pass strategy for passing FTMO challenges.
+
+  strategies:
+    - id: active-bots-overview
+      title: Active Bots Overview
+      path: strategies/active-bots-overview.md
+      tags: [bots, strategies, pairs, macd, bollinger, sma, volatility-breakout]
+      description: Summary of all 15 bot strategies across 8 symbols, with
+        symbol-pair mapping, magic numbers, and status.
+
+  bots:
+    - id: deployment-runbook
+      title: Bot Deployment Runbook
+      path: bots/deployment-runbook.md
+      tags: [deployment, lifecycle, auto-start, backend]
+      description: How bots are deployed — the backend lifecycle hook that
+        auto-starts all discovered bots on server boot.
+
+  decisions:
+    - id: decision-log-summary
+      title: Decision Log Summary
+      path: decisions/decision-log-summary.md
+      tags: [decisions, history, bot starts, errors, ftmo-incidents]
+      description: Key decisions from the structured decision log, including
+        bot starts, trade signals, errors, and FTMO-related incidents.
+
+  api:
+    - id: backend-endpoints
+      title: Backend API Reference
+      path: api/backend-endpoints.md
+      tags: [api, endpoints, rest, websocket, auth]
+      description: Complete REST API reference for the AgentX backend
+        (FastAPI on port 8005), including health, auth, accounts, stats,
+        bots, FTMO, analytics, WebSocket proxy, and SSE events.

@@ -12,6 +12,10 @@ tunnel_token.txt
 cloudflared.exe
 OpenSSH-Win64/
 
+# Headroom cache files
+.headroom/
+strategy-engine/.headroom/
+
 # Knowledge base — belongs in Hermess repo
 rag_knowledge_base/
 

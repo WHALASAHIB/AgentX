@@ -1,0 +1,57 @@
+//@version=5
+strategy(title="iter_289_BB_Trend_Follow", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)       // sweep: 10-30 step 5
+bb_mult = input.float(2.0, "BB StdDev Mult", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.5-3.0 step 0.5
+rsi_length = input.int(14, "RSI Length", minval=5, maxval=21)      // sweep: 10-20 step 2
+rsi_threshold = input.int(50, "RSI Threshold", minval=30, maxval=70) // sweep: 40-60 step 5
+tp_atr_mult = input.float(2.0, "TP (ATR mult)", minval=0.5, maxval=5.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+sl_atr_mult = input.float(1.0, "SL (ATR mult)", minval=0.5, maxval=5.0, step=0.5)   // sweep: 0.5-2.0 step 0.5
+atr_length = input.int(14, "ATR Length", minval=7, maxval=28)      // sweep: 10-20 step 2
+
+//--- calculate indicators
+bb_middle = ta.sma(close, bb_length)
+bb_dev = ta.stdev(close, bb_length) * bb_mult
+bb_upper = bb_middle + bb_dev
+bb_lower = bb_middle - bb_dev
+
+rsi = ta.rsi(close, rsi_length)
+atr_val = ta.atr(atr_length)
+
+//--- plot Bollinger Bands for visual reference
+plot(bb_middle, "BB Middle", color=color.blue, linewidth=1)
+plot(bb_upper, "BB Upper", color=color.gray, linewidth=1)
+plot(bb_lower, "BB Lower", color=color.gray, linewidth=1)
+
+//--- entry logic
+// Trend-following approach: price crossing above middle band = bullish, below = bearish
+bullish_cross = ta.crossover(close, bb_middle)
+bearish_cross = ta.crossunder(close, bb_middle)
+
+// RSI filter: long only if RSI > threshold, short only if RSI < threshold
+rsi_bullish = rsi > rsi_threshold
+rsi_bearish = rsi < (100 - rsi_threshold)
+
+// Entry conditions
+long_condition = bullish_cross and rsi_bullish
+short_condition = bearish_cross and rsi_bearish
+
+if (long_condition)
+    strategy.entry("BB_LONG", strategy.long)
+
+if (short_condition)
+    strategy.entry("BB_SHORT", strategy.short)
+
+//--- exit management
+// Dynamic ATR-based stops and targets
+long_sl_dist = int(sl_atr_mult * atr_val / syminfo.mintick)
+long_tp_dist = int(tp_atr_mult * atr_val / syminfo.mintick)
+short_sl_dist = int(sl_atr_mult * atr_val / syminfo.mintick)
+short_tp_dist = int(tp_atr_mult * atr_val / syminfo.mintick)
+
+if (strategy.position_size > 0)
+    strategy.exit("BB_LONG_EXIT", "BB_LONG", loss=long_sl_dist, profit=long_tp_dist)
+
+if (strategy.position_size < 0)
+    strategy.exit("BB_SHORT_EXIT", "BB_SHORT", loss=short_sl_dist, profit=short_tp_dist)
