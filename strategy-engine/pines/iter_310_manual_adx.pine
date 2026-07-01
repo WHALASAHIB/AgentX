@@ -1,0 +1,89 @@
+//@version=5
+strategy(title="EMA5/13 + RSI + Manual ADX + 1:1.5 TP/SL", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=50, group="EMA")
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=100, group="EMA")
+useRSIFilter = input.bool(true, "Use RSI Filter", group="Filters")
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=21, group="Filters")
+rsiLongThreshold = input.int(50, "RSI Long Threshold (> this)", minval=30, maxval=70, group="Filters")
+rsiShortThreshold = input.int(50, "RSI Short Threshold (< this)", minval=30, maxval=70, group="Filters")
+useADXFilter = input.bool(true, "Use ADX Filter", group="Filters")
+adxLen = input.int(14, "ADX Length", minval=7, maxval=21, group="Filters")
+adxThreshold = input.int(15, "ADX Threshold", minval=10, maxval=25, group="Filters")
+tpSlRatioLong = input.float(1.5, "TP/SL Ratio (Long)", minval=0.5, maxval=5.0, step=0.5, group="Risk")
+tpSlRatioShort = input.float(1.5, "TP/SL Ratio (Short)", minval=0.5, maxval=5.0, step=0.5, group="Risk")
+slPercent = input.float(0.3, "Stop Loss (% of price)", minval=0.05, maxval=2.0, step=0.05, group="Risk")
+
+//--- Manual ADX Calculation (Wilder's method)
+// True Range
+trVal = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+// +DM and -DM
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+
+// Wilder's smoothing (equivalent to EMA with alpha=1/length)
+alpha = 1.0 / adxLen
+smoothedTR = 0.0
+smoothedPlusDM = 0.0
+smoothedMinusDM = 0.0
+if bar_index == 0
+    smoothedTR := trVal
+    smoothedPlusDM := plusDM
+    smoothedMinusDM := minusDM
+else
+    smoothedTR := nz(smoothedTR[1]) + alpha * (trVal - nz(smoothedTR[1]))
+    smoothedPlusDM := nz(smoothedPlusDM[1]) + alpha * (plusDM - nz(smoothedPlusDM[1]))
+    smoothedMinusDM := nz(smoothedMinusDM[1]) + alpha * (minusDM - nz(smoothedMinusDM[1]))
+
+// DI+ and DI-
+diPlus = 100 * smoothedPlusDM / (smoothedTR > 0 ? smoothedTR : 1)
+diMinus = 100 * smoothedMinusDM / (smoothedTR > 0 ? smoothedTR : 1)
+
+// Directional Index
+dx = 100 * math.abs(diPlus - diMinus) / ((diPlus + diMinus) > 0 ? (diPlus + diMinus) : 1)
+
+// ADX = Wilder's smoothed DX
+adxVal = 0.0
+if bar_index < adxLen * 2
+    // Simple average for initial values
+    adxVal := 0.0
+else
+    adxVal := nz(adxVal[1]) + alpha * (dx - nz(adxVal[1]))
+
+//--- EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry conditions
+longEntry = ta.crossover(emaFast, emaSlow)
+if (useRSIFilter)
+    longEntry := longEntry and (rsiVal > rsiLongThreshold)
+if (useADXFilter)
+    longEntry := longEntry and (adxVal > adxThreshold)
+
+shortEntry = ta.crossunder(emaFast, emaSlow)
+if (useRSIFilter)
+    shortEntry := shortEntry and (rsiVal < rsiShortThreshold)
+if (useADXFilter)
+    shortEntry := shortEntry and (adxVal > adxThreshold)
+
+//--- entry management (no cascade-close)
+if (longEntry)
+    strategy.entry("Long", strategy.long)
+if (shortEntry)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management via fixed SL/TP
+slTicksLong = int(slPercent * close / syminfo.mintick / 100)
+tpTicksLong = int(slTicksLong * tpSlRatioLong)
+slTicksShort = int(slPercent * close / syminfo.mintick / 100)
+tpTicksShort = int(slTicksShort * tpSlRatioShort)
+
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long", loss=slTicksLong, profit=tpTicksLong)
+if (strategy.position_size < 0)
+    strategy.exit("Short Exit", "Short", loss=slTicksShort, profit=tpTicksShort)

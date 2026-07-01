@@ -1,0 +1,59 @@
+//@version=5
+strategy(title="XAUUSD MACD+RSI 1:1.5 TP/SL", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=5, maxval=50)    // sweep: 8-20 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=10, maxval=100)  // sweep: 18-34 step 4
+signalLength = input.int(9, "MACD Signal Length", minval=3, maxval=20) // sweep: 5-15 step 2
+
+// RSI filter
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=28)           // sweep: 10-20 step 2
+rsiThreshold = input.int(50, "RSI Threshold", minval=30, maxval=70)   // sweep: 40-60 step 5
+
+// TP/SL ratio
+tpRatio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0)     // sweep: 1.0-3.0 step 0.5
+slPct = input.float(0.3, "SL % of Close", minval=0.1, maxval=2.0)     // sweep: 0.15-0.5 step 0.05
+
+// Session filter
+sessionStart = input.int(8, "Session Start (UTC)", minval=0, maxval=23)  // sweep: 6-10 step 1
+sessionEnd = input.int(16, "Session End (UTC)", minval=0, maxval=23)     // sweep: 14-20 step 1
+
+//--- indicator calculations
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+rsiValue = ta.rsi(close, rsiLength)
+
+//--- entry logic
+macdBullish = ta.crossover(macdLine, signalLine)
+macdBearish = ta.crossunder(macdLine, signalLine)
+
+// RSI filter: long only if RSI > threshold, short only if RSI < threshold
+rsiLong = rsiValue > rsiThreshold
+rsiShort = rsiValue < (100 - rsiThreshold)
+
+// Session filter: trade only during defined UTC window
+inSession = hour(time) >= sessionStart and hour(time) < sessionEnd
+
+// Entry conditions
+longCondition = macdBullish and rsiLong and inSession
+shortCondition = macdBearish and rsiShort and inSession
+
+//--- entry management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Calculate SL and TP distances based on close price
+slDist = close * slPct / syminfo.mintick
+tpDist = slDist * tpRatio
+
+// Exit long with TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slDist, profit=tpDist)
+
+// Exit short with TP/SL
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=slDist, profit=tpDist)
