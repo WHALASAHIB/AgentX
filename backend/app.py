@@ -1082,6 +1082,7 @@ async def switch_account(account_id: str, auth=Depends(require_auth)):
     # Step 1: Call bridge's terminal-switch endpoint (kills & restarts MT5
     # terminal with the target account's credentials). This bypasses the
     # mt5.login() limitation by fully restarting the terminal process.
+    switch_result = {}
     try:
         switch_result = await bridge._post(f"/api/v1/accounts/{account_id}/switch-terminal")
         logger.info("Terminal switched to %s: %s", account_id, switch_result.get("status"))
@@ -1094,16 +1095,14 @@ async def switch_account(account_id: str, auth=Depends(require_auth)):
     # Step 2: Update DB active account
     db.set_active_account(account_id)
 
-    # Step 3: Return the account info
-    try:
-        info = await bridge.get_account(account_id)
-    except HTTPException:
-        db_acct = db.get_account(account_id)
-        if not db_acct:
-            raise HTTPException(status_code=404, detail=f"Account '{account_id}' not found")
-        info = {"login": db_acct["login"], "name": db_acct["name"], "server": db_acct["server"],
+    # Step 3: Build account info — use switch result when available
+    info = {}
+    if switch_result:
+        info = {"login": switch_result.get("login", ""), "name": "", "server": switch_result.get("server", ""),
                 "connected": False, "stale": True}
 
+    # Step 4: Try health check to get real connected status (wait for bridge to reconnect)
+    await asyncio.sleep(10)
     try:
         bridge_health = await bridge.health()
         is_connected = (
@@ -1115,6 +1114,15 @@ async def switch_account(account_id: str, auth=Depends(require_auth)):
         info["stale"] = not is_connected
     except Exception:
         pass
+
+    # Step 5: Fall back to DB info if bridge data unavailable
+    if not info.get("login"):
+        db_acct = db.get_account(account_id)
+        if db_acct:
+            info = {"login": db_acct["login"], "name": db_acct["name"], "server": db_acct["server"],
+                    "connected": info.get("connected", False), "stale": info.get("stale", True)}
+        else:
+            raise HTTPException(status_code=404, detail=f"Account '{account_id}' not found")
 
     db_acct = db.get_account(account_id)
     if db_acct:
@@ -1162,10 +1170,12 @@ async def account_detail(account_id: str, auth=Depends(require_auth)):
 @app.post("/api/accounts")
 async def add_account(req: AddAccountRequest, auth=Depends(require_auth)):
     db = get_db()
-    from bridge.config import AccountConfig, encrypt_password
-    encrypted = ""
-    if req.password:
-        encrypted = encrypt_password(req.password)
+    # encrypt_password is nice-to-have; fall back to empty if bridge import fails
+    try:
+        from bridge.config import encrypt_password
+        encrypted = encrypt_password(req.password) if req.password else ""
+    except ImportError:
+        encrypted = ""
     acct = {
         "id": req.id,
         "name": req.name or req.id,
@@ -1181,7 +1191,7 @@ async def add_account(req: AddAccountRequest, auth=Depends(require_auth)):
 
     # Also register account with bridge so it can auto-discover it
     try:
-        from bridge.config import save_account as bridge_save_account
+        from bridge.config import AccountConfig, save_account as bridge_save_account
         bridge_acct = AccountConfig(
             id=req.id,
             name=req.name or req.id,
@@ -1195,6 +1205,8 @@ async def add_account(req: AddAccountRequest, auth=Depends(require_auth)):
         )
         bridge_save_account(bridge_acct)
         logger.info("Account synced to bridge config: id=%s", req.id)
+    except ImportError:
+        logger.info("bridge.config not available — skipping bridge sync")
     except Exception as e:
         logger.warning("Failed to sync account to bridge config: %s", e)
         # Don't fail the request if bridge sync fails
