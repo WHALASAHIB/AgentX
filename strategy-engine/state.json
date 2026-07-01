@@ -1,6 +1,6 @@
 {
-  "iteration": 314,
-  "last_run": "2026-07-01T15:52:00Z",
+  "iteration": 317,
+  "last_run": "2026-07-01T16:29:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add ADX(14) > 25 trending filter to improve Sharpe ratio (-5.18). Current EMA5/13 crossover + RSI(50) filter + 1:1.5 TP/SL on XAUUSD 1h produced PF=0.36 with negative Sharpe despite RSI filter. ADX(14) > 25 ensures only trending market entries, filtering out choppy sideways moves that kill the EMA crossover strategy. EMA5/13 crossover + RSI(50) + ADX(25) trending filter + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h.",
+  "current_hypothesis": "Reduce ADX threshold from 25 to 18 to generate more trades (ADX(25) only produced 1 trade). EMA3/10 crossover + RSI(50) filter + ADX(18) trending filter + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h. The ADX(25) was too restrictive — only 1 trade with -$545 loss. A lower ADX(18) should catch moderate trends while still filtering out noise.",
   "evolution_log": [
     {
       "iteration": 312,
@@ -32,6 +32,33 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-01T15:52:00Z"
+    },
+    {
+      "iteration": 314,
+      "hypothesis": "Add ADX(14) > 25 trending filter to improve Sharpe ratio (-5.18). EMA5/13 crossover + RSI(50) filter + ADX(25) trending filter + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h.",
+      "metrics": {"pf": 0.0, "sharpe": -6.75, "wr": 0.0, "dd": 10.66, "trades": 3, "net_profit": -886.36},
+      "verdict": "invalid (low sample, 3 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-01T15:57:00Z"
+    },
+    {
+      "iteration": 315,
+      "hypothesis": "Lower ADX threshold from 25 to 15 and use faster EMAs (3/10 cross instead of 5/13) to generate more trades. EMA3/10 crossover + RSI(50) filter + ADX(15) trending filter + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h.",
+      "metrics": {"pf": 1.15835516, "sharpe": -1.87660753, "wr": 41.66666667, "dd": 2.58409915, "trades": 24, "net_profit": -118.251129767177},
+      "verdict": "rejected (PF=1.16 Sharpe=-1.88 DD=2.58%)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-01T16:13:00Z"
+    },
+    {
+      "iteration": 316,
+      "hypothesis": "Increase ADX threshold from 15 to 25 to improve Sharpe ratio (-1.88). EMA3/10 crossover + RSI(50) filter + ADX(25) trending filter + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h.",
+      "metrics": {"pf": 0.0, "sharpe": -2.65, "wr": 0.0, "dd": 8.37, "trades": 1, "net_profit": -545.91},
+      "verdict": "invalid (low sample, 1 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-01T16:29:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

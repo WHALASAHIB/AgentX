@@ -1,0 +1,66 @@
+//@version=5
+strategy(title="EMA5/13 Crossover + RSI50 + ADX25 filter", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=1)        // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=2)       // sweep: 10-26 step 1
+rsi_len = input.int(14, "RSI Length", minval=2)                 // sweep: 7-21 step 2
+rsi_oversold = input.int(30, "RSI Oversold", minval=1)          // sweep: 20-40 step 5
+rsi_overbought = input.int(70, "RSI Overbought", minval=1)      // sweep: 60-80 step 5
+rsi_filter = input.bool(true, "Use RSI Filter (Long>50, Short<50)")
+adx_len = input.int(14, "ADX Length", minval=2)                 // sweep: 7-21 step 2
+adx_threshold = input.int(25, "ADX Threshold", minval=1)        // sweep: 20-30 step 2
+use_adx_filter = input.bool(true, "Use ADX Trending Filter (>threshold)")
+sl_pct = input.float(0.3, "Stop Loss %", step=0.05)             // sweep: 0.1-0.5 step 0.05
+tp_sl_ratio = input.float(1.5, "TP/SL Ratio", step=0.1)         // sweep: 1.0-2.0 step 0.25
+trade_session_start = input.int(8, "Session Start (UTC)", minval=0, maxval=23)  // sweep: 0-23 step 1
+trade_session_end = input.int(16, "Session End (UTC)", minval=0, maxval=23)     // sweep: 8-20 step 1
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi = ta.rsi(close, rsi_len)
+
+//--- manual ADX calculation (ta.adx not available on Trader Dev engine)
+adx_smoothing = input.int(14, "ADX Smoothing", minval=1)
+up = high - high[1]
+down = low[1] - low
+plus_dm = na(up) ? na : (up > down and up > 0 ? up : 0)
+minus_dm = na(down) ? na : (down > up and down > 0 ? down : 0)
+tr = math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))
+atr = ta.rma(tr, adx_len)
+plus_di = 100 * ta.rma(plus_dm, adx_len) / atr
+minus_di = 100 * ta.rma(minus_dm, adx_len) / atr
+dx = math.abs(plus_di - minus_di) / (plus_di + minus_di) * 100
+adx_line = ta.rma(dx, adx_smoothing)
+
+//--- entry conditions
+in_session = hour(time) >= trade_session_start and hour(time) < trade_session_end
+trending = adx_line > adx_threshold or (not use_adx_filter)
+
+// Long conditions
+long_cross = ta.crossover(ema_fast, ema_slow)
+rsi_ok_long = rsi > 50 or (not rsi_filter)
+long_entry = long_cross and rsi_ok_long and in_session and trending
+
+// Short conditions
+short_cross = ta.crossunder(ema_fast, ema_slow)
+rsi_ok_short = rsi < 50 or (not rsi_filter)
+short_entry = short_cross and rsi_ok_short and in_session and trending
+
+//--- entry logic
+if (long_entry)
+    strategy.entry("Long", strategy.long)
+    
+if (short_entry)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management (close-based percentage stops)
+sl_dist = close * sl_pct / 100 * 10 / syminfo.mintick
+tp_dist = sl_dist * tp_sl_ratio
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=sl_dist, profit=tp_dist)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=sl_dist, profit=tp_dist)

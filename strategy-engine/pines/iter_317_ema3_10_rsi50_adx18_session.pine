@@ -1,0 +1,66 @@
+//@version=5
+strategy(title="EMA3/10 RSI50 ADX18 Session XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+slow_len = input.int(10, "Slow EMA Length", minval=1, maxval=100)      // sweep: 8-30 step 2
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)             // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long>short<)", minval=20, maxval=80)  // sweep: 40-60 step 5
+
+// ADX parameters
+adx_len = input.int(14, "ADX Length", minval=2, maxval=50)             // sweep: 7-21 step 2
+adx_threshold = input.int(18, "ADX Threshold (enter above)", minval=5, maxval=50)   // sweep: 14-30 step 2
+
+// Risk management
+sl_pct = input.float(0.3, "Stop Loss (%)", minval=0.05, maxval=5.0)    // sweep: 0.1-1.0 step 0.1
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0)  // sweep: 1.0-3.0 step 0.5
+
+// Session filter
+session_start = input.int(8, "Session Start (UTC hour)", minval=0, maxval=23)    // sweep: 0-12 step 2
+session_end = input.int(20, "Session End (UTC hour)", minval=0, maxval=23)       // sweep: 12-23 step 2
+
+//--- indicator calculations
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+adx_val = ta.adx(high, low, close, adx_len)
+current_hour = hour(time)
+
+//--- entry logic
+long_condition = false
+short_condition = false
+
+// Session check: trade only during session_start to session_end UTC
+in_session = current_hour >= session_start and current_hour < session_end
+
+// EMA crossover with RSI and ADX filters
+ema_cross_up = ta.crossover(fast_ema, slow_ema)
+ema_cross_dn = ta.crossunder(fast_ema, slow_ema)
+
+// Long: EMA up-cross + RSI > threshold + ADX > threshold + in session
+if ema_cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and in_session
+    long_condition := true
+
+// Short: EMA down-cross + RSI < threshold + ADX > threshold + in session
+if ema_cross_dn and rsi_val < rsi_threshold and adx_val > adx_threshold and in_session
+    short_condition := true
+
+// Calculate SL and TP distances in ticks
+sl_ticks = math.round(sl_pct / 100 * close / syminfo.mintick)
+tp_ticks = math.round(sl_ticks * tp_sl_ratio)
+
+//--- entry execution
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if short_condition and strategy.position_size == 0
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", loss=sl_ticks, profit=tp_ticks)
+
+//--- plot EMA lines for visual reference
+plot(fast_ema, "Fast EMA", color=color.blue, linewidth=1)
+plot(slow_ema, "Slow EMA", color=color.red, linewidth=1)

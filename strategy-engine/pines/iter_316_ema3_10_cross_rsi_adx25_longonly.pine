@@ -1,0 +1,64 @@
+//@version=5
+strategy(title="EMA3_10_RSI_ADX25 Long Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMAs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)  // sweep: 2-8 step 1
+ema_slow_len = input.int(10, "Slow EMA Length", minval=1, maxval=50) // sweep: 8-21 step 2
+
+// RSI filter
+rsi_len      = input.int(14, "RSI Length", minval=2, maxval=30)      // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (above = long)", minval=20, maxval=80) // sweep: 40-60 step 5
+
+// ADX filter
+adx_len      = input.int(14, "ADX Length", minval=5, maxval=30)     // sweep: 10-30 step 2
+adx_threshold= input.int(25, "ADX Threshold (must exceed)", minval=5, maxval=50) // sweep: 18-30 step 2
+
+// TP/SL
+tp_sl_ratio  = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.25
+sl_pct       = input.float(0.3, "Stop Loss % of Close", minval=0.05, maxval=2.0, step=0.05) // sweep: 0.1-1.0 step 0.1
+
+// Session filter
+session_start = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23) // sweep: 6-10 step 1
+session_end   = input.int(20, "Session End Hour (UTC)", minval=0, maxval=23)  // sweep: 16-22 step 1
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+
+// Manual ADX calculation
+hi = high
+lo = low
+cl = close
+tr_ = ta.tr(true)
+up = hi - hi[1]
+down = lo[1] - lo
+plus_dm = up > down and up > 0 ? up : 0
+minus_dm = down > up and down > 0 ? down : 0
+atr_smooth = ta.rma(tr_, adx_len)
+plus_di = 100 * ta.rma(plus_dm, adx_len) / atr_smooth
+minus_di = 100 * ta.rma(minus_dm, adx_len) / atr_smooth
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx, adx_len)
+
+//--- entry conditions
+current_hour = hour(time)
+in_session = current_hour >= session_start and current_hour < session_end
+
+ema_cross_bullish = ta.crossover(ema_fast, ema_slow)
+rsi_ok = rsi_val > rsi_threshold
+adx_ok = adx_val > adx_threshold
+trend_ok = close > ema_slow
+
+long_entry = ema_cross_bullish and rsi_ok and adx_ok and trend_ok and in_session
+
+//--- exit management
+sl_ticks = math.round(sl_pct * close / syminfo.mintick)
+tp_ticks = math.round(sl_ticks * tp_sl_ratio)
+
+if (long_entry)
+    strategy.entry("Long", strategy.long)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
