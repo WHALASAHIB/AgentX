@@ -1,0 +1,49 @@
+//@version=5
+strategy(title="EMA5/13 RSI50 ADX25 1.5TP Long Only XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+ema_fast = input.int(5, "Fast EMA", minval=2, maxval=50)      // sweep: 3-10 step 1
+ema_slow = input.int(13, "Slow EMA", minval=5, maxval=50)     // sweep: 8-21 step 1
+
+// RSI(14) threshold
+rsi_length = input.int(14, "RSI Length", minval=7, maxval=21) // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Threshold (long >)", minval=20, maxval=70) // sweep: 30-60 step 5
+
+// ADX(14) filter — using ta.dmi which returns [adx, diPlus, diMinus]
+dmi_length = input.int(14, "DMI/ADX Length", minval=7, maxval=28) // sweep: 7-28 step 1
+adx_threshold = input.int(25, "ADX Threshold (trend >)", minval=10, maxval=40) // sweep: 15-35 step 5
+
+// TP/SL ratio
+tp_ratio = input.float(1.5, "Take Profit (×ATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.5
+sl_ratio = input.float(1.0, "Stop Loss (×ATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 0.5-2.0 step 0.5
+
+// ATR length for stops
+atr_length = input.int(14, "ATR Length", minval=7, maxval=28) // sweep: 7-28 step 1
+
+//--- indicator calculations
+ema_fast_val = ta.ema(close, ema_fast)
+ema_slow_val = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_length)
+[adx_val, di_plus, di_minus] = ta.dmi(high, low, close, dmi_length)
+atr_val = ta.atr(atr_length)
+
+//--- entry logic
+// Long condition: EMA fast crosses above slow, RSI > threshold, ADX > threshold
+long_condition = ta.crossover(ema_fast_val, ema_slow_val) and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+// Exit condition: EMA fast crosses below slow (trend reversal exit)
+exit_long_condition = ta.crossunder(ema_fast_val, ema_slow_val)
+
+//--- trade management
+if (long_condition)
+    stop_loss_price = close - (atr_val * sl_ratio)
+    take_profit_price = close + (atr_val * tp_ratio)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=close - stop_loss_price, profit=take_profit_price - close, comment="TP/SL")
+
+// Plot for visual reference
+plot(ema_fast_val, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow_val, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)
+plot(adx_val, "ADX", display=display.none)
