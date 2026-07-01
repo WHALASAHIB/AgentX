@@ -1,6 +1,6 @@
 {
-  "iteration": 291,
-  "last_run": "2026-07-01T09:43:00Z",
+  "iteration": 294,
+  "last_run": "2026-07-01T10:55:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "BB trend-follow with ADX(14)>25 filter still loses (PF=0.96, Sharpe=-9.06, WR=33.6%, DD=16.9%). The ADX filter slightly improved PF (0.86→0.96) but DD is now worse (12.3%→16.9%). WR is still 33.6% — tighten TP/SL ratio from 2:1 to 1:1.5 (TP=1.0 ATR, SL=1.5 ATR) to improve win rate by capturing more smaller winners. Keep ADX(14)>25. XAUUSD 30m.",
+  "current_hypothesis": "Strategy produced 237 trades but 34.18% WR and negative Sharpe (-6.25). Tighten RSI(14) filter from 40 to 50 (long only if RSI>50, short only if RSI<50) to improve signal quality and win rate. The RSI>40 was letting in too many weak momentum trades. XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 270,
@@ -138,7 +138,7 @@
       "iteration": 287,
       "hypothesis": "Remove ADX filter. EMA3/8 + RSI(14)>40...",
       "metrics": {"pf": 0.81980163, "sharpe": -6.63073321, "wr": 37.68115942, "dd": 10.75814515, "trades": 69, "net_profit": -847.580530688118},
-      "verdict": "rejected (PF=0.82 Sharpe=-6.63 DD=10.76%)",
+      "verdict": "rejected (PF=0.82 Sharpe=-6.63 DD=10.75%)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-01T03:18:00Z"
     },
     {
@@ -161,6 +161,40 @@
       "metrics": {"pf": 0.95857742, "sharpe": -9.05833164, "wr": 33.63636364, "dd": 16.89632281, "trades": 220, "net_profit": -1600.506340707851},
       "verdict": "rejected (PF=0.96 Sharpe=-9.06 WR=33.6% DD=16.9%)",
       "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-01T09:43:00Z"
+    },
+    {
+      "iteration": 291,
+      "hypothesis": "BB trend-follow + ADX(14)>25 + tightened TP/SL from 2:1 to 1:1.5 (TP=1.0 ATR, SL=1.5 ATR) to improve WR by capturing smaller winners. XAUUSD 30m.",
+      "metrics": {"pf": 0.83127639, "sharpe": -11.35569439, "wr": 52.59259259, "dd": 14.8252108, "trades": 135, "net_profit": -1415.554262115349},
+      "verdict": "rejected (PF=0.83 Sharpe=-11.36 DD=14.83%)",
+      "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-01T02:09:06Z"
+    },
+    {
+      "iteration": 292,
+      "hypothesis": "BB trend-follow + ADX(14)>25 + RSI(14)>50 filter. Long only when price > BB middle (SMA20) AND ADX(14) > 25 AND RSI(14) > 50. Tightened TP/SL 1:1.5 ratio. XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades — triple AND condition too restrictive)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-01T02:24:00Z"
+    },
+    {
+      "iteration": 293,
+      "hypothesis": "RSI(50) threshold was too restrictive — triple AND (BB middle > close AND ADX>25 AND RSI>50) produced zero qualifying bars. Loosen RSI threshold from 50 to 40 while keeping BB middle > close AND ADX>25. XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades — RSI>40 still too restrictive for triple AND)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-01T10:28:00Z"
+    },
+    {
+      "iteration": 294,
+      "hypothesis": "Switch to EMA5/13 crossover entry which historically produced the best result (iter 44, PF=3.61). EMA5 crossing above EMA13 = long, with ADX>25 trending filter and RSI>40 momentum filter. XAUUSD 30m.",
+      "metrics": {"pf": 1.1068491, "sharpe": -6.25149917, "wr": 34.17721519, "dd": 12.96931883, "trades": 237, "net_profit": -1179.919139337984},
+      "verdict": "rejected (PF=1.11 Sharpe=-6.25 DD=12.97%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-01T10:55:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
