@@ -1,6 +1,6 @@
 # 🏛️ AGENTX INFRASTRUCTURE BASELINE — IMMUTABLE
 
-> **Last verified:** 2026-07-01 03:45 HKT
+> **Last verified:** 2026-07-01 03:52 HKT
 > **Status:** ✅ ALL SYSTEMS OPERATIONAL (3 accounts)
 > **This document is the single source of truth for all infrastructure. Do NOT modify any setting below without explicit Commander approval.**
 
@@ -152,6 +152,8 @@ Switch accounts via the website's Switch button — terminal restarts with chose
 | 10 | Switch-terminal updates coordinator active account | `bridge/server.py` | 2026-06-30 |
 | 11 | Coordinator created synchronously (race fix) | `bridge/mt5_manager.py` | 2026-06-30 |
 | 12 | Lifespan sets initial active to mt5-demo | `bridge/server.py` | 2026-06-30 |
+| 13 | Switch: use bridge result + 10s delay for accurate status | `backend/app.py` | 2026-07-01 |
+| 14 | Add-account: wrap bridge.config import in try/except | `backend/app.py` | 2026-07-01 |
 
 ---
 

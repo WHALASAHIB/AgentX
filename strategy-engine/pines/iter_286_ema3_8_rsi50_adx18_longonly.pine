@@ -1,0 +1,37 @@
+//@version=5
+strategy(title="EMA3_8_RSI50_ADX18_LongOnly_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50, step=1)       // sweep: 1-20 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=100, step=1)       // sweep: 5-50 step 1
+rsiLen     = input.int(14, "RSI Length", minval=1, maxval=50, step=1)            // sweep: 5-30 step 2
+rsiMin     = input.float(50.0, "RSI Minimum (long only)", step=0.5)              // sweep: 20-60 step 5
+adxLen     = input.int(14, "ADX Length", minval=1, maxval=50, step=1)            // sweep: 5-30 step 2
+adxMin     = input.float(18.0, "ADX Minimum (trend filter)", step=0.5)           // sweep: 10-30 step 2
+tpMult     = input.float(1.0, "TP (ATR multiple)", step=0.25)                    // sweep: 0.5-3.0 step 0.25
+slMult     = input.float(1.5, "SL (ATR multiple)", step=0.25)                    // sweep: 0.5-3.0 step 0.25
+atrLen     = input.int(14, "ATR Length", minval=1, maxval=100, step=1)           // sweep: 5-30 step 2
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi     = ta.rsi(close, rsiLen)
+[adx, plusDI, minusDI] = ta.dmi(high, low, close, adxLen)
+atr     = ta.atr(atrLen)
+
+//--- plot indicators for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+hline(adxMin, "ADX Min", color=color.gray, linestyle=hline.style_dashed)
+
+//--- entry logic
+longCondition = false
+if ta.crossover(emaFast, emaSlow) and rsi > rsiMin and adx > adxMin
+    longCondition := true
+
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", loss=slMult * atr / syminfo.mintick, profit=tpMult * atr / syminfo.mintick)

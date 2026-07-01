@@ -1,0 +1,58 @@
+//@version=5
+strategy(title="EMA3/8 RSI>50 TP2 SL1 24h XAUUSD 30m",
+         overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFast = input.int(3, "Fast EMA", minval=2, maxval=30)           // sweep: 2-10 step 1
+emaSlow = input.int(8, "Slow EMA", minval=5, maxval=50)            // sweep: 6-20 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Period", minval=7, maxval=21)          // sweep: 7-21 step 1
+rsiMin = input.int(50, "RSI Minimum (long only)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// ATR-based SL/TP
+atrLen = input.int(14, "ATR Period", minval=7, maxval=21)          // sweep: 7-21 step 1
+tpMultiplier = input.float(2.0, "TP (×ATR)", step=0.5, minval=0.5, maxval=5.0)  // sweep: 1.0-4.0 step 0.5
+slMultiplier = input.float(1.0, "SL (×ATR)", step=0.5, minval=0.5, maxval=5.0)  // sweep: 0.5-2.5 step 0.5
+
+//--- indicators
+ema_fast = ta.ema(close, emaFast)
+ema_slow = ta.ema(close, emaSlow)
+rsi_val = ta.rsi(close, rsiLen)
+atr_val = ta.atr(atrLen)
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsiMin
+
+//--- exit management
+var float entry_price = na
+var float entry_atr = na
+var int bar_since_entry = na
+
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    entry_price := close
+    entry_atr := atr_val
+    bar_since_entry := 0
+
+if strategy.position_size > 0
+    bar_since_entry := bar_since_entry + 1
+    // Only place exit after 1 bar to let entry fill
+    if bar_since_entry >= 1 and not na(entry_price) and not na(entry_atr)
+        stop_loss = entry_price - (entry_atr * slMultiplier)
+        take_profit = entry_price + (entry_atr * tpMultiplier)
+        strategy.exit("XL", "Long",
+             loss=int((entry_price - stop_loss) / syminfo.mintick),
+             profit=int((take_profit - entry_price) / syminfo.mintick))
+
+//--- plot
+plot(ema_fast, "Fast EMA", color.blue, 1)
+plot(ema_slow, "Slow EMA", color.red, 1)
+hline(rsiMin, "RSI Min", color.gray, hline.style_dashed)

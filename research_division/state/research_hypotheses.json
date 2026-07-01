@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 154,
+    "total_ideas": 157,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -818,6 +818,64 @@
       "diversification_value": "This is unique in the seasonal family. No existing idea uses base metals demand cycles as a leading predictor for gold. It bridges the cross-commodity sub-niche (only 1 prior idea) with a PROXY trade rather than a direct seasonal play on gold itself. Unlike 'Cross_Commodity_Seasonal_Rotation' which trades each metal independently on best-performing calendar months, this explicitly models the TRANSMISSION LAG from industrial metals to gold via institutional portfolio rebalancing. It is also distinct from 'Gold_Silver_Ratio_Rotation' (cross_asset) which is a ratio trade driven by monetary/investment demand \u2014 this uses industrial demand as a leading indicator for gold.",
       "self_grade": "A-",
       "generated_at": "2026-06-30T16:32:13Z"
+    },
+    {
+      "name": "Real_Yield_Divergence_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Mean reversion of XAUUSD against US real yields (10-year TIPS) implied fair value. When gold diverges significantly from its real-yield-implied equilibrium, the dislocation reverts within 3-5 trading days.",
+      "market_behaviour": "Gold has the strongest and most persistent inverse correlation with US real yields (10-year TIPS) of any single variable \u2014 a relationship documented across multiple market regimes spanning decades. When real yields rise, gold's opportunity cost increases (gold pays no yield), driving prices down; when real yields fall, gold becomes more attractive. However, the relationship is not instantaneous \u2014 dislocations occur during liquidity events, position-squaring, or sentiment-driven flows that temporarily decouple price from fair value. These dislocations systematically revert within 3-5 trading days as institutional arbitrageurs and macro funds re-enter to capture the spread. The edge lies in measuring the divergence from a rolling regression-based fair value and entering when the dislocation reaches 1.5+ standard deviations from equilibrium \u2014 a point where reversion probability exceeds 75% in historical data.",
+      "entry_logic": "1. Compute fair value of XAUUSD using rolling 60-day regression: XAUUSD_price ~ beta * (1/DXY) + gamma * (US10Y_real_yield) + intercept. Fair value = predicted price from regression. 2. Calculate divergence = (current_price - fair_value) / ATR(14) \u2014 normalized distance from fair value in ATR units. 3. If divergence > +1.5 (gold overvalued vs fair value) AND US10Y real yield > 5-day rolling average (confirmation that yield pressure is real), enter SHORT. 4. If divergence < -1.5 (gold undervalued vs fair value) AND US10Y real yield < 5-day rolling average, enter LONG. 5. Confirmation filter: DXY must not be in a strong trend (>25 ADX on D1 DXY chart) \u2014 the reversion edge is strongest when DXY is range-bound, not trending. Skip trade if DXY ADX > 25. 6. Skip if within 2 days of FOMC or NFP \u2014 event risk overwhelms the correlation during these periods.",
+      "exit_logic": "Stop loss: 1.5\u00d7 ATR(14) from entry. Take profit: 0.8\u00d7 divergence at entry (partial close at 50% TP, trailing stop on remainder). Time stop: Exit after 5 trading days regardless of P&L \u2014 the reversion edge decays beyond this horizon. Re-entry allowed after 3 days if divergence persists above 1.0 ATR units.",
+      "failure_mode": "1. Regime change: During structural breaks like 2008 financial crisis or 2020 COVID, the gold-real yield correlation briefly broke down as gold sold off for liquidity alongside all assets. The regression fair value would be wrong on both sides. 2. Policy regime shift: If central banks explicitly target gold (e.g., 2022-2023 central bank buying spree), the fundamental relationship shifts and the 60-day window lags. 3. Low volatility environment: In low-vol regimes, the 1.5 ATR divergence threshold may rarely be triggered, leading to long periods with no trades. 4. Data dependency: TIPS yield data is not available in real-time for all brokers; using nominal yield minus inflation expectations as proxy introduces estimation error.",
+      "diversification_value": "All existing mean_reversion ideas operate on gold price action alone \u2014 Z-score, Kalman filter, VWAP, wick structure, volume profile. This is the first idea in the family to use an externally-anchored fair value (real yields) rather than statistical price dynamics. The Gold_Oil_Ratio_Extreme_Reverter uses a cross-asset ratio but targets oil, not macro rates. This idea targets the Macro Correlation OPEN sub-niche cluster \u2014 entirely new mechanism for the mean_reversion family.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-01T00:30:15Z"
+    },
+    {
+      "name": "Consolidation_Duration_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1 entry",
+        "H4 consolidation filter"
+      ],
+      "description": "Breakout strategy that filters entries by consolidation duration \u2014 the longer price consolidates in a narrow range, the more significant the eventual breakout. Enters only when breakouts occur after price has been in a consolidation phase longer than its 20-period median.",
+      "market_behaviour": "Markets exhibit a well-documented phenomenon where the duration of a consolidation phase is proportional to the magnitude of the subsequent breakout move \u2014 a concept rooted in Wyckoff's law of cause and effect and confirmed in microstructure literature. When gold trades in a narrow range (less than 0.5\u00d7 ATR daily range for at least 3 bars), institutional orders accumulate. The longer this accumulation phase lasts, the more pent-up directional energy builds. Breakouts from extended consolidations (>90th percentile of historical consolidation durations) produce sustained directional moves of 1.5-3\u00d7 the consolidation range in 70%+ of cases, compared to <50% for breakouts from brief consolidations. This edge exists because short-duration consolidations are often random noise or brief pauses, while extended consolidations represent genuine order stacking.",
+      "entry_logic": "1. Define a consolidation bar: any H1 bar with range < 0.4\u00d7 ATR(20) on H1 AND close within the middle 60% of the bar's range (no strong directional close). 2. Track consolidation duration: count consecutive consolidation bars. A new bar outside the consolidation range resets the counter. 3. The consolidation zone = highest high and lowest low across the entire consolidation sequence. 4. A breakout occurs when price closes more than 0.3\u00d7 ATR(14) beyond the consolidation zone boundary. 5. Entry filter: Only trade a breakout if the consolidation duration (number of bars) is in the upper quartile (>75th percentile) of all consolidation durations over the trailing 200 bars. 6. Confirmation: The breakout bar must have volume > 1.2\u00d7 average volume over the consolidation period (confirms institutional participation). 7. Direction: LONG if breakout is above consolidation high AND H4 trend is bullish (price above 50 EMA). SHORT if below consolidation low AND H4 trend is bearish.",
+      "exit_logic": "Stop loss: 0.5\u00d7 ATR(14) below the consolidation zone boundary (tight \u2014 the breakout should not retrace deeply). Take profit: 1:2 risk-reward minimum (2\u00d7 ATR). Trailing stop activates after price moves 1\u00d7 ATR in profit \u2014 trail at 0.5\u00d7 ATR from the highest close since entry. Time stop: Exit after 24 hours if TP not hit \u2014 extended consolidations produce quick moves, not slow grinds.",
+      "failure_mode": "1. False breakout from extended consolidation: Large players can create liquidity traps by breaking above a long consolidation to attract late buyers, then reversing. The volume confirmation filter mitigates but doesn't eliminate this. 2. Range expansion without direction: In news-driven markets, the consolidation zone boundary is breached but price oscillates near the boundary rather than trending \u2014 the 0.3\u00d7 ATR threshold is hit but follow-through fails. 3. Consolidation redefinition: In trending markets, pullbacks may be misclassified as consolidations, leading to false signals in the direction opposite to the trend. 4. Low volume environments: During holidays or low-liquidity sessions, the volume confirmation filter may never trigger, causing extended dry spells.",
+      "diversification_value": "All existing breakout ideas rely on session boundaries (Asian/London), chart patterns, Bollinger squeeze, or market structure for entry triggers. This is the first idea to use consolidation DURATION as the primary filter \u2014 a fundamentally different edge rooted in order accumulation theory rather than price pattern recognition. It targets the Consolidation Duration OPEN sub-niche cluster in the breakout family. The nearest existing idea (Bollinger_Squeeze_Momentum_Breakout) uses BB width contraction which is structurally different \u2014 any bar can have narrow BB width regardless of preceding consolidation bars.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-01T00:30:15Z"
+    },
+    {
+      "name": "InterCommodity_Momentum_Divergence",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Momentum entries on XAUUSD triggered when gold/silver ratio diverges from its trend \u2014 gold momentum that is not confirmed by silver (the 'poor man's gold') is suspect, while joint momentum across both metals signals genuine directional conviction.",
+      "market_behaviour": "Gold and silver share the highest inter-commodity correlation among major markets (typically 0.75-0.85 on D1) due to shared monetary, industrial, and safe-haven demand drivers. When gold makes a directional move that is NOT confirmed by silver moving in the same direction, the move is statistically unreliable \u2014 it represents either a temporary safe-haven premium (gold-specific) or a positioning-driven spike that lacks broad precious-metals conviction. Conversely, when BOTH gold and silver move directionally in sync, it signals genuine institutional conviction in the precious metals direction, and the momentum is more likely to sustain. The gold/silver ratio itself is mean-reverting around a slow-moving trend, and divergences from this trend at momentum inflection points create a powerful confirmation filter.",
+      "entry_logic": "1. Compute the gold/silver ratio: XAUUSD_close / XAGUSD_close on H4. 2. Compute the 40-period EMA of the gold/silver ratio. 3. Track the rate of change (ROC) of both gold and silver over 8 H4 bars (roughly 32 hours). 4. LONG entry: Gold 8-bar ROC > +2% AND silver 8-bar ROC > +1.5% (both rising, gold leading) AND gold/silver ratio is below its 40-EMA (ratio compressed, silver outperforming \u2014 healthy uptrend structure). 5. SHORT entry: Gold 8-bar ROC < -2% AND silver 8-bar ROC < -1.5% (both falling) AND gold/silver ratio is above its 40-EMA (ratio expanded, gold holding up better \u2014 sell gold weakness confirmed by silver). 6. Confirmation filter on D1: ADX(14) on XAUUSD must be > 20 (minimum trend presence) and less than 45 (not over-extended). 7. Skip entry if either gold or silver is within 1% of a major structural level (previous week's high/low) \u2014 momentum stalls at round numbers on both metals simultaneously.",
+      "exit_logic": "Stop loss: 1\u00d7 ATR(14) on H4 from entry. Take profit: 2\u00d7 ATR(14) \u2014 standard momentum continuation target. Trailing stop: Activate after 1.5\u00d7 ATR profit, trail at 1\u00d7 ATR from peak. Divergence exit: If silver ROC drops below 0% on LONGs (or above 0% on SHORTs) before TP is hit, exit immediately \u2014 the confirming metal has stopped confirming. Re-entry: Allowed after 12 hours if the divergence re-emerges.",
+      "failure_mode": "1. Decoupling events: During silver-specific supply shocks (e.g., industrial supply disruption) or gold-specific events (central bank buying announcements), the correlation temporarily breaks and false signals occur. The volume confirmation on XAUUSD is a partial mitigation. 2. Regime of persistent ratio divergence (2020-2021): Silver outperformed gold dramatically during the retail trading frenzy, causing the ratio to stay below its EMA for months \u2014 a LONG signal would have been correct but the ratio filter would have kept you out of a massive trend. 3. Low-vol environments: When both metals trade in a narrow range, the 2% ROC threshold may not trigger for weeks, leading to extended flat periods. 4. Data synchronization: Silver (XAGUSD) and gold (XAUUSD) have different session liquidity profiles. During Asian hours, silver is less liquid, creating false divergence signals. Mitigated by H4 timeframe smoothing.",
+      "diversification_value": "All existing momentum ideas operate on XAUUSD alone or with macro cross-asset inputs (DXY, US10Y, VIX). This is the first idea to use inter-commodity precious-metals confirmation \u2014 explicitly checking whether gold's momentum is endorsed by silver before committing capital. It targets the Inter-Commodity Divergence OPEN sub-niche cluster. The nearest idea (CrossAsset_Momentum_Transmission) uses DXY/US10Y/VIX leading into gold \u2014 a different mechanism focused on macro transmission rather than commodity internal confirmation.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-01T00:30:15Z"
     }
   ],
   "archived": [
@@ -2886,7 +2944,8 @@
       "Momentum_ROC_Acceleration_Confluence",
       "Momentum_Entropy_Rotational_Sizer",
       "CrossAsset_Momentum_Transmission",
-      "Session_Transition_Momentum_Carryover"
+      "Session_Transition_Momentum_Carryover",
+      "InterCommodity_Momentum_Divergence"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -2903,7 +2962,8 @@
       "Intraday_Volume_Profile_Mean_Reverter",
       "Session_Boundary_Mean_Reverter",
       "Kalman_Filter_Dynamic_Mean_Reversion",
-      "Regime_Adaptive_Dynamic_Reversion"
+      "Regime_Adaptive_Dynamic_Reversion",
+      "Real_Yield_Divergence_Reverter"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -2920,7 +2980,8 @@
       "MultiTimeframe_Liquidity_Stacked_Breakout",
       "Breakout_Volume_Climax_Fade",
       "Opening_Gap_Breakout_Continuation",
-      "Consolidation_Pattern_Measured_Move_Breakout"
+      "Consolidation_Pattern_Measured_Move_Breakout",
+      "Consolidation_Duration_Breakout"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",

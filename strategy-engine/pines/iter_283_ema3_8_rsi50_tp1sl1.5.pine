@@ -1,0 +1,30 @@
+//@version=5
+strategy(title="EMA3/8 Cross + RSI50 - Iter 283", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)       // sweep: 6-20 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)                // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=20, maxval=80) // sweep: 40-60 step 5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                // sweep: 7-21 step 7
+tp_mult = input.float(1.0, "TP Multiplier (ATR)", minval=0.5, maxval=5.0) // sweep: 0.5-3.0 step 0.5
+sl_mult = input.float(1.5, "SL Multiplier (ATR)", minval=0.5, maxval=5.0) // sweep: 0.5-3.0 step 0.5
+
+//--- indicator calculations
+fast_ema = ta.ema(close, ema_fast_len)
+slow_ema = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA3/8 crossover + RSI > threshold (LONG ONLY)
+long_condition = ta.crossover(fast_ema, slow_ema) and rsi_val > rsi_threshold
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: ATR-based TP and SL
+sl_distance = sl_mult * atr_val / syminfo.mintick
+tp_distance = tp_mult * atr_val / syminfo.mintick
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=int(sl_distance), profit=int(tp_distance))
