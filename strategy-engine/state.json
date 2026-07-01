@@ -1,6 +1,6 @@
 {
-  "iteration": 287,
-  "last_run": "2026-07-01T03:05:00Z",
+  "iteration": 288,
+  "last_run": "2026-07-01T03:18:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "ADX(18) still too restrictive for this data window. Remove ADX filter entirely. Keep EMA3/8 crossover + RSI(14)>40 (mild down-trend filter). TP=2.0 ATR, SL=1.5 ATR, 24h trading. XAUUSD 30m.",
+  "current_hypothesis": "All standard fixes (RSI>50, ADX>25, TP/SL 1:1.5) have been tried and failed on the EMA3/8 framework. Switching to Bollinger Bands (20,2) mean reversion: long when price touches lower band and RSI(14)<30 (oversold), short when price touches upper band and RSI(14)>70 (overbought). TP=Middle Band, SL=outer band+0.5 ATR. 24h trading. XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 269,
@@ -302,6 +302,22 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-01T03:05:00Z"
+    },
+    {
+      "iteration": 287,
+      "hypothesis": "Remove ADX filter entirely. Keep EMA3/8 crossover + RSI(14)>40 (mild down-trend filter). TP=2.0 ATR, SL=1.5 ATR, 24h trading. XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.81980163,
+        "sharpe": -6.63073321,
+        "wr": 37.68115942,
+        "dd": 10.75814515,
+        "trades": 69,
+        "net_profit": -847.580530688118
+      },
+      "verdict": "rejected (PF=0.82 Sharpe=-6.63 DD=10.76%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-01T03:18:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

@@ -1,0 +1,32 @@
+//@version=5
+strategy(title="EMA3_8_RSI40_LongOnly_v287", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(3, "EMA Fast Period", minval=1, maxval=50)        // sweep: 1-10 step 2
+ema_slow = input.int(8, "EMA Slow Period", minval=2, maxval=50)        // sweep: 5-20 step 3
+rsi_length = input.int(14, "RSI Length", minval=7, maxval=28)          // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Min (long only above)", minval=30, maxval=60)  // sweep: 30-60 step 10
+atr_length = input.int(14, "ATR Length", minval=7, maxval=28)          // sweep: 7-21 step 7
+tp_atr_mult = input.float(2.0, "TP ATR Multiplier", minval=0.5, maxval=5.0)   // sweep: 1.0-4.0 step 0.5
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0)   // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+ema_f = ta.ema(close, ema_fast)
+ema_s = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_length)
+atr_val = ta.atr(atr_length)
+
+//--- entry logic: EMA3/8 crossover + RSI(14)>40
+bullish_cross = ta.crossover(ema_f, ema_s)
+bearish_cross = ta.crossunder(ema_f, ema_s)
+
+long_condition = bullish_cross and rsi_val > rsi_threshold
+exit_long_condition = bearish_cross
+
+//--- entry
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: TP=2.0 ATR, SL=1.5 ATR
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=int(sl_atr_mult * atr_val / syminfo.mintick), profit=int(tp_atr_mult * atr_val / syminfo.mintick))

@@ -81,8 +81,10 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.3s ease; }
-    .live-active { color: var(--success); }
-    .live-inactive { color: var(--text-sec); }
+    .live-active { color: var(--success); font-weight: 600; }
+    .live-active::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 6px; vertical-align: middle; animation: pulse 2s infinite; }
+    .live-inactive { color: var(--text-sec); font-weight: 500; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
@@ -390,7 +392,13 @@
         const data = await res.json();
         const connected = data?.bridge?.connected || data?.bridge?.data?.connected || false;
         const indicator = document.getElementById('liveIndicator');
-        indicator.className = connected ? 'live-active' : 'live-inactive';
+        if (connected) {
+          indicator.className = 'live-active';
+          indicator.textContent = '● Live';
+        } else {
+          indicator.className = 'live-inactive';
+          indicator.textContent = '○ Offline';
+        }
 
         // Show weekend / market status banner
         const isWeekend = data?.bridge?.data?.is_weekend || false;
@@ -408,7 +416,10 @@
         }
       } catch(e) {
         const indicator = document.getElementById('liveIndicator');
-        if (indicator) indicator.className = 'live-inactive';
+        if (indicator) {
+          indicator.className = 'live-inactive';
+          indicator.textContent = '○ Offline';
+        }
       }
     }
 
