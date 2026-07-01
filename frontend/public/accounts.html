@@ -49,6 +49,8 @@
     .btn-switch{padding:8px 20px;background:var(--secondary);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;width:100%;}
     .btn-switch:hover{opacity:0.9;}
     .btn-switch:disabled{opacity:0.4;cursor:not-allowed;}
+    .btn-switch.loading{opacity:0.8;cursor:wait;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn-switch .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0;}
     .positions-section{margin-top:24px;}
     .positions-section table{width:100%;border-collapse:collapse;font-size:13px;}
     .positions-section th{text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-sec);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;}
@@ -278,7 +280,7 @@
               <div class="acct-detail"><div class="detail-label">Total P&amp;L</div><div class="detail-value ${netPnl>=0?'green':'red'}">${fmtUsd(netPnl)}</div></div>
               <div class="acct-detail"><div class="detail-label">Win Rate</div><div class="detail-value">${fmt(winRate,1)}%</div></div>
             </div>
-            <button class="btn-switch" onclick="switchAccount('${acct.id}')" ${isActive?'disabled':''}>${isActive?'✓ Active':'Switch'}</button>
+            <button class="btn-switch" onclick="switchAccount(this,'${acct.id}')" ${isActive?'disabled':''}>${isActive?'✓ Active':'Switch'}</button>
             <button class="btn-delete" onclick="deleteAccount('${acct.id}','${acct.name.replace(/'/g,"\\'")}')">🗑 Remove</button>
             ${errorHtml}
           </div>
@@ -286,13 +288,19 @@
       }).join('');
     }
 
-    async function switchAccount(id) {
+    async function switchAccount(btn, id) {
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.innerHTML = '<span class="spinner"></span> Switching…';
+
       try {
         const res = await fetch(API+'/api/accounts/'+id+'/switch', { method:'POST' });
         const data = await res.json();
-        if(data.status==='switched') loadAccounts();
-        else alert('Failed: '+(data.detail||'unknown'));
-      } catch(e) { alert('Error: '+e.message); }
+        if(data.status!=='switched') alert('Failed: '+(data.detail||'unknown'));
+      } catch(e) {
+        alert('Error: '+e.message);
+      }
+      loadAccounts();  // Re-render grid (resets all buttons)
     }
 
     async function loadPositions(activeId) {

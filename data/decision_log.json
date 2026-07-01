@@ -890,5 +890,17 @@
     "metadata": {
       "source": "bot_controller"
     }
+  },
+  {
+    "id": "dec_1782867685786_a345",
+    "timestamp": "2026-07-01T01:01:25.786686+00:00",
+    "agent_id": "Propfirm_pass_EURUSD",
+    "agent_name": "Propfirm Pass Eurusd",
+    "action": "Bot Started",
+    "detail": "Bot 'Propfirm_pass_EURUSD' started (PID 2060)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
   }
 ]
