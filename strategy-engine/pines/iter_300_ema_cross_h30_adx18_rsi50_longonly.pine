@@ -1,0 +1,66 @@
+//@version=5
+strategy(title="EMA5_13_ADX18_RSI50_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//==============================================================================
+// --- inputs
+//==============================================================================
+
+// EMA parameters
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=50, step=1)     // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=100, step=1)    // sweep: 8-26 step 2
+
+// RSI filter
+rsiLen     = input.int(14, "RSI Length", minval=7, maxval=28, step=1)          // sweep: 7-21 step 7
+rsiThresh  = input.int(50, "RSI Threshold (long>this, short<this)", minval=30, maxval=70, step=5)  // sweep: 40-60 step 5
+
+// ADX trend filter
+adxLen     = input.int(14, "ADX Length", minval=7, maxval=28, step=1)          // sweep: 7-21 step 7
+adxThresh  = input.int(18, "ADX Threshold (trend > this)", minval=10, maxval=40, step=2)  // sweep: 14-25 step 2
+
+// Exit management
+tpRatio    = input.float(2.0, "Take Profit (x ATR)", minval=0.5, maxval=10.0, step=0.5)  // sweep: 1.0-4.0 step 0.5
+slRatio    = input.float(1.0, "Stop Loss (x ATR)", minval=0.3, maxval=5.0, step=0.2)     // sweep: 0.5-2.0 step 0.3
+useTrail   = input.bool(false, "Use Trailing Stop", tooltip="If true, trailing stop replaces fixed SL")  // sweep: true/false
+
+// ATR for SL/TP calculation
+atrLen     = input.int(14, "ATR Length", minval=7, maxval=28, step=1)          // sweep: 10-20 step 5
+
+//==============================================================================
+// --- indicator calculations
+//==============================================================================
+
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+rsiVal  = ta.rsi(close, rsiLen)
+
+[adxVal, diPlus, diMinus] = ta.dmi(high, low, close, adxLen)
+
+atrVal  = ta.atr(atrLen)
+
+//==============================================================================
+// --- entry conditions
+//==============================================================================
+
+// Long: EMA fast crosses above slow, RSI > threshold, ADX > threshold (trending market)
+longEntry = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh and adxVal > adxThresh
+
+// Short: EMA fast crosses below slow, RSI < (100 - threshold), ADX > threshold
+shortEntry = ta.crossunder(emaFast, emaSlow) and rsiVal < (100 - rsiThresh) and adxVal > adxThresh
+
+//==============================================================================
+// --- exit management
+//==============================================================================
+
+// Calculate SL/TP distances in ticks
+slTicks = int(atrVal * slRatio / syminfo.mintick)
+tpTicks = int(atrVal * tpRatio / syminfo.mintick)
+
+// We manage exits individually per entry (no cascade-close)
+if longEntry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=slTicks, profit=tpTicks)
+
+if shortEntry and strategy.position_size == 0
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", loss=slTicks, profit=tpTicks)

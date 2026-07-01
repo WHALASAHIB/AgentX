@@ -1,0 +1,50 @@
+//@version=5
+strategy(title="EMA5-13 Cross + RSI50 + ADX18 — XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(5, title="Fast EMA", minval=1, maxval=50, step=1)        // sweep: 3-10 step 1
+emaSlow = input.int(13, title="Slow EMA", minval=5, maxval=50, step=1)        // sweep: 10-26 step 2
+
+// RSI parameters
+rsiLength = input.int(14, title="RSI Length", minval=5, maxval=30, step=1)   // sweep: 7-21 step 2
+rsiLongThresh = input.int(50, title="RSI Long Threshold", minval=30, maxval=70, step=5)  // sweep: 40-60 step 5
+rsiShortThresh = input.int(50, title="RSI Short Threshold", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, title="ADX Length", minval=7, maxval=30, step=1)      // sweep: 10-25 step 3
+adxThreshold = input.int(18, title="ADX Threshold", minval=10, maxval=40, step=1) // sweep: 15-25 step 2
+
+// TP/SL parameters
+slPct = input.float(0.5, title="SL (%)", minval=0.1, maxval=5.0, step=0.1)  // sweep: 0.3-2.0 step 0.1
+tpRatio = input.float(2.0, title="TP/SL Ratio", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//--- calculations
+emaFastVal = ta.ema(close, emaFast)
+emaSlowVal = ta.ema(close, emaSlow)
+rsiVal = ta.rsi(close, rsiLength)
+[adxVal, diPlus, diMinus] = ta.dmi(high, low, close, adxLen)
+
+//--- entry conditions
+// Long: fast EMA crosses above slow EMA, RSI > threshold, ADX > threshold (trending), +DI > -DI
+longCondition = ta.crossover(emaFastVal, emaSlowVal) and rsiVal > rsiLongThresh and adxVal > adxThreshold and diPlus > diMinus
+
+// Short: fast EMA crosses below slow EMA, RSI < threshold, ADX > threshold (trending), -DI > +DI
+shortCondition = ta.crossunder(emaFastVal, emaSlowVal) and rsiVal < rsiShortThresh and adxVal > adxThreshold and diMinus > diPlus
+
+//--- entry logic
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management — fixed 2:1 TP/SL using percentage stops
+slDist = close * slPct / 100.0
+tpDist = slDist * tpRatio
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=int(slDist / syminfo.mintick), profit=int(tpDist / syminfo.mintick))
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=int(slDist / syminfo.mintick), profit=int(tpDist / syminfo.mintick))

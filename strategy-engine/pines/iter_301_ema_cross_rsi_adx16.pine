@@ -1,0 +1,58 @@
+//@version=5
+strategy(title="EMA5/13 + RSI(50) + ADX(16) + 2:1 TP/SL XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "EMA Fast Length", minval=1, maxval=50, step=1)           // sweep: 3-13 step 2
+ema_slow_len = input.int(13, "EMA Slow Length", minval=5, maxval=50, step=1)           // sweep: 8-26 step 3
+rsi_len      = input.int(14, "RSI Length", minval=5, maxval=30, step=1)                // sweep: 7-21 step 7
+rsi_thresh   = input.int(50, "RSI Threshold", minval=30, maxval=70, step=5)           // sweep: 40-60 step 5
+adx_len      = input.int(14, "ADX Length", minval=7, maxval=21, step=1)                // sweep: 7-21 step 7
+adx_thresh   = input.float(16, "ADX Threshold", minval=10, maxval=30, step=1)          // sweep: 14-20 step 1
+tp_sl_ratio  = input.float(2.0, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.5)       // sweep: 1.0-3.0 step 0.5
+sl_atr_mult  = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+atr_len      = input.int(14, "ATR Length", minval=7, maxval=21, step=1)                 // sweep: 10-20 step 5
+
+//--- calculate indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+atr_val  = ta.atr(atr_len)
+
+// ADX calculation
+[di_plus, di_minus, adx_val] = ta.dmi(adx_len, adx_len)
+
+//--- entry signals
+// Long: EMA fast crosses above slow, RSI > threshold, ADX > threshold (trending market)
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_thresh and adx_val > adx_thresh
+
+// Short: EMA fast crosses below slow, RSI < threshold, ADX > threshold
+short_condition = ta.crossunder(ema_fast, ema_slow) and rsi_val < (100 - rsi_thresh) and adx_val > adx_thresh
+
+//--- entry logic
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Calculate SL distance as ATR * multiplier, TP as SL * ratio
+sl_distance = atr_val * sl_atr_mult
+tp_distance = sl_distance * tp_sl_ratio
+
+// Convert to ticks
+sl_ticks = math.round(sl_distance / syminfo.mintick)
+tp_ticks = math.round(tp_distance / syminfo.mintick)
+
+// Apply exits using loss/profit in ticks
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)
+
+//--- plot indicators for visual reference
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=1)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=1)
+hline(rsi_thresh, "RSI Long Thresh", color=color.green, linestyle=hline.style_dashed)
+hline(100 - rsi_thresh, "RSI Short Thresh", color=color.red, linestyle=hline.style_dashed)

@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 157,
+    "total_ideas": 160,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -876,6 +876,61 @@
       "diversification_value": "All existing momentum ideas operate on XAUUSD alone or with macro cross-asset inputs (DXY, US10Y, VIX). This is the first idea to use inter-commodity precious-metals confirmation \u2014 explicitly checking whether gold's momentum is endorsed by silver before committing capital. It targets the Inter-Commodity Divergence OPEN sub-niche cluster. The nearest idea (CrossAsset_Momentum_Transmission) uses DXY/US10Y/VIX leading into gold \u2014 a different mechanism focused on macro transmission rather than commodity internal confirmation.",
       "self_grade": "A-",
       "generated_at": "2026-07-01T00:30:15Z"
+    },
+    {
+      "name": "Spread_Regime_Adaptive_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Classifies XAUUSD bid-ask spread into 4 discrete regimes (Tight, Normal, Wide, Extreme) using percentile-based thresholds of rolling 200-period normalized spread history, inversely adjusting position size per regime.",
+      "market_behaviour": "Gold's bid-ask spread follows predictable intraday and event-driven patterns \u2014 tightest during London/US overlap when liquidity is highest, widest at Asian open, during NFP/FOMC data releases, and on Friday afternoons when institutional desks reduce risk. These spread expansions are NOT random noise; they reflect genuine market liquidity conditions that directly predict execution quality (slippage, partial fills). A regime-based classification is more robust than continuous regression models because spread data is heavy-tailed and non-stationary \u2014 parametric models overfit to current liquidity patterns and break when market microstructure shifts. The discrete regime approach uses historical percentiles that naturally adapt to the full distribution of spread observations, making it immune to outlier distortion and more interpretable for risk managers.",
+      "entry_logic": "1) Compute normalized spread = (ask_price - bid_price) / ATR(14) every 30 minutes. 2) Maintain a rolling 200-period history of normalized spread values. 3) Set regime thresholds: Tight = <25th percentile (multiplier 1.0x), Normal = 25th-60th percentile (0.85x), Wide = 60th-90th percentile (0.55x), Extreme = >90th percentile (0.0x \u2014 skip trade entirely). 4) Each potential trade signal first checks the current spread regime and applies the corresponding size multiplier to the base position size. 5) Reclassify every 30 minutes or on significant tick (spread change > 50% of current regime mid-point). 6) If spread data is unavailable, default to Normal regime (0.85x conservative).",
+      "exit_logic": "No direct exit logic \u2014 this is a position sizing overlay applied before entry. However, active positions should re-check spread regime every 30 minutes: if the regime shifts to Extreme (spread > 90th percentile) while a position is open, tighten stops by 25% to account for elevated slippage risk. The overlay does not automatically close positions \u2014 only prevents new entries in Extreme regimes and adjusts stop distance in Wide regimes.",
+      "failure_mode": "1) Structural market change: A permanent regime change in market microstructure (e.g., move to 24/7 trading, or a regulatory change affecting liquidity provision) can invalidate the 200-period lookback window, causing regime misclassification for weeks until the window fills. 2) Regime-cliff edge: A spread just below the 90th percentile threshold triggers 0.55x sizing, but one tick wider triggers 0.0x \u2014 this cliff effect can cause inconsistent sizing if spreads oscillate near threshold boundaries. Mitigate with a 5% hysteresis band around thresholds. 3) Data availability: MT5 tick history may not provide sufficient spread resolution on volatile days, leading to stale regime classifications.",
+      "diversification_value": "Completely orthogonal to existing risk_overlay ideas. Unlike Slippage_Regime_Sizer (which uses a continuous regression model predicting expected slippage from a feature vector), this uses discrete regime classification with historical percentile thresholds \u2014 making it robust to outliers and interpretable by humans. Unlike Multi_TF_Vol_Convexity_Sizer (which measures vol convexity divergence across timeframes), this is spread-specific and focused on execution cost regimes. Unlike all other risk_overlay ideas that target position sizing from PnL/drawdown/VaR/Kelly perspectives, this is the ONLY one addressing execution quality as a sizing input.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-01T04:38:59Z"
+    },
+    {
+      "name": "Correlation_Breakdown_Contingency_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Monitors rolling 20-session correlations of XAUUSD vs DXY, US10Y, and SPX; when ALL THREE simultaneously converge toward zero (|rho| < 0.2), signals idiosyncratic regime and cuts position size by 50%.",
+      "market_behaviour": "Gold maintains characteristic correlation relationships with three core reference assets: inverse to DXY (dollar-denominated pricing), inverse to US real yields (opportunity cost of holding gold vs bonds), and positive with risk-off equity moves (safe-haven bid). These three correlations form a 'correlation triangle' that explains most of gold's systematic variance. Periods when ALL THREE correlations simultaneously break down (converging toward zero) are rare but significant regime-change events \u2014 they mark moments when gold is being driven by an idiosyncratic exogenous factor (e.g., a physical supply disruption, a sanctions regime, a reserve-currency status debate, or a geopolitical shock that decouples gold from its normal drivers). During these periods, traditional hedge relationships fail and gold's price behavior becomes unpredictable \u2014 precisely when standard position sizing is most dangerous.",
+      "entry_logic": "1) Compute rolling 20-session Pearson correlations between XAUUSD daily returns and DXY, US10Y yield change, and SPX daily returns. 2) Check if ALL THREE satisfy |correlation| < 0.2 simultaneously. 3) If true \u2192 declare CORRELATION_BREAKDOWN regime \u2192 apply 0.5x size multiplier to all gold trades. 4) Recompute daily at 00:00 UTC. 5) Exit breakdown regime when ANY ONE of the three correlations re-establishes |correlation| > 0.4, signaling the idiosyncratic driver has faded. 6) Smoothing: require 2 consecutive daily confirms before entering/leaving breakdown to avoid whipsaw.",
+      "exit_logic": "This is a position sizing overlay \u2014 it does not close positions directly. When breakdown regime is active, reduce new trade entries to 0.5x base size. Open positions in breakdown regime should use tighter trailing stops (1.5x ATR instead of 2x) to account for higher uncertainty. When breakdown regime ends, return to normal sizing on the next signal after correlation confirmation.",
+      "failure_mode": "1) False breakdown: During periods of very low volatility (e.g., holiday season), all correlations naturally drift toward zero due to low signal-to-noise ratio, triggering false breakdown signals. Mitigate with a minimum volatility filter (skip check if XAUUSD ATR(20) is in the bottom 10% of its 200-day range). 2) Incomplete reference set: If gold is being driven by a factor NOT captured by DXY/US10Y/SPX (e.g., yuan devaluation, specific commodity supply event), the breakdown detection will miss it and maintain full sizing during a genuinely idiosyncratic move. 3) Lag in correlation detection: The 20-session window means the breakdown is only detected ~10 sessions after it begins, during which time significant adverse moves may have already occurred.",
+      "diversification_value": "Fundamentally different from Portfolio_Correlation_Sizing_Gate (which monitors aggregate USD directional exposure across ALL open positions). Different from Risk_Premium_Chase_Decay (which models gold's equity-bond beta regime as a decay signal for position sizing). Different from Entropy_Regime_Contingency_Sizer (which measures entropy of price directional changes internally). This is the ONLY risk_overlay idea that specifically targets simultaneous breakdown of gold's three core cross-asset correlations \u2014 a distinct, regime-change signal orthogonal to all existing overlays.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-01T04:38:59Z"
+    },
+    {
+      "name": "Volatility_Compass_Expansion_System",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Dual-confirmation volatility expansion capture using ATR(14) percentile crossing above 60th paired with ATR RSI(5) above 50, with H1 trend direction bias \u2014 identifies the transition from slow-to-rapid volatility expansion phase.",
+      "market_behaviour": "Volatility expansions in gold follow a characteristic S-curve: a slow initial acceleration phase as early participants detect the shift, a rapid middle phase as momentum traders and stop-runs amplify the move, and an asymptotic tail as the expansion exhausts. The most favorable risk/reward entry point is at the transition from Phase 1 (slow) to Phase 2 (rapid). Raw ATR values are regime-dependent (what's 'high vol' in summer is 'low vol' in crisis). Using the percentile rank of ATR over 200 periods normalizes for the prevailing volatility regime, making the 60th percentile threshold meaningful across all market environments. Adding the RSI of ATR values (volatility momentum) ensures the second derivative is positive \u2014 the expansion is accelerating, not decelerating. The H1 50 EMA direction filter prevents trading against the dominant trend, which has been the highest-validity directional bias during volatility expansions.",
+      "entry_logic": "1) Compute ATR(14) percentile rank over rolling 200-period window. 2) Compute 5-period RSI of the ATR(14) values (momentum of volatility itself). 3) Trigger condition: ATR percentile > 60th AND ATR_RSI > 50 (both must confirm). 4) Determine direction from H1 50 EMA: bullish if H1 close > 50 EMA AND 50 EMA slope > 0 over last 3 bars; bearish if H1 close < 50 EMA AND slope < 0. 5) Enter on the H1 close that satisfies all conditions. 6) Maximum 1 trade at a time. 7) No re-entry for 48 hours after exit.",
+      "exit_logic": "1) Fixed take profit at 1.5x the ATR(14) value at entry. 2) Trailing stop: once price achieves +1.0x ATR from entry, tighten to a trailing stop of 2x ATR(14) from the peak favorable excursion. 3) Time stop: exit if neither TP nor SL is hit within 24 H1 bars (24 hours). 4) Re-entry allowed after 48 hours if trigger conditions re-activate. 5) In case of ATR_RSI dropping below 30 (volatility momentum collapsing), exit early regardless of TP \u2014 this catches the asymptotic tail where expansions exhaust before hitting TP.",
+      "failure_mode": "1) Trendless whipsaw: In choppy sideways markets where ATR oscillates around the 60th percentile, the trigger may fire in both directions on consecutive signals. The 48-hour re-entry cooldown and trend filter mitigate this but cannot eliminate it entirely. 2) Regime drift: The 200-period percentile window is long enough that a sustained high-vol regime will gradually raise the baseline, making the 60th threshold easier to cross as the window fills with higher-vol data \u2014 this is a design feature (adaptivity) but can cause more frequent entries during high-vol periods. 3) Trend-following limitation: In sharp reversals where volatility expands against the H1 trend, the system will not participate even if the reversal has 2:1 risk/reward \u2014 missing some profitable counter-trend moves by design.",
+      "diversification_value": "Different from Volatility_Momentum_Ride (which uses a moving average crossover of ATR and rides until ATR falls \u2014 pure trend-following). Different from Volatility_Contraction_Breakout (which uses Bollinger squeeze \u2014 pre-expansion entry). Different from Volatility_Regime_Anticipation_Expansion (which uses leading indicators like vol term structure). This is the ONLY volatility idea using percentile-based dual confirmation (level percentile + momentum RSI) with H1 trend direction, targeting the specific S-curve inflection point \u2014 distinct from all 17 existing ideas in the volatility family.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-01T04:38:59Z"
     }
   ],
   "archived": [
@@ -3000,7 +3055,8 @@
       "News_Impact_Volatility_Decay",
       "Volatility_Regime_Anticipation_Expansion",
       "OVX_GVZ_Cross_Volatility_Divergence",
-      "Asian_Session_Vol_Carry_Harvest"
+      "Asian_Session_Vol_Carry_Harvest",
+      "Volatility_Compass_Expansion_System"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -3038,7 +3094,9 @@
       "Skew_Asymmetry_Insurer",
       "Drawdown_Regime_Recovery_Sizer",
       "Position_Aging_Theta_Decay_Overlay",
-      "Portfolio_Correlation_Sizing_Gate"
+      "Portfolio_Correlation_Sizing_Gate",
+      "Spread_Regime_Adaptive_Sizer",
+      "Correlation_Breakdown_Contingency_Sizer"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
