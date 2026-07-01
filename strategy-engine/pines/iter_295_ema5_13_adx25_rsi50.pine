@@ -1,0 +1,60 @@
+//@version=5
+strategy(title="EMA5/13 + ADX(25) + RSI(50) — XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen = input.int(5, "EMA Fast Length", minval=1, maxval=50)      // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=1, maxval=50)      // sweep: 10-26 step 2
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length", minval=1, maxval=50)               // sweep: 10-30 step 2
+adxThreshold = input.int(25, "ADX Threshold", minval=1, maxval=50)      // sweep: 15-35 step 5
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)               // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold", minval=1, maxval=100)     // sweep: 40-60 step 5
+
+// TP/SL parameters
+tpMultiplier = input.float(2.0, "TP (×ATR)", minval=0.5, maxval=5.0)   // sweep: 1.0-4.0 step 0.5
+slMultiplier = input.float(1.0, "SL (×ATR)", minval=0.5, maxval=5.0)   // sweep: 0.5-2.0 step 0.5
+
+// ATR for TP/SL calculation
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)               // sweep: 10-20 step 2
+
+//--- indicator calculations
+
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+adxVal = ta.adx(high, low, close, adxLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+
+// Long condition: EMA5 > EMA13 AND ADX > 25 AND RSI > 50
+longCondition = ta.crossover(emaFast, emaSlow) and adxVal > adxThreshold and rsiVal > rsiThreshold
+
+// Short condition: EMA5 < EMA13 AND ADX > 25 AND RSI < 50
+shortCondition = ta.crossunder(emaFast, emaSlow) and adxVal > adxThreshold and rsiVal < rsiThreshold
+
+//--- position management
+
+if (longCondition and strategy.position_size <= 0)
+    stopLoss = slMultiplier * atrVal / syminfo.mintick
+    takeProfit = tpMultiplier * atrVal / syminfo.mintick
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=stopLoss, profit=takeProfit)
+
+if (shortCondition and strategy.position_size >= 0)
+    stopLoss = slMultiplier * atrVal / syminfo.mintick
+    takeProfit = tpMultiplier * atrVal / syminfo.mintick
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=stopLoss, profit=takeProfit)
+
+//--- plots
+
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)

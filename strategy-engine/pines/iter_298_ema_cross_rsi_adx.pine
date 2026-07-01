@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="EMA5/13 Crossover + RSI + ADX — XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== inputs ===
+// EMA inputs
+fastLen = input.int(5, "Fast EMA Length", minval=1, maxval=50)       // sweep: 1-50 step 1
+slowLen = input.int(13, "Slow EMA Length", minval=1, maxval=100)     // sweep: 1-100 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)            // sweep: 1-50 step 1
+rsiThresh = input.int(50, "RSI Threshold", minval=1, maxval=100)     // sweep: 1-100 step 1
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=1, maxval=50)            // sweep: 1-50 step 1
+adxThresh = input.int(25, "ADX Threshold (enter only above)", minval=1, maxval=100)  // sweep: 1-100 step 1
+
+// TP/SL
+tpSlRatio = input.float(2.0, "TP:SL Ratio", minval=0.5, maxval=10.0, step=0.1)  // sweep: 0.5-5.0 step 0.1
+slPct = input.float(0.005, "SL as % of price", minval=0.001, maxval=0.05, step=0.001)  // sweep: 0.001-0.02 step 0.001
+
+//=== indicator calculations ===
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsiVal = ta.rsi(close, rsiLen)
+[adxVal, plusDi, minusDi] = ta.dmi(high, low, close, adxLen)
+
+//=== entry logic ===
+// Crossover: fast EMA crosses above slow EMA
+crossOver = ta.crossover(emaFast, emaSlow)
+// Crossunder: fast EMA crosses below slow EMA
+crossUnder = ta.crossunder(emaFast, emaSlow)
+
+// Conditions for long: EMA crossover + RSI > threshold + ADX trending
+longCondition = crossOver and rsiVal > rsiThresh and adxVal > adxThresh
+// Conditions for short: EMA crossunder + RSI < threshold + ADX trending
+shortCondition = crossUnder and rsiVal < (100 - rsiThresh) and adxVal > adxThresh
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//=== exit management ===
+tpPriceLong = strategy.position_avg_price * (1 + slPct * tpSlRatio)
+slPriceLong = strategy.position_avg_price * (1 - slPct)
+tpPriceShort = strategy.position_avg_price * (1 - slPct * tpSlRatio)
+slPriceShort = strategy.position_avg_price * (1 + slPct)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", limit=tpPriceLong, stop=slPriceLong)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", limit=tpPriceShort, stop=slPriceShort)
