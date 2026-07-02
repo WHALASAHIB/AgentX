@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 160,
+    "total_ideas": 163,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -931,6 +931,63 @@
       "diversification_value": "Different from Volatility_Momentum_Ride (which uses a moving average crossover of ATR and rides until ATR falls \u2014 pure trend-following). Different from Volatility_Contraction_Breakout (which uses Bollinger squeeze \u2014 pre-expansion entry). Different from Volatility_Regime_Anticipation_Expansion (which uses leading indicators like vol term structure). This is the ONLY volatility idea using percentile-based dual confirmation (level percentile + momentum RSI) with H1 trend direction, targeting the specific S-curve inflection point \u2014 distinct from all 17 existing ideas in the volatility family.",
       "self_grade": "A-",
       "generated_at": "2026-07-01T04:38:59Z"
+    },
+    {
+      "name": "DXY_Gold_Correlation_Mean_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Mean reversion on DXY-XAUUSD correlation breakdowns \u2014 when the typical negative correlation flips positive (both move together), the relationship tends to snap back within 5-10 sessions, creating a high-probability reversion trade.",
+      "market_behaviour": "DXY and XAUUSD maintain a strong negative correlation (typically -0.7 to -0.85) because gold is USD-denominated and competes with the dollar as a store of value. During periods of market stress, liquidity crises, or unusual cross-border capital flows, this relationship can temporarily break down with both assets moving in the same direction. Historical analysis shows these correlation breakdowns are self-correcting within 5-10 trading sessions as the fundamental pricing relationship reasserts itself through arbitrage and institutional rebalancing. The snap-back tends to be violent \u2014 the longer the breakdown persists, the faster and further the reversion.",
+      "entry_logic": "1. Calculate 20-period rolling Pearson correlation between DXY daily returns and XAUUSD daily returns on D1 timeframe. 2. When correlation crosses above +0.30 (anomalous positive territory), flag as a correlation-breakdown event. 3. Wait for the first daily close where the rolling correlation drops back below +0.10 \u2014 this signals the breakdown is resolving. 4. Enter in the direction that re-establishes the normal negative relationship: if gold rallied alongside DXY during the breakdown, SELL XAUUSD (expecting gold to fall as the inverse relationship returns). 5. If gold fell alongside DXY during the breakdown, BUY XAUUSD. 6. Skip if ATR(14) is above the 90th percentile of its 90-day range (excessive volatility regime invalidates the reversion signal). 7. Skip if within 3 days of FOMC, NFP, or CPI release (event risk overrides correlation dynamics).",
+      "exit_logic": "Stop loss: 1.5x 14-day ATR from entry. Take profit: 2x 14-day ATR, OR when 20-period DXY-XAUUSD correlation returns below -0.30 (whichever comes first). Maximum hold: 10 trading days. If position not triggered in 10 days, flat at market. Re-entry allowed only after 5 full trading sessions flat.",
+      "failure_mode": "1) Structural regime change where DXY-gold correlation permanently weakens (geopolitical de-dollarization, BRICS reserve diversification). 2) Multi-week macro shock (banking crisis, sovereign default) where both assets legitimately trend together for extended periods \u2014 the signal becomes a false flag and the 'reversion' never materializes. 3) Intra-correlation whipsaw where correlation oscillates around zero without establishing a clear breakdown \u2014 produces multiple small losses.",
+      "diversification_value": "Completely orthogonal to Gold_Oil_Ratio_Extreme_Reverter (the only other cross-asset mean reversion idea in this family). That idea trades the gold-to-oil price ratio at absolute extremes. This idea trades the statistical correlation between DXY and gold itself \u2014 a different mechanism (rolling correlation vs static ratio), different observation window (20-period vs 200-day), different entry trigger (correlation crossing thresholds vs z-score extremes), and different exit logic (correlation returning to negative territory vs ratio returning to equilibrium). Requires DXY ticker available via MT5.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-02T04:35:34Z"
+    },
+    {
+      "name": "Tick_Volume_Divergence_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Mean reversion using tick-volume divergence across successive price pushes \u2014 when each new swing high/low prints on lower tick volume than the prior one, momentum is exhausting and a reversion to the mean follows within 3-5 candles.",
+      "market_behaviour": "In liquid markets like XAUUSD, genuine directional moves are accompanied by increasing participation \u2014 more traders and larger size driving the move. When price continues extending but tick volume progressively shrinks on each successive push in the same direction, it reveals that the move is running out of participants. This is a volume-based divergence distinct from RSI or MACD divergences: it directly measures market participation rather than oscillator momentum. Institutional traders use declining tick volume as a signal to begin scaling out of positions, creating a self-fulfilling reversion. The phenomenon is strongest on M15-H1 where tick data is granular enough to show the divergence pattern but not noisy like M1.",
+      "entry_logic": "1. Track tick volume on M15 candles for XAUUSD. 2. Identify a directional swing: at least 3 consecutive candles with higher highs (for bullish swings) or lower lows (for bearish swings). 3. Measure tick volume for each push candle. If each successive push candle has LOWER tick volume than the previous push candle (e.g., push 1 = 12,000 ticks, push 2 = 8,500 ticks, push 3 = 5,200 ticks), flag as volume divergence. 4. Wait for the first M15 candle to close in the opposite direction (a bearish candle after a series of bullish pushes, or vice versa) \u2014 this is the trigger candle. 5. Enter opposite to the swing direction on the trigger candle close. 6. Confirm with H1 RSI(14) < 70 (for bearish divergence entry) or > 30 (for bullish divergence entry) to avoid fading extreme trending conditions. 7. Skip if ATR(14) on H1 is above the 80th percentile of its 30-day range (excess volatility invalidates the divergence signal).",
+      "exit_logic": "Stop loss: 1.5x the M15 ATR(14) at entry. Take profit: target the midpoint of the entire divergence swing range (the average price of all push candles), OR 2x M15 ATR, whichever is closer. Time stop: exit after 8 M15 candles if neither SL nor TP hit. Re-entry allowed after 2 hours flat and a fresh divergence pattern.",
+      "failure_mode": "1) Strong trending market (ADX > 40 on H1) where declining volume is consolidation within a trend, not exhaustion \u2014 the reversion is shallow and the trend resumes immediately. 2) News-driven volume spike where tick volume patterns are dominated by algorithmic responses and the divergence signal is noise. 3) Low-volatility sideways market where all pushes have similar volume and false divergences are frequent.",
+      "diversification_value": "Distinct from all 3 existing volume-based mean reversion ideas. Volume_Weighted_Mean_Reverter uses VWAP envelope deviations \u2014 a price-level reversion anchored to volume-weighted price. Volume_Delta_Exhaustion_Reverter uses cumulative delta (aggressive buy vs sell imbalance). Intraday_Volume_Profile_Mean_Reverter uses price reversion to the high-volume node \u2014 a volume-weighted price zone. None of them measure declining tick volume across successive price pushes as a standalone divergence signal. This idea's mechanism \u2014 comparing tick volume across sequential directional pushes \u2014 is a unique measurement angle within the Volume/Profile sub-niche cluster.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-02T04:35:34Z"
+    },
+    {
+      "name": "Gold_Silver_Ratio_Seasonal_Reverser",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Trades the gold-silver ratio (GSR) at seasonal extremes \u2014 historically, the ratio exhibits predictable widening during spring (Mar-May) and narrowing during late summer (Aug-Oct), driven by industrial silver demand cycles and safe-haven gold flows.",
+      "market_behaviour": "The gold-silver ratio (XAUUSD price / XAGUSD price) has a long-term average of approximately 75-80 but shows strong seasonal patterns. From March to May, the ratio tends to widen (gold outperforms silver) as geopolitical uncertainty peaks around spring budget cycles, elections in major economies, and gold's safe-haven premium increases. From August to October, the ratio tends to narrow (silver catches up) driven by the industrial demand cycle \u2014 silver's heavy industrial use in electronics manufacturing (ahead of holiday production runs), solar panel installations (pre-winter buildout), and automotive catalytic converter production. Institutional seasonal rotation between gold ETFs and silver ETFs amplifies these moves. When the GSR reaches extremes relative to its seasonal norm, mean reversion toward the seasonal average within 4-6 weeks has been statistically reliable in 14 of the last 20 years.",
+      "entry_logic": "1. Maintain a rolling 10-year database of daily GSR values (XAUUSD close / XAGUSD close). 2. Compute the seasonal average GSR for each calendar week (e.g., week 12 = March 18-24 average across 10 years). 3. Compute the current GSR and its z-score relative to the seasonal mean for the current calendar week. 4. WIDENING entry (May window, March 15 - May 31): if GSR z-score > +1.5 vs seasonal mean, enter LONG GSR (BUY XAUUSD + SELL XAGUSD in ratio-weighted proportion). Expectation: ratio continues widening for 2-4 more weeks. 5. NARROWING entry (August window, August 1 - October 15): if GSR z-score > +1.0 vs seasonal mean, enter SHORT GSR (SELL XAUUSD + BUY XAGUSD). Expectation: silver outperforms gold as industrial demand picks up. 6. If GSR z-score is < +0.5 during the respective windows (near the mean), skip \u2014 no edge. 7. Position sizing: risk 1% of account \u2014 calculate ratio-weighted notional. For single-instrument retail execution, trade the dominant leg: in widening season if GSR is extreme, BUY XAUUSD only (silver leg is confirmatory). For narrowing season, BUY XAGUSD only.",
+      "exit_logic": "Take profit: exit when GSR returns to within +0.5 z-score of the seasonal mean, OR after 6 calendar weeks, OR when the seasonal window closes (May 31 for widening, October 15 for narrowing). Stop loss: 3x the daily ATR(14) of the GSR itself at the time of entry. Time stop: if neither SL nor TP reached within 6 weeks, close at market. Re-entry: allowed only within the same seasonal window if reversion doesn't fully complete.",
+      "failure_mode": "1) Regime change in silver industrial demand (recession, manufacturing collapse) that breaks the seasonal pattern \u2014 silver underperforms regardless of calendar month. 2) Gold-specific macro shock (central bank buying spree, reserve status crisis) that overwhelms the seasonal signal \u2014 gold trends independently of silver. 3) The z-score never reaches the entry threshold during a given seasonal window \u2014 missed opportunity is not a loss, but means the strategy has zero activity some years. 4) Execution complexity: retail traders may need ratio-weighted sizing or choose to trade only one leg, reducing the purity of the GSR exposure.",
+      "diversification_value": "Fundamentally different from Cross_Commodity_Seasonal_Rotation (the only existing idea in the Cross-Commodity Seasonal cluster). That idea selects the single strongest metal by calendar month (silver/platinum/palladium) and trades it directionally above the 50-SMA. This idea trades the gold-silver RATIO itself, at seasonal extremes, using a z-score framework vs a 10-year seasonal mean. It's a pairs-trade / relative-value approach vs a directional metal pick. Different instruments (GSR vs single metal), different entry logic (z-score vs calendar lookup), different time horizon (4-6 weeks vs monthly rotation), and different risk profile (relative-value is hedged vs directional).",
+      "self_grade": "A-",
+      "generated_at": "2026-07-02T04:35:34Z"
     }
   ],
   "archived": [
@@ -3018,7 +3075,9 @@
       "Session_Boundary_Mean_Reverter",
       "Kalman_Filter_Dynamic_Mean_Reversion",
       "Regime_Adaptive_Dynamic_Reversion",
-      "Real_Yield_Divergence_Reverter"
+      "Real_Yield_Divergence_Reverter",
+      "DXY_Gold_Correlation_Mean_Reverter",
+      "Tick_Volume_Divergence_Reverter"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -3139,7 +3198,8 @@
       "Central_Bank_Gold_Reserve_Announcement_Window",
       "Platinum_Gold_Seasonal_Wedding_Flow",
       "Agricultural_Harvest_Cycle_Gold_Demand",
-      "Base_Metals_Gold_Seasonal_Demand_Proxy"
+      "Base_Metals_Gold_Seasonal_Demand_Proxy",
+      "Gold_Silver_Ratio_Seasonal_Reverser"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

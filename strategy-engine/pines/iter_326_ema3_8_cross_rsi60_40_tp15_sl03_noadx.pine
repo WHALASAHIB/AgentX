@@ -1,0 +1,42 @@
+//@version=5
+strategy(title="Iter 326 — EMA3/8 RSI60/40 TP1.5 NoADX", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(3, "Fast EMA", minval=1, maxval=50)      // sweep: 2-10 step 1
+ema_slow = input.int(8, "Slow EMA", minval=2, maxval=100)     // sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)    // sweep: 7-21 step 2
+rsi_long_threshold = input.int(60, "RSI Long Entry >", minval=30, maxval=80, step=5)  // sweep: 50-70 step 5
+rsi_short_threshold = input.int(40, "RSI Short Entry <", minval=20, maxval=70, step=5) // sweep: 30-50 step 5
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", step=0.1)       // sweep: 1.0-3.0 step 0.5
+sl_pct = input.float(0.3, "SL % of Entry Price", step=0.05)   // sweep: 0.15-0.50 step 0.05
+use_long = input.bool(true, "Allow Long Entries")
+use_short = input.bool(true, "Allow Short Entries")
+
+//--- calculations
+ema_f = ta.ema(close, ema_fast)
+ema_s = ta.ema(close, ema_slow)
+rsi = ta.rsi(close, rsi_len)
+
+// Crossover detection
+cross_over = ta.crossover(ema_f, ema_s)
+cross_under = ta.crossunder(ema_f, ema_s)
+
+//--- entry logic
+long_condition = cross_over and rsi > rsi_long_threshold
+short_condition = cross_under and rsi < rsi_short_threshold
+
+if long_condition and use_long
+    strategy.entry("Long", strategy.long)
+
+if short_condition and use_short
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+sl_distance = close * sl_pct / syminfo.mintick
+tp_distance = sl_distance * tp_sl_ratio
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_distance, profit=tp_distance)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=sl_distance, profit=tp_distance)

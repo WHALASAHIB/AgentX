@@ -1,0 +1,70 @@
+//@version=5
+strategy(title="EMA3/8 Cross RSI Long60 Short40 ADX18 XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Fast & slow EMAs
+ema_fast = input.int(3, "Fast EMA", minval=1, maxval=50)        // sweep: 2-10 step 1
+ema_slow = input.int(8, "Slow EMA", minval=2, maxval=100)        // sweep: 5-30 step 1
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)       // sweep: 7-21 step 1
+rsi_long_min = input.int(60, "RSI Long Min", minval=50, maxval=70) // sweep: 50-70 step 5
+rsi_short_max = input.int(40, "RSI Short Max", minval=20, maxval=50) // sweep: 20-50 step 5
+
+// ADX filter components (manual ADX calculation)
+adx_len = input.int(14, "ADX Length", minval=5, maxval=30)       // sweep: 7-21 step 2
+adx_threshold = input.int(18, "ADX Min Threshold", minval=5, maxval=50) // sweep: 10-30 step 5
+
+// Risk management
+sl_pct = input.float(0.3, "SL %", step=0.05)                     // sweep: 0.1-1.0 step 0.1
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", step=0.1)          // sweep: 1.0-3.0 step 0.25
+
+//--- manual ADX calculation
+// True range
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+atr_val = ta.rma(tr_val, adx_len)
+
+// Directional movement
+up_move = high - high[1]
+down_move = low[1] - low
+
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0.0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0.0
+
+plus_di = 100.0 * ta.rma(plus_dm, adx_len) / atr_val
+minus_di = 100.0 * ta.rma(minus_dm, adx_len) / atr_val
+
+// ADX = RMA of (|DI+ - DI-| / (DI+ + DI-)) * 100
+dx = 100.0 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx, adx_len)
+
+//--- calculations
+ema_fast_val = ta.ema(close, ema_fast)
+ema_slow_val = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+// Long condition: fast EMA above slow EMA, RSI > long threshold, ADX > threshold
+long_condition = ta.crossover(ema_fast_val, ema_slow_val) and rsi_val > rsi_long_min and adx_val > adx_threshold
+
+// Short condition: fast EMA below slow EMA, RSI < short threshold, ADX > threshold
+short_condition = ta.crossunder(ema_fast_val, ema_slow_val) and rsi_val < rsi_short_max and adx_val > adx_threshold
+
+//--- exit management
+// TP/SL distance in ticks
+sl_ticks = math.round(sl_pct / 100.0 * close / syminfo.mintick)
+tp_ticks = math.round(sl_ticks * tp_sl_ratio)
+
+// Entry: close-based, one position at a time
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+
+// Exit orders with fixed TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)
