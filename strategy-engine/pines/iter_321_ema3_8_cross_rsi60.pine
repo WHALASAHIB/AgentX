@@ -1,0 +1,42 @@
+//@version=5
+strategy(title="EMA3_8_Cross_RSI60_XAUUSD_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 1-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)       // sweep: 5-20 step 1
+rsi_len      = input.int(14, "RSI Length", minval=1, maxval=50)           // sweep: 7-21 step 2
+rsi_long_th  = input.int(60, "RSI Long Threshold", minval=1, maxval=100)  // sweep: 50-70 step 5
+rsi_short_th = input.int(50, "RSI Short Threshold", minval=1, maxval=100) // sweep: 30-50 step 5
+tp_ratio     = input.float(1.5, "TP Ratio (x SL)", minval=0.1, step=0.1)  // sweep: 0.5-3.0 step 0.5
+sl_pct       = input.float(0.3, "SL %", minval=0.05, step=0.05)          // sweep: 0.1-0.5 step 0.1
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+
+//--- entry logic
+long_condition  = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_long_th
+short_condition = ta.crossunder(ema_fast, ema_slow) and rsi_val < rsi_short_th
+
+//--- exit management
+sl_ticks    = math.round(sl_pct / 100.0 * close / syminfo.mintick)
+tp_ticks    = math.round(tp_ratio * sl_ticks)
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)
+
+//--- plot indicators
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
+hline(rsi_long_th, "RSI Long Threshold", color=color.green, linestyle=hline.style_dashed)
+hline(rsi_short_th, "RSI Short Threshold", color=color.red, linestyle=hline.style_dashed)

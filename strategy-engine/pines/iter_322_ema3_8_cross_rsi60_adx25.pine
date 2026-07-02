@@ -1,0 +1,68 @@
+//@version=5
+strategy(title="EMA3_8_RSI60_ADX25", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)        // sweep: 5-21 step 1
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)                // sweep: 7-21 step 1
+rsiLongThreshold = input.int(60, "RSI Long Entry Threshold (> value)", minval=50, maxval=80) // sweep: 50-70 step 5
+
+// Trend filter — SMA instead of ADX (ADX not supported by Trader Dev)
+smaTrendLen = input.int(50, "SMA Trend Length (price > SMA = long bias)", minval=20, maxval=100) // sweep: 20-100 step 10
+
+// TP/SL parameters
+slPct = input.float(0.3, "Stop Loss (%)", minval=0.1, maxval=5.0, step=0.05)     // sweep: 0.2-1.0 step 0.1
+tpRatio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.1)      // sweep: 1.0-3.0 step 0.3
+
+//--- manual ADX calculation (since ta.adx is not available in Trader Dev)
+// True Range
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+// Directional Movement
+dmPlus = high - high[1] > low[1] - low ? math.max(high - high[1], 0) : 0
+dmMinus = low[1] - low > high - high[1] ? math.max(low[1] - low, 0) : 0
+// Smoothed (Wilder's RMA) 
+trSmooth = ta.rma(tr, 14)
+dmPlusSmooth = ta.rma(dmPlus, 14)
+dmMinusSmooth = ta.rma(dmMinus, 14)
+// Directional Indicators
+diPlus = 100 * dmPlusSmooth / trSmooth
+diMinus = 100 * dmMinusSmooth / trSmooth
+// ADX
+dx = 100 * math.abs(diPlus - diMinus) / (diPlus + diMinus)
+adxVal = ta.rma(dx, 14)
+adxThreshold = input.int(25, "ADX Trend Threshold (> value)", minval=10, maxval=50) // sweep: 15-30 step 5
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+smaTrend = ta.sma(close, smaTrendLen)
+
+//--- entry logic
+// Long: EMA crossover + RSI > threshold + price above SMA trend (uptrend) + ADX > threshold
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiLongThreshold and close > smaTrend and adxVal > adxThreshold
+
+// Short: EMA crossunder + RSI < 50 + price below SMA trend (downtrend) + ADX > threshold
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsiVal < 50 and close < smaTrend and adxVal > adxThreshold
+
+//--- exit management
+// Calculate TP/SL in ticks
+slTicks = int((slPct / 100.0) * close / syminfo.mintick)
+tpTicks = int(slTicks * tpRatio)
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=slTicks, profit=tpTicks)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", loss=slTicks, profit=tpTicks)
+
+//--- visual indicators
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+plot(smaTrend, "SMA Trend", color=color.purple, linewidth=1)
+hline(rsiLongThreshold, "RSI Long Threshold", color=color.green, linestyle=hline.style_dashed)

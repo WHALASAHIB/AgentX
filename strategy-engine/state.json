@@ -1,6 +1,6 @@
 {
-  "iteration": 319,
-  "last_run": "2026-07-01T17:07:00Z",
+  "iteration": 323,
+  "last_run": "2026-07-02T07:35:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Increase RSI long-entry threshold from 50 to 60 to filter out weak bullish signals. Longs have 15.4% WR (2/13 wins) at RSI>50 — not selective enough. Keep shorts at RSI<50 (55.6% WR, +$46 profitable). The short side works, the long side needs strictter conditions. EMA3/10 crossover + strict RSI filter (long > 60, short < 50) + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h.",
+  "current_hypothesis": "Lower ADX threshold from 25 to 18 to generate more trades (ADX>25 produced only 8 trades). EMA3/8 crossover + RSI(long > 60, short < 50) + manual ADX(14) > 18 trending filter + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h.",
   "evolution_log": [
     {
       "iteration": 312,
@@ -71,12 +71,48 @@
     },
     {
       "iteration": 318,
-      "hypothesis": "Remove ADX filter entirely — ADX(18) still only produced 1 trade on XAUUSD 1h, same as ADX(25) in iter 316. The ADX filter is too restrictive for the already-narrow EMA3/10 crossover + RSI(50) combo. Keep EMA3/10 crossover + RSI(50) filter + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h to establish a baseline trade count without ADX. If trades are still <20, try removing the session filter next.",
+      "hypothesis": "Remove ADX filter entirely. EMA3/10 crossover + RSI(50) filter + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h.",
       "metrics": {"pf": 0.87599923, "sharpe": -1.58350791, "wr": 31.81818182, "dd": 7.47518406, "trades": 22, "net_profit": -247.35108560319},
       "verdict": "rejected (PF=0.88 Sharpe=-1.58 DD=7.48%)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-01T17:07:00Z"
+    },
+    {
+      "iteration": 319,
+      "hypothesis": "Increase RSI long-entry threshold from 50 to 60. EMA3/10 crossover + RSI filter (long > 60, short < 50) + 1:1.5 TP/SL + 0.3% SL + session filter (8-20 UTC) on XAUUSD 1h.",
+      "metrics": {"pf": 3.19011806, "sharpe": 3.31521607, "wr": 75.0, "dd": 4.7764356, "trades": 8, "net_profit": 525.921277303589},
+      "verdict": "invalid (low sample, 8 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-02T07:00:00Z"
+    },
+    {
+      "iteration": 320,
+      "hypothesis": "Remove session filter (8-20 UTC) to increase trade count. EMA3/10 crossover + RSI(long > 60, short < 50) + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h 24h.",
+      "metrics": {"pf": 0.75033363, "sharpe": -1.95562622, "wr": 50.0, "dd": 6.91491343, "trades": 16, "net_profit": -310.051938727065},
+      "verdict": "invalid (low sample, 16 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-02T07:15:00Z"
+    },
+    {
+      "iteration": 321,
+      "hypothesis": "Faster EMAs (3/8 instead of 3/10) to generate more cross signals. EMA3/8 crossover + RSI(long > 60, short < 50) + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h 24h.",
+      "metrics": {"pf": 1.4610728, "sharpe": -0.30644583, "wr": 51.51515152, "dd": 2.06802957, "trades": 33, "net_profit": -21.299526558536},
+      "verdict": "rejected (PF=1.46 Sharpe=-0.31 DD=2.07%)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-02T07:30:00Z"
+    },
+    {
+      "iteration": 322,
+      "hypothesis": "Add ADX(14) > 25 trending filter to improve Sharpe ratio (-0.31). EMA3/8 crossover + RSI(long > 60, short < 50) + manual ADX(14) > 25 trending filter + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h.",
+      "metrics": {"pf": 1.60092146, "sharpe": 0.70141846, "wr": 37.5, "dd": 4.59378225, "trades": 8, "net_profit": 102.16201281828},
+      "verdict": "invalid (low sample, 8 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-02T07:35:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
