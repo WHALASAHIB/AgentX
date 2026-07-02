@@ -1,0 +1,39 @@
+//@version=5
+strategy(title="EMA3_8_RSI50_XAUUSD_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA length", minval=2, maxval=20, tooltip="Speed of short-term trend")       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA length", minval=5, maxval=50, tooltip="Speed of longer-term trend")       // sweep: 5-20 step 2
+rsi_len = input.int(14, "RSI length", minval=7, maxval=21)                                                       // sweep: 7-21 step 2
+rsi_long_threshold = input.int(50, "RSI long threshold (above=long allowed)", minval=30, maxval=70)              // sweep: 30-70 step 5
+rsi_short_threshold = input.int(50, "RSI short threshold (below=short allowed)", minval=30, maxval=70)           // sweep: 30-70 step 5
+sl_pct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1)                                      // sweep: 0.1-1.0 step 0.1
+tp_ratio = input.float(1.5, "TP/SL ratio", minval=0.5, maxval=4.0, step=0.1)                                    // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_long_threshold
+short_condition = ta.crossunder(ema_fast, ema_slow) and rsi_val < rsi_short_threshold
+
+//--- exit management
+if (long_condition)
+    stop_price = close * (1 - sl_pct / 100)
+    take_price = close * (1 + sl_pct / 100 * tp_ratio)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=math.round((close - stop_price) / syminfo.mintick), profit=math.round((take_price - close) / syminfo.mintick))
+
+if (short_condition)
+    stop_price = close * (1 + sl_pct / 100)
+    take_price = close * (1 - sl_pct / 100 * tp_ratio)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=math.round((stop_price - close) / syminfo.mintick), profit=math.round((close - take_price) / syminfo.mintick))
+
+//--- visual
+plot(ema_fast, "Fast EMA", color.blue, 1)
+plot(ema_slow, "Slow EMA", color.red, 1)
+hline(rsi_long_threshold, "RSI Long Thresh", color.green)
+hline(rsi_short_threshold, "RSI Short Thresh", color.red)

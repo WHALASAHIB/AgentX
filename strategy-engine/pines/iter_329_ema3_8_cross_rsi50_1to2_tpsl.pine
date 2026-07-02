@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="EMA3_8_RSI50_1to2TP_SL_XAUUSD_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFast = input.int(3, title="EMA Fast Period", minval=1, maxval=50)        // sweep: 1-10 step 1
+emaSlow = input.int(8, title="EMA Slow Period", minval=2, maxval=50)         // sweep: 5-20 step 1
+
+// RSI filter
+rsiLen = input.int(14, title="RSI Length", minval=5, maxval=30)              // sweep: 7-21 step 2
+rsiLongMin = input.int(50, title="RSI Long Minimum", minval=20, maxval=80)   // sweep: 40-60 step 5
+rsiShortMax = input.int(50, title="RSI Short Maximum", minval=20, maxval=80) // sweep: 40-60 step 5
+
+// Trade hours (UTC)
+tradeStart = input.int(8, title="Trade Start Hour (UTC)", minval=0, maxval=23)   // London/NY overlap 8-16 UTC
+tradeEnd = input.int(16, title="Trade End Hour (UTC)", minval=0, maxval=23)
+
+// Risk management
+stopLossPct = input.float(0.3, title="Stop Loss (%)", minval=0.05, maxval=5.0, step=0.05)  // sweep: 0.1-2.0 step 0.1
+takeProfitRatio = input.float(2.0, title="TP/SL Ratio", minval=0.5, maxval=5.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+ema_fast = ta.ema(close, emaFast)
+ema_slow = ta.ema(close, emaSlow)
+rsi_val = ta.rsi(close, rsiLen)
+
+//--- entry logic
+inTradeHours = (hour(time) >= tradeStart and hour(time) < tradeEnd)
+
+// Long condition: EMA fast crosses above slow + RSI > minimum threshold
+longCondition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsiLongMin and inTradeHours
+
+// Short condition: EMA fast crosses below slow + RSI < maximum threshold
+shortCondition = ta.crossunder(ema_fast, ema_slow) and rsi_val < rsiShortMax and inTradeHours
+
+// Plot EMAs for visual reference
+plot(ema_fast, color=color.blue, linewidth=1, title="EMA Fast")
+plot(ema_slow, color=color.red, linewidth=1, title="EMA Slow")
+
+//--- entry execution
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Calculate SL/TP distances in ticks based on entry price
+slTicks = math.round(stopLossPct / 100 * close / syminfo.mintick)
+tpTicks = math.round(slTicks * takeProfitRatio)
+
+// Apply exits to any open position from this strategy
+strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)

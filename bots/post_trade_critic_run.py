@@ -8,7 +8,6 @@ import sys
 import os
 from datetime import datetime, timedelta
 from collections import defaultdict
-
 import MetaTrader5 as mt5
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -21,13 +20,15 @@ MAGIC = 780012
 SYMBOL = "EURUSD"
 LOOKBACK_HOURS = 2
 
-
 def load_config():
     with open(CONFIG_PATH) as f:
         cfg = json.load(f)
-    account = cfg["accounts"][0]
-    return account["login"], account["password"], account["server"]
-
+    # Try accounts array first, then top-level fields
+    if "accounts" in cfg and len(cfg["accounts"]) > 0:
+        account = cfg["accounts"][0]
+        return account["login"], account["password"], account["server"]
+    else:
+        return cfg.get("login"), cfg.get("password"), cfg.get("server")
 
 def evaluate_trade(trade):
     """Score a closed trade 1-10. Returns critique dict."""
@@ -92,7 +93,7 @@ def evaluate_trade(trade):
         elif holding_hours > 4:
             root_cause = "Extended drawdown — trade held too long against position"
             fix = "Set tighter time-based exit (max 4h hold with trailing SL at breakeven after 1h)"
-            prevention_rule = f"Maximum 4-hour holding time for EURUSD session trades, trail SL to breakeven after 1h"
+            prevention_rule = "Maximum 4-hour holding time for EURUSD session trades, trail SL to breakeven after 1h"
         else:
             root_cause = "Trend reversal during trade — signal faded by broader market move"
             fix = "Require H1 trend filter aligning with entry direction before taking signal"
@@ -152,7 +153,7 @@ def detect_patterns(critiques):
         patterns.append({"pattern": "Consecutive losses", "severity": "CRITICAL",
                          "detail": f"{max_cons} losses in a row"})
 
-    avg_score = sum(c["score"] for c in critiques) / total
+    avg_score = sum(c["score"] for c in critiques) / total if total > 0 else 0
     return patterns, win_rate, avg_score
 
 
@@ -169,7 +170,10 @@ def log_mistake(critique):
         "prevention_rule": critique["prevention_rule"],
     }
     with open(LEDGER_PATH, "r+") as f:
-        ledger = json.load(f)
+        try:
+            ledger = json.load(f)
+        except json.JSONDecodeError:
+            ledger = {"strategy": "Propfirm Pass v8", "mistakes": [], "lessons_learned": []}
         ledger["mistakes"].append(entry)
         f.seek(0)
         json.dump(ledger, f, indent=2)
@@ -188,8 +192,33 @@ def main():
     if not mt5.initialize(login=login, password=password, server=server):
         err = mt5.last_error()
         print(f"ERROR: initialize failed — {err}")
-        sys.exit(1)
-    print(f"  Connected: version {mt5.version()}")
+        # Try bare init then login
+        print("  Trying bare initialize() + login()...")
+        if not mt5.initialize():
+            err2 = mt5.last_error()
+            print(f"ERROR: bare initialize failed — {err2}")
+            mt5.shutdown()
+            sys.exit(1)
+        if not mt5.login(login=login, password=password, server=server):
+            err3 = mt5.last_error()
+            print(f"ERROR: login failed — {err3}")
+            mt5.shutdown()
+            sys.exit(1)
+        print(f"  Connected (fallback method): version {mt5.version()}")
+    else:
+        print(f"  Connected: version {mt5.version()}")
+
+    # ── Check account info ────────────────────────────────────────────
+    info = mt5.account_info()
+    if info:
+        print(f"  Account: {info.login}@{info.server} | Balance: ${info.balance:.2f}")
+        # Verify against config
+        cfg_login = int(login) if isinstance(login, str) else login
+        cfg_server = str(server)
+        if info.login != cfg_login or info.server != cfg_server:
+            print(f"  ⚠️ WARNING: Connected to {info.login}/{info.server}, expected {cfg_login}/{cfg_server}")
+    else:
+        print(f"  No account info available")
 
     # ── Fetch deals ────────────────────────────────────────────────────
     print(f"\n[2] Fetching closed trades (lookback: {LOOKBACK_HOURS}h)...")
@@ -236,9 +265,16 @@ def main():
         entry_d, exit_d = pdeals[0], pdeals[-1]
 
         # Determine direction from deal type (0=BUY, 1=SELL)
-        direction = "BUY" if entry_d.get("type", 0) in (0,) else "SELL"
+        entry_type = entry_d.get("entry", 0)
+        deal_type = entry_d.get("type", 0)
+        if deal_type == 0:
+            direction = "BUY"
+        elif deal_type == 1:
+            direction = "SELL"
+        else:
+            direction = "BUY" if entry_type == 0 else "SELL"
 
-        # Try to get order for SL/TP info (by position_id)
+        # Try to get order for SL/TP info
         sl = tp = 0
         try:
             order_info = mt5.history_orders_get(position=pid)
@@ -248,7 +284,7 @@ def main():
         except Exception as e:
             print(f"  Warning: could not fetch order for position {pid}: {e}")
 
-        # Compute P&L: sum profit + commission + swap across all deals in this position
+        # Compute P&L
         total_pnl = sum(
             d.get("profit", 0) + d.get("commission", 0) + d.get("swap", 0)
             for d in pdeals
