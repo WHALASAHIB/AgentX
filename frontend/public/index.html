@@ -6,6 +6,8 @@
   <title>Dashboard — Agent X</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
   <style>
     :root { --bg: #050508; --card: #0d0d1a; --text: #e2e8f0; --text-sec: #94a3b8; --border: #1e1e2e; --accent: #00d4aa; --accent-hover: #00b894; --secondary: #6366f1; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --sidebar-w: 240px; --radius: 12px; --shadow: 0 4px 24px rgba(0,0,0,0.4); }
     .light { --bg: #f5f5f7; --card: #ffffff; --text: #1a1a2e; --text-sec: #64748b; --border: #e2e8f0; --shadow: 0 4px 24px rgba(0,0,0,0.08); }
@@ -435,6 +437,16 @@
       setInterval(fetchStats, 10000);
       setInterval(fetchSentiment, 10000);
       document.getElementById('lastUpdate').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+      // GSAP entrance animation — stagger cards in
+      gsap.registerPlugin(ScrollTrigger);
+      gsap.from('.price-card, .stat-card, .sentiment-card, .section-title', {
+        y: 24, opacity: 0, duration: 0.5, stagger: 0.06, ease: 'power2.out'
+      });
+      // Scroll-triggered stats reveal
+      gsap.from('.stat-card:nth-child(n+3)', {
+        scrollTrigger: { trigger: '.stats-grid', start: 'top 85%' },
+        y: 30, opacity: 0, duration: 0.4, stagger: 0.08, ease: 'power1.out'
+      });
     }
     init();
   </script>
