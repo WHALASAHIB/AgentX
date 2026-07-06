@@ -47,8 +47,8 @@
       "entry": 0,
       "exit": 0,
       "pnl": 0,
-      "root_cause": "PropFirm Pass v8 bot (M780012) ran at 15:58 UTC on Saturday Jun 27, detected weekend, created stale PID lock (16408), entered 190879s sleep. The sleep timer would have expired around Jun 29 mid-day, but the process exited without placing any trades.",
-      "fix": "PID lock file at C:\\Hermess\\bots\\locks\\propfirm_pass_strategy.pid is stale (PID 16408 dead). Next cron launch at Jun 30 04:50 UTC should clean stale locks on startup.",
+      "root_cause": "PropFirm Pass v8 bot (M780012) ran at 15:58 UTC on Saturday Jun 27, detected weekend, created stale PID lock (16408), entered 190879s sleep.",
+      "fix": "Bot launch script must check and clean stale PID locks before attempting to acquire new lock.",
       "prevention_rule": "Bot launch script must check and clean stale PID locks before attempting to acquire new lock."
     },
     {
@@ -57,8 +57,8 @@
       "entry": 0,
       "exit": 0,
       "pnl": -860.11,
-      "root_cause": "7-day review of FTMO account: 106 trades, -$860.11 PnL. MACD multi-pair bots (M200100/M200200) went 0-for-23 trades with 0% WR and -$356 combined PnL. Propfirm pass variant bots (M780003-M780008) collectively: 36 trades, -$100.76, 15.3% WR. The only positive contributor was Gold Phoenix (M777888): 2 trades, +$39.96, 100% WR.",
-      "fix": "Only Gold Phoenix has shown any edge. All other bots (MACD multi-pair, SMA, propfirm pass variants) are destroying equity at 0% WR. Stop all non-performing bots on this account.",
+      "root_cause": "7-day review of FTMO account: 106 trades, -$860.11 PnL. MACD multi-pair bots (M200100/M200200) went 0-for-23 trades with 0% WR and -$356 combined PnL. Propfirm pass variant bots (M780003-M780008) collectively: 36 trades, -$100.76, 15.3% WR.",
+      "fix": "Stop all non-performing bots on this account. Only Gold Phoenix showed positive returns.",
       "prevention_rule": "Any bot with <30% WR over 10+ consecutive trades on the FTMO account should auto-disable."
     },
     {
@@ -67,18 +67,40 @@
       "entry": 0,
       "exit": 0,
       "pnl": 0,
-      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded — 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: bot launched via cron at 12:50 UTC, immediately hit (-10001, 'IPC send failed') because the MT5 terminal is logged into MetaQuotes-Demo (5051185832) while the bot config specifies FTMO-Demo (1513767391). The API cannot switch accounts — this is a wrong-account rejection disguised as IPC failure.",
-      "fix": "Terminal must be manually logged into FTMO-Demo before the bot can connect. OR the bot config must be updated to match the active MetaQuotes-Demo account. Cannot be fixed programmatically — mt5.initialize() with different credentials hangs/fails when the running terminal is on a different account.",
-      "prevention_rule": "Before deploying a bot to a specific broker account, verify the MT5 terminal is logged into that account. mt5.account_info().login must match the config. If they differ, the terminal must be manually switched via MT5 GUI."
+      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded — 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: (-10001, 'IPC send failed') — wrong-account rejection disguised as IPC failure.",
+      "fix": "Terminal must be manually logged into FTMO-Demo before the bot can connect. mt5.initialize() with different credentials cannot switch accounts on a running terminal.",
+      "prevention_rule": "Before deploying a bot to a specific broker account, verify the MT5 terminal is logged into that account."
+    },
+    {
+      "date": "2026-07-02",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Risk supervisor risk_peak.json has peak_balance=$100,000 instead of FTMO starting balance of $10,000. Causes 90.92% false drawdown and permanent EMERGENCY state since Jul 1 01:30 UTC.",
+      "fix": "Reset risk_peak.json peak_balance to $10,000 (the actual FTMO challenge starting balance).",
+      "prevention_rule": "After any account switch, reset risk_peak.json to the new account's starting balance."
+    },
+    {
+      "date": "2026-07-02",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Propfirm Pass v8 bot (M780012) 4th launch. Config login=1513845007 vs connected account=1513767391 (same server FTMO-Demo, different login). mt5.initialize() returned True but silently kept running terminal's account. Zero trades across all 4 launches.",
+      "fix": "Add post-connect account_info() verification. Terminal must be manually logged into correct FTMO-Demo account.",
+      "prevention_rule": "Always verify mt5.account_info().login matches config login after initialize returns True."
     }
   ],
   "lessons_learned": [
-    "Multi-pair bots (MACD/SMA) should NEVER be run on an FTMO challenge account. They were optimized for $100K demo with different risk tolerance. On a $10K FTMO account with 10% max DD, their 0% win rate on multiple pairs generates terminal drawdown.",
-    "CLOSED_BY_FTMO comment in trade history is a RED FLAG — it means FTMO's risk management has flagged the account and is manually closing positions.",
-    "PropFirm Pass v8 bot (M780012) has zero trades to date. The strategy is untested in live conditions. Do not deploy without addressing the multi-pair bot bleed first.",
-    "Risk supervisor MT5 connectivity failed from Jun 25 16:40 UTC to Jun 26 22:40 UTC — 30 hours without risk monitoring on a rapidly deteriorating account.",
-    "Risk supervisor uses trailing drawdown (8.6% from peak $9,930.84) but FTMO uses STATIC drawdown (9.23% from initial $10K). The risk_state.json emergency_stop=false while actual FTMO headroom is only 0.77%. Static DD must be the primary metric for FTMO decisions.",
-    "Propfirm Pass variant bots (M780003-M780008) collectively produced 36 trades at 15.3% WR and -$100.76 PnL. These were launched alongside the v8 bot and are destroying edge. Only Gold Phoenix (M777888) showed positive returns.",
-    "Stale PID lock files at C:\\Hermess\\bots\\locks\\propfirm_pass_strategy.pid accumulate between runs. Bot launch scripts must handle stale PID cleanup."
+    "Multi-pair bots (MACD/SMA) should NEVER be run on an FTMO challenge account.",
+    "CLOSED_BY_FTMO comment in trade history is a RED FLAG — FTMO risk desk is manually closing positions.",
+    "PropFirm Pass v8 bot (M780012) has zero trades to date across 4 launch attempts.",
+    "Risk supervisor MT5 connectivity failed for 30 hours from Jun 25 16:40 UTC — no risk monitoring during a drawdown event.",
+    "Risk supervisor uses trailing drawdown — FTMO uses STATIC drawdown. Static DD must be the primary metric.",
+    "Propfirm Pass variant bots (M780003-M780008): 36 trades at 15.3% WR, -$100.76 PnL.",
+    "Stale PID lock files accumulate between runs. Launch scripts must clean stale locks.",
+    "Risk supervisor peak_balance=$100K from prior demo must be reset to $10K for FTMO challenge.",
+    "mt5.account_info().login must be verified after every mt5.initialize() — True return does not mean correct account is connected."
   ]
 }

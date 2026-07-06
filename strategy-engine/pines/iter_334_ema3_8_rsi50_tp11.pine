@@ -1,0 +1,42 @@
+//@version=5
+strategy(title="EMA3/8 RSI50 TP1:1 XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(3, "Fast EMA", minval=2, maxval=20, tooltip="Fast EMA period. Sweep: 2-10 step 1")
+ema_slow = input.int(8, "Slow EMA", minval=5, maxval=50, tooltip="Slow EMA period. Sweep: 5-30 step 2")
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, tooltip="RSI period. Sweep: 7-21 step 2")
+rsi_long_threshold = input.int(50, "RSI Long Min", minval=30, maxval=70, tooltip="Min RSI for long entry. Sweep: 40-60 step 5")
+rsi_short_threshold = input.int(50, "RSI Short Max", minval=30, maxval=70, tooltip="Max RSI for short entry. Sweep: 40-60 step 5")
+sl_pct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1, tooltip="SL as % of entry price. Sweep: 0.1-1.0 step 0.1")
+tp_ratio = input.float(1.0, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.1, tooltip="Take profit = SL * this ratio. Sweep: 0.5-3.0 step 0.5")
+
+//--- calculations
+ema_val_fast = ta.ema(close, ema_fast)
+ema_val_slow = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- crossover detection
+cross_above = ta.crossover(ema_val_fast, ema_val_slow)
+cross_below = ta.crossunder(ema_val_fast, ema_val_slow)
+
+//--- entry logic
+long_condition = cross_above and rsi_val > rsi_long_threshold
+short_condition = cross_below and rsi_val < rsi_short_threshold
+
+//--- exit management
+sl_distance = (sl_pct / 100.0) * close
+tp_distance = sl_distance * tp_ratio
+
+if long_condition and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=int(sl_distance / syminfo.mintick), profit=int(tp_distance / syminfo.mintick))
+
+if short_condition and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=int(sl_distance / syminfo.mintick), profit=int(tp_distance / syminfo.mintick))
+
+//--- plot
+plot(ema_val_fast, "Fast EMA", color.blue)
+plot(ema_val_slow, "Slow EMA", color.red)
+hline(rsi_long_threshold, "RSI Long Threshold", color.green, hline.style_dashed)
+hline(rsi_short_threshold, "RSI Short Threshold", color.red, hline.style_dashed)
