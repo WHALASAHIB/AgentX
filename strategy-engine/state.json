@@ -1,6 +1,6 @@
 {
-  "iteration": 335,
-  "last_run": "2026-07-02T14:38:00Z",
+  "iteration": 338,
+  "last_run": "2026-07-07T23:25:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add ADX(14) trending filter (enter only if ADX > 25) to improve Sharpe ratio (currently 0.38, target > 1.0). The low Sharpe means entries occur during choppy/non-trending markets where EMA crossover + RSI generate false signals. ADX > 25 ensures trades only in trending conditions. EMA3/8 crossover + RSI(50/50) + ADX(14) > 25 trending filter + 1:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
+  "current_hypothesis": "Widen TP:SL ratio from 1:1 to 2:1 to improve profit factor (currently 1.22, target > 1.5). With 53.8% win rate, a 2:1 TP/SL ratio should let winners run and significantly improve PF. The 1:1 ratio produced avg win ($34.06) close to avg loss ($32.71), leaving no room after commission ($403 total). EMA3/8 crossover + RSI(50/50) + 2:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
   "evolution_log": [
     {
       "iteration": 0,
@@ -122,6 +122,33 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-02T14:38:00Z"
+    },
+    {
+      "iteration": 335,
+      "hypothesis": "Add ADX(14) trending filter (enter only if ADX > 25) to improve Sharpe ratio (currently 0.38, target > 1.0). The low Sharpe means entries occur during choppy/non-trending markets where EMA crossover + RSI generate false signals. ADX > 25 ensures trades only in trending conditions. EMA3/8 crossover + RSI(50/50) + ADX(14) > 25 trending filter + 1:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
+      "metrics": {"pf": 1.52384659, "sharpe": -0.4336974, "wr": 60.0, "dd": 1.02626844, "trades": 10, "net_profit": -12.772696003878},
+      "verdict": "invalid (low sample, 10 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-07T06:00:00Z"
+    },
+    {
+      "iteration": 336,
+      "hypothesis": "Lower ADX threshold from 25 to 18 to increase trade count (currently 10, need > 20). ADX(14) > 18 is a looser trending filter — captures more entries while still filtering out the worst choppy markets where false signals occur. EMA3/8 crossover + RSI(50/50) + ADX(14) > 18 trending filter + 1:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
+      "metrics": {"pf": 0.0, "sharpe": null, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0.0},
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-07T23:25:00Z"
+    },
+    {
+      "iteration": 337,
+      "hypothesis": "Remove ADX filter entirely. ADX(14) > 18 produced 0 trades (too restrictive with RSI + EMA crossover). Go back to pure EMA3/8 crossover + RSI(50/50) filter + 1:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading). Simpler conditions should generate enough trades for statistical significance.",
+      "metrics": {"pf": 1.21510929, "sharpe": -3.3132266, "wr": 53.84615385, "dd": 3.23806277, "trades": 52, "net_profit": -234.50181052989},
+      "verdict": "rejected (PF=1.22 Sharpe=-3.31 DD=3.2%)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-07T23:25:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

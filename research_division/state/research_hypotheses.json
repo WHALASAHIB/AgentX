@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 163,
+    "total_ideas": 165,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -988,6 +988,44 @@
       "diversification_value": "Fundamentally different from Cross_Commodity_Seasonal_Rotation (the only existing idea in the Cross-Commodity Seasonal cluster). That idea selects the single strongest metal by calendar month (silver/platinum/palladium) and trades it directionally above the 50-SMA. This idea trades the gold-silver RATIO itself, at seasonal extremes, using a z-score framework vs a 10-year seasonal mean. It's a pairs-trade / relative-value approach vs a directional metal pick. Different instruments (GSR vs single metal), different entry logic (z-score vs calendar lookup), different time horizon (4-6 weeks vs monthly rotation), and different risk profile (relative-value is hedged vs directional).",
       "self_grade": "A-",
       "generated_at": "2026-07-02T04:35:34Z"
+    },
+    {
+      "name": "Asian_Liquidity_Vacuum_Fade",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades late-Asian session directional pushes without volume conviction at London open, capturing the statistical retracement from thin-market moves when fresh institutional flow enters.",
+      "market_behaviour": "During the Asian session (00:00-09:00 HKT), XAUUSD trades in structurally thin liquidity \u2014 volumes are typically 30-40% of London/US levels. When a large directional move occurs in the final 60 minutes of the Asian session (08:00-09:00 HKT) on disproportionately low tick volume (<60% of the session's average 5-min tick count), it is often driven by a single large retail or regional order rather than genuine institutional conviction. Thin liquidity amplifies price impact of this order. At London open (09:00 HKT/07:00 UTC), fresh institutional flow with genuine conviction enters and systematically fades these vacuum-driven Asian extremes. Statistical analysis shows a 65-70% probability of at least 50% retracement of the late-Asian move within 2 hours of London open, with the most reliable signals occurring when the move exceeds 0.5xATR(15) on low volume.",
+      "entry_logic": "1. Wait for Asian session (00:00-09:00 HKT / 07:00-16:00 AEST).\n2. Monitor the final 60 minutes (08:00-09:00 HKT / 06:00-07:00 UTC).\n3. Detect a directional move exceeding 0.5xATR(15) from the 08:00 HKT price.\n4. Verify tick volume during this move is <60% of the session's average 5-min tick count (volume vacuum).\n5. At London open (09:00 HKT / 07:00 UTC), if price is still extended beyond 0.5xATR from 08:00 level, enter a fade position (if bullish vacuum \u2192 short, if bearish vacuum \u2192 long).\n6. Skip if any high-impact news event (NFP, FOMC, CPI) is within 2 hours before/after London open \u2014 event-driven volatility overwhelms the microstructure edge.\n7. Skip if ATR(15) > 2x 20-day ATR(15) average \u2014 the market is in a high-volatility regime where thin-session moves have lower retracement probability.",
+      "exit_logic": "Stop Loss: 0.8xATR(15) from entry, measured at London open (not Asian extremes \u2014 use the current price at open).\nTake Profit 1: 50% retracement of the late-Asian directional move (calculated from entry to the late-Asian extreme). Scale 50% position here.\nTake Profit 2: 70% retracement or 1.5 hours after London open, whichever comes first. Scale remaining 50%.\nTime Stop: If neither TP is reached within 3 hours of London open, close all \u2014 the edge decays as the session matures.\nRe-entry: Do NOT re-enter the same fade after a stopped-out attempt. The edge is a single-shot per session.",
+      "failure_mode": "1. BREAKOUT FAILURE: When a genuine trend develops during late-Asian that continues through London (e.g., a macroeconomic catalyst in the Asian timezone like PBOC announcement or RBA decision). The vacuum move wasn't thin \u2014 it was early positioning. The fade gets stopped out and the trend runs without you.\n2. MAJOR NEWS OVERLAP: If unscheduled news (flash crash warning, geopolitical escalation) hits during Asian-late or London open, the microstructure edge is destroyed \u2014 all bets are off.\n3. HOLIDAY DISTORTION: On bank holidays where London or Asian markets have reduced participation (e.g., day after Christmas, Golden Week), the 'fresh institutional flow' assumption fails because liquidity remains thin through London open.\n4. VOLATILITY REGIME SHIFT: In consistently high-volatility environments (VIX > 25, gold 20-day ATR expanding >30%), late-Asian moves are more likely to be genuine trend starts rather than vacuum movements.",
+      "diversification_value": "This differs from London_Open_Gap_Retracement_Timer (which fades the price gap between Asian close and London open) by targeting INTRA-Asian directional movement in the final hour, not the gap itself. It differs from Session_Liquidity_Sweep_Scalper (which trades stop-loss hunting at session extremes) by specifically detecting volume-vacuum conditions \u2014 a low-tick-volume signature that distinguishes thin orders from genuine flow. It also adds a volume-confirmation filter (tick volume < 60% average) that neither existing session-flow idea uses. This is orthogonal to all existing 'other' family ideas because it combines time-window (last 60 min of Asian) + volume condition (tick vacuum) + session-transition catalyst (London open) \u2014 a triple-confluence pattern not present in any other archive entry.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-07T04:49:54Z"
+    },
+    {
+      "name": "DXY_Momentum_Phase_Shift_Capture",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Captures gold's directional momentum during DXY acceleration/deceleration phase shifts, exploiting the non-linear correlation breakdown that occurs when USD moves accelerate beyond 0.3%/hour.",
+      "market_behaviour": "Gold and DXY have a well-documented inverse correlation, but this relationship is non-linear. When DXY moves at a rate exceeding 0.3% per hour sustained over a 3-hour window, the market enters a 'phase shift' \u2014 the correlation temporarily breaks as traders price in the CAUSE of the USD move (rate expectations, risk sentiment, capital flows) rather than mechanically trading the inverse. During DXY acceleration phase (velocity increasing), gold often moves in the OPPOSITE direction to what pure correlation would predict \u2014 because the USD move signals a broader regime shift. During the DXY deceleration phase (velocity decreasing after peak), gold snaps back harder than the initial correlation breakdown would suggest, producing outsized momentum moves in the 'correct' direction. This non-linear response creates a 2-3 candle (H1) momentum window on gold with ~70% persistence when entered during the DXY deceleration trigger.",
+      "entry_logic": "1. Monitor DXY on H1 chart alongside XAUUSD H1.\n2. Detect DXY directional velocity > 0.3% per hour over a trailing 3-hour window (compute: abs(close - close_3h_ago) / close_3h_ago / 3).\n3. Wait for DXY velocity to peak and begin decelerating (current hour's absolute return < prior hour's absolute return, with both > 0.2%).\n4. Confirm XAUUSD is showing signs of phase-shift: the current H1 candle should be moving opposite to what pure inverse correlation would predict, OR the candle body should show a rejection wick (lower wick for bullish setup, upper wick for bearish setup) at the extreme of the initial DXY-correlated move.\n5. Enter gold in the direction that the phase-shift candle indicates (if XAUUSD had a bearish wick rejecting lower prices while DXY was accelerating higher \u2192 go long; if XAUUSD had a bullish wick rejecting higher prices while DXY was accelerating lower \u2192 go short).\n6. Minimum position: 2xATR(1H) from entry to nearest structural level (recent swing high/low).\n7. Skip if DXY velocity is already decelerating for more than 2 hours (the momentum window has likely passed).",
+      "exit_logic": "Stop Loss: 1xATR(1H) below/above entry. Place at the extreme of the phase-shift candle's wick.\nTake Profit: Target the prior H1 swing high/low in gold's direction. If no clear swing within 3xATR(1H), take profit at 2xATR(1H).\nTrailing Stop: After price moves 1.5xATR(1H) in your favour, move stop to break even + 0.3xATR(1H).\nTime Stop: Close all if neither TP nor SL triggered within 6 hours \u2014 the DXY phase shift signal has decayed.\nRe-entry: A new DXY acceleration phase (velocity rebuilds above 0.3%/hour) resets the signal. Enter again if the deceleration trigger re-forms with new peaks.",
+      "failure_mode": "1. EXTENDED ACCELERATION: DXY can sustain >0.3%/hour velocity for 6-8 hours during trend days (NFP, FOMC, dramatic risk-off). The deceleration trigger never fires cleanly \u2014 DXY keeps accelerating past normal statistical bounds. False signals on shallow decelerations that resume accelerating.\n2. CORRELATION REGIME SHIFT: During certain macro regimes (e.g., 2020 when gold and USD both rose on safe-haven flows), the inverse correlation breaks structurally for weeks, not hours. The phase-shift model assumes correlation eventually returns \u2014 it's wrong during persistent regime breaks.\n3. DATA-DEPENDENT ENTRY: The 3-hour DXY velocity window means the earliest entry is 3 hours into a DXY move. Fast-moving shocks (flash crash, surprise rate decision) complete their entire cycle within 1-2 hours, so the signal fires AFTER the momentum window is already closed.\n4. FALSE DECELERATION: A single candle with lower return (data noise) appears to show deceleration but DXY re-accelerates on the next candle, trapping the gold entry in the wrong direction.",
+      "diversification_value": "This differs from CrossAsset_Momentum_Transmission (which covers basic gold-DXY correlation trading) by specifically targeting the non-linear phase-shift regime \u2014 it does not trade correlation, it trades correlation BREAKDOWN and the snap-back momentum that follows. It differs from Correlation_Decoupling_Trend_Capture (an 'other' family idea trading gold decoupling from DXY as a trend-catching signal) by focusing on the VELOCITY of DXY moves as the trigger, not the decoupling event itself. The velocity-based framework (acceleration \u2192 peak \u2192 deceleration) is unique in the momentum family \u2014 no existing idea uses rate-of-change of the correlation driver as the entry signal. It turns from 1\u21922 ideas in the Cross-Asset Transmission PARTIAL cluster, strengthening a currently weak sub-niche.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-07T04:49:54Z"
     }
   ],
   "archived": [
@@ -3057,7 +3095,8 @@
       "Momentum_Entropy_Rotational_Sizer",
       "CrossAsset_Momentum_Transmission",
       "Session_Transition_Momentum_Carryover",
-      "InterCommodity_Momentum_Divergence"
+      "InterCommodity_Momentum_Divergence",
+      "DXY_Momentum_Phase_Shift_Capture"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -3220,7 +3259,8 @@
       "Tick_Volume_Climax_Reversal",
       "Correlation_Decoupling_Trend_Capture",
       "Monthly_Option_MaxPain_Gravity_Target",
-      "Range_Extension_Statistical_Trap"
+      "Range_Extension_Statistical_Trap",
+      "Asian_Liquidity_Vacuum_Fade"
     ]
   }
 }

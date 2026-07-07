@@ -1,0 +1,55 @@
+//@version=5
+strategy(title="EMA3/8 RSI ADX18 Long Only XAUUSD 1h", overlay=true, initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         commission_type=strategy.commission.percent, commission_value=0.04,
+         process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)     // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)     // sweep: 5-21 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=30)             // sweep: 7-21 step 2
+rsiLongThreshold = input.int(50, "RSI Long Threshold", minval=20, maxval=80)  // sweep: 30-60 step 5
+
+// ADX trending filter (via DMI)
+dmiLen = input.int(14, "DMI Length", minval=5, maxval=30)             // sweep: 7-21 step 2
+adxThreshold = input.int(18, "ADX Threshold", minval=5, maxval=50)    // sweep: 14-25 step 2
+
+// TP/SL management
+slPct = input.float(0.3, "Stop Loss %", minval=0.05, maxval=2.0)      // sweep: 0.1-0.5 step 0.05
+tpRatio = input.float(1.0, "TP/SL Ratio", minval=0.5, maxval=5.0)     // sweep: 0.5-2.0 step 0.25
+
+//--- calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+rsiVal = ta.rsi(close, rsiLen)
+
+// DMI returns [plusDI, minusDI, adx]
+[plusDI, minusDI, adxVal] = ta.dmi(high, low, close, dmiLen)
+
+//--- entry conditions
+// Long entry: EMA fast crosses above EMA slow, RSI > threshold, ADX > threshold (trending market)
+longEntry = ta.crossover(emaFast, emaSlow) and rsiVal > rsiLongThreshold and adxVal > adxThreshold
+
+//--- exit management using TP/SL
+// Calculate SL distance in price terms based on entry price percentage
+slDist = close * slPct / 100.0
+tpDist = slDist * tpRatio
+
+//--- strategy execution
+if (longEntry)
+    strategy.entry("Long", strategy.long)
+
+// Exit with fixed TP/SL in ticks (using syminfo.mintick for precision)
+if (strategy.position_size > 0)
+    slTicks = math.floor(slDist / syminfo.mintick)
+    tpTicks = math.floor(tpDist / syminfo.mintick)
+    strategy.exit("Long Exit", "Long", loss=slTicks, profit=tpTicks)
+
+//--- visual plots
+plot(emaFast, "EMA Fast", color.blue, 2)
+plot(emaSlow, "EMA Slow", color.red, 2)
+hline(rsiLongThreshold, "RSI Threshold", color.green, hline.style_dashed)
