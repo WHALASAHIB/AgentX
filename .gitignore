@@ -1,54 +1,47 @@
-# AgentX Website .gitignore
 
+# AgentX Website .gitignore
+# Bot logs — runtime data, not source
+# Cloned third-party repos — not our source code
+# Database — keep schema, ignore data
+# Headroom cache files
+# IDE
+# Knowledge base — belongs in Hermess repo
+# Large binaries
+# OS
+# Python
 # Secrets — keep these out of git!
-.env*
+*.bak
 *.key
+*.pyc
+*.pyo
+*.swo
+*.swp
 *_token.txt
 .bridge_key
 .cf_token
-tunnel_token.txt
-
-# Large binaries
-cloudflared.exe
-OpenSSH-Win64/
-
-# Headroom cache files
+.DS_Store
+.env*
 .headroom/
-strategy-engine/.headroom/
-
-# Knowledge base — belongs in Hermess repo
-rag_knowledge_base/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyc
+.idea/
 .venv/
-venv/
-
-# Database — keep schema, ignore data
+.vscode/
+/tmp/
+__pycache__/
 backend/db/*.db
 backend/db/*.db-shm
 backend/db/*.db-wal
 backend/db/agentx_store.json
-
-# Bot logs — runtime data, not source
 bots/logs/
-
-# Cloned third-party repos — not our source code
-research_division/repos/
-*.bak
-/tmp/
-temp/
-
-# OS
-.DS_Store
-Thumbs.db
+cloudflared.exe
 desktop.ini
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+graphify-out/
+knowledge/graphify-out/
+knowledge/research/
+OpenSSH-Win64/
+rag_knowledge_base/
+research_division/repos/
+strategy-engine/.headroom/
+temp/
+Thumbs.db
+tunnel_token.txt
+venv/
