@@ -1,0 +1,47 @@
+//@version=5
+strategy(title="EMA3/8 + RSI + 2:1 TP/SL (Iter 338)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)   // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)   // sweep: 5-20 step 1
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)            // sweep: 7-21 step 2
+rsi_long_thresh = input.int(50, "RSI Long Threshold (> this)", minval=20, maxval=80)   // sweep: 40-60 step 5
+rsi_short_thresh = input.int(50, "RSI Short Threshold (< this)", minval=20, maxval=80) // sweep: 40-60 step 5
+tp_ratio = input.float(2.0, "Take Profit Ratio (× SL)", minval=0.5, maxval=5.0)        // sweep: 1.0-4.0 step 0.5
+sl_pct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0)                       // sweep: 0.1-1.0 step 0.1
+
+//--- calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- crossover detection
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+bearish_cross = ta.crossunder(ema_fast, ema_slow)
+
+//--- entry logic
+// Long: EMA fast crosses above slow AND RSI > threshold (uptrend momentum confirmed)
+long_condition = bullish_cross and rsi_val > rsi_long_thresh
+// Short: EMA fast crosses below slow AND RSI < threshold (downtrend momentum confirmed)
+short_condition = bearish_cross and rsi_val < rsi_short_thresh
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Long exit: SL at sl_pct% below entry, TP at sl_pct * tp_ratio% above entry
+stop_loss_price = strategy.position_avg_price * (1 - sl_pct / 100)
+take_profit_price = strategy.position_avg_price * (1 + sl_pct / 100 * tp_ratio)
+
+// Short exit: SL at sl_pct% above entry, TP at sl_pct * tp_ratio% below entry
+short_sl = strategy.position_avg_price * (1 + sl_pct / 100)
+short_tp = strategy.position_avg_price * (1 - sl_pct / 100 * tp_ratio)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", stop=stop_loss_price, limit=take_profit_price)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", stop=short_sl, limit=short_tp)

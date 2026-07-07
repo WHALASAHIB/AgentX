@@ -1,0 +1,44 @@
+//@version=5
+strategy(title="EMA3/8 Cross RSI50 ADX15 Long Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50)     // sweep: 1-20 step 1
+emaSlowLen = input.int(8, "Slow EMA Length", minval=1, maxval=100)    // sweep: 5-50 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)             // sweep: 7-21 step 1
+rsiThreshold = input.int(50, "RSI Long Threshold (enter if RSI > N)", minval=1, maxval=100)  // sweep: 30-60 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30)             // sweep: 5-30 step 1
+adxThreshold = input.int(15, "ADX Min Threshold (enter if ADX > N)", minval=1, maxval=50)    // sweep: 10-30 step 2
+
+// TP/SL management
+tpRatio = input.float(2.0, "Take Profit Ratio (TP:SL)", minval=0.5, maxval=10.0)  // sweep: 1.0-4.0 step 0.5
+slPercent = input.float(0.3, "Stop Loss (%)", minval=0.05, maxval=5.0)           // sweep: 0.1-2.0 step 0.1
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold and adx > adxThreshold
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (strategy.position_size > 0)
+    entryPrice = strategy.position_avg_price
+    slPrice = entryPrice * (1 - slPercent / 100)
+    tpPrice = entryPrice * (1 + slPercent * tpRatio / 100)
+    strategy.exit("Long Exit", "Long", loss=int((entryPrice - slPrice) / syminfo.mintick), profit=int((tpPrice - entryPrice) / syminfo.mintick))
+
+//--- plot indicators
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=2)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=2)
+hline(rsiThreshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)
+plotchar(adx > adxThreshold, "ADX > Threshold", "▲", location=location.bottom, color=color.green, size=size.tiny)
