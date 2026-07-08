@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="EMA2_5_Cross_RSI50_XAUUSD_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast length — shorter than iter 342-343's EMA3 for more frequent signals
+ema_fast = input.int(2, "EMA Fast Length", minval=1, maxval=10, step=1)  // sweep: 1-5 step 1
+// EMA slow length
+ema_slow = input.int(5, "EMA Slow Length", minval=3, maxval=20, step=1)  // sweep: 4-10 step 1
+// RSI threshold for long entries (long if RSI > rsi_long)
+rsi_long = input.int(50, "RSI Long Threshold", minval=30, maxval=60, step=5)  // sweep: 40-55 step 5
+// RSI threshold for short entries (short if RSI < rsi_short)
+rsi_short = input.int(50, "RSI Short Threshold", minval=40, maxval=70, step=5)  // sweep: 45-60 step 5
+// RSI length
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=1)  // sweep: 10-20 step 2
+// Stop loss as percentage of entry price
+sl_pct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1)  // sweep: 0.2-0.5 step 0.1
+// Take profit ratio (TP = TP_SL_ratio * SL)
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=1.0, maxval=3.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+// Trade all hours (24h)
+trade_all_hours = input.bool(true, "Trade All Hours (24h)")  // 24h trading
+
+//--- calculations
+// EMAs
+fast_ema = ta.ema(close, ema_fast)
+slow_ema = ta.ema(close, ema_slow)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+// Crossover detection
+ema_cross_long = ta.crossover(fast_ema, slow_ema)
+ema_cross_short = ta.crossunder(fast_ema, slow_ema)
+
+// Entry conditions
+long_condition = ema_cross_long and rsi_val > rsi_long
+short_condition = ema_cross_short and rsi_val < rsi_short
+
+// Calculate SL/TP distances in ticks
+sl_ticks = int((close * sl_pct / 100) / syminfo.mintick)
+tp_ticks = int(sl_ticks * tp_sl_ratio)
+
+//--- entry logic
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Long exits
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+// Short exits
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)

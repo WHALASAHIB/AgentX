@@ -1,0 +1,45 @@
+//@version=5
+strategy(title="EMA3/8 + RSI(50) + 1.5:1 TP/SL v342", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)        // sweep: 2-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=100)       // sweep: 5-30 step 1
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)             // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Threshold", minval=10, maxval=90)   // sweep: 30-70 step 5
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0)  // sweep: 1.0-3.0 step 0.5
+sl_pct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0)      // sweep: 0.1-1.0 step 0.1
+
+//--- calculations
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- crossover / crossunder detection
+cross_over = ta.crossover(ema_fast, ema_slow)
+cross_under = ta.crossunder(ema_fast, ema_slow)
+
+//--- entry conditions
+long_condition = cross_over and rsi_val > rsi_threshold
+short_condition = cross_under and rsi_val < rsi_threshold
+
+//--- entry logic
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management — fixed TP/SL using percentage-based stops
+// SL distance in ticks = (close * sl_pct / 100) / syminfo.mintick
+// TP distance in ticks = SL distance * tp_sl_ratio
+sl_ticks_long = math.max(1, int((close * sl_pct / 100.0) / syminfo.mintick))
+tp_ticks_long = int(sl_ticks_long * tp_sl_ratio)
+
+sl_ticks_short = math.max(1, int((close * sl_pct / 100.0) / syminfo.mintick))
+tp_ticks_short = int(sl_ticks_short * tp_sl_ratio)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=sl_ticks_long, profit=tp_ticks_long)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=sl_ticks_short, profit=tp_ticks_short)

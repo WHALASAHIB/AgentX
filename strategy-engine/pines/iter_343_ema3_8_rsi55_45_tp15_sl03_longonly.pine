@@ -1,0 +1,47 @@
+//@version=5
+//--- inputs
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)          // sweep: 1-10 step 1
+slowLen = input.int(8, "Slow EMA Length", minval=5, maxval=100, step=1)          // sweep: 5-50 step 5
+rsiLen  = input.int(14, "RSI Length", minval=7, maxval=28, step=1)              // sweep: 7-28 step 7
+rsiLongThreshold = input.float(55, "RSI Long Threshold (above)", minval=30, maxval=70, step=5)   // sweep: 50-70 step 5
+rsiShortThreshold = input.float(45, "RSI Short Threshold (below)", minval=30, maxval=70, step=5)  // sweep: 30-50 step 5
+tpRatio = input.float(1.5, "Take Profit Ratio (TP:SL)", minval=0.5, maxval=5.0, step=0.1)        // sweep: 1.0-3.0 step 0.5
+slPercent = input.float(0.3, "Stop Loss (%)", minval=0.1, maxval=2.0, step=0.05)                  // sweep: 0.1-1.0 step 0.1
+
+//--- trade settings
+useLong = input.bool(true, "Enable Long Trades")
+useShort = input.bool(true, "Enable Short Trades")
+
+strategy(title="EMA3/8 RSI55/45 TP1.5 SL0.3 XAUUSD 1h", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- indicator calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+
+//--- entry logic
+longCondition  = ta.crossover(emaFast, emaSlow) and rsiVal > rsiLongThreshold
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsiVal < rsiShortThreshold
+
+//--- exit management
+slPriceLong  = close * (1 - slPercent / 100)
+tpPriceLong  = close * (1 + slPercent / 100 * tpRatio)
+slPriceShort = close * (1 + slPercent / 100)
+tpPriceShort = close * (1 - slPercent / 100 * tpRatio)
+
+//--- execute long
+if longCondition and useLong
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", from_entry="Long",
+                  loss=math.abs(close - slPriceLong) / syminfo.mintick,
+                  profit=math.abs(tpPriceLong - close) / syminfo.mintick)
+
+//--- execute short
+if shortCondition and useShort
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", from_entry="Short",
+                  loss=math.abs(slPriceShort - close) / syminfo.mintick,
+                  profit=math.abs(close - tpPriceShort) / syminfo.mintick)
