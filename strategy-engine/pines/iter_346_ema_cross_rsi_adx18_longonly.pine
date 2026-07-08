@@ -1,0 +1,54 @@
+//@version=5
+strategy(title="EMA2/5 Cross + RSI + ADX18 - XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+emaFastLen = input.int(2, "EMA Fast Length", minval=1, maxval=50)  // sweep: 1-10 step 1
+// EMA slow period
+emaSlowLen = input.int(5, "EMA Slow Length", minval=1, maxval=50)  // sweep: 3-20 step 1
+// RSI length
+rsiLen = input.int(14, "RSI Length", minval=7, maxval=21)  // sweep: 7-21 step 1
+// RSI oversold threshold (long entry: RSI > oversold)
+rsiOversold = input.int(50, "RSI Oversold Level (Long if RSI >)", minval=30, maxval=70)  // sweep: 40-60 step 5
+// RSI overbought threshold (short entry: RSI < overbought)
+rsiOverbought = input.int(50, "RSI Overbought Level (Short if RSI <)", minval=30, maxval=70)  // sweep: 40-60 step 5
+// ADX threshold (enter only if ADX > threshold — trending market)
+adxThreshold = input.int(18, "ADX Threshold (trending filter)", minval=10, maxval=40)  // sweep: 10-30 step 4
+// ADX smoothing length
+adxLen = input.int(14, "ADX Length", minval=7, maxval=28)  // sweep: 7-21 step 2
+// Take profit ratio (TP = TP_Ratio * SL_distance)
+tpRatio = input.float(1.5, "TP:SL Ratio", step=0.1)  // sweep: 1.0-3.0 step 0.5
+// Stop loss as percent of close price
+slPercent = input.float(0.3, "Stop Loss (%)", step=0.05)  // sweep: 0.15-0.5 step 0.05
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+[adxVal, diPlus, diMinus] = ta.dmi(close, high, low, adxLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiOversold and adxVal > adxThreshold
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsi < rsiOverbought and adxVal > adxThreshold
+
+//--- exit management (fixed SL/TP at entry)
+var float longSL = na
+var float longTP = na
+var float shortSL = na
+var float shortTP = na
+
+// On long entry: set SL and TP
+if longCondition and strategy.position_size == 0
+    stopLossPips = close * slPercent / 100.0  // as price pips
+    longSL := close - stopLossPips
+    longTP := close + stopLossPips * tpRatio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=close - longSL, profit=longTP - close)
+
+// On short entry: set SL and TP
+if shortCondition and strategy.position_size == 0
+    stopLossPips = close * slPercent / 100.0
+    shortSL := close + stopLossPips
+    shortTP := close - stopLossPips * tpRatio
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", loss=shortSL - close, profit=close - shortTP)

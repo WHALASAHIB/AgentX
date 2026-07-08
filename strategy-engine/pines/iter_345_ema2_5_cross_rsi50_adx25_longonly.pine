@@ -1,0 +1,51 @@
+//@version=5
+strategy(title="EMA2/5 RSI ADX25 Long Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fastLen  = input.int(2,  "Fast EMA Length",  group="EMA", tooltip="Fast EMA period for crossover")    // sweep: 2-5 step 1
+slowLen  = input.int(5,  "Slow EMA Length",  group="EMA", tooltip="Slow EMA period for crossover")    // sweep: 5-13 step 2
+
+// RSI parameters
+rsiLen   = input.int(14, "RSI Length",       group="RSI", tooltip="RSI calculation period")            // sweep: 7-21 step 2
+rsiLong  = input.int(50, "RSI Long Threshold", group="RSI", tooltip="RSI above = long entry")         // sweep: 40-60 step 5
+
+// ADX parameters
+adxLen   = input.int(14, "ADX Length",       group="ADX", tooltip="ADX calculation period")            // sweep: 7-21 step 2
+adxThresh= input.int(25, "ADX Threshold",    group="ADX", tooltip="ADX above = trending market")       // sweep: 14-30 step 2
+
+// TP/SL parameters
+slPct    = input.float(0.3, "Stop Loss %",   group="Risk", tooltip="Stop loss as % of entry price")    // sweep: 0.2-1.0 step 0.1
+tpRatio  = input.float(1.5, "TP/SL Ratio",   group="Risk", tooltip="Take profit = SL distance × ratio") // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+emaFast   = ta.ema(close, fastLen)
+emaSlow   = ta.ema(close, slowLen)
+rsiVal    = ta.rsi(close, rsiLen)
+
+//--- manual ADX calculation (engine does not support ta.adx)
+// True Range
+trVal = ta.tr(true)
+// Directional Movement
+upMove   = high - high[1]
+downMove = low[1] - low
+plusDM   = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM  = downMove > upMove and downMove > 0 ? downMove : 0
+// Smoothed with RMA (Wilder smoothing)
+atrVal   = ta.rma(trVal, adxLen)
+diPlus   = 100.0 * ta.rma(plusDM, adxLen) / atrVal
+diMinus  = 100.0 * ta.rma(minusDM, adxLen) / atrVal
+// DX and ADX
+dxVal    = 100.0 * math.abs(diPlus - diMinus) / (diPlus + diMinus)
+adxVal   = ta.rma(dxVal, adxLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiLong and adxVal > adxThresh
+
+//--- exit management
+if (longCondition)
+    // SL: percentage of entry price below entry
+    slDist   = close * slPct / 100.0
+    tpDist   = slDist * tpRatio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=int(slDist / syminfo.mintick), profit=int(tpDist / syminfo.mintick))

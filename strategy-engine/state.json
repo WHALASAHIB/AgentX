@@ -1,6 +1,6 @@
 {
-  "iteration": 345,
-  "last_run": "2026-07-07T14:30:00Z",
+  "iteration": 347,
+  "last_run": "2026-07-08T11:40:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add ADX(14) trending filter (enter only if ADX > 25) to eliminate choppy market entries. Iter 344's EMA2/5 + RSI(50/50) produced 72 trades but PF 0.85 and Sharpe -8.47 — too many poor signals in non-trending markets. ADX > 25 ensures EMA crossovers only trigger during trending conditions where they're more reliable. EMA2/5 crossover + RSI(50/50) + ADX(14) > 25 + 1.5:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
+  "current_hypothesis": "Remove ADX filter entirely. ADX(14) > 18 still produces 0 trades on XAUUSD H1 — the filter is too restrictive when combined with EMA2/5 crossover + RSI(50/50). Go back to pure EMA2/5 crossover + RSI(50/50) + 1.5:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading). Iter 344 with EMA2/5 + RSI(50/50) + no ADX produced 72 trades (PF 0.85, rejected). Try with 1:1 TP/SL instead of 1.5:1 — the 50% WR with tighter TP might improve PF.",
   "evolution_log": [
     {
       "iteration": 0,
@@ -158,6 +158,38 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-07T14:30:00Z"
+    },
+    {
+      "iteration": 345,
+      "hypothesis": "Add ADX(14) trending filter (ADX > 25) to eliminate choppy market entries. EMA2/5 crossover + RSI(50/50) + ADX(14) > 25 + 1.5:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
+      "metrics": {
+        "pf": 0.88898741,
+        "sharpe": -0.3779482,
+        "wr": 50.0,
+        "dd": 6.35380325,
+        "trades": 4,
+        "net_profit": -59.8284967734
+      },
+      "verdict": "invalid (low sample, 4 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-08T00:00:00Z"
+    },
+    {
+      "iteration": 346,
+      "hypothesis": "Lower ADX threshold from 25 to 18 to allow more trades after iter 345 produced only 4 trades with ADX(14) > 25 — too restrictive on XAUUSD H1. EMA2/5 crossover + RSI(50/50) + ADX(14) > 18 + 1.5:1 TP/SL + 0.3% SL on XAUUSD 1h (24h trading).",
+      "metrics": {
+        "pf": 0,
+        "sharpe": null,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-08T11:40:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
