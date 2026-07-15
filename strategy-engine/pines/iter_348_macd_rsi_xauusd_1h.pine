@@ -1,0 +1,46 @@
+//@version=5
+strategy(title="iter_348_MACD_RSI_XAUUSD_1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macd_fast = input.int(12, "MACD Fast Length", minval=2, maxval=50)       // sweep: 8-20 step 2
+macd_slow = input.int(26, "MACD Slow Length", minval=10, maxval=100)     // sweep: 18-34 step 4
+macd_signal = input.int(9, "MACD Signal Length", minval=2, maxval=30)     // sweep: 5-15 step 2
+
+// RSI filter
+rsi_length = input.int(14, "RSI Length", minval=2, maxval=50)             // sweep: 7-21 step 2
+rsi_long_threshold = input.int(50, "RSI Long Threshold (above)", minval=20, maxval=80)  // sweep: 40-60 step 5
+rsi_short_threshold = input.int(50, "RSI Short Threshold (below)", minval=20, maxval=80) // sweep: 40-60 step 5
+
+// Risk management
+tp_ratio = input.float(1.5, "Take Profit (x SL)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 1.0-3.0 step 0.5
+sl_percent = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.05)      // sweep: 0.15-0.5 step 0.05
+
+//--- calculations
+[macd_line, signal_line, hist] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+rsi = ta.rsi(close, rsi_length)
+
+//--- entry logic
+long_condition = ta.crossover(macd_line, signal_line) and rsi > rsi_long_threshold
+short_condition = ta.crossunder(macd_line, signal_line) and rsi < rsi_short_threshold
+
+//--- exit management (fixed percentage-based TP/SL)
+sl_price_percent = (sl_percent / 100.0)
+long_tp = close * (1.0 + sl_price_percent * tp_ratio)
+long_sl = close * (1.0 - sl_price_percent)
+short_tp = close * (1.0 - sl_price_percent * tp_ratio)
+short_sl = close * (1.0 + sl_price_percent)
+
+//--- entry execution
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", limit=long_tp, stop=long_sl)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", limit=short_tp, stop=short_sl)

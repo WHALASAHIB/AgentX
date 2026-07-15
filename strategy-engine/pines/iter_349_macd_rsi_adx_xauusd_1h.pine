@@ -1,0 +1,60 @@
+//@version=5
+strategy(title="MACD RSI ADX XAUUSD 1H", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=1, maxval=50)
+slowLength = input.int(26, "MACD Slow Length", minval=1, maxval=50)
+signalLength = input.int(9, "MACD Signal Length", minval=1, maxval=30)
+// RSI parameters
+rsiLength = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiLongThreshold = input.int(50, "RSI Long Threshold (above)", minval=30, maxval=70)
+rsiShortThreshold = input.int(50, "RSI Short Threshold (below)", minval=30, maxval=70)
+// ADX parameters
+adxLength = input.int(14, "ADX Length", minval=5, maxval=30)
+adxThreshold = input.int(25, "ADX Threshold (> = trending)", minval=10, maxval=50)
+// TP/SL parameters
+tpRatio = input.float(1.5, "Take Profit Ratio (TP)", minval=0.5, maxval=5.0, step=0.1)
+slRatio = input.float(0.3, "Stop Loss Ratio (%)", minval=0.1, maxval=2.0, step=0.1)
+//--- end inputs
+
+//--- calculate indicators
+// MACD
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+macdHist = macdLine - signalLine
+macdCrossAbove = ta.crossover(macdLine, signalLine)
+macdCrossBelow = ta.crossunder(macdLine, signalLine)
+
+// RSI
+rsi = ta.rsi(close, rsiLength)
+
+// ADX
+[diPlus, diMinus, adx] = ta.dmi(adxLength, adxLength)
+//--- end indicators
+
+//--- entry logic
+// Long condition: MACD crosses above signal line AND RSI > threshold AND ADX > threshold (trending)
+longCondition = macdCrossAbove and rsi > rsiLongThreshold and adx > adxThreshold
+// Short condition: MACD crosses below signal line AND RSI < threshold AND ADX > threshold (trending)
+shortCondition = macdCrossBelow and rsi < rsiShortThreshold and adx > adxThreshold
+
+//--- exit management
+// Calculate SL and TP distances in ticks
+slTicks = int(slRatio / 100.0 * close / syminfo.mintick)
+tpTicks = int(tpRatio * slTicks)
+
+// Place entries
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+// Set SL/TP on each entry (strategy.exit with loss/profit per entry)
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=slTicks, profit=tpTicks)
+
+if strategy.position_size < 0
+    strategy.exit("Short Exit", "Short", loss=slTicks, profit=tpTicks)
+
+//--- end strategy

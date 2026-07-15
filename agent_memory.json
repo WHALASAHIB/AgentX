@@ -1,0 +1,48 @@
+{
+  "entries": [
+    {
+      "key": "ftmo_rules",
+      "metadata": {
+        "phase": "2-Step",
+        "profit_target": "5% per phase",
+        "daily_dd": "5% static",
+        "max_loss": "10% static",
+        "min_trading_days": 4
+      },
+      "text": "FTMO 2-Step Challenge Phase 1 and 2 each require 5% profit target. Max daily drawdown is 5% of initial balance. Max total drawdown is 10% static. Minimum 4 trading days per phase. No time limit. Consistency rule: best day cannot exceed 50% of total profit.",
+      "timestamp": 1783934204.8928924
+    },
+    {
+      "key": "propfirm_pass_strategy",
+      "metadata": {
+        "type": "VWAP Mean Reversion",
+        "symbol": "EURUSD",
+        "session": "13:00-15:00 UTC",
+        "magic": 780012
+      },
+      "text": "VWAP Deviation Mean Reversion on EURUSD during US Open. Entry: >=10 pip deviation from VWAP + 5M rejection candle. Momentum filter skips trend candles. Fixed SL 12 pips, TP 24 pips (1:2 RR). Max 2 trades/day, stop after 2 consecutive losses.",
+      "timestamp": 1783934204.895455
+    },
+    {
+      "key": "risk_management",
+      "metadata": {
+        "risk_per_trade": "1%",
+        "max_daily_trades": 2,
+        "max_consecutive_losses": 2,
+        "account": "FTMO-100K"
+      },
+      "text": "Risk 1% of account per trade. On $100K account, $1,000 risk per trade at 8.3 lots EURUSD. Stop after 2 consecutive losses (max $2,000 daily loss). FTMO static drawdown: 5% daily, 10% total.",
+      "timestamp": 1783934204.896451
+    },
+    {
+      "key": "crawl4ai",
+      "metadata": {
+        "type": "web_scraper",
+        "version": "0.9.1",
+        "license": "Apache-2.0"
+      },
+      "text": "Crawl4AI is an async web crawler that converts web pages to clean LLM-ready Markdown. Installed via pip. Uses Playwright for JS rendering. Tested on FTMO rules page and ForexFactory calendar.",
+      "timestamp": 1783934204.8974516
+    }
+  ]
+}

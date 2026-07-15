@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 165,
+    "total_ideas": 171,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1026,6 +1026,124 @@
       "diversification_value": "This differs from CrossAsset_Momentum_Transmission (which covers basic gold-DXY correlation trading) by specifically targeting the non-linear phase-shift regime \u2014 it does not trade correlation, it trades correlation BREAKDOWN and the snap-back momentum that follows. It differs from Correlation_Decoupling_Trend_Capture (an 'other' family idea trading gold decoupling from DXY as a trend-catching signal) by focusing on the VELOCITY of DXY moves as the trigger, not the decoupling event itself. The velocity-based framework (acceleration \u2192 peak \u2192 deceleration) is unique in the momentum family \u2014 no existing idea uses rate-of-change of the correlation driver as the entry signal. It turns from 1\u21922 ideas in the Cross-Asset Transmission PARTIAL cluster, strengthening a currently weak sub-niche.",
       "self_grade": "A-",
       "generated_at": "2026-07-07T04:49:54Z"
+    },
+    {
+      "name": "Structural_Compression_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "H1 entry",
+        "M15 confirmation",
+        "H4 filter"
+      ],
+      "description": "Detects breakout entries when price compresses into a tight range at significant H4 structural levels (prior swing high/low), then expands with conviction \u2014 using candle body-to-range ratio as the conviction filter.",
+      "market_behaviour": "Price naturally compresses as it approaches significant structural levels\u2014prior H4 swing highs in uptrends, prior swing lows in downtrends\u2014creating a zone of indecision between breakout sellers and position holders. This compression represents a buildup of directional energy; the longer and tighter the consolidation at a level, the more explosive the eventual breakout. Wyckoff's law of cause and effect describes this: the compression phase builds the 'cause' and the subsequent expansion delivers the 'effect.' Breakouts from these compressed zones with high conviction (large body relative to total candle range) tend to travel 1.5-2.5x the compression range before retracing. The key signal is not just the level break but the candle structure of the breakout bar itself\u2014a bar that breaks the level with a body exceeding 70% of its total range shows genuine institutional absorption, while a bar with a body under 50% of its range suggests hesitation and likely failure.",
+      "entry_logic": "1. Identify the H4 structural level: prior swing high in an uptrend OR prior swing low in a downtrend (last 120 bars).\n2. Wait for price to approach the level and form a compression zone: at least 3 consecutive H1 candles with ranges below 40% of H1 ATR(14) within 0.5x ATR of the structural level.\n3. H4 trend filter: price must be above 50 EMA with EMA sloping up (for bullish) or below 50 EMA with EMA sloping down (for bearish).\n4. Entry trigger: the first H1 candle that closes beyond the structural level AND has a body-to-range ratio above 0.7 (body > 70% of total candle range).\n5. Confirmation: the breakout candle's M15 sub-candles must show 3 out of 4 closing beyond the level\u2014if 2+ sub-candles close back inside, skip this entry.\n6. Skip condition: if the compression zone lasted fewer than 3 candles or the ATR(20) on H1 is above its 80th percentile of the past 50 bars (excessive volatility), do not enter.",
+      "exit_logic": "Stop loss: 1.0x ATR(14) on H1 below the structural level for bullish entries, above for bearish entries.\nTake profit 1: 1.0x the compression range (distance from highest high to lowest low of the compression candles) measured from the structural level.\nTake profit 2: 1.8x the compression range.\nTrailing stop: Activate after TP1 is hit. Trail at 0.5x ATR(14) from the highest H1 close since entry.\nTime stop: If TP1 not reached within 24 candles on H1, close at market (the compression-reward timeframe has expired).\nRe-entry: Allowed on a fresh compression pattern at the next structural level\u2014do not re-enter the same level after a stopped-out trade.",
+      "failure_mode": "1. Trend exhaustion: in a mature trend, the compression at a structural level may be the last push before a reversal\u2014the breakout succeeds initially but reverses violently within 3-5 bars, catching the trailing stop. 2. Range-bound market: in a sideways market with no clear H4 trend direction, structural levels break both ways without follow-through, producing whipsaw entries that hit the SL before momentum resumes. 3. Low-volatility regime: if overall market volatility contracts (e.g., holiday trading, pre-NFP calm), compression signals fire but the breakout fails to travel the projected distance because no institutional flow is present to sustain the move.",
+      "diversification_value": "OrderBlock_Fractal_Breakout (B+) uses SMC unmitigated order blocks + Williams Fractal confirmation\u2014it requires the order block to be unmitigated (price never traded through it) before entering. Structural_Compression_Breakout works on ANY proven H4 swing level regardless of mitigation status, and adds a compression-pattern filter plus candle-body conviction metric that OrderBlock_Fractal_Breakout lacks. Consolidation_Duration_Breakout (A-) measures duration-only (consecutive narrow-range candles anywhere in price), not proximity to structural levels. This idea bridges the gap between structural-level trading and compression/conviction analysis.",
+      "self_grade": "A-"
+    },
+    {
+      "name": "Trap_Spring_Breakout_Filter",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD"
+      ],
+      "timeframes": [
+        "H1 structure",
+        "M15 entry",
+        "H4 trend filter"
+      ],
+      "description": "Identifies Wyckoff Spring / shakeout patterns where price deliberately breaches a structural support level to hunt stops, immediately reverses, and then breaks out in the original trend direction with institutional follow-through.",
+      "market_behaviour": "In trending markets, institutional traders routinely engineer false breakouts below support (in uptrends) or above resistance (in downtrends) to trigger stop-loss orders from the crowd and accumulate/reverse positions at better prices. This is the Wyckoff 'Spring' pattern\u2014a deliberate liquidity grab that precedes the real directional move. The spring works because: (1) retail traders place their stops just below obvious support levels, and (2) above-average liquidity sits at these levels from breakout sellers who entered during previous structure breaks. Once those stops are absorbed and the weak hands are shaken out, the path of least resistance resumes in the trend direction. A genuine spring has three signatures in price action: the false break closes back inside the level within 1-2 candles, the subsequent rally shows expanding range and above-average candle bodies, and the entire pattern completes within 3-5 H1 candles\u2014longer patterns are distribution, not accumulation.",
+      "entry_logic": "1. Establish H4 trend direction: for a bullish spring, price must be in an H4 uptrend (above 50 EMA + 50 EMA sloping up + at least 3 higher swing lows).\n2. Identify a structural support level on H1: a prior swing low with at least 2 touches, or a trendline that has been touched 3+ times. The level must be within the H4 uptrend structure.\n3. Spring trigger: price breaks below the structural support by >0.3x ATR(14) on H1 but the H1 candle closes BACK ABOVE the level within 2 candles of the break. The close must be in the upper 60% of the candle's range.\n4. Entry: on the close of the first M15 candle after the spring that makes a higher high relative to the spring candle's high\u2014this confirms selling pressure has been absorbed.\n5. Volume proxy: if using H1 range as a volume proxy, the spring candle's range should be >1.2x the average range of the prior 5 candles (elevated participation).\n6. Skip condition: if price remains below the support level for 3+ H1 candles after the break, it is a genuine breakdown, not a spring. Do not enter.\n7. Skip condition: do not trade springs during high-impact news events (FOMC, NFP, CPI) within 1 hour before or after\u2014the mechanical pattern is unreliable during news-driven volatility.",
+      "exit_logic": "Stop loss: 1.0x ATR(14) below the low of the spring candle (the lowest point of the false break).\nTake profit 1: 1.2x ATR(14) from entry.\nTake profit 2: 2.0x ATR(14) from entry.\nTrailing stop: after TP1, trail at 0.4x ATR(14) from the highest H1 close since entry.\nTime stop: if TP1 is not reached within 12 H1 candles from entry, close at market\u2014springs that do not produce immediate follow-through are likely failed attempts.\nRe-entry: allowed if a fresh spring forms at a higher structural support level within the same uptrend. Do not re-enter the same level twice.",
+      "failure_mode": "1. Distribution pattern misidentification: what looks like a spring may be a Wyckoff distribution pattern where the false break is actually a 'upthrust after distribution'\u2014the fake breakout traps bulls and the market continues lower. This happens in mature trends where what appears to be a healthy pullback/support retest is actually position winding-down. 2. News-driven stop hunts: institutional traders sometimes set up springs that work perfectly technically but fail to follow through because a macro news release (surprise rate decision, geopolitical flash) overrides the technical structure. 3. Trend change: if the H4 trend is weakening (divergence on RSI or MACD, contracting range of swing highs), a spring at support may simply be the last gasp before a trend reversal\u2014the false break succeeds briefly but the reversal fails to materialize and price grinds lower.",
+      "diversification_value": "Both existing false-breakout ideas (Breakout_Volume_Climax_Fade, B+ and False_Breakout_Trap_Fade, B) fade breakouts after they fail\u2014they enter AGAINST the breakout direction once price closes back inside the level. Trap_Spring_Breakout_Filter is fundamentally different: it treats the false breakout as a CONFIRMATION FILTER that makes the subsequent real breakout higher-probability. It enters WITH the subsequent breakout, not against the failed one. The existing ideas profit from trapped breakout traders' losses; this idea profits by riding the institutional accumulation that caused the trap. The market behaviour and entry logic are orthogonal directions of the same coin.",
+      "self_grade": "A-"
+    },
+    {
+      "name": "ATR_Percentile_Compression_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD",
+        "GBPUSD",
+        "USDJPY",
+        "AUDUSD"
+      ],
+      "timeframes": [
+        "H1 primary",
+        "M15 confirmation"
+      ],
+      "description": "Detects breakout opportunities using ATR percentile-based compression detection instead of Bollinger Band width, making the trigger adaptive across instruments and volatility regimes without recalibration.",
+      "market_behaviour": "All financial markets experience alternating phases of contraction and expansion in price volatility\u2014a well-documented phenomenon across asset classes. During contraction phases, the Average True Range compresses as institutional participants step back, liquidity thins, and price oscillates in a narrowing band. The critical insight is that the Bollinger Band squeeze metric (BB width = [upper-lower]/middle) is sensitive to standard deviation which is affected by outlier bars and changing price levels, making it less consistent across different trend regimes (a squeeze in an uptrending gold at $2,400 has different BB width characteristics than one at $1,800). ATR percentile, defined as the rank of the current H1 ATR(14) value within its own 100-period lookback, is scale-invariant and naturally adjusts for volatility regime changes\u2014a 10th-percentile ATR reading means the exact same thing whether gold is quietly ranging or in a screaming trend. When ATR drops below the 10th percentile, it signals genuine compression regardless of price level or historical volatility, and the direction of the first expansion beyond the compression range (defined as the highest high and lowest low during the compression period) has a 65-70% probability of becoming the near-term directional bias.",
+      "entry_logic": "1. Define the compression range: the highest high and lowest low of the most recent H1 candles forming the compression zone.\n2. Compression trigger: H1 ATR(14) drops below its 10th percentile of the past 100 periods.\n3. While ATR is in the compression zone (below the 10th percentile threshold), track the expanding range boundaries.\n4. Breakout trigger: the first H1 candle whose high breaks above the compression range's highest high AND closes in the upper 50% of its range (for bullish breakout), OR the first H1 candle whose low breaks below the compression range's lowest low AND closes in the lower 50% of its range (for bearish breakout).\n5. Confirmation: the breakout candle's range must be >0.8x H1 ATR(14)\u2014if the breakout candle is too small (range <0.5x ATR), the compression has not resolved yet and the system resets and waits.\n6. Trend bias filter (optional): prefer bullish breakouts if H4 price is above the 50 EMA, bearish breakouts if below. Entries against the H4 trend require the breakout candle range to exceed 1.0x ATR(14) instead of 0.8x.\n7. Skip condition: if the compression zone lasts more than 25 H1 candles without a breakout, mark the setup as stale\u2014compressions that persist beyond this window tend to decay into directionless drift rather than directional expansion.",
+      "exit_logic": "Stop loss: 1.0x ATR(14) on H1 below the compression range's low (for bullish entry) or above its high (for bearish entry).\nTake profit 1: 1.5x the compression range height.\nTake profit 2: 2.5x the compression range height.\nPartial close: close 40% at TP1, let 60% run to TP2.\nTrailing stop: activate after TP1. Trail at 0.5x ATR(14) from the highest H1 close (bullish) or lowest H1 close (bearish) since entry.\nTime stop: if TP1 not reached within 20 H1 candles from entry, close at market.",
+      "failure_mode": "1. Multi-instrument false positives: because ATR percentile is scale-invariant, the same reading across different instruments may mean different things\u2014a 10th-percentile ATR on XAUUSD during holiday trading (true compression) vs. the same reading on USDJPY during an active fundamental trend (structural low-volatility regime, not compression). 2. Compression decay: extremely long compression periods (25+ candles) may represent actual low-volatility regime acceptance rather than pent-up directional energy\u2014the market may simply continue drifting without resolving. 3. Failed expansion: the first breakout candle may trigger the entry but the expansion fails to sustain beyond 1 compression-range height, trapping the initial entry and reversing to hit the SL. This is particularly common when the compression formed during overlapping session transitions (e.g., Asian-into-London transition where the 'compression' is just the natural overnight liquidity low).",
+      "diversification_value": "Bollinger_Squeeze_Momentum_Breakout (A-) uses BB width percentile + ADX rise to detect volatility contraction and expansion. ATR_Percentile_Compression_Breakout uses ATR's rank within its own lookback instead\u2014which is scale-invariant, does not require ADX as an additional filter, and naturally adjusts for changing price levels. The BB squeeze metric is sensitive to price-level shifts (a $2,400 gold has different BB width characteristics than $1,800 gold), making it less portable. ATR percentile means the same thing at any price level or volatility regime. Additionally, this idea defines the compression range as a concrete price zone (highest high to lowest low during compression) rather than a band calculation, making the breakout target measurable from the outset.",
+      "self_grade": "A-"
+    },
+    {
+      "name": "Volatility_Premium_Event_Contraction",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Captures the systematic contraction of the volatility risk premium (implied minus realized vol) following scheduled macro events, when implied volatility is systematically overpriced.",
+      "market_behaviour": "The volatility risk premium \u2014 the gap between implied volatility expectations and subsequently realized volatility \u2014 follows a highly predictable pattern around scheduled macro events. In the 2-4 hours before major events (NFP, FOMC, CPI, PCE), implied volatility rises as market makers and option sellers demand premium to cover event risk. Immediately following the event, as uncertainty resolves, this premium contracts rapidly. The effect is most pronounced in gold (XAUUSD), which shows a 40-60% premium contraction within the first 2 hours post-event. This is not a directional trade \u2014 it exploits the mechanical unwinding of event-based volatility pricing regardless of whether the market moves up or down. The mechanism is distinct from session-transition premium decay because it is driven by scheduled-information uncertainty resolution, not liquidity migration between global trading hubs.",
+      "entry_logic": "1. Identify upcoming high-impact macro events (NFP, FOMC, CPI, Core PCE) from a pre-built calendar. 2. 3 hours before event: calculate ATR(50) - ATR(14) as a % of ATR(50) to quantify the 'vol premium'. 3. If premium > 15% (implied vol significantly exceeds recent realized vol), prepare for entry. 4. At 15 minutes post-event: measure ATR(14) \u2014 confirm it expanded at least 10% from pre-event value (event impact confirmed). 5. Wait for first 15-minute candle where ATR(14) closes lower than previous candle (contraction begins). 6. Enter trade on H1 candle close in the direction of the post-event price stabilisation \u2014 fade the initial spike.",
+      "exit_logic": "Stop loss: If ATR(14) re-expands above the post-event spike high (vol premium expands instead of contracting). Take profit: When premium contracts by 60% of the pre-event spread (ATR spread closes to <60% of pre-event level), or 4 hours after event (whichever first). Hard time stop at 6 hours post-event. No trailing \u2014 this is a fixed-target fade.",
+      "failure_mode": "1. Black swan event within the event release (e.g., surprise rate change not telegraphed) \u2014 premium expands rather than contracts as the market reprices. Unlikely but possible. 2. Event where the outcome triggers a structural regime change (e.g., 2020 COVID emergency cuts) \u2014 premium structure breaks down entirely and the mean-reversion never materialises. 3. Low-premium events where the spread was already below 15% \u2014 trade doesn't trigger, no loss but missed opportunity for weeks with few events.",
+      "diversification_value": "Differs from Volatility_Risk_Premium_Decay (B+) which targets session-based (Asian to London) premium decay driven by liquidity migration. This is event-window specific and exploits scheduled-event uncertainty resolution mechanics, not session-transition liquidity patterns. Differs from News_Impact_Volatility_Decay (A-) which trades the vol spike fade directionally \u2014 this trades the pre-event implied vol premium contraction as a non-directional volatility reduction. The mechanism (scheduled-information uncertainty resolution) is a distinct sub-niche within the Risk Premium/Carry cluster.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-15T00:37:48Z"
+    },
+    {
+      "name": "Volatility_Duration_Contraction_Expansion",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Exploits the statistical relationship between contraction duration and subsequent expansion magnitude, entering early when duration-based thresholds are met.",
+      "market_behaviour": "Gold volatility exhibits a reliable duration-dependent contraction-expansion cycle. When ATR(14) enters a sustained contraction regime (ATR declining for N consecutive bars), the probability and magnitude of the subsequent expansion increase as a function of (a) contraction duration in bars and (b) total contraction percentage measured from the most recent 20-bar ATR peak. This occurs because extended contractions build energy in gold's microstructure \u2014 market makers reduce positioning width, retail exits with no edge hold positions, and institutional flow accumulates below the surface waiting for a catalyst. The longer the coiling period, the more energy is stored, and the stronger the eventual spring. This effect is distinct from Bollinger squeeze patterns which measure band width against standard deviation; it captures the duration dimension of volatility compression that band-width indicators miss entirely.",
+      "entry_logic": "1. Track ATR(14) on H1 chart \u2014 identify the most recent 20-bar ATR peak value. 2. Count consecutive bars where ATR(14) closes lower than previous bar (contraction streak). 3. IF contraction streak >= 5 bars AND total contraction from peak >= 25%: mark as 'coiled' state. 4. Calculate the mean ATR(14) over the last 3 bars of the coiled state as baseline. 5. Entry signal: When H1 range (high-low) exceeds 1.3x the coiled ATR(14) baseline \u2014 the expansion has begun. 6. Enter in the direction of the H1 breakout (if close > open, go long; if close < open, go short).",
+      "exit_logic": "Stop loss: 1.0x ATR(14) from entry price (measured at entry candle close). Take profit: 2.0x ATR(14) target. Scale: exit 50% at 1.0x ATR, let the rest ride to 2.0x ATR. Alternative exit: If ATR(14) re-compresses (declines for 3 consecutive bars) at any point \u2014 the expansion is fading prematurely, close entire position. Time stop: 24 hours from entry.",
+      "failure_mode": "1. Structural vol decline (holiday season, macro quiescence) \u2014 the duration threshold is met but no expansion materialises because the vol regime has structurally shifted lower. The contraction is secular, not cyclical. 2. False expansion: a single-bar H1 spike exceeds 1.3x ATR but the next candle immediately retraces \u2014 no sustained expansion follows (low signal-to-noise in ranging markets). 3. Already-positioned failure: if the coiled state's baseline ATR is already very low (<5th percentile of 200-bar range), the expansion may be proportionally weak.",
+      "diversification_value": "Differs from Volatility_Compass_Expansion_System (A-) which uses ATR percentile crossing + ATR RSI for dual confirmation \u2014 this uses contraction duration streak + contraction magnitude (raw bars, not percentiles). Differs from Volatility_Contraction_Breakout (A-) which uses Bollinger Bands width at 10th percentile \u2014 this uses ATR(14) raw contraction streak, not BB width. The duration-mechanism (bars of continuous contraction + % peak-to-trough) is a distinct signal chain not present in any existing volatility idea.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-15T00:37:48Z"
+    },
+    {
+      "name": "Volatility_Session_Transition_Fade",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades the mechanical volatility spike at session transitions (Asian to London, London to US) by entering when the spike exceeds a threshold and confirming the first ATR contraction.",
+      "market_behaviour": "Gold volatility follows a reliable pattern during major session transitions (Asian to London, London to US). The transition period creates a temporary volatility spike as liquidity shifts between global trading hubs \u2014 market makers widen spreads, stop-loss cascades trigger from stale positions held through the quiet Asian session, and new London/US flow enters at different price levels. This spike is mechanically driven by the liquidity handover process, not directional conviction. The spike consistently fades within 2-3 hours as the new session's liquidity stabilises. The fade is most reliable during the Asian to London transition (07:00-09:00 HKT) where the vol spike is proportionally largest relative to baseline London session volatility, because Asian session compresses vol to its daily minimum.",
+      "entry_logic": "1. Identify session transition windows: Asian to London (07:00-09:00 HKT) and London to US (17:00-19:00 HKT). 2. 2 hours before transition, calculate ATR(14) on M15 as the 'pre-transition baseline'. 3. During the transition window, monitor ATR(14) on M15 continuously. 4. If ATR(14) expands >20% above the pre-transition baseline (vol spike triggered). 5. Wait for first M15 candle where ATR(14) closes lower than its post-spike peak (fade confirmation). 6. Enter mean-reversion position: fade the direction of the strongest candle in the transition spike (if the strongest candle was bullish, go short; if bearish, go long).",
+      "exit_logic": "Stop loss: 1.5x pre-transition ATR(14) from entry price. Take profit: When ATR(14) returns to within 10% of pre-transition baseline (vol normalises). Time stop: 3 hours post-transition start. No trailing \u2014 this is a fade trade with a fixed target tied to baseline vol normalisation.",
+      "failure_mode": "1. Major news overlaps with the session transition (e.g., NFP at 08:30 HKT = top of London open) \u2014 the spike is fundamental news-driven, not mechanical liquidity-driven, and won't fade. Skip trades on high-impact news days. 2. The transition spike is below the 20% threshold \u2014 no trade triggers. 3. Transition fade happens within 1-2 candles (micro-fade) and the entry candle is missed before the confirmation bar closes. Reduce position size if missed entry. 4. Low-volatility regime (holiday weeks) where the 20% threshold is never reached.",
+      "diversification_value": "Differs from Intraday_Volatility_Reversal_Oscillator (B+) which trades multi-peak intraday vol patterns using RSI divergence on a pre-set time schedule at known high-vol hours \u2014 this uses ATR expansion threshold + ATR contraction confirmation specific to session transitions as a discrete event. Differs from Asian_Session_Vol_Carry_Harvest (B+) which trades range mean-reversion within Asian session \u2014 this trades the volatility fade from the transition between Asian and London, which is a mechanical liquidity-handover effect rather than Asian range trading. The session-transition threshold + confirmation pattern is a distinct signal chain in the Mean Reversion cluster.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-15T00:37:48Z"
     }
   ],
   "archived": [
@@ -3134,7 +3252,10 @@
       "Breakout_Volume_Climax_Fade",
       "Opening_Gap_Breakout_Continuation",
       "Consolidation_Pattern_Measured_Move_Breakout",
-      "Consolidation_Duration_Breakout"
+      "Consolidation_Duration_Breakout",
+      "Structural_Compression_Breakout",
+      "Trap_Spring_Breakout_Filter",
+      "ATR_Percentile_Compression_Breakout"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
@@ -3154,7 +3275,10 @@
       "Volatility_Regime_Anticipation_Expansion",
       "OVX_GVZ_Cross_Volatility_Divergence",
       "Asian_Session_Vol_Carry_Harvest",
-      "Volatility_Compass_Expansion_System"
+      "Volatility_Compass_Expansion_System",
+      "Volatility_Premium_Event_Contraction",
+      "Volatility_Duration_Contraction_Expansion",
+      "Volatility_Session_Transition_Fade"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T08:10:43.843612+08:00",
+  "generated_at": "2026-07-11T08:19:33.419881+08:00",
   "sprint_number": 2,
   "market_summary": {
     "total_trades": 65,
@@ -103,5 +103,5 @@
       "detail": "Pair USDJPY PF=0.00 from 10 trades. Winning efficiency has dropped significantly."
     }
   ],
-  "standup": "## \ud83e\udd16 Daily Standup \u2014 2026-07-15 08:10 HKT\n\n### \ud83d\udccb Sprint #2\n\n**\u274c Failed:**\n  \u2022 `BL-0004` USDJPY/macd \u2014 Low WR\n\n**Backlog remaining:** 0 item(s)\n\n### \ud83d\udea8 Blockers\n\n**\ud83d\udd34 Critical:**\n  \u2022 AUDUSD \u2014 6 consecutive losses\n  \u2022 XAUUSD \u2014 9 consecutive losses\n\n**\ud83d\udfe1 Warnings:**\n  \u2022 AUDUSD \u2014 Win rate 11.1% below 25% threshold\n  \u2022 USDJPY \u2014 Profit factor 0.00 suggests strategy degradation\n\n### \ud83d\udca1 Recommendations\n\n  \u2022 **Immediate action:** Address critical blockers before proceeding with new sprint work.\n  \u2022 **Trading halt:** Consider pausing the affected strategy until root cause is identified.\n  \u2022 **Filter review:** Add or tighten entry filters for low-win-rate pairs.\n\n---\n*Generated at 2026-07-15 08:10 HKT by Research Division Sprint Manager*"
+  "standup": "## \ud83e\udd16 Daily Standup \u2014 2026-07-11 08:19 HKT\n\n### \ud83d\udccb Sprint #2\n\n**\u274c Failed:**\n  \u2022 `BL-0004` USDJPY/macd \u2014 Low WR\n\n**Backlog remaining:** 0 item(s)\n\n### \ud83d\udea8 Blockers\n\n**\ud83d\udd34 Critical:**\n  \u2022 AUDUSD \u2014 6 consecutive losses\n  \u2022 XAUUSD \u2014 9 consecutive losses\n\n**\ud83d\udfe1 Warnings:**\n  \u2022 AUDUSD \u2014 Win rate 11.1% below 25% threshold\n  \u2022 USDJPY \u2014 Profit factor 0.00 suggests strategy degradation\n\n### \ud83d\udca1 Recommendations\n\n  \u2022 **Immediate action:** Address critical blockers before proceeding with new sprint work.\n  \u2022 **Trading halt:** Consider pausing the affected strategy until root cause is identified.\n  \u2022 **Filter review:** Add or tighten entry filters for low-win-rate pairs.\n\n---\n*Generated at 2026-07-11 08:19 HKT by Research Division Sprint Manager*"
 }

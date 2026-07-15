@@ -1,0 +1,61 @@
+//@version=5
+strategy(title="MACD_ADX18_RSI_XAUUSD_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_length = input.int(12, "MACD Fast Length", minval=1)      // sweep: 8-16 step 2
+slow_length = input.int(26, "MACD Slow Length", minval=1)      // sweep: 20-32 step 3
+signal_length = input.int(9, "MACD Signal Length", minval=1)   // sweep: 7-12 step 1
+
+// RSI parameters
+rsi_length = input.int(14, "RSI Length", minval=1)             // sweep: 10-20 step 2
+rsi_ob = input.int(70, "RSI Overbought", minval=50)            // sweep: 65-80 step 5
+rsi_os = input.int(30, "RSI Oversold", minval=10)              // sweep: 20-35 step 5
+
+// ADX parameters
+adx_length = input.int(14, "ADX Length", minval=1)             // sweep: 10-20 step 2
+adx_threshold = input.int(18, "ADX Threshold", minval=1)       // sweep: 15-30 step 3
+
+// Risk management
+sl_pct = input.float(0.3, "Stop Loss %", minval=0.1, step=0.1)  // sweep: 0.1-1.0 step 0.1
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", minval=0.5, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//--- manual ADX calculation (ta.adx not supported by engine)
+// True Range
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+// Directional Movement
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+// Smoothed averages
+tr_smooth = ta.rma(tr_val, adx_length)
+plus_di = 100 * ta.rma(plus_dm, adx_length) / tr_smooth
+minus_di = 100 * ta.rma(minus_dm, adx_length) / tr_smooth
+// DX and ADX
+dx_val = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx_val, adx_length)
+
+//--- MACD calculation
+[macd_line, signal_line, hist_line] = ta.macd(close, fast_length, slow_length, signal_length)
+
+//--- RSI calculation
+rsi_val = ta.rsi(close, rsi_length)
+
+//--- entry logic
+long_condition = ta.crossover(macd_line, signal_line) and rsi_val > 50 and adx_val > adx_threshold
+short_condition = ta.crossunder(macd_line, signal_line) and rsi_val < 50 and adx_val > adx_threshold
+
+//--- exit management
+sl_distance = close * sl_pct / 100
+tp_distance = sl_distance * tp_sl_ratio
+sl_ticks = math.round(sl_distance / syminfo.mintick)
+tp_ticks = math.round(tp_distance / syminfo.mintick)
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)

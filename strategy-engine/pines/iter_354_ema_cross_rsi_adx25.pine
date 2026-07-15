@@ -1,0 +1,77 @@
+//@version=5
+//============================================================================
+// Strategy: EMA3/8 Crossover + RSI(50/50) + ADX(14) > 25
+// Symbol: XAUUSD | Timeframe: 1h
+// Entry: EMA3 crosses above EMA8 with RSI > 50 = LONG
+//        EMA3 crosses below EMA8 with RSI < 50 = SHORT
+//        ADX(14) > 25 required for any entry (trending market only)
+// TP/SL: 2:1 reward-to-risk, 0.3% close-based SL
+//============================================================================
+
+strategy(
+  title="EMA3/8 + RSI(50/50) + ADX(14) > 25 | XAUUSD 1h",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen  = input.int(3,   "EMA Fast Length",  minval=1, maxval=50)    // sweep: 2-10 step 1
+emaSlowLen  = input.int(8,   "EMA Slow Length",  minval=1, maxval=50)    // sweep: 5-20 step 1
+
+// RSI parameters
+rsiLen      = input.int(14,  "RSI Length",       minval=1, maxval=50)    // sweep: 7-21 step 7
+rsiLongMin  = input.int(50,  "RSI Min (Long)",   minval=1, maxval=100)  // sweep: 40-60 step 5
+rsiShortMax = input.int(50,  "RSI Max (Short)",  minval=1, maxval=100)  // sweep: 40-60 step 5
+
+// ADX parameters
+adxLen      = input.int(14,  "ADX Length",       minval=7, maxval=30)   // sweep: 7-21 step 7
+adxMin      = input.int(25,  "ADX Min (Trend)",  minval=10, maxval=50)  // sweep: 15-35 step 5
+
+// Risk management
+slPct       = input.float(0.3, "Stop Loss (%)",  minval=0.05, maxval=2.0, step=0.05)  // sweep: 0.1-1.0 step 0.1
+tpRatio     = input.float(2.0, "TP:SL Ratio",    minval=0.5,  maxval=5.0,  step=0.5)  // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+
+// EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+// ADX (trend strength) via DMI
+[adxVal, diPlus, diMinus] = ta.dmi(high, low, close, adxLen)
+
+//--- entry signals
+
+// Long: EMA fast crosses above EMA slow, RSI > threshold, ADX > threshold
+longCondition  = ta.crossover(emaFast, emaSlow) and rsiVal > rsiLongMin and adxVal > adxMin
+
+// Short: EMA fast crosses below EMA slow, RSI < threshold, ADX > threshold
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsiVal < rsiShortMax and adxVal > adxMin
+
+//--- entry logic
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+
+// Calculate SL distance in ticks based on close price percentage
+slTicks  = int(close * slPct / 100.0 / syminfo.mintick)
+tpTicks  = int(slTicks * tpRatio)
+
+// Apply exits to all active positions
+strategy.exit("XL", "Long",  loss=slTicks, profit=tpTicks, from_entry="Long")
+strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks, from_entry="Short")

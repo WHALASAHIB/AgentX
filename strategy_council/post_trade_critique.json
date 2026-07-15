@@ -1,0 +1,204 @@
+{
+  "strategy": "Propfirm Pass v9.1",
+  "analysis_date": "2026-07-14",
+  "total_trades": 5,
+  "wins": 2,
+  "losses": 3,
+  "win_rate": 40.0,
+  "total_pnl": 419.41,
+  "avg_win": 1973.57,
+  "avg_loss": -1175.91,
+  "profit_factor": 1.12,
+  "sample_size_warning": "Only 5 trades — patterns are suggestive, not statistically significant. 20+ trades needed for confidence.",
+
+  "trade_critiques": [
+    {
+      "trade_num": 1,
+      "date": "2026-07-08",
+      "direction": "SELL",
+      "entry": 1.14403,
+      "exit": 1.14165,
+      "volume": 8.33,
+      "pnl": 1982.54,
+      "holding_time": "5h17m",
+      "score": 9,
+      "quality": "excellent",
+      "outcome": "win",
+      "comment": "TP hit (target 1.14164)",
+      "positives": [
+        "Captured full 1:2 RR — TP exactly hit at 1.14164",
+        "Held patiently 5+ hours — let the trade breathe",
+        "SELL direction aligned with broader EURUSD weakness"
+      ],
+      "negatives": [],
+      "root_cause": "N/A (winning trade)"
+    },
+    {
+      "trade_num": 2,
+      "date": "2026-07-10→13",
+      "direction": "BUY",
+      "entry": 1.14189,
+      "exit": 1.14008,
+      "volume": 8.49,
+      "pnl": -1536.69,
+      "holding_time": "~55h (weekend gap)",
+      "score": 3,
+      "quality": "poor",
+      "outcome": "loss",
+      "comment": "SL gapped through by 6 pips over weekend",
+      "positives": [
+        "Signal was valid — VWAP deviation triggered correctly",
+        "SL placement was within strategy parameters"
+      ],
+      "negatives": [
+        "Weekend gap added $476 extra loss beyond SL distance",
+        "Friday entry means overnight and weekend exposure",
+        "Holding time extreme due to weekend closure"
+      ],
+      "root_cause": "Structural — EURUSD cannot be traded Friday after US close. Weekend gap risk is systemic with no prevention possible at signal level. Gap added ~$476 to a $1,060 expected loss."
+    },
+    {
+      "trade_num": 3,
+      "date": "2026-07-13",
+      "direction": "SELL",
+      "entry": 1.14368,
+      "exit": 1.14133,
+      "volume": 8.36,
+      "pnl": 1964.60,
+      "holding_time": "5h30m",
+      "score": 9,
+      "quality": "excellent",
+      "outcome": "win",
+      "comment": "TP hit (target 1.14130)",
+      "positives": [
+        "Perfect 1:2 RR — TP exactly hit",
+        "SELL direction aligned with bearish session",
+        "Held patiently for full move despite intraday noise",
+        "5.5 hours — stayed in trade without premature exit"
+      ],
+      "negatives": [],
+      "root_cause": "N/A (winning trade)"
+    },
+    {
+      "trade_num": 4,
+      "date": "2026-07-13",
+      "direction": "BUY",
+      "entry": 1.14139,
+      "exit": 1.14028,
+      "volume": 8.52,
+      "pnl": -945.72,
+      "holding_time": "12m",
+      "score": 2,
+      "quality": "error",
+      "outcome": "loss",
+      "comment": "SL hit at 1.14017",
+      "positives": [],
+      "negatives": [
+        "Entered BUY just 3 minutes after SELL TP hit on Trade 3",
+        "Direction flip (SELL→BUY) with zero cooldown or trend check",
+        "Held only 12 minutes — price never moved in direction",
+        "Volume slightly larger (8.52 vs 8.36) on a counter-trend entry"
+      ],
+      "root_cause": "No trend filter or cooldown mechanism. The bot went from a winning SELL directly into a BUY without checking if EURUSD was still in a downtrend. Entered against the prevailing direction."
+    },
+    {
+      "trade_num": 5,
+      "date": "2026-07-13",
+      "direction": "BUY",
+      "entry": 1.14069,
+      "exit": 1.13945,
+      "volume": 8.43,
+      "pnl": -1045.32,
+      "holding_time": "2h09m",
+      "score": 4,
+      "quality": "poor",
+      "outcome": "loss",
+      "comment": "SL hit at 1.13952",
+      "positives": [
+        "Better holding time than Trade 4 — price did move slightly in direction during the 2 hours"
+      ],
+      "negatives": [
+        "Second consecutive BUY against the prevailing downtrend",
+        "Opened at 1.14069 which was BELOW the prior losing SL (1.14017)",
+        "Dips-buying after price just showed it was falling — catching a falling knife"
+      ],
+      "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing price continue lower, the bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.'"
+    }
+  ],
+
+  "patterns_detected": [
+    {
+      "pattern": "Directional bias works — on the right side",
+      "evidence": "Both wins = SELL. 3 losses = 2 BUY + 1 gap. When bot sold EURUSD, it won convincingly (avg +$1,974). When it bought, it lost (avg -$996).",
+      "confidence": "SUGGESTIVE (5 trades)",
+      "severity": "HIGH",
+      "recommendation": "Add a session-level trend filter. If the last N hours showed a clear direction, bias entries to match. Specifically: if the last closed trade was a win in direction X, do NOT open a trade in the opposite direction for at least 60 minutes."
+    },
+    {
+      "pattern": "Immediate direction flip after win",
+      "evidence": "Trade 3 closed SELL TP at 01:01 UTC. Trade 4 opened BUY at 01:04 UTC. 3 minutes apart. The winning SELL was held 5.5 hours, and within 3 minutes of closing, the bot flipped to BUY.",
+      "confidence": "SUGGESTIVE (single event)",
+      "severity": "HIGH",
+      "recommendation": "Implement a cooldown timer after any TP hit. No trade in the opposite direction within 60-90 minutes. The bot needs time for price to establish a new signal, not enter immediately on the reversal."
+    },
+    {
+      "pattern": "Friday/weekend entry adds unnecessary risk",
+      "evidence": "Trade 2 was entered Friday, held through weekend, gap-opened 18 pips below entry (6 pips past SL). Added ~$476 extra loss.",
+      "confidence": "STRONG (clear cause-effect)",
+      "severity": "MEDIUM",
+      "recommendation": "Consider restricting trades on Friday after 12:00 UTC (London close). Weekend gap risk is systemic and cannot be solved at SL level — only by not being in a position."
+    },
+    {
+      "pattern": "Winners held long — losers cut short",
+      "evidence": "Wins: 5h17m and 5h30m. Losses: 12m and 2h09m. The bot is not cutting winners prematurely — it lets them run. The issue is entering bad trades, not exiting good ones.",
+      "confidence": "SUGGESTIVE (small sample, but consistent)",
+      "severity": "LOW",
+      "recommendation": "No change needed to exit logic. TP is working correctly. Focus improvement on ENTRY quality, not exit."
+    }
+  ],
+
+  "improvement_recommendations": [
+    {
+      "priority": 1,
+      "change": "Trend filter — avoid counter-direction entries",
+      "detail": "If EURUSD has moved 15+ pips in one direction in the last 2 hours (measured from VWAP), only enter trades aligned with that direction. This prevents buying into a falling market.",
+      "testable": "Backtest on July 13: would this have blocked Trade 4 and Trade 5? Likely yes (EURUSD fell from 1.14368 to 1.14069 = 30 pips down in 6 hours).",
+      "risk": "Could filter out valid reversal trades. Start with directional bias as a SOFT filter (reduce volume 50% on counter-trend) rather than HARD block."
+    },
+    {
+      "priority": 2,
+      "change": "Cooldown timer after any TP/SL hit",
+      "detail": "No new trade in ANY direction for 30 minutes after a trade closes (win or loss). This prevents whip-lash entries.",
+      "testable": "Would have blocked Trade 4 (entered 3 min after Trade 3 TP). Without Trade 4, Trade 5 might also have been blocked due to max-daily-trade limit.",
+      "risk": "Could miss a valid reversal signal in fast markets. 30 min is conservative; could adjust to 15 min."
+    },
+    {
+      "priority": 3,
+      "change": "Friday session restriction",
+      "detail": "Do NOT open new trades on Friday after 12:00 UTC. If a trade is open Friday morning, let it run (SL/TP are set). But no NEW entries after the London session closes.",
+      "testable": "Would not have affected any win — the two wins were Monday/Tuesday.",
+      "risk": "Misses any Friday-only patterns. Low risk — Friday afternoon is typically thin and unpredictable."
+    },
+    {
+      "priority": 4,
+      "change": "Do NOT change exit logic",
+      "detail": "TP is working (2/2 wins hit TP exactly). SL is working (all losses capped). Do not change R:R parameters. The problem is entering bad trades, not exiting them.",
+      "testable": "Maintain 1:2 RR. Monitor next 10 trades. If win rate stays below 40%, re-evaluate entry criteria (deviation threshold or candle confirmation).",
+      "risk": "None — maintaining working system."
+    }
+  ],
+
+  "noise_vs_signal_assessment": {
+    "reliable_signals": [
+      "SELL direction = profitable on this account (both wins were shorts)",
+      "SL/TP placement is accurate — hits exactly at target prices",
+      "Winners held patient — bot doesn't panic-exit"
+    ],
+    "possible_noise": [
+      "40% win rate may normalize toward 50% with more trades",
+      "BUY losses could be coincidence (only 2 BUY trades ever closed)",
+      "The gap loss may not repeat next weekend",
+      "July 13 was a highly directional day — not representative of average conditions"
+    ]
+  }
+}

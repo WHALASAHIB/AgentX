@@ -1,0 +1,47 @@
+//@version=5
+strategy(title="EMA3/8 Crossover 2:1 TP/SL XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)           // sweep: 2-10 step 1
+// EMA slow period
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=100)          // sweep: 5-21 step 2
+// Stop loss as percentage of close price (0.3% = 0.003)
+sl_pct = input.float(0.003, "SL %", minval=0.001, maxval=0.05, step=0.0005)  // sweep: 0.1%-1.0% step 0.1%
+// Take profit ratio (multiple of SL distance)
+tp_ratio = input.float(2.0, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.5)  // sweep: 0.5-4.0 step 0.5
+// Trade direction
+trade_long = input.bool(true, "Trade Long")
+trade_short = input.bool(true, "Trade Short")
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+
+//--- entry logic
+// Crossover: fast EMA crosses above slow EMA = bullish
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+// Crossunder: fast EMA crosses below slow EMA = bearish
+bearish_cross = ta.crossunder(ema_fast, ema_slow)
+
+// Entry conditions
+long_condition = bullish_cross and trade_long
+short_condition = bearish_cross and trade_short
+
+//--- exit management
+// Calculate SL and TP distances in ticks
+sl_distance_ticks = (close * sl_pct) / syminfo.mintick
+tp_distance_ticks = sl_distance_ticks * tp_ratio
+
+// Enter and manage positions
+if long_condition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=math.round(sl_distance_ticks), profit=math.round(tp_distance_ticks))
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=math.round(sl_distance_ticks), profit=math.round(tp_distance_ticks))
+
+//--- plots for visual reference
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)

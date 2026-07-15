@@ -1,0 +1,50 @@
+//@version=5
+strategy(title="EMA3/8 Crossover + RSI(50/50) + ADX(14)>18 — Iter 355", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)      // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=2, maxval=100)     // sweep: 5-30 step 3
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)              // sweep: 7-21 step 2
+rsiLongMin = input.int(50, "RSI Minimum for Long", minval=20, maxval=80)   // sweep: 40-60 step 5
+rsiShortMax = input.int(50, "RSI Maximum for Short", minval=20, maxval=80)  // sweep: 40-60 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30)              // sweep: 7-21 step 2
+adxThreshold = input.int(18, "ADX Minimum Threshold", minval=5, maxval=50) // sweep: 10-25 step 3
+
+// TP/SL
+tpRatio = input.float(2.0, "Take Profit (TP) as R:R ratio", minval=0.5, maxval=10.0)  // sweep: 1.0-3.0 step 0.5
+slPct = input.float(0.3, "Stop Loss % of price", minval=0.1, maxval=2.0)               // sweep: 0.1-1.0 step 0.1
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
+
+//--- entry signals
+// Long: EMA fast crosses above EMA slow AND RSI > 50 AND ADX > threshold
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiLongMin and adxVal > adxThreshold
+
+// Short: EMA fast crosses below EMA slow AND RSI < 50 AND ADX > threshold
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsiVal < rsiShortMax and adxVal > adxThreshold
+
+//--- entry management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management — fixed TP/SL based on close price at entry
+slPips = close * slPct / 100 / syminfo.mintick
+tpPips = slPips * tpRatio
+
+// We use strategy.exit to manage open positions with fixed TP/SL
+// Only exit if we have a position
+if (strategy.position_size != 0)
+    strategy.exit("TP/SL", "Long", loss=slPips, profit=tpPips, when=strategy.position_size > 0)
+    strategy.exit("TP/SL", "Short", loss=tpPips, profit=slPips, when=strategy.position_size < 0)

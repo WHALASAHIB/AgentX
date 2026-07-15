@@ -1,0 +1,12 @@
+{
+  "trade_date": "2026-07-14",
+  "daily_trade_count": 1,
+  "consecutive_losses": 0,
+  "total_trades": 1,
+  "total_wins": 0,
+  "total_losses": 0,
+  "last_trade_close_time": "2026-07-14T12:23:38.210147+00:00",
+  "last_trade_direction": -1,
+  "session_trend": 1,
+  "session_trend_price": 1.14018
+}
