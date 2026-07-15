@@ -1,0 +1,39 @@
+//@version=5
+strategy(title="EMA2/5 RSI50 ADX18 TimeFilter LongOnly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(2, "Fast EMA Length", minval=1, maxval=50)       // sweep: 1-10 step 1
+ema_slow_len = input.int(5, "Slow EMA Length", minval=1, maxval=50)       // sweep: 3-20 step 1
+rsi_len      = input.int(14, "RSI Length", minval=2, maxval=50)           // sweep: 7-21 step 2
+rsi_oversold = input.int(50, "RSI Oversold Level", minval=10, maxval=80)  // sweep: 30-70 step 5
+adx_len      = input.int(14, "ADX Length", minval=5, maxval=50)           // sweep: 7-25 step 2
+adx_threshold = input.int(18, "ADX Threshold", minval=5, maxval=50)       // sweep: 14-30 step 2
+tp_points    = input.float(67, "Take Profit (points)", minval=1, maxval=500)  // sweep: 20-150 step 10
+sl_points    = input.float(67, "Stop Loss (points)", minval=1, maxval=500)   // sweep: 20-150 step 10
+use_time_filter = input.bool(true, "Use Time Filter (8-16 UTC)")          // sweep: true/false
+start_hour   = input.int(8, "Start Hour (UTC)", minval=0, maxval=23)     // sweep: 6-10 step 1
+end_hour     = input.int(16, "End Hour (UTC)", minval=0, maxval=23)      // sweep: 14-20 step 1
+
+//--- indicators
+fast_ema = ta.ema(close, ema_fast_len)
+slow_ema = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+[di_plus, di_minus, adx_val] = ta.dmi(adx_len, adx_len)
+
+//--- entry conditions
+bullish_cross = ta.crossover(fast_ema, slow_ema)
+time_ok = not use_time_filter or (hour >= start_hour and hour < end_hour)
+rsi_ok = rsi_val > rsi_oversold
+adx_ok = adx_val > adx_threshold
+
+long_entry = bullish_cross and time_ok and rsi_ok and adx_ok
+
+//--- exit management via strategy.exit
+if long_entry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_points * syminfo.mintick, profit=tp_points * syminfo.mintick)
+
+//--- plot
+plot(fast_ema, "Fast EMA", color=color.blue, linewidth=1)
+plot(slow_ema, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_oversold, "RSI Level", color=color.gray, linestyle=hline.style_dashed)

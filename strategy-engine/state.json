@@ -1,6 +1,6 @@
 {
-  "iteration": 370,
-  "last_run": "2026-07-15T11:38:00Z",
+  "iteration": 374,
+  "last_run": "2026-07-15T13:00:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,43 +13,11 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Remove the ADX filter entirely to maximize trade frequency. Without ADX restricting entries, the EMA2/5 crossover + RSI(50) + time filter (8-16 UTC) should generate more trades for a statistically significant sample. Still long-only with 67/100 point TP/SL on XAUUSD 30m.",
+  "current_hypothesis": "The EMA2/5 crossover is too restrictive even with ADX>18 — only 1 trade. The best strategy (iter 44) used EMA5/13 with ADX>25 and produced 33 trades with PF=3.61. Switch back to EMA5/13 crossover to restore trade frequency, keep ADX>18 to give slightly more room vs the best's ADX>25. EMA5/13 crossover + RSI(50) + ADX(14)>18 + time filter (8-16 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
   "evolution_log": [
     {
-      "iteration": 367,
-      "hypothesis": "Reduce entry threshold with faster EMAs (2/5 instead of 3/8). EMA2/5 crossover + RSI(50) + time filter (8-16 UTC) long-only + fixed 67/100 point TP/SL on XAUUSD 30m.",
-      "metrics": {
-        "pf": 0.75617698,
-        "sharpe": -10.56643294,
-        "wr": 25.0,
-        "dd": 1.93237491,
-        "trades": 20,
-        "net_profit": -193.237490926042
-      },
-      "verdict": "rejected (PF=0.76 Sharpe=-10.57 DD=1.9%)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-15T11:00:00Z"
-    },
-    {
-      "iteration": 368,
-      "hypothesis": "Add ADX(14) filter (ADX > 25) to avoid trading in choppy/consolidating markets, improving signal quality and PF. EMA2/5 crossover + RSI(50) + ADX(14)>25 + time filter (8-16 UTC) long-only + 67/100 point TP/SL on XAUUSD 30m.",
-      "metrics": {
-        "pf": 0.43644592,
-        "sharpe": -4.34666464,
-        "wr": 40.0,
-        "dd": 7.92653112,
-        "trades": 5,
-        "net_profit": -394.069106395216
-      },
-      "verdict": "invalid (low sample, 5 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-15T11:15:00Z"
-    },
-    {
       "iteration": 369,
-      "hypothesis": "Reduce ADX threshold from 25 to 14 to increase trade frequency. EMA2/5 crossover + RSI(50) + ADX(14)>14 + time filter (8-16 UTC) long-only + 67/100 point TP/SL on XAUUSD 30m.",
+      "hypothesis": "Reduce ADX threshold from 25 to 14 to increase trade frequency. EMA2/5 crossover + RSI(50) + ADX(14)>14 + time filter (8-16 UTC) long-only + fixed 67/100 point TP/SL on XAUUSD 30m.",
       "metrics": {
         "pf": 0.26420422,
         "sharpe": -8.69458068,
@@ -62,6 +30,70 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-15T11:38:00Z"
+    },
+    {
+      "iteration": 370,
+      "hypothesis": "Remove ADX filter entirely to maximize trade frequency. EMA2/5 crossover + RSI(50) + time filter (8-16 UTC) long-only + 67/100 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.75617698,
+        "sharpe": -10.576653,
+        "wr": 25.0,
+        "dd": 1.93237491,
+        "trades": 20,
+        "net_profit": -193.237490926042
+      },
+      "verdict": "rejected (PF=0.76 Sharpe=-10.58 DD=1.9%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T11:53:00Z"
+    },
+    {
+      "iteration": 371,
+      "hypothesis": "Tighten TP/SL ratio from ~1:1.5 (67/100) to 1:1 (67/67 points). With equal TP/SL distance, win rate should improve as winners are taken sooner. EMA2/5 crossover + RSI(50) + time filter (8-16 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.75617698,
+        "sharpe": -10.576653,
+        "wr": 25.0,
+        "dd": 1.93237491,
+        "trades": 20,
+        "net_profit": -193.237490926042
+      },
+      "verdict": "rejected (PF=0.76 Sharpe=-10.58 DD=1.9%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T12:22:00Z"
+    },
+    {
+      "iteration": 372,
+      "hypothesis": "Restore ADX(14) > 25 trending filter to eliminate choppy entries. The best strategy (iter 44) used ADX and produced PF=3.61. EMA2/5 crossover + RSI(50) + ADX(14)>25 + time filter (8-16 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -3.7653623,
+        "wr": 0.0,
+        "dd": 8.36542288,
+        "trades": 1,
+        "net_profit": -540.540201937634
+      },
+      "verdict": "invalid (low sample, 1 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T12:45:00Z"
+    },
+    {
+      "iteration": 373,
+      "hypothesis": "Reduce ADX threshold from 25 to 18 to increase trade frequency while keeping a trending market filter. EMA2/5 crossover + RSI(50) + ADX(14)>18 + time filter (8-16 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -3.7653623,
+        "wr": 0.0,
+        "dd": 8.36542288,
+        "trades": 1,
+        "net_profit": -540.540201937634
+      },
+      "verdict": "invalid (low sample, 1 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T13:00:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

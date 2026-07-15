@@ -1,0 +1,30 @@
+//@version=5
+strategy(title="EMA2_5_RSI50_TimeFilter_LongOnly_30m_v371", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=10)      // sweep: 1-5 step 1
+slowLen = input.int(5, "Slow EMA Length", minval=2, maxval=20)      // sweep: 3-12 step 1
+rsiLen  = input.int(14, "RSI Length", minval=5, maxval=21)          // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold (long > this)", minval=30, maxval=70)  // sweep: 40-60 step 5
+tpPoints = input.int(67, "Take Profit (points)", minval=10, maxval=500)            // sweep: 30-150 step 10
+slPoints = input.int(67, "Stop Loss (points)", minval=10, maxval=500)             // sweep: 30-150 step 10
+sessionStart = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23)       // sweep: 6-10 step 1
+sessionEnd   = input.int(16, "Session End Hour (UTC)", minval=0, maxval=23)        // sweep: 14-20 step 1
+
+//--- calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsi = ta.rsi(close, rsiLen)
+currentHour = hour(time)
+
+//--- entry logic
+// No ADX filter — enter on every EMA crossover that meets RSI + time conditions
+// TP/SL tightened to 1:1 ratio (67/67 points) to improve win rate by taking winners sooner
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold and currentHour >= sessionStart and currentHour < sessionEnd
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (strategy.position_size > 0)
+    strategy.exit("TP/SL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
