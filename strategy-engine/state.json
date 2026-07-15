@@ -1,6 +1,6 @@
 {
-  "iteration": 362,
-  "last_run": "2026-07-15T16:00:00Z",
+  "iteration": 366,
+  "last_run": "2026-07-15T02:53:17Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "WR at 36.7% is below 40% threshold. Tighten TP/SL ratio from 80/100 (0.8:1) to 67/100 (~1:1.5) to increase win rate. The ADX threshold was lowered from 25 to 18 which increased trades from 19 to 30 but hurt PF (0.92 vs 1.22). Now focus on improving WR by tightening profit target relative to stop loss. EMA3/8 + RSI(50) + ADX(14)>18 long-only + 67/100 point TP/SL on XAUUSD 30m.",
+  "current_hypothesis": "H1 gave only 4 trades even after removing ADX filter. Switch from H1 to 30m timeframe to increase trade frequency. EMA3/8 crossover + RSI(50) + time filter (8-16 UTC) long-only + 67/100 point TP/SL on XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 0,
@@ -32,102 +32,6 @@
       "time": "2026-06-23T11:23:00"
     },
     {
-      "iteration": 355,
-      "hypothesis": "Lower ADX threshold from 25 to 18. EMA3/8 + RSI(50/50) + ADX(14)>18 + 2:1 TP/SL + 0.3% SL on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.04737743,
-        "sharpe": -8.59780599,
-        "wr": 13.04347826,
-        "dd": 10.83654617,
-        "trades": 23,
-        "net_profit": -936.226645164781
-      },
-      "verdict": "rejected (PF=0.05 Sharpe=-8.60 DD=10.8%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-15T14:41:00Z"
-    },
-    {
-      "iteration": 356,
-      "hypothesis": "Tighten TP/SL to 1:1.5 with ADX(14)>18. EMA3/8 + RSI(50/50) + ADX(14)>18 + 0.3% SL on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.04666732,
-        "sharpe": -9.72118579,
-        "wr": 13.04347826,
-        "dd": 9.80135029,
-        "trades": 23,
-        "net_profit": -949.367958711517
-      },
-      "verdict": "rejected (PF=0.05 Sharpe=-9.72 DD=9.8%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-15T14:56:00Z"
-    },
-    {
-      "iteration": 357,
-      "hypothesis": "Remove ADX filter. EMA3/8 + RSI(50/50) + 1:1.5 TP/SL + 0.3% SL on XAUUSD 1h.",
-      "metrics": {
-        "pf": 1.15763916,
-        "sharpe": -0.50112411,
-        "wr": 37.5,
-        "dd": 3.32923215,
-        "trades": 24,
-        "net_profit": -52.423005785253
-      },
-      "verdict": "rejected (PF=1.16 Sharpe=-0.50 DD=3.3%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-15T15:00:00Z"
-    },
-    {
-      "iteration": 358,
-      "hypothesis": "Widen TP/SL to 2:1. EMA3/8 + RSI(50/50) + 2:1 TP/SL + 0.3% SL on XAUUSD 1h.",
-      "metrics": {
-        "pf": 1.15763916,
-        "sharpe": -0.50112411,
-        "wr": 37.5,
-        "dd": 3.32923215,
-        "trades": 24,
-        "net_profit": -52.423005785253
-      },
-      "verdict": "rejected (PF=1.16 Sharpe=-0.50 DD=3.3%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-15T15:04:00Z"
-    },
-    {
-      "iteration": 359,
-      "hypothesis": "Switch timeframe to 30m. EMA3/8 crossover + RSI(50/50) + 2:1 TP/SL + 0.3% SL on XAUUSD 30m (24h trading).",
-      "metrics": {
-        "pf": 0.78016496,
-        "sharpe": -3.68712821,
-        "wr": 20.37037037,
-        "dd": 5.30760781,
-        "trades": 54,
-        "net_profit": -341.702200775695
-      },
-      "verdict": "rejected (PF=0.78 Sharpe=-3.69 DD=5.3%)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-15T15:08:00Z"
-    },
-    {
-      "iteration": 360,
-      "hypothesis": "Switch to long-only with tighter EMA3/8 crossover on 30m, matching iter 44's architecture more closely. EMA3/8 crossover + RSI(50) + ADX(14)>25 long-only + fixed 80/100 point TP/SL on XAUUSD 30m.",
-      "metrics": {
-        "pf": 1.22073576,
-        "sharpe": -6.5961373,
-        "wr": 42.10526316,
-        "dd": 1.38106353,
-        "trades": 19,
-        "net_profit": -138.106352961027
-      },
-      "verdict": "invalid (low sample, 19 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-15T15:58:00Z"
-    },
-    {
       "iteration": 361,
       "hypothesis": "Lower ADX threshold from 25 to 18 to increase trade count. EMA3/8 crossover + RSI(50) + ADX(14)>18 long-only + fixed 80/100 point TP/SL on XAUUSD 30m.",
       "metrics": {
@@ -142,6 +46,70 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-15T16:00:00Z"
+    },
+    {
+      "iteration": 362,
+      "hypothesis": "Tighten TP/SL ratio from 80/100 (0.8:1) to 67/100 (~1:1.5) to increase win rate. EMA3/8 + RSI(50) + ADX(14)>18 long-only + 67/100 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.91668783,
+        "sharpe": -10.28103643,
+        "wr": 36.66666667,
+        "dd": 2.78436311,
+        "trades": 30,
+        "net_profit": -274.265901448609
+      },
+      "verdict": "rejected (PF=0.92 Sharpe=-10.28 DD=2.8%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T16:00:00Z"
+    },
+    {
+      "iteration": 363,
+      "hypothesis": "Remove EMA crossunder exit, letting TP/SL (67/100 points, 1:1.5 ratio) be the sole exit mechanism. EMA3/8 + RSI(50) + ADX(14)>18 long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.9170599,
+        "sharpe": -9.63916853,
+        "wr": 36.66666667,
+        "dd": 2.58954205,
+        "trades": 30,
+        "net_profit": -254.775438052146
+      },
+      "verdict": "rejected (PF=0.92 Sharpe=-9.64 DD=2.6%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T16:22:55Z"
+    },
+    {
+      "iteration": 364,
+      "hypothesis": "Switch from 30m to H1 timeframe to give trades more room to develop. EMA3/8 + RSI(50) + ADX(18) long-only + TP/SL-only exit + 67/100 point TP/SL on XAUUSD H1.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": null,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-15T16:23:00Z"
+    },
+    {
+      "iteration": 365,
+      "hypothesis": "Remove ADX filter to increase entry frequency. EMA3/8 crossover + RSI(50) + time filter (8-16 UTC) long-only + 67/100 point TP/SL on XAUUSD H1.",
+      "metrics": {
+        "pf": 3.62276239,
+        "sharpe": 1.85793274,
+        "wr": 50,
+        "dd": 0.45371967,
+        "trades": 4,
+        "net_profit": 35.128108585355
+      },
+      "verdict": "invalid (low sample, 4 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-15T02:53:17Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

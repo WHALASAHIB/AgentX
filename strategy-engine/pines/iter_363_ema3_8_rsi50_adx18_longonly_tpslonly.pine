@@ -1,0 +1,50 @@
+//@version=5
+strategy(title="EMA(3,8) + RSI(14)>50 + ADX(14)>18 LONG-only 30m TP/SL-only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFast = input.int(3, "EMA Fast Period")        // sweep: 2-6 step 1
+emaSlow = input.int(8, "EMA Slow Period")         // sweep: 5-14 step 1
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length")              // sweep: 10-21 step 2
+rsiMin = input.int(50, "RSI Minimum (LONG-only)") // sweep: 40-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length")              // sweep: 10-21 step 2
+adxMin = input.int(18, "Min ADX (trend filter)")  // sweep: 15-30 step 5
+
+// TP/SL (~1:1.5 ratio to improve WR)
+tpPoints = input.int(67, "Take Profit (points)")  // sweep: 40-100 step 5
+slPoints = input.int(100, "Stop Loss (points)")   // sweep: 50-150 step 10
+
+//--- indicator calculations
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Manual ADX calculation using DMI
+up = ta.change(high)
+down = -ta.change(low)
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr = ta.sma(tr, adxLen)
+plusDI = 100 * ta.sma(plusDM, adxLen) / atr
+minusDI = 100 * ta.sma(minusDM, adxLen) / atr
+dx = math.abs(plusDI - minusDI) / (plusDI + minusDI) * 100
+adxVal = ta.sma(dx, adxLen)
+
+//--- entry logic
+// LONG entry: EMA3 crosses above EMA8 AND RSI > 50 AND ADX > 18 (trending)
+longCondition = ta.crossover(emaF, emaS) and rsiVal > rsiMin and adxVal > adxMin
+
+//--- entry management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// TP/SL-only exit: no EMA crossunder exit to let trades run to profit targets
+if (strategy.position_size > 0)
+    // Fixed TP/SL exit with 67/100 ratio (~1:1.5) — sole exit mechanism
+    strategy.exit("XL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
