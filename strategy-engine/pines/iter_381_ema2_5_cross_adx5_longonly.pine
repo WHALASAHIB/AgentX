@@ -1,0 +1,61 @@
+//@version=5
+strategy(title="EMA2/5 Cross ADX5 Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(2, "Fast EMA Length", minval=1, maxval=50)       // sweep: 1-10 step 1
+slow_len = input.int(5, "Slow EMA Length", minval=1, maxval=100)      // sweep: 3-20 step 1
+adx_len = input.int(14, "ADX Length", minval=5, maxval=50)            // sweep: 5-30 step 5
+adx_threshold = input.float(5.0, "ADX Threshold", minval=1.0, maxval=50.0) // sweep: 5-25 step 5
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=28)            // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long > this)", minval=30, maxval=70) // sweep: 40-60 step 5
+tp_points = input.int(67, "Take Profit (points)", minval=10, maxval=500) // sweep: 20-200 step 10
+sl_points = input.int(67, "Stop Loss (points)", minval=10, maxval=500) // sweep: 20-200 step 10
+
+//--- indicator calculations
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- manual ADX calculation (ta.adx not supported on Trader Dev)
+// True Range
+tr_val = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+// Directional Movement
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0.0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0.0
+// Wilder's smoothing
+smoothed_tr = 0.0
+smoothed_plus_dm = 0.0
+smoothed_minus_dm = 0.0
+if bar_index < adx_len + 1
+    smoothed_tr := na(smoothed_tr[1]) ? tr_val : smoothed_tr[1] + (tr_val - smoothed_tr[1]) / adx_len
+    smoothed_plus_dm := na(smoothed_plus_dm[1]) ? plus_dm : smoothed_plus_dm[1] + (plus_dm - smoothed_plus_dm[1]) / adx_len
+    smoothed_minus_dm := na(smoothed_minus_dm[1]) ? minus_dm : smoothed_minus_dm[1] + (minus_dm - smoothed_minus_dm[1]) / adx_len
+else
+    smoothed_tr := smoothed_tr[1] + (tr_val - smoothed_tr[1]) / adx_len
+    smoothed_plus_dm := smoothed_plus_dm[1] + (plus_dm - smoothed_plus_dm[1]) / adx_len
+    smoothed_minus_dm := smoothed_minus_dm[1] + (minus_dm - smoothed_minus_dm[1]) / adx_len
+// DI lines
+plus_di = 100.0 * smoothed_plus_dm / smoothed_tr
+minus_di = 100.0 * smoothed_minus_dm / smoothed_tr
+// DX
+dx_val = 100.0 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+// ADX
+adx_val = 0.0
+if bar_index < adx_len * 2 + 1
+    adx_val := na(adx_val[1]) ? dx_val : adx_val[1] + (dx_val - adx_val[1]) / adx_len
+else
+    adx_val := adx_val[1] + (dx_val - adx_val[1]) / adx_len
+
+//--- entry logic
+long_condition = false
+if ta.crossover(fast_ema, slow_ema) and rsi_val > rsi_threshold and adx_val > adx_threshold
+    long_condition := true
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_points * syminfo.mintick, profit=tp_points * syminfo.mintick)

@@ -1,6 +1,6 @@
 {
-  "iteration": 378,
-  "last_run": "2026-07-15T13:59:00Z",
+  "iteration": 382,
+  "last_run": "2026-07-15T14:38:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Re-add a wider session filter (6-18 UTC) to restore entry quality while allowing more trades than the original 8-16 UTC window. The 0-24 UTC test (iter 377) proved that trading all hours produces too many low-quality entries (PF=0.42, Sharpe=-6.97). Trading only the most liquid 12 hours should filter out overnight noise while doubling the entry window vs iter 376. EMA3/8 crossover + RSI(50) + ADX(14)>14 + session filter (6-18 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
+  "current_hypothesis": "WR is still low at 34.78% despite the faster EMA2/5 crossover getting 46 trades. Adjust TP/SL ratio from 1:1 (67/67) to ~1:1.5 (TP=67, SL=100) to give trades more room and improve win rate. Keep EMA2/5 crossover + RSI>50 + ADX>5 + no session filter long-only on XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 376,
@@ -46,6 +46,70 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-15T13:59:00Z"
+    },
+    {
+      "iteration": 378,
+      "hypothesis": "Re-add a wider session filter (6-18 UTC) to restore entry quality while allowing more trades than the original 8-16 UTC window. EMA3/8 crossover + RSI(50) + ADX(14)>14 + session filter (6-18 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.71352257,
+        "sharpe": -8.00422232,
+        "wr": 27.77777778,
+        "dd": 1.91492445,
+        "trades": 18,
+        "net_profit": -191.492445379457
+      },
+      "verdict": "invalid (low sample, 18 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T14:05:00Z"
+    },
+    {
+      "iteration": 379,
+      "hypothesis": "Lower ADX threshold from 14 to 8 to allow entries in lower-trend environments while keeping the 6-18 UTC session filter. EMA3/8 crossover + RSI(50) + ADX(14)>8 + session filter (6-18 UTC) long-only + 67/67 point TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T14:18:00Z"
+    },
+    {
+      "iteration": 380,
+      "hypothesis": "Remove session filter entirely (0-24 UTC) to maximize available bars. ADX>8 + RSI>50 quality control. EMA3/8 crossover + RSI(50) + ADX(14)>8 + no session filter + 67/67 TP/SL long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.66182994,
+        "sharpe": -3.77191478,
+        "wr": 36.36363636,
+        "dd": 6.58424121,
+        "trades": 11,
+        "net_profit": -392.699213631528
+      },
+      "verdict": "invalid (low sample, 11 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T14:23:00Z"
+    },
+    {
+      "iteration": 381,
+      "hypothesis": "Trade count is too low at 11. Need faster entry signals. Try EMA2/5 crossover (faster than 3/8) and lower ADX threshold to 5 to maximize trade frequency while keeping RSI>50 quality filter and no session filter. 67/67 TP/SL long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.89015183,
+        "sharpe": -13.71229985,
+        "wr": 34.7826087,
+        "dd": 4.05536513,
+        "trades": 46,
+        "net_profit": -392.4699915372
+      },
+      "verdict": "rejected (PF=0.89 Sharpe=-13.71 DD=4.06%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T14:38:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

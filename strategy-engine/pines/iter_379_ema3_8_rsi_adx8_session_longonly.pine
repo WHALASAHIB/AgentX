@@ -1,0 +1,33 @@
+//@version=5
+strategy(title="EMA3_8_RSI_ADX8_Session_LongOnly_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)       // sweep: 1-10 step 1
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=50)       // sweep: 5-20 step 1
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)                // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=30, maxval=70) // sweep: 30-60 step 5
+adx_len = input.int(14, "ADX Length", minval=5, maxval=30)                // sweep: 7-21 step 2
+adx_threshold = input.float(8.0, "ADX Min Threshold", minval=1, maxval=50) // sweep: 5-25 step 3
+session_start = input.int(6, "Session Start Hour (UTC)", minval=0, maxval=23)  // sweep: 0-12 step 2
+session_end = input.int(18, "Session End Hour (UTC)", minval=0, maxval=23)     // sweep: 12-23 step 2
+tp_points = input.int(67, "Take Profit (points)", minval=10, maxval=200)       // sweep: 30-120 step 10
+sl_points = input.int(67, "Stop Loss (points)", minval=10, maxval=200)        // sweep: 30-120 step 10
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+adx_val = ta.dmi(adx_len, adx_len)
+
+//--- session filter
+current_hour = hour(time)
+in_session = current_hour >= session_start and current_hour < session_end
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold and adx_val > adx_threshold and in_session
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+strategy.exit("XL", "Long", loss=sl_points * syminfo.mintick, profit=tp_points * syminfo.mintick)

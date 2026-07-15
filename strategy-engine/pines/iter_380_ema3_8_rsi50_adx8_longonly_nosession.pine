@@ -1,0 +1,40 @@
+//@version=5
+strategy(title="EMA3/8 RSI50 ADX8 NoSession LongOnly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)        // sweep: 2-20 step 1
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=50)        // sweep: 5-30 step 1
+rsi_len      = input.int(14, "RSI Length", minval=1, maxval=50)            // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=1, maxval=100) // sweep: 30-70 step 5
+adx_len      = input.int(14, "ADX Length", minval=1, maxval=50)            // sweep: 7-30 step 2
+adx_threshold = input.int(8, "ADX Threshold (enter above)", minval=1, maxval=50) // sweep: 5-25 step 3
+tp_points    = input.int(67, "Take Profit (points)", minval=1, maxval=500) // sweep: 20-200 step 10
+sl_points    = input.int(67, "Stop Loss (points)", minval=1, maxval=500)   // sweep: 20-200 step 10
+
+//--- calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+[di_plus, di_minus, adx_val] = ta.dmi(adx_len, adx_len)
+
+//--- crossover signal
+crossover_signal = ta.crossover(ema_fast, ema_slow)
+
+//--- entry conditions (long only, no session filter)
+long_entry = crossover_signal and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+//--- convert points to ticks for strategy.exit
+tp_ticks = tp_points / syminfo.mintick
+sl_ticks = sl_points / syminfo.mintick
+
+//--- entry logic
+if long_entry
+    strategy.entry("Long", strategy.long)
+
+//--- exit management via fixed TP/SL
+if strategy.position_size > 0
+    strategy.exit("TP/SL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+//--- plot EMAs for visual reference
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=2)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=2)
