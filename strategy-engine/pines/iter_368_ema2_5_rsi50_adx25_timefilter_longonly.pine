@@ -1,0 +1,49 @@
+//@version=5
+strategy(title="EMA2/5 + RSI50 + ADX25 + Time Filter Long Only (30m)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period - sweep: 2-10 step 1
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=20)
+// EMA slow period - sweep: 5-21 step 1
+slowLen = input.int(5, "Slow EMA Length", minval=1, maxval=30)
+// RSI threshold - sweep: 30-60 step 5
+rsiThreshold = input.int(50, "RSI Threshold", minval=20, maxval=80)
+// ADX threshold - sweep: 14-30 step 2
+adxThreshold = input.int(25, "ADX Threshold", minval=5, maxval=50)
+// ADX smoothing - sweep: 7-21 step 7
+adxLen = input.int(14, "ADX Smoothing Length", minval=5, maxval=30)
+// TP in points - sweep: 30-150 step 10
+tpPoints = input.int(67, "Take Profit (points)", minval=10, maxval=300)
+// SL in points - sweep: 30-150 step 10
+slPoints = input.int(100, "Stop Loss (points)", minval=10, maxval=300)
+// Session start hour (UTC) - sweep: 0-12 step 2
+sessionStart = input.int(8, "Session Start (UTC)", minval=0, maxval=23)
+// Session end hour (UTC) - sweep: 12-23 step 2
+sessionEnd = input.int(16, "Session End (UTC)", minval=0, maxval=23)
+
+//--- calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsi = ta.rsi(close, 14)
+
+// ADX calculation
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+// Time filter
+currentHour = hour(time)
+inSession = currentHour >= sessionStart and currentHour < sessionEnd
+
+//--- entry logic
+// Long entry: EMA2 crosses above EMA5, RSI > threshold, ADX > threshold, in session
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold and adx > adxThreshold and inSession
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// Fixed TP/SL in points — loss and profit are in ticks (syminfo.mintick)
+slTicks = int(slPoints / syminfo.mintick)
+tpTicks = int(tpPoints / syminfo.mintick)
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", loss=slTicks, profit=tpTicks)

@@ -1,0 +1,43 @@
+//@version=5
+strategy(title="EMA3_8_30m_RSI_TimeFilter_LongOnly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)         // sweep: 1-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50, step=1)         // sweep: 5-20 step 1
+rsi_len  = input.int(14, "RSI Length", minval=2, maxval=30, step=1)            // sweep: 7-21 step 2
+rsi_ov  = input.int(50, "RSI Oversold Threshold (long above)", minval=20, maxval=80, step=5)  // sweep: 30-60 step 5
+tp_points = input.int(67, "Take Profit (points)", minval=10, maxval=500, step=5)   // sweep: 30-150 step 10
+sl_points = input.int(100, "Stop Loss (points)", minval=10, maxval=500, step=5)   // sweep: 30-200 step 10
+use_time_filter = input.bool(true, "Use Session Time Filter (8-16 UTC)")
+session_start  = input.int(8, "Session Start Hour (UTC)", minval=0, maxval=23, step=1)
+session_end    = input.int(16, "Session End Hour (UTC)", minval=0, maxval=23, step=1)
+
+//--- indicator calculations
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+
+//--- entry conditions
+// Bullish crossover: fast EMA crosses above slow EMA
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+// RSI filter: only long if RSI > oversold threshold (above 50 = bullish momentum)
+rsi_ok = rsi_val > rsi_ov
+// Time filter: trade only during London/NY session overlap (8-16 UTC)
+current_hour = hour(time)
+time_ok = not use_time_filter or (current_hour >= session_start and current_hour < session_end)
+
+// Combined entry signal
+enter_long = bullish_cross and rsi_ok and time_ok
+
+//--- exit management
+// Convert points to ticks for strategy.exit
+tp_ticks = tp_points / syminfo.mintick
+sl_ticks = sl_points / syminfo.mintick
+
+//--- execution
+if (enter_long)
+    strategy.entry("Long", strategy.long)
+
+// Exit only via TP/SL — no signal-based close (prevents cascade-close)
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", profit=tp_ticks, loss=sl_ticks)
