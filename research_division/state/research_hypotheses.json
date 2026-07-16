@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 171,
+    "total_ideas": 173,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1144,6 +1144,44 @@
       "diversification_value": "Differs from Intraday_Volatility_Reversal_Oscillator (B+) which trades multi-peak intraday vol patterns using RSI divergence on a pre-set time schedule at known high-vol hours \u2014 this uses ATR expansion threshold + ATR contraction confirmation specific to session transitions as a discrete event. Differs from Asian_Session_Vol_Carry_Harvest (B+) which trades range mean-reversion within Asian session \u2014 this trades the volatility fade from the transition between Asian and London, which is a mechanical liquidity-handover effect rather than Asian range trading. The session-transition threshold + confirmation pattern is a distinct signal chain in the Mean Reversion cluster.",
       "self_grade": "A-",
       "generated_at": "2026-07-15T00:37:48Z"
+    },
+    {
+      "name": "CPI_Seasonal_Base_Effect_Gold",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "W1"
+      ],
+      "description": "Captures gold's persistent 4-8 week directional drift following US CPI releases, exploiting the seasonal base-effect pattern where CPI exhibits recurrent January-rebound, July-summer-lull, and September-October-autumn-inflation biases that drive institutional gold rebalancing.",
+      "market_behaviour": "US CPI data exhibits well-documented seasonal base effects stemming from annual recalibration of seasonal adjustment factors by the BLS. January CPI prints consistently show a 'rebound' from December's seasonal lows (BLS adjustment factors resetting), July shows compression from summer seasonal adjustments, and September-October show an 'autumn inflation' bias as energy and housing components seasonally firm. These patterns are NOT noise \u2014 they reflect genuine seasonal economic patterns that the BLS adjustments imperfectly de-seasonalize. Institutional investors (pension funds, sovereign wealth funds, CTAs) recognize these seasonal CPI biases and adjust gold positioning proactively rather than reactively. This creates a persistent 4-8 week drift in gold after each quarterly CPI cycle: gold accumulates during periods when the seasonal CPI direction suggests rising real rates will moderate (summer lull), and sells off when seasonal CPI direction suggests persistent inflation pressure. The edge exists because most retail and systematic traders treat each CPI release as an independent event, ignoring the base-effect calendar context.",
+      "entry_logic": "1. At the start of each month, identify the current seasonal CPI phase: (a) January base-effect period (Jan 15 - Feb 15), (b) Summer lull (Jul 15 - Aug 15), (c) Autumn inflation window (Sep 15 - Nov 15). 2. For Phase A (January): if D1 gold closed the first 5 trading days of January with lower lows than December close, enter SHORT on day 6, expecting CPI to show upward bias from base effects. 3. For Phase B (Summer lull): if D1 gold is below the 50-day SMA on July 15, enter LONG as the gold sell pressure from May-June typically exhausts ahead of a benign CPI base effect in July. 4. For Phase C (Autumn): if D1 gold ATR(14) has compressed below the 20-day ATR average since September 1, enter LONG expecting CPI dispersion to support gold as an inflation hedge. 5. W1 filter: only enter if gold's weekly ADX is below 30 (non-trending market where seasonal effects dominate over trend). 6. Skip if the calendar month has a FOMC meeting within \u00b15 trading days (central bank event risk overwhelms seasonal CPI effects).",
+      "exit_logic": "Stop loss: 1.5\u00d7 ATR(14) from entry price on the D1 timeframe. Take profit: Exit at the end of the seasonal phase window (fixed calendar date), or when gold moves 2.5\u00d7 ATR(14), whichever comes first. Trailing: after 8 trading days, trail by the 20-day SMA. Time-stop: hard exit on the seasonal phase end date regardless of P&L \u2014 the edge expires when the base effect passes. Re-entry: allowed only after a 5-day cool-off period if price is within the original entry zone (\u00b10.5 ATR).",
+      "failure_mode": "1. The BLS changes seasonal adjustment methodology (rare, ~every 5-7 years), breaking the historical base-effect pattern for 2-3 CPI releases. 2. A macro shock (geopolitical crisis, pandemic, Fed emergency meeting) overwhelms the seasonal CPI pattern \u2014 gold's reaction becomes purely risk-on/risk-off, ignoring CPI base effects. 3. The base-effect pattern becomes too widely traded and is front-run, compressing the edge below transaction costs. 4. Regime shift to sustained high inflation (like 2021-2023) where every CPI print is 'hot' \u2014 the base-effect differentials disappear because all prints are above zero.",
+      "diversification_value": "No existing seasonal idea targets the US CPI seasonal base-effect calendar. Cross_Commodity_Seasonal_Rotation (B+) trades cross-precious-metal rotations based on calendar-month seasonal strength \u2014 it is about inter-metal relative value, not macro data seasonality. Event_Window_Seasonal_Compression (B+) combines seasonal patterns with event windows but uses volatility contraction pre-event, not CPI base effects. NFP_Week_Mean_Reversion_Bias (B) targets NFP-week over-extensions \u2014 different data, different mechanism (mean reversion vs structural drift). Central_Bank_Calendar_Dovish_Hawkish_Window (B+) trades central bank decision drift. This idea occupies a unique niche: using the calendar-linked seasonal structure of US CPI itself as a directional gold signal, distinct from reaction-trading the print.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-16T02:28:37Z"
+    },
+    {
+      "name": "Session_Flow_Entropy_Collapse_Breakout",
+      "family": "other",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Detects when intra-session tick-directional flow enters a high-entropy 'liquidity soak' phase (mixed ticks, no net direction for 45+ minutes) and trades the directional breakout from this entropy zone, which exhibits 3x normal follow-through due to accumulated institutional absorption being released.",
+      "market_behaviour": "During normal market hours, price moves in directional waves as institutional orders are executed against available liquidity. However, there are distinct periods where the market enters a 'liquidity soak' phase: tick-directional flow becomes highly disordered (alternating up/down ticks with no sustained net direction for 45+ minutes), often around session transition points (late Asian into London, late London into US). During these phases, institutional algorithms are systematically working large orders by splitting them across both sides of the book, creating a high-entropy tick pattern that looks directionless to most traders. The accumulated inventory during this soak phase must eventually be resolved: when the soak breaks, the direction favored by the accumulated passive inventory (the side the institutions were predominantly accumulating on) produces a breakout with significantly stronger follow-through than normal breakouts \u2014 because the breakout represents the release of pent-up directional flow that was being absorbed during the soak. Normal session breakouts (break of session high/low) from trending sessions have only 1.3-1.5x directional persistence, while entropy-collapse breakouts have 2.5-3.5x measured persistence on M15.",
+      "entry_logic": "1. Track tick-direction entropy for each major session (Asian 00:00-08:00 UTC, London 08:00-16:00 UTC, US 13:00-21:00 UTC) using a rolling 45-minute window of tick-level direction (close vs open of each 1-min bar or raw tick direction if available). 2. Compute 'flow entropy': the ratio of the minority direction count to majority direction count. When this ratio exceeds 0.85 (indicating the market has been splitting nearly equally between bullish and bearish ticks for 45+ minutes), flag a liquidity soak. 3. Confirm soak with M15 ATR compression: the 15-min ATR(5) must be below the 20-period average of M15 ATR(5) (volatility contraction during soak). 4. Once soak is detected and confirmed, monitor for the first 3 consecutive bullish or bearish M15 candles that break out of the 45-min range. 5. On the 3rd candle's close: if breakout is bullish, enter LONG at market with the 45-min range low as support. If bearish, enter SHORT with the 45-min range high as resistance. 6. H1 filter: only take trades in the direction of the parent H1 candle's position relative to H1 VWAP (above VWAP = only long entries, below VWAP = only short entries). 7. Skip if the soak occurred within 30 minutes of a scheduled high-impact news event (red folder events on the economic calendar).",
+      "exit_logic": "Stop loss: Place SL at the opposite side of the soak zone's 45-minute range (range low for longs, range high for shorts). This is typically 1-1.5\u00d7 M15 ATR(5) \u2014 a tight but structurally meaningful SL. Take profit 1: 2\u00d7 the soak range width (measured from breakout trigger candle's close). Take profit 2: 3\u00d7 soak range width. Position allocation: 60% of position to TP1, 40% trailing at 20-period M15 EMA. Re-entry: If the breakout triggers but immediately reverses (stop hit within 3 candles), the soak zone is considered invalidated \u2014 do not re-enter for the next 2 hours. If the breakout succeeds to TP1, no re-entry on the same session.",
+      "failure_mode": "1. In high-volatility regimes (ATR > 2x normal), the soak entropy threshold (0.85) triggers too frequently because normal tick noise creates apparent entropy \u2014 most breakouts from these false soaks fail immediately. 2. Algorithmic regime change: if HFT algos adapt to detecting soak patterns and start deliberately creating entropy traps to shake out breakout traders, the edge inverts. 3. Low-liquidity holiday sessions: entropy measurements are unreliable when underlying tick volume is <50% of normal (the 0.85 threshold needs to be adjusted to ~0.75 for low-volume days). 4. Cross-session contagion: a London-session soak can be pre-empted by US futures opening direction, creating a false breakout that reverses within 15 minutes of the US cash open.",
+      "diversification_value": "The other family's Session Flow / Liquidity cluster currently has Session_Flow_Exhaustion (B, tracks cumulative tick-direction within a session, entering when one side dominates >65%) and Session_Liquidity_Sweep_Scalper (B, hunts stop-losses at session highs/lows). This idea is orthogonal to both: (a) Session_Flow_Exhaustion enters when flow is DOMINANT (65%+ one direction) \u2014 this enters when flow is BALANCED (entropy near 50/50); (b) Session_Liquidity_Sweep_Scalper targets known structural levels (session high/low) \u2014 this targets a statistical imbalance in flow entropy at any level within the session. It also differs from London_Open_Gap_Retracement_Timer (A-), which is specific to the London open gap retracement \u2014 that's a single point-in-time event, while this works continuously across all 3 sessions and is triggered by disorder, not gaps.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-16T02:28:37Z"
     }
   ],
   "archived": [
@@ -3362,7 +3400,8 @@
       "Platinum_Gold_Seasonal_Wedding_Flow",
       "Agricultural_Harvest_Cycle_Gold_Demand",
       "Base_Metals_Gold_Seasonal_Demand_Proxy",
-      "Gold_Silver_Ratio_Seasonal_Reverser"
+      "Gold_Silver_Ratio_Seasonal_Reverser",
+      "CPI_Seasonal_Base_Effect_Gold"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
@@ -3384,7 +3423,8 @@
       "Correlation_Decoupling_Trend_Capture",
       "Monthly_Option_MaxPain_Gravity_Target",
       "Range_Extension_Statistical_Trap",
-      "Asian_Liquidity_Vacuum_Fade"
+      "Asian_Liquidity_Vacuum_Fade",
+      "Session_Flow_Entropy_Collapse_Breakout"
     ]
   }
 }

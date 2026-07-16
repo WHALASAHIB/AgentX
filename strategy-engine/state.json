@@ -1,6 +1,6 @@
 {
-  "iteration": 386,
-  "last_run": "2026-07-15T15:55:00Z",
+  "iteration": 389,
+  "last_run": "2026-07-16T10:43:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "After 10 iterations of declining results with EMA2/5 crossovers on 30m (PF 0.89, Sharpe -13.73, WR 34.78%), it's clear ultra-fast EMAs on XAUUSD 30m are not trending well enough. Switching to H1 timeframe with Bollinger Band squeeze breakout strategy — completely different indicator family (BB %B + SMA trend + RSI filter). Bullish squeeze breakout (bandwidth expanding after contraction) when price above SMA(5) and RSI > 50. 1.5:1 TP/SL (150/100 points on H1). Entry only when the squeeze releases, reducing false signals.",
+  "current_hypothesis": "BB breakout on H1 is still getting only 11 trades even after removing SMA(20) trend filter and lowering RSI to 40. H1 timeframe produces too few trade signals for XAUUSD. Switch back to 30m timeframe and try a Keltner Channels breakout strategy — long when close > upper Keltner band (ATR-based) with ADX(14)>20 trend filter and RSI>50 momentum. 2x ATR TP / 1x ATR SL. Long-only on XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 376,
@@ -174,6 +174,54 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-15T15:55:00Z"
+    },
+    {
+      "iteration": 386,
+      "hypothesis": "Complete indicator family change: BB squeeze breakout on XAUUSD H1. %B + SMA(5) trend + RSI(50) filter. Bullish squeeze breakout (bandwidth expanding after contraction <0.1%) when price>basis, %B>0.5, price>SMA(5), RSI>50. 150/100 point TP/SL. Long-only. Entry only when squeeze releases.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-16T06:08:00Z"
+    },
+    {
+      "iteration": 387,
+      "hypothesis": "BB squeeze breakout on H1 produced 0 trades. Switch to a simpler BB breakout: go long when price closes above upper BB band (volatility breakout) with price above SMA(20) for trend context, RSI>50 for momentum confirmation. Remove squeeze precondition entirely. Use ATR-based TP/SL (2x ATR TP, 1x ATR SL).",
+      "metrics": {
+        "pf": 0.37580198,
+        "sharpe": -4.29318849,
+        "wr": 63.63636364,
+        "dd": 6.28241076,
+        "trades": 11,
+        "net_profit": -383.692820999715
+      },
+      "verdict": "invalid (low sample, 11 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-16T06:22:00Z"
+    },
+    {
+      "iteration": 388,
+      "hypothesis": "BB breakout with SMA(20)+RSI(50) only got 11 trades on H1. Remove SMA(20) trend filter entirely and lower RSI threshold from 50 to 40 to allow more entries. Keep BB(20,2) breakout strategy with 2x ATR TP / 1x ATR SL. Long-only on XAUUSD H1.",
+      "metrics": {
+        "pf": 0.37580198,
+        "sharpe": -4.29318849,
+        "wr": 63.63636364,
+        "dd": 6.28241076,
+        "trades": 11,
+        "net_profit": -383.692820999715
+      },
+      "verdict": "invalid (low sample, 11 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-16T10:43:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
