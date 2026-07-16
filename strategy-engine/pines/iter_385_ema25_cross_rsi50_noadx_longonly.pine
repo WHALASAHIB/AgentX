@@ -1,0 +1,39 @@
+//@version=5
+strategy(title="EMA2_5_RSI50_LongOnly_XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(2,  "Fast EMA Length",  group="EMA", minval=1, maxval=50)      // sweep: 1-10 step 1
+emaSlowLen   = input.int(5,  "Slow EMA Length",  group="EMA", minval=1, maxval=50)      // sweep: 3-20 step 1
+rsiLen       = input.int(14, "RSI Length",       group="RSI", minval=2, maxval=50)      // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Entry Level (long if >)", group="RSI", minval=20, maxval=80) // sweep: 30-60 step 5
+tpPoints     = input.int(67, "Take Profit (points)",     group="TP/SL", minval=5, maxval=500) // sweep: 20-200 step 10
+slPoints     = input.int(67, "Stop Loss (points)",       group="TP/SL", minval=5, maxval=500) // sweep: 20-200 step 10
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+
+//--- entry logic: EMA2/5 crossover + RSI > threshold (no ADX filter)
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold
+
+//--- exit conditions (managed by strategy.exit with fixed TP/SL)
+var posEntered = false
+var float entryPrice = na
+
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    posEntered := true
+    entryPrice := close
+
+//--- exit management: fixed-point TP/SL using syminfo.mintick
+if (strategy.position_size > 0 and posEntered)
+    strategy.exit("XL", "Long",
+         loss  = slPoints * syminfo.mintick,
+         profit = tpPoints * syminfo.mintick)
+    posEntered := false
+
+//--- plot EMAs for visual reference
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsiThreshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)

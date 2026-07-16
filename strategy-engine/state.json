@@ -1,6 +1,6 @@
 {
-  "iteration": 382,
-  "last_run": "2026-07-15T14:38:00Z",
+  "iteration": 386,
+  "last_run": "2026-07-15T15:55:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "WR is still low at 34.78% despite the faster EMA2/5 crossover getting 46 trades. Adjust TP/SL ratio from 1:1 (67/67) to ~1:1.5 (TP=67, SL=100) to give trades more room and improve win rate. Keep EMA2/5 crossover + RSI>50 + ADX>5 + no session filter long-only on XAUUSD 30m.",
+  "current_hypothesis": "After 10 iterations of declining results with EMA2/5 crossovers on 30m (PF 0.89, Sharpe -13.73, WR 34.78%), it's clear ultra-fast EMAs on XAUUSD 30m are not trending well enough. Switching to H1 timeframe with Bollinger Band squeeze breakout strategy — completely different indicator family (BB %B + SMA trend + RSI filter). Bullish squeeze breakout (bandwidth expanding after contraction) when price above SMA(5) and RSI > 50. 1.5:1 TP/SL (150/100 points on H1). Entry only when the squeeze releases, reducing false signals.",
   "evolution_log": [
     {
       "iteration": 376,
@@ -110,6 +110,70 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-15T14:38:00Z"
+    },
+    {
+      "iteration": 382,
+      "hypothesis": "WR is still low at 34.78% despite the faster EMA2/5 crossover getting 46 trades. Adjust TP/SL ratio from 1:1 (67/67) to ~1:1.5 (TP=67, SL=100) to give trades more room and improve win rate. Keep EMA2/5 crossover + RSI>50 + ADX>5 + no session filter long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.28801639,
+        "sharpe": -5.85479185,
+        "wr": 26.08695652,
+        "dd": 6.82091498,
+        "trades": 23,
+        "net_profit": -537.330901500063
+      },
+      "verdict": "rejected (PF=0.29 Sharpe=-5.85 DD=6.82%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T15:30:00Z"
+    },
+    {
+      "iteration": 383,
+      "hypothesis": "PF collapsed to 0.29 with the 1:1.5 TP/SL ratio (TP=67, SL=100) making losses worse. The ADX>5 threshold is too loose. Sharply increase ADX threshold from 5 to 25 and restore TP/SL to 1:1 (67/67). EMA2/5 + RSI(14)>50 + ADX(14)>25 + no session filter + 1:1 TP/SL long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T15:23:00Z"
+    },
+    {
+      "iteration": 384,
+      "hypothesis": "ADX(14)>25 was too strict. Try ADX(14)>14 (moderate trending threshold) to allow some entries while still filtering choppiest periods. EMA2/5 + RSI(14)>50 + 1:1 TP/SL (67/67) + no session filter long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T15:47:00Z"
+    },
+    {
+      "iteration": 385,
+      "hypothesis": "ADX(14)>14 still blocks all entries. Remove ADX filter entirely. Try EMA2/5 crossover + RSI(14)>50 only (no ADX filter) to establish baseline trade counts. 1:1 TP/SL (67/67), no session filter, long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.89015183,
+        "sharpe": -13.73243064,
+        "wr": 34.7826087,
+        "dd": 4.05536513,
+        "trades": 46,
+        "net_profit": -392.4699915372
+      },
+      "verdict": "rejected (PF=0.89 Sharpe=-13.73 DD=4.06%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-15T15:55:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

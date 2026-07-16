@@ -1,0 +1,35 @@
+//@version=5
+strategy(title="EMA2/5 Cross RSI ADX TP1:1.5 Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=50)
+slowLen = input.int(5, "Slow EMA Length", minval=2, maxval=100)
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(50, "RSI Threshold (long >)", minval=1, maxval=100)
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length", minval=2, maxval=50)
+adxThreshold = input.int(5, "ADX Threshold (must be >)", minval=1, maxval=50)
+
+// TP/SL parameters (in points)
+tpPoints = input.int(67, "Take Profit (points)", minval=1, maxval=500, group="TP/SL")
+slPoints = input.int(100, "Stop Loss (points)", minval=1, maxval=500, group="TP/SL")
+
+//--- indicator calculations
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+
+rsi = ta.rsi(close, rsiLen)
+
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+//--- entry logic
+longCondition = ta.crossover(fastMA, slowMA) and rsi > rsiThreshold and adx > adxThreshold
+
+//--- exit management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
