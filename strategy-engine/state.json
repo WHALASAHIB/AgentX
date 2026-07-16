@@ -1,6 +1,6 @@
 {
-  "iteration": 389,
-  "last_run": "2026-07-16T10:43:00Z",
+  "iteration": 391,
+  "last_run": "2026-07-16T03:23:31Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "BB breakout on H1 is still getting only 11 trades even after removing SMA(20) trend filter and lowering RSI to 40. H1 timeframe produces too few trade signals for XAUUSD. Switch back to 30m timeframe and try a Keltner Channels breakout strategy — long when close > upper Keltner band (ATR-based) with ADX(14)>20 trend filter and RSI>50 momentum. 2x ATR TP / 1x ATR SL. Long-only on XAUUSD 30m.",
+  "current_hypothesis": "EMA8/21 + RSI>50 on XAUUSD 30m got 23 trades but PF=0.68 and Sharpe=-7.52. The RSI>50 filter alone isn't enough — the market was choppy and entries got stopped out. Add ADX(14)>25 filter to only enter when the market is trending. EMA8/21 crossover + RSI(14)>50 + ADX(14)>25 + ATR-based 2:1 TP/SL + long-only on XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 376,
@@ -222,6 +222,38 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-16T10:43:00Z"
+    },
+    {
+      "iteration": 389,
+      "hypothesis": "Keltner Channels breakout on XAUUSD 30m. Long when close > upper Keltner band (EMA20 basis, 2x ATR) with RSI(14)>50 momentum filter. 2x ATR TP / 1x ATR SL. Long-only.",
+      "metrics": {
+        "pf": 0.45621105,
+        "sharpe": -6.93881185,
+        "wr": 14.28571429,
+        "dd": 9.75252773,
+        "trades": 7,
+        "net_profit": -797.691942348471
+      },
+      "verdict": "invalid (low sample, 7 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-16T03:08:54Z"
+    },
+    {
+      "iteration": 390,
+      "hypothesis": "Switch to a faster EMA crossover (EMA8/21) with RSI(14)>50 long-only on XAUUSD 30m to generate more signals while maintaining quality control through RSI. Use ATR-based TP/SL at 2:1 ratio (2x ATR TP, 1x ATR SL).",
+      "metrics": {
+        "pf": 0.68294171,
+        "sharpe": -7.51764315,
+        "wr": 26.08695652,
+        "dd": 4.61923625,
+        "trades": 23,
+        "net_profit": -329.650836666606
+      },
+      "verdict": "rejected (PF=0.68 Sharpe=-7.52 DD=4.62%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-16T03:23:31Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
