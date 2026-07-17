@@ -1,0 +1,45 @@
+//@version=5
+strategy(title="EMA3_8_RSI50_ADX25_XAUUSD_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)
+ema_slow_len = input.int(8, "EMA Slow Length", minval=5, maxval=50)
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=28)
+rsi_threshold = input.int(50, "RSI Threshold (Long >)", minval=30, maxval=70)
+adx_len = input.int(14, "ADX Length", minval=7, maxval=28)
+adx_threshold = input.int(25, "ADX Threshold (> for trend)", minval=5, maxval=40)
+tp_points = input.int(67, "Take Profit (points)", minval=10, maxval=500)
+sl_points = input.int(100, "Stop Loss (points)", minval=10, maxval=500)
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- manual ADX from DMI components
+up_ = ta.change(high)
+down_ = -ta.change(low)
+plus_dm_ = up_ > down_ and up_ > 0 ? up_ : 0
+minus_dm_ = down_ > up_ and down_ > 0 ? down_ : 0
+atr_ = ta.atr(adx_len)
+tr_ = ta.tr
+
+// Smoothed +/- DI using Wilder's smoothing (same as ta.rma)
+plus_di_ = 100 * ta.rma(plus_dm_, adx_len) / atr_
+minus_di_ = 100 * ta.rma(minus_dm_, adx_len) / atr_
+dx_ = 100 * math.abs(plus_di_ - minus_di_) / (plus_di_ + minus_di_)
+adx_val = ta.rma(dx_, adx_len)
+
+//--- entry logic: EMA3/8 crossover + RSI>50 + ADX>25
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+long_condition = bullish_cross and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+//--- exit management
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", profit=tp_points, loss=sl_points)
+
+//--- visual reference
+plot(ema_fast, "EMA Fast", color.blue, 1)
+plot(ema_slow, "EMA Slow", color.red, 1)
+hline(adx_threshold, "ADX Threshold", color.gray, hline.style_dashed)

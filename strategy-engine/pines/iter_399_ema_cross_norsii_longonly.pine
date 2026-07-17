@@ -1,0 +1,24 @@
+//@version=5
+strategy(title="EMA8/21 NoRSI Long-only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(8, "EMA Fast Length", minval=1, maxval=100)       // sweep: 5-15 step 1
+emaSlowLen = input.int(21, "EMA Slow Length", minval=1, maxval=200)       // sweep: 15-30 step 1
+tpPoints   = input.int(67, "Take Profit (points)", minval=10, maxval=500)  // sweep: 50-120 step 5
+slPoints   = input.int(100, "Stop Loss (points)", minval=10, maxval=500)   // sweep: 50-120 step 5
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+//--- entry logic: EMA8/21 crossover, long-only, no RSI filter
+longCondition = ta.crossover(emaFast, emaSlow)
+
+//--- exit management (ATR-based points)
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", profit=tpPoints, loss=slPoints)
+
+//--- plot EMAs for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
