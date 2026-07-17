@@ -110,6 +110,146 @@
       "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing EURUSD continue lower, bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.' Volume was larger (8.52→8.43 lots) on the second attempt.",
       "fix": "Add direction-failure detection: if a trade in direction X loses and price continues beyond exit, do not open another trade in direction X for 2 hours.",
       "prevention_rule": "If a trade loses and price moves further in the same direction (beyond SL+5 pips), the bot must not re-enter that direction for the rest of the session."
+    },
+    {
+      "date": "2026-07-15 to 2026-07-16",
+      "direction": "MIXED (2 BUY, 2 SELL)",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -2071.25,
+      "root_cause": "4 trades on EURUSD with magic 780012: 2 SL hits (-$1,041.25, -$1,030.00) and 2 breakeven closes. 0% WR. Risk per trade at ~1% ($1,245) is double the FTMO-optimized 0.5%. Three duplicate bot instances were running simultaneously, potentially conflicting on trading decisions. Trades appeared outside the declared 13:00-15:00 UTC session window.",
+      "fix": "Reduce RISK_PCT to 0.5% (target ~3.3 lots EURUSD). Kill duplicate instances. Fix launch script to prevent accumulation. Verify session window logic.",
+      "prevention_rule": "Monitor active bot process count before each cron launch. If 1+ instance exists, kill all before starting fresh."
+    },
+    {
+      "date": "2026-07-16",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "3 propfirm_pass_bot.py instances running simultaneously (PIDs 15596, 5752, 19640). Cron launcher started new instance without killing prior one from 17h earlier. Lock file at C:\\Hermess\\bots\\locks\\ only covers one deployment path; Hermess-path instances have no lock protection.",
+      "fix": "Add pre-launch cleanup: kill ALL matching instances before starting new one. Ensure lock file works across both deployment paths (C:\\Trading and C:\\Hermess).",
+      "prevention_rule": "Before launching propfirm_pass_bot.py, kill all existing instances matching the script name."
+    },
+    {
+      "date": "2026-06-25",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Propfirm Pass bot (M780012) ran once at 15:29 UTC, synced state from other bots' trades (found 9 actual trades), immediately hit daily max limit, and went to sleep without ever placing a trade with its own magic number. State sync function does not filter by magic.",
+      "fix": "State sync in sync_state_from_mt5() already filters by MAGIC and SYMBOL — but the log message 'found 9 trades' suggests it may have read trades from other bots incorrectly. Root cause: the bot ran at 15:29 UTC, which is past the 13:00-15:00 US Open window (session ends at 15:00). The 'Max trades per day' trigger at startup means a stale state file from a previous run persisted trade counts.",
+      "prevention_rule": "Verify the bot actually trades on its own magic number before reporting execution success."
+    },
+    {
+      "date": "2026-06-26",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -455.00,
+      "root_cause": "USDJPY trades (magic 0, likely FTMO manual closure or orphan bot trades) lost -$455 today with CLOSED_BY_FTMO comment — FTMO's risk desk is actively intervening on this account.",
+      "fix": "Emergency: reduce exposure immediately. Account at 8.6% drawdown — only 1.4% from FTMO 10% liquidation.",
+      "prevention_rule": "Monitor FTMO account drawdown in real-time. At 8% DD, auto-pause ALL trading. At 9%, send emergency alert."
+    },
+    {
+      "date": "2026-06-26",
+      "direction": "SELL",
+      "entry": 161.550,
+      "exit": 161.652,
+      "pnl": -455.00,
+      "root_cause": "8.5 lots of USDJPY (5.0+2.5+1.0 at magic 0) opened at 19:10-19:17 UTC, closed by FTMO risk desk at 19:32 UTC. Only 15-22 minutes of holding time. FTMO static drawdown reached 9.23%.",
+      "fix": "Emergency stop must trigger at 8% static DD (not 8% trailing DD). The risk supervisor's REDUCE state used trailing DD (8.6%) while FTMO uses static DD (9.23%) — leaving only 0.77% headroom with no emergency stop.",
+      "prevention_rule": "Risk supervisor must track BOTH trailing and static drawdown. Emergency stop triggers at 8% STATIC DD (relative to initial FTMO balance), not 8% trailing DD."
+    },
+    {
+      "date": "2026-06-27",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "PropFirm Pass v8 bot (M780012) ran at 15:58 UTC on Saturday Jun 27, detected weekend, created stale PID lock (16408), entered 190879s sleep.",
+      "fix": "Bot launch script must check and clean stale PID locks before attempting to acquire new lock.",
+      "prevention_rule": "Bot launch script must check and clean stale PID locks before attempting to acquire new lock."
+    },
+    {
+      "date": "2026-06-23 to 2026-06-26",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -860.11,
+      "root_cause": "7-day review of FTMO account: 106 trades, -$860.11 PnL. MACD multi-pair bots (M200100/M200200) went 0-for-23 trades with 0% WR and -$356 combined PnL. Propfirm pass variant bots (M780003-M780008) collectively: 36 trades, -$100.76, 15.3% WR.",
+      "fix": "Stop all non-performing bots on this account. Only Gold Phoenix showed positive returns.",
+      "prevention_rule": "Any bot with <30% WR over 10+ consecutive trades on the FTMO account should auto-disable."
+    },
+    {
+      "date": "2026-06-30",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded — 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: (-10001, 'IPC send failed') — wrong-account rejection disguised as IPC failure.",
+      "fix": "Terminal must be manually logged into FTMO-Demo before the bot can connect. mt5.initialize() with different credentials cannot switch accounts on a running terminal.",
+      "prevention_rule": "Before deploying a bot to a specific broker account, verify the MT5 terminal is logged into that account."
+    },
+    {
+      "date": "2026-07-02",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Risk supervisor risk_peak.json has peak_balance=$100,000 instead of FTMO starting balance of $10,000. Causes 90.92% false drawdown and permanent EMERGENCY state since Jul 1 01:30 UTC.",
+      "fix": "Reset risk_peak.json peak_balance to $10,000 (the actual FTMO challenge starting balance).",
+      "prevention_rule": "After any account switch, reset risk_peak.json to the new account's starting balance."
+    },
+    {
+      "date": "2026-07-02",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "Propfirm Pass v8 bot (M780012) 4th launch. Config login=1513845007 vs connected account=1513767391 (same server FTMO-Demo, different login). mt5.initialize() returned True but silently kept running terminal's account. Zero trades across all 4 launches.",
+      "fix": "Add post-connect account_info() verification. Terminal must be manually logged into correct FTMO-Demo account.",
+      "prevention_rule": "Always verify mt5.account_info().login matches config login after initialize returns True."
+    },
+    {
+      "date": "2026-07-13",
+      "direction": "BUY",
+      "entry": 1.14139,
+      "exit": 1.14028,
+      "pnl": -945.72,
+      "root_cause": "No trend filter or cooldown between trades. Bot entered BUY just 3 minutes after closing a winning SELL TP (Trade 3). The opposite-direction entry with zero cooldown went against the prevailing EURUSD downtrend.",
+      "fix": "Add cooldown timer (30 min) after any trade close before opening opposite-direction trades. Add session-level trend bias check.",
+      "prevention_rule": "After a TP hit, wait 30 minutes before any new entry. If the last closed trade won in direction X, do not enter direction Y for 60 minutes."
+    },
+    {
+      "date": "2026-07-13",
+      "direction": "BUY",
+      "entry": 1.14069,
+      "exit": 1.13945,
+      "pnl": -1045.32,
+      "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing EURUSD continue lower, bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.' Volume was larger (8.52→8.43 lots) on the second attempt.",
+      "fix": "Add direction-failure detection: if a trade in direction X loses and price continues beyond exit, do not open another trade in direction X for 2 hours.",
+      "prevention_rule": "If a trade loses and price moves further in the same direction (beyond SL+5 pips), the bot must not re-enter that direction for the rest of the session."
+    },
+    {
+      "date": "2026-07-15 to 2026-07-16",
+      "direction": "MIXED (2 BUY, 2 SELL)",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -2071.25,
+      "root_cause": "4 trades on EURUSD with magic 780012: 2 SL hits (-$1,041.25, -$1,030.00) and 2 breakeven closes. 0% WR. Risk per trade at ~1% ($1,245) is double the FTMO-optimized 0.5%. Three duplicate bot instances were running simultaneously, potentially conflicting on trading decisions. Trades appeared outside the declared 13:00-15:00 UTC session window.",
+      "fix": "Reduce RISK_PCT to 0.5% (target ~3.3 lots EURUSD). Kill duplicate instances. Fix launch script to prevent accumulation. Verify session window logic.",
+      "prevention_rule": "Monitor active bot process count before each cron launch. If 1+ instance exists, kill all before starting fresh."
+    },
+    {
+      "date": "2026-07-16",
+      "direction": "N/A",
+      "entry": 0,
+      "exit": 0,
+      "pnl": 0,
+      "root_cause": "3 propfirm_pass_bot.py instances running simultaneously (PIDs 15596, 5752, 19640). Cron launcher started new instance without killing prior one from 17h earlier. Lock file at C:\\Hermess\\bots\\locks\\ only covers one deployment path; Hermess-path instances have no lock protection.",
+      "fix": "Add pre-launch cleanup: kill ALL matching instances before starting new one. Ensure lock file works across both deployment paths (C:\\Trading and C:\\Hermess).",
+      "prevention_rule": "Before launching propfirm_pass_bot.py, kill all existing instances matching the script name."
     }
   ],
   "lessons_learned": [
@@ -123,6 +263,9 @@
     "Risk supervisor peak_balance=$100K from prior demo must be reset to $10K for FTMO challenge.",
     "mt5.account_info().login must be verified after every mt5.initialize() — True return does not mean correct account is connected.",
     "Direction flip without cooldown caused -$945 loss on July 13. Entered BUY 3 min after SELL TP hit.",
-    "Counter-trade bias without failure detection caused -$1,045 second consecutive loss on July 13."
+    "Counter-trade bias without failure detection caused -$1,045 second consecutive loss on July 13.",
+    "Bot instance accumulation: cron launchers start new instances without killing prior ones. 3 instances ran simultaneously for the same bot.",
+    "Risk per trade at 1% ($1,245 SL hit) is double the FTMO-optimized 0.5%. At 8.3 lots EURUSD, 3 consecutive losses hit the 4.5% daily DD cap.",
+    "State file sync is incomplete — shows 2 trades vs 4 actual MT5 history entries for same period."
   ]
 }

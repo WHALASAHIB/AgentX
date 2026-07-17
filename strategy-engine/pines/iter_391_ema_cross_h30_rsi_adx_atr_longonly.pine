@@ -1,0 +1,29 @@
+//@version=5
+strategy(title="EMA8/21 RSI ADX ATR Long-Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(8, "EMA Fast Length", minval=1, maxval=50)    // sweep: 5-12 step 1
+emaSlowLen = input.int(21, "EMA Slow Length", minval=1, maxval=100)   // sweep: 15-30 step 2
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)             // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold", minval=1, maxval=100)   // sweep: 40-60 step 5
+adxLen = input.int(14, "ADX Length", minval=1, maxval=50)             // sweep: 7-21 step 2
+adxThreshold = input.int(25, "ADX Threshold", minval=1, maxval=100)   // sweep: 15-35 step 5
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)             // sweep: 7-21 step 2
+tpMultiplier = input.float(2.0, "TP Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (ATR)", minval=0.5, maxval=5.0, step=0.5)  // sweep: 0.5-2.0 step 0.5
+
+//--- calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+[diPlus, diMinus, adxVal] = ta.dmi(high, low, close, adxLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold and adxVal > adxThreshold
+
+if (longCondition)
+    stopPrice = close - (atrVal * slMultiplier)
+    takeProfit = close + (atrVal * tpMultiplier)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", stop=stopPrice, limit=takeProfit)

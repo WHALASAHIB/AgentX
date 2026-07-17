@@ -1,6 +1,6 @@
 {
-  "iteration": 391,
-  "last_run": "2026-07-16T03:23:31Z",
+  "iteration": 392,
+  "last_run": "2026-07-16T07:38:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,24 +13,8 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "EMA8/21 + RSI>50 on XAUUSD 30m got 23 trades but PF=0.68 and Sharpe=-7.52. The RSI>50 filter alone isn't enough — the market was choppy and entries got stopped out. Add ADX(14)>25 filter to only enter when the market is trending. EMA8/21 crossover + RSI(14)>50 + ADX(14)>25 + ATR-based 2:1 TP/SL + long-only on XAUUSD 30m.",
+  "current_hypothesis": "ADX(14)>25 was too strict — 0 trades on XAUUSD 30m. Reduce ADX threshold from 25 to 18 to allow entries in moderately trending markets. EMA8/21 crossover + RSI(14)>50 + ADX(14)>18 + ATR-based 2:1 TP/SL + long-only on XAUUSD 30m.",
   "evolution_log": [
-    {
-      "iteration": 376,
-      "hypothesis": "Switch to shorter EMA3/8 crossover to increase trade frequency while keeping ADX(14)>14, RSI(50), and session filter (8-16 UTC) long-only with 67/67 point TP/SL on XAUUSD 30m.",
-      "metrics": {
-        "pf": 1.86195612,
-        "sharpe": 0.07352214,
-        "wr": 10.0,
-        "dd": 3.49925544,
-        "trades": 10,
-        "net_profit": -0.777786032098
-      },
-      "verdict": "invalid (low sample, 10 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-15T13:45:00Z"
-    },
     {
       "iteration": 377,
       "hypothesis": "Remove session filter (8-16 UTC) to trade all hours and increase trade count. EMA3/8 + RSI(50) + ADX(14)>14 + 67/67 TP/SL long-only on XAUUSD 30m, trading 0-24 UTC.",
@@ -254,6 +238,22 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-16T03:23:31Z"
+    },
+    {
+      "iteration": 391,
+      "hypothesis": "EMA8/21 + RSI>50 on XAUUSD 30m got 23 trades but PF=0.68 and Sharpe=-7.52. The RSI>50 filter alone isn't enough — the market was choppy and entries got stopped out. Add ADX(14)>25 filter to only enter when the market is trending. EMA8/21 crossover + RSI(14)>50 + ADX(14)>25 + ATR-based 2:1 TP/SL + long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-16T07:38:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
