@@ -1,6 +1,6 @@
 {
-  "iteration": 395,
-  "last_run": "2026-07-17T10:53:00Z",
+  "iteration": 398,
+  "last_run": "2026-07-17T11:53:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "EMA8/21 + RSI>50 without ADX generated 22 trades on XAUUSD 30m but PF=0.59 and WR=22.7%. The RSI filter alone is insufficient for quality. Tighten TP/SL ratio from 2:1 to 1.5:1 (TP=1.5xATR, SL=1xATR) to improve win rate by making profit targets more achievable. Keep no ADX filter and no session filter.",
+  "current_hypothesis": "Remove RSI filter entirely. Pure EMA8/21 crossover + 1:1.5 TP/SL (67/100 points) + no ADX + no session filter + long-only on XAUUSD 30m. RSI(40) produced identical 12 trades as RSI(50) — the RSI filter isn't constraining trade count. Testing whether pure EMA crossover alone generates enough trades (target >20) while keeping same TP/SL structure.",
   "evolution_log": [
     {
       "iteration": 377,
@@ -302,6 +302,70 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-17T10:53:00Z"
+    },
+    {
+      "iteration": 395,
+      "hypothesis": "WR was 22.7% with 2:1 TP/SL (TP=2xATR, SL=1xATR). Tighten TP/SL ratio from 2:1 to 1:1.5 (TP=1xATR, SL=1.5xATR) to make profit targets more achievable and improve win rate. Keep EMA8/21, RSI(14)>50, no ADX, no session filter, long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 1.03241414,
+        "sharpe": -3.70317984,
+        "wr": 55,
+        "dd": 2.74900993,
+        "trades": 20,
+        "net_profit": -147.55215659675
+      },
+      "verdict": "rejected (PF=1.03 Sharpe=-3.70 DD=2.75%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T10:57:00Z"
+    },
+    {
+      "iteration": 396,
+      "hypothesis": "WR improved to 55% with 1:1.5 TP/SL (vs 22.7% with 2:1) but PF still 1.03. Increase RSI threshold from 50 to 55 to filter weaker entries and push WR beyond 60%. Keep 1:1.5 TP/SL, no ADX, no session filter, long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 1.43524107,
+        "sharpe": -0.63373095,
+        "wr": 60,
+        "dd": 1.20409516,
+        "trades": 10,
+        "net_profit": -16.152167740955
+      },
+      "verdict": "invalid (low sample, 10 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T11:14:00Z"
+    },
+    {
+      "iteration": 397,
+      "hypothesis": "Lower RSI threshold from 55 to 50 to increase trade count from 10 to ~20+ on XAUUSD 30m. RSI(50) previously produced 20 trades at PF=1.03 and WR=55%. Keep EMA8/21, 1:1.5 TP/SL (67/100), no ADX, no session filter, long-only.",
+      "metrics": {
+        "pf": 0.85917114,
+        "sharpe": -2.12897421,
+        "wr": 25,
+        "dd": 5.50863806,
+        "trades": 12,
+        "net_profit": -191.91983520623
+      },
+      "verdict": "invalid (low sample, 12 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T11:38:00Z"
+    },
+    {
+      "iteration": 398,
+      "hypothesis": "Lower RSI threshold from 50 to 40 to generate more entry signals on XAUUSD 30m. RSI(50) only produced 12 trades (needs >20). RSI(40) should allow more crossover signals to pass the quality filter. Keep EMA8/21, TP/SL 67/100 (1:1.5), no ADX, no session filter, long-only.",
+      "metrics": {
+        "pf": 0.85917114,
+        "sharpe": -2.12897421,
+        "wr": 25,
+        "dd": 5.50863806,
+        "trades": 12,
+        "net_profit": -191.91983520623
+      },
+      "verdict": "invalid (low sample, 12 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T11:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
