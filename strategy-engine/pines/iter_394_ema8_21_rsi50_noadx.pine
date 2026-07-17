@@ -1,0 +1,38 @@
+//@version=5
+strategy(title="EMA8_21 RSI50 NoADX XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(8, title="EMA Fast Length", minval=2, maxval=50, step=1)     // sweep: 5-14 step 2
+emaSlowLen = input.int(21, title="EMA Slow Length", minval=10, maxval=50, step=1)    // sweep: 15-34 step 3
+
+// RSI parameters
+rsiLen = input.int(14, title="RSI Length", minval=5, maxval=30, step=1)             // sweep: 7-21 step 2
+rsiThreshold = input.int(50, title="RSI Long Threshold", minval=30, maxval=80, step=5) // sweep: 40-60 step 5
+
+// ATR parameters for TP/SL
+atrLen = input.int(14, title="ATR Length", minval=7, maxval=28, step=1)             // sweep: 10-20 step 2
+tpMultiplier = input.float(2.0, title="TP Multiplier (x ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.0, title="SL Multiplier (x ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-2.0 step 0.5
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// Bullish crossover: fast EMA crosses above slow EMA, and RSI > threshold
+bullishCrossover = ta.crossover(emaFast, emaSlow)
+entryCondition = bullishCrossover and rsiVal > rsiThreshold
+
+// Calculate TP and SL levels as ATR multiples from entry price
+tpPoints = tpMultiplier * atrVal / syminfo.mintick
+slPoints = slMultiplier * atrVal / syminfo.mintick
+
+//--- position management
+if (entryCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long", loss=slPoints, profit=tpPoints)

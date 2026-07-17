@@ -129,12 +129,22 @@ class MACDStrategy:
         ema_fast = self._ema(closes, fast)
         ema_slow = self._ema(closes, slow)
         macd = ema_fast - ema_slow
-        sig = self._ema(macd, signal)
+        # Signal EMA — skip NaN region in macd before computing
+        first_valid = np.where(~np.isnan(macd))[0]
+        if len(first_valid) == 0:
+            return macd, np.full_like(macd, np.nan)
+        start = first_valid[0]
+        sig = np.full_like(macd, np.nan)
+        if len(macd) - start >= signal:
+            k = 2.0 / (signal + 1)
+            sig[start + signal - 1] = np.nanmean(macd[start:start + signal])
+            for j in range(start + signal, len(macd)):
+                sig[j] = macd[j] * k + sig[j - 1] * (1 - k)
         return macd, sig
 
     def next(self, i: int) -> dict:
-        if i < max(self.fast, self.slow, self.signal_period) + 1:
-            return {"action": None}
+        if i < max(self.fast, self.slow) + self.signal_period + 1:
+            return {"action": None}  # Warmup: need ema_fast + ema_slow + signal_line all stable
         if np.isnan(self.macd_line[i]) or np.isnan(self.signal_line[i]):
             return {"action": None}
 

@@ -1,0 +1,67 @@
+[
+  {
+    "name": "1. Propfirm Pass (VWAP H1)",
+    "trades": 8,
+    "wins": 5,
+    "losses": 3,
+    "wr": 62.5,
+    "pf": 1.12,
+    "net": 498.0,
+    "mdd": 0,
+    "aw": 916.0,
+    "al": 1360.67,
+    "exp": 62.25
+  },
+  {
+    "name": "2. Gold Phoenix",
+    "trades": 119,
+    "wins": 69,
+    "losses": 50,
+    "wr": 58.0,
+    "pf": 3.57,
+    "net": 29531.0,
+    "mdd": 0,
+    "aw": 594.81,
+    "al": 230.22,
+    "exp": 248.16
+  },
+  {
+    "name": "3. Bot Park (MACD)",
+    "trades": 142,
+    "wins": 71,
+    "losses": 71,
+    "wr": 50.0,
+    "pf": 2.2,
+    "net": 1209.3,
+    "mdd": 0,
+    "aw": 31.25,
+    "al": 14.22,
+    "exp": 8.52
+  },
+  {
+    "name": "4. VolBreak (BollingerSqueeze)",
+    "trades": 2,
+    "wins": 2,
+    "losses": 0,
+    "wr": 100.0,
+    "pf": 0,
+    "net": 1168.1,
+    "mdd": 0,
+    "aw": 584.05,
+    "al": 0,
+    "exp": 584.05
+  },
+  {
+    "name": "5. ATR Expansion",
+    "trades": 52,
+    "wins": 24,
+    "losses": 28,
+    "wr": 46.2,
+    "pf": 2.02,
+    "net": 628.3,
+    "mdd": 0,
+    "aw": 51.88,
+    "al": 22.03,
+    "exp": 12.08
+  }
+]

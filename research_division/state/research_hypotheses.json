@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 173,
+    "total_ideas": 175,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1182,6 +1182,42 @@
       "diversification_value": "The other family's Session Flow / Liquidity cluster currently has Session_Flow_Exhaustion (B, tracks cumulative tick-direction within a session, entering when one side dominates >65%) and Session_Liquidity_Sweep_Scalper (B, hunts stop-losses at session highs/lows). This idea is orthogonal to both: (a) Session_Flow_Exhaustion enters when flow is DOMINANT (65%+ one direction) \u2014 this enters when flow is BALANCED (entropy near 50/50); (b) Session_Liquidity_Sweep_Scalper targets known structural levels (session high/low) \u2014 this targets a statistical imbalance in flow entropy at any level within the session. It also differs from London_Open_Gap_Retracement_Timer (A-), which is specific to the London open gap retracement \u2014 that's a single point-in-time event, while this works continuously across all 3 sessions and is triggered by disorder, not gaps.",
       "self_grade": "A-",
       "generated_at": "2026-07-16T02:28:37Z"
+    },
+    {
+      "name": "Volume_Profile_POC_Momentum_Capture",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Captures momentum by detecting when price breaks decisively away from the volume profile Point of Control (POC) with expanding tick volume, exploiting the break-and-accept dynamic that signals institutional accumulation/distribution beyond fair value.",
+      "market_behaviour": "Volume profile reveals the market's acceptance and rejection of price levels. The Point of Control (POC) \u2014 the price level where the most volume traded \u2014 represents fair value as determined by all market participants. When momentum-driven price action breaks decisively away from the POC with expanding tick volume, it signals that the market is accepting value at new levels, not just testing them. This break-and-accept dynamic is a higher-quality momentum signal than simple volume-price convergence because it incorporates distributional information \u2014 how much trading activity occurred at each level. Institutional accumulation or distribution patterns show up first in the volume profile structure before price confirms the trend direction. The divergence between where volume is concentrated (POC) and where price is moving creates a measurable edge: price breaking above Value Area High with surging volume is structurally different from a quiet breakout on thin volume.",
+      "entry_logic": "1. Calculate daily volume profile on H1 bars using tick volume as proxy, identifying the Point of Control (POC = price level with highest tick volume) and Value Area High/Low (VAH/VAL = the levels encompassing 70% of total volume). 2. For long entries: price must break above VAH with an H1 candle close strictly above VAH. For short entries: price must break below VAL with an H1 close strictly below VAL. 3. Momentum confirmation: H1 ADX > 22 and ADX slope rising over the last 3 bars (ADX line moving up, not flat). 4. Volume filter: the breakout bar's tick volume must exceed the 20-bar average tick volume by at least 1.5x (1.5 standard multiplier). 5. Enter at the open of the next H1 bar. 6. Skip condition: if price is within 0.5 ATR of the POC (not enough acceptance divergence \u2014 still near fair value, likely a fakeout). 7. Skip if this is the first 2 hours of the Asian session (low volume distorts the profile).",
+      "exit_logic": "Stop loss: 1.5 ATR below the breakout level (VAH for longs, VAL for shorts). Take profit: 2.5x ATR from entry price, OR when price closes back inside the value area (below VAH for longs, above VAL for shorts) \u2014 whichever occurs first. Trailing stop: activate after price has moved 1x ATR in profit; trail at 0.5 ATR distance. No re-entry on the same POC break \u2014 if stopped out, wait for a new POC to form. Hard time-stop: exit at end of the session (London close for Asian breakouts, US close for London breakouts) if no TP hit.",
+      "failure_mode": "1. Low-volume environments (holiday trading, pre-holiday weeks) where tick volume doesn't reflect true market participation \u2014 profile breaks become unreliable. 2. Choppy/range-bound markets where price repeatedly breaks VAH/VAL but never trends (false breakouts every 2-3 bars) \u2014 requires ADX > 22 filter but ADX can lag. 3. Instruments with poor tick volume data quality \u2014 if MetaTrader's tick volume is a poor proxy for actual volume, the POC identification is noisy. 4. News-driven gap openings that bypass the VAH/VAL entirely (price opens above VAH with no breakout bar to measure).",
+      "diversification_value": "Momentum_Volume_Convergence enters when price momentum and volume momentum converge as time-series (both rising together). It looks at volume-as-trend (is volume increasing alongside price?). This idea uses volume-as-distribution (where is volume concentrated across price levels, and is price moving away from that concentration?). These are orthogonal informational axes \u2014 one measures volume intensity over time, the other measures volume location across price. A trade could satisfy both conditions, but they are derived from completely different data views. No existing momentum idea uses volume profile or POC concepts.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-17T02:23:58Z"
+    },
+    {
+      "name": "Gamma_Strike_Momentum_Gravitation",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Captures dealer delta-hedging acceleration as gold approaches high-option-OI strikes \u2014 the gravitational pull effect where dealer hedging flow joins directional momentum, accelerating price toward the strike.",
+      "market_behaviour": "Options dealers who sell options (the typical position) are short gamma \u2014 they are net short options, meaning they must buy the underlying as price rises and sell as price falls to remain delta-neutral. This dealer hedging flow creates a self-reinforcing momentum effect near option strike concentrations. In gold futures (GC), the highest open interest clusters at round-number levels ($1900, $1950, $2000, $2050, etc.) and major technical levels, where both retail and institutional options volume concentrates. When the spot price approaches within 1.5 ATR of a high-OI strike, dealer hedging begins accelerating \u2014 every small price move toward the strike triggers incremental dealer buying (for an upward approach) or selling (for a downward approach). This creates a gravitational pull: price accelerates into the strike as more dealers hedge, often overshooting it intra-session. The effect is strongest during US hours when options markets are most active and dealer books are largest. Unlike vanna flow (which requires spot-vol correlation and complex gamma surface data), this plain delta-hedging acceleration works with a simple assumption: dealers hedge their gamma, and concentrated strikes create directional bias.",
+      "entry_logic": "1. Identify the nearest high-option-OI strike to current XAUUSD price. Use round-number strikes in $50 increments ($1900, $1950, $2000, etc.) as high-OI proxies \u2014 CME gold options OI consistently clusters at these levels. 2. Price must be within 1.0-1.5 ATR of the identified strike and approaching it (for longs: price rising toward strike from below; for shorts: price falling toward strike from above). 3. Momentum confirmation: H1 ADX > 20 and the last 3 H1 candles must show acceleration \u2014 each successive candle body larger than the previous body (expanding range). 4. Entry: at the open of the next H1 bar after the acceleration + proximity pattern triggers. 5. Skip if a high-impact news event (NFP, FOMC, CPI, FOMC minutes) is scheduled within 2 hours \u2014 macro news overrides dealer hedging mechanics. 6. Skip during the first hour of the Asian session (low options volume).",
+      "exit_logic": "Stop loss: 1 ATR below the entry candle's low (for longs) or above the entry candle's high (for shorts). Take profit: at the identified strike level \u2014 do NOT hold beyond the strike as the gravitational pull diminishes once price reaches the concentration zone. Alternative exit: if price reverses more than 0.3 ATR from the entry before reaching the strike, exit immediately (the expected hedging flow is not materialising \u2014 something else is driving price). No trailing stop \u2014 this is a strike-targeting trade, not a trend-ride. Hard time-stop: exit at US market close (17:00 EST) if not filled \u2014 options liquidity drops sharply after hours.",
+      "failure_mode": "1. Options OI data is approximate \u2014 round-number proxies work empirically but are not exact. Low-OI expiration weeks (monthly options expiry has passed) see weaker strike gravitation. 2. Macro news overwhelms dealer hedging \u2014 if a surprise data release happens between price and the strike, the hedging signal is drowned and price may reverse violently. 3. During high-volatility regimes (VIX > 30 or gold IV > 25%), implied vol makes options expensive and dealer gamma may be smaller (less options sold at high premiums). 4. The effect is primarily a US-hours phenomenon \u2014 Asian/late London approaches may see weaker hedging flow. 5. If price gaps past the strike overnight, the entry condition never forms and the trade is missed (acceptable \u2014 no forced entry).",
+      "diversification_value": "Vanna_Flow_Momentum_Capture relies on the 3-factor gamma x spot x implied vol interaction (vanna = the rate of change of delta with respect to vol), requiring option surface data and implied vol calculations. This idea uses a simpler, more robust mechanism: plain delta-hedging acceleration near known high-OI strikes, independent of vol data. It targets the gravitational-pull effect toward strikes rather than using gamma levels as a confirmation filter. The two are complementary: Vanna_Flow_Momentum_Capture filters entry direction based on gamma regime; Gamma_Strike_Momentum_Gravitation uses strikes as direct price targets. A systematic strategy could run both \u2014 the vanna filter says 'long entries are favourable', the gravitation signal says 'enter now and target $2000'. No existing momentum idea uses strike-level price targeting as the core mechanism.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-17T02:23:58Z"
     }
   ],
   "archived": [
@@ -3252,7 +3288,9 @@
       "CrossAsset_Momentum_Transmission",
       "Session_Transition_Momentum_Carryover",
       "InterCommodity_Momentum_Divergence",
-      "DXY_Momentum_Phase_Shift_Capture"
+      "DXY_Momentum_Phase_Shift_Capture",
+      "Volume_Profile_POC_Momentum_Capture",
+      "Gamma_Strike_Momentum_Gravitation"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",

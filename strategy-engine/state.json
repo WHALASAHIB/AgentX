@@ -1,6 +1,6 @@
 {
-  "iteration": 392,
-  "last_run": "2026-07-16T07:38:00Z",
+  "iteration": 395,
+  "last_run": "2026-07-17T10:53:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "ADX(14)>25 was too strict — 0 trades on XAUUSD 30m. Reduce ADX threshold from 25 to 18 to allow entries in moderately trending markets. EMA8/21 crossover + RSI(14)>50 + ADX(14)>18 + ATR-based 2:1 TP/SL + long-only on XAUUSD 30m.",
+  "current_hypothesis": "EMA8/21 + RSI>50 without ADX generated 22 trades on XAUUSD 30m but PF=0.59 and WR=22.7%. The RSI filter alone is insufficient for quality. Tighten TP/SL ratio from 2:1 to 1.5:1 (TP=1.5xATR, SL=1xATR) to improve win rate by making profit targets more achievable. Keep no ADX filter and no session filter.",
   "evolution_log": [
     {
       "iteration": 377,
@@ -254,6 +254,54 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-16T07:38:00Z"
+    },
+    {
+      "iteration": 392,
+      "hypothesis": "ADX(14)>25 was too strict — 0 trades on XAUUSD 30m. Reduce ADX threshold from 25 to 18 to allow entries in moderately trending markets. EMA8/21 crossover + RSI(14)>50 + ADX(14)>18 + ATR-based 2:1 TP/SL + long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T02:10:00Z"
+    },
+    {
+      "iteration": 393,
+      "hypothesis": "ADX(14)>18 still produces 0 trades on 30m XAUUSD (961 bars evaluated). Reduce ADX threshold from 18 to 10 to allow entries in weakly trending markets while keeping EMA8/21 crossover + RSI(14)>50 + ATR-based 2:1 TP/SL long-only filters. If 0 trades persist, consider removing ADX entirely next iteration.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T10:30:00Z"
+    },
+    {
+      "iteration": 394,
+      "hypothesis": "Remove ADX entirely. Revert to EMA8/21 crossover + RSI(14)>50 only, no session filter, with ATR-based 2:1 TP/SL long-only on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.5900793,
+        "sharpe": -9.11689471,
+        "wr": 22.72727273,
+        "dd": 4.61971426,
+        "trades": 22,
+        "net_profit": -363.715036877189
+      },
+      "verdict": "rejected (PF=0.59 Sharpe=-9.12 DD=4.62%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-17T10:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
