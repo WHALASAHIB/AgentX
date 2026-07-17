@@ -1,0 +1,56 @@
+//@version=5
+strategy(title="iter_407_ema3_8_rsi50_longonly", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+// Fast EMA period — shorter for more sensitive entries
+// sweep: 2-10 step 1
+fastLen = input.int(3, "Fast EMA", minval=1, maxval=50)
+
+// Slow EMA period
+// sweep: 5-21 step 2
+slowLen = input.int(8, "Slow EMA", minval=1, maxval=50)
+
+// RSI period
+// sweep: 7-21 step 2
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)
+
+// RSI threshold — enter long only when RSI above this level
+// sweep: 40-60 step 5
+rsiThreshold = input.int(50, "RSI Threshold (long above)", minval=30, maxval=70)
+
+// Take Profit in points (at 30m timeframe)
+// sweep: 50-300 step 25
+tpPoints = input.int(150, "Take Profit (pts)", minval=10, maxval=500)
+
+// Stop Loss in points
+// sweep: 50-200 step 25
+slPoints = input.int(100, "Stop Loss (pts)", minval=10, maxval=500)
+
+//--- indicator calculations
+fastEma = ta.ema(close, fastLen)
+slowEma = ta.ema(close, slowLen)
+rsi = ta.rsi(close, rsiLen)
+
+//--- entry logic
+// Long entry: fast EMA crosses above slow EMA AND RSI above threshold
+// RSI filter improves signal quality by ensuring bullish momentum exists
+longCondition = ta.crossover(fastEma, slowEma) and rsi > rsiThreshold
+
+//--- trade management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    // Set TP/SL immediately on entry
+    strategy.exit("XL", "Long",
+         loss=slPoints * syminfo.mintick,
+         profit=tpPoints * syminfo.mintick)
+
+//--- exit management
+// Early exit if fast EMA crosses back below slow EMA (trend reversal)
+if (strategy.position_size > 0 and ta.crossunder(fastEma, slowEma))
+    strategy.close("Long")

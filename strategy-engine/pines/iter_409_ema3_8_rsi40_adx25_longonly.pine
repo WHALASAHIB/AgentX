@@ -1,0 +1,39 @@
+//@version=5
+strategy(title="EMA3/8 RSI40 ADX25 LongOnly XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)   // sweep: 2-10 step 1
+// EMA slow period
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=100)   // sweep: 5-21 step 2
+// RSI period
+rsiLen     = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 2
+// RSI entry threshold (long only if RSI > threshold)
+rsiThresh  = input.int(40, "RSI Entry Threshold", minval=1, maxval=100) // sweep: 30-60 step 5
+// ADX period
+adxLen     = input.int(14, "ADX Length", minval=2, maxval=50)         // sweep: 10-30 step 2
+// ADX entry threshold (enter only if ADX > threshold ensures trending market)
+adxThresh  = input.int(25, "ADX Threshold", minval=1, maxval=100)     // sweep: 18-30 step 2
+// Take profit in points
+tpPoints   = input.int(150, "Take Profit (points)", minval=1, maxval=500) // sweep: 50-300 step 25
+// Stop loss in points
+slPoints   = input.int(100, "Stop Loss (points)", minval=1, maxval=500)  // sweep: 50-300 step 25
+
+//--- indicators
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+rsiVal   = ta.rsi(close, rsiLen)
+adxVal   = ta.adx(high, low, close, adxLen)
+
+//--- entry logic
+// Long condition: EMA fast crosses above EMA slow + RSI > threshold + ADX > threshold (trending market)
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh and adxVal > adxThresh
+
+//--- entry management
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// Attach TP/SL to the most recent entry
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)

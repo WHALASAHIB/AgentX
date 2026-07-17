@@ -1,0 +1,75 @@
+//@version=5
+strategy(title="EMA5/13 ADX14 RSI40 LongOnly XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(5, "Fast EMA Length", minval=2, maxval=30)       // sweep: 3-10 step 1
+ema_slow_len = input.int(13, "Slow EMA Length", minval=5, maxval=50)       // sweep: 8-26 step 2
+adx_len = input.int(14, "ADX Length", minval=7, maxval=28)                 // sweep: 7-28 step 7
+adx_threshold = input.int(14, "ADX Threshold", minval=5, maxval=40)        // sweep: 5-25 step 5  <-- REDUCED FROM 25 TO 14
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=21)                 // sweep: 5-21 step 7
+rsi_min = input.int(40, "RSI Minimum for Long", minval=20, maxval=60)      // sweep: 30-55 step 5
+tp_pts = input.int(150, "Take Profit (points)", minval=50, maxval=500)     // sweep: 50-300 step 50
+sl_pts = input.int(100, "Stop Loss (points)", minval=30, maxval=300)       // sweep: 30-200 step 30
+
+//--- price data
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- manual ADX calculation (Wilder's smoothing)
+// True Range
+tr_val = ta.tr(true)
+
+// +DM and -DM
+plus_dm = high - high[1]
+minus_dm = low[1] - low
+plus_dm_clean = plus_dm > minus_dm and plus_dm > 0 ? plus_dm : 0
+minus_dm_clean = minus_dm > plus_dm and minus_dm > 0 ? minus_dm : 0
+
+// Smoothed ATR using Wilder's method
+atr_smooth = 0.0
+atr_smooth := nz(atr_smooth[1]) == 0 ? ta.sma(tr_val, adx_len) : (atr_smooth[1] * (adx_len - 1) + tr_val) / adx_len
+
+// Smoothed +DI and -DI
+plus_di_raw = 0.0
+minus_di_raw = 0.0
+plus_di_raw := nz(plus_di_raw[1]) == 0 ? ta.sma(plus_dm_clean, adx_len) : (plus_di_raw[1] * (adx_len - 1) + plus_dm_clean) / adx_len
+minus_di_raw := nz(minus_di_raw[1]) == 0 ? ta.sma(minus_dm_clean, adx_len) : (minus_di_raw[1] * (adx_len - 1) + minus_dm_clean) / adx_len
+
+plus_di = atr_smooth > 0 ? 100 * plus_di_raw / atr_smooth : 0
+minus_di = atr_smooth > 0 ? 100 * minus_di_raw / atr_smooth : 0
+
+// DX and ADX
+dx = plus_di + minus_di > 0 ? 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di) : 0
+adx_value = 0.0
+adx_value := nz(adx_value[1]) == 0 ? ta.sma(dx, adx_len) : (adx_value[1] * (adx_len - 1) + dx) / adx_len
+
+//--- entry logic
+// Bullish condition: EMA5 crosses above EMA13, RSI > 40, ADX > 14
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+bullish_continuation = ema_fast > ema_slow and rsi_val > rsi_min and adx_value > adx_threshold
+
+enter_long = bullish_cross and rsi_val > rsi_min and adx_value > adx_threshold
+
+//--- exit management
+// Use strategy.entry + strategy.exit for proper cascade-close prevention
+var trade_active = false
+
+if enter_long and not trade_active
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit Long", from_entry="Long", loss=sl_pts * syminfo.mintick, profit=tp_pts * syminfo.mintick)
+    trade_active := true
+
+// Reset when no position
+if strategy.position_size == 0
+    trade_active := false
+
+//--- visual signals
+plot(ema_fast, "Fast EMA", color.blue, 1)
+plot(ema_slow, "Slow EMA", color.red, 1)
+hline(rsi_min, "RSI Min", color.gray, hline.style_dashed)
+plotshape(enter_long, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
+
+//--- debug - show values in status line
+if barstate.islast
+    label.new(bar_index, high, "ADX: " + str.tostring(adx_value, "#.##") + " | RSI: " + str.tostring(rsi_val, "#.##"), style=label.style_label_lower_right, size=size.small)
