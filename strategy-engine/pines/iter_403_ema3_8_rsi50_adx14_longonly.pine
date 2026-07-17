@@ -1,0 +1,43 @@
+//@version=5
+strategy(title="EMA3/8 RSI50 ManualADX14 Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len  = input.int(3,   "Fast EMA Length",   minval=1, maxval=50)    // sweep: 2-10 step 1
+ema_slow_len  = input.int(8,   "Slow EMA Length",   minval=5, maxval=50)    // sweep: 5-30 step 1
+rsi_len       = input.int(14,  "RSI Length",        minval=2, maxval=30)    // sweep: 7-21 step 1
+rsi_threshold = input.int(50,  "RSI Entry Threshold", minval=10, maxval=90) // sweep: 30-70 step 5
+adx_len       = input.int(14,  "ADX Length",        minval=5, maxval=30)    // sweep: 10-30 step 2
+adx_threshold = input.int(14,  "ADX Min Threshold", minval=5, maxval=50)    // sweep: 8-25 step 1
+tp_points     = input.int(67,  "Take Profit (points)", minval=10, maxval=500) // sweep: 30-200 step 10
+sl_points     = input.int(100, "Stop Loss (points)",   minval=10, maxval=500) // sweep: 30-200 step 10
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+
+//--- Manual ADX calculation (DMI method, ta.adx is not supported on Trader Dev)
+up = ta.change(high)
+down = -ta.change(low)
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr = ta.sma(tr, adx_len)
+plusDI = 100 * ta.sma(plusDM, adx_len) / atr
+minusDI = 100 * ta.sma(minusDM, adx_len) / atr
+dx = math.abs(plusDI - minusDI) / (plusDI + minusDI) * 100
+adx_val = ta.sma(dx, adx_len)
+
+//--- entry logic
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+rsi_ok       = rsi_val > rsi_threshold
+adx_ok       = adx_val > adx_threshold
+trend_ok     = close > ema_slow  // price above slow EMA for trend alignment
+
+long_condition = bullish_cross and rsi_ok and adx_ok and trend_ok
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+strategy.exit("XL", "Long", loss=sl_points * syminfo.mintick, profit=tp_points * syminfo.mintick)

@@ -1,0 +1,43 @@
+//@version=5
+strategy(title="EMA3/8 RSI55 ADX14 LongOnly XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)        // sweep: 2-10 step 1
+// EMA slow period
+slowLen = input.int(8, "Slow EMA Length", minval=2, maxval=50, step=1)         // sweep: 5-21 step 1
+// RSI period
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, step=1)              // sweep: 7-21 step 2
+// RSI threshold
+rsiThreshold = input.int(55, "RSI Threshold (long if RSI > this)", minval=20, maxval=80, step=1)  // sweep: 45-65 step 5
+// DMI length (for ADX/DI trend strength)
+dmiLen = input.int(14, "DMI Length", minval=2, maxval=50, step=1)              // sweep: 7-21 step 2
+// DMI+ threshold for trend direction long
+diPlusMin = input.int(14, "DMI+ Min (trend strength)", minval=5, maxval=50, step=1)  // sweep: 10-25 step 2
+// TP/SL ratio (TP = SL * ratio)
+tpSlRatio = input.float(1.5, "TP:SL Ratio", minval=0.5, maxval=5.0, step=0.1)  // sweep: 1.0-3.0 step 0.5
+// SL in points (ticks)
+slPoints = input.int(100, "Stop Loss (points)", minval=10, maxval=500, step=10) // sweep: 50-200 step 25
+
+//--- indicator calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsi = ta.rsi(close, rsiLen)
+// DMI gives [diPlus, diMinus, adx] -- trend direction + strength
+[diPlus, diMinus, adx] = ta.dmi(high, low, close, dmiLen)
+
+//--- entry logic
+// Bullish crossover: fast EMA crosses above slow EMA
+bullishCross = ta.crossover(emaFast, emaSlow)
+// Long condition: crossover + RSI > threshold + ADX/DMI trending (DI+ above threshold)
+longCondition = bullishCross and rsi > rsiThreshold and diPlus > diPlusMin
+
+//--- exit management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=slPoints * syminfo.mintick, profit=math.round(slPoints * tpSlRatio) * syminfo.mintick)
+
+//--- plot indicators for visual reference
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsiThreshold, "RSI Threshold", color=color.green, linestyle=hline.style_dashed)
