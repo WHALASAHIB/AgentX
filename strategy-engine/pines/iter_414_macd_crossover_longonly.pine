@@ -1,0 +1,38 @@
+//@version=5
+strategy(
+  title="MACD Crossover Long Only (XAUUSD 1h)",
+  overlay=false,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- inputs
+macdFast  = input.int(12, "MACD Fast Length", minval=5, maxval=30)   // sweep: 8-21 step 2
+macdSlow  = input.int(26, "MACD Slow Length", minval=10, maxval=50)  // sweep: 17-34 step 3
+macdSig   = input.int(9,  "MACD Signal Length", minval=5, maxval=20) // sweep: 7-14 step 1
+tpPoints  = input.int(150, "Take Profit (ticks)", minval=10, maxval=500)  // sweep: 50-300 step 25
+slPoints  = input.int(100, "Stop Loss (ticks)",   minval=10, maxval=500)  // sweep: 50-300 step 25
+
+//--- indicators
+[macdLine, signalLine, _] = ta.macd(close, macdFast, macdSlow, macdSig)
+
+//--- entry logic
+// Long when MACD line crosses above signal line
+longEntry  = ta.crossover(macdLine, signalLine)
+// Exit when MACD line crosses below signal line
+longExit   = ta.crossunder(macdLine, signalLine)
+
+//--- trade execution
+if (longEntry)
+    strategy.entry("Long", strategy.long)
+
+if (longExit)
+    strategy.close("Long")
+
+// Fixed TP/SL via strategy.exit (active while in position)
+if (strategy.position_size > 0)
+    strategy.exit("TP/SL", "Long", loss=slPoints, profit=tpPoints)

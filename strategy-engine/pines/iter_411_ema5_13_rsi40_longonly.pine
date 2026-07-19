@@ -1,0 +1,43 @@
+//@version=5
+strategy(title="EMA5/13 + RSI40 Long Only (No ADX)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA fast period
+fastLen = input.int(5, "Fast EMA Length", minval=1, maxval=50, step=1)
+// EMA slow period
+slowLen = input.int(13, "Slow EMA Length", minval=1, maxval=100, step=1)
+// RSI period
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, step=1)
+// RSI threshold (long only if above)
+rsiMin = input.int(40, "RSI Minimum for Long", minval=20, maxval=80, step=5)
+// TP ratio (multiplier of SL)
+tpRatio = input.float(1.5, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.1)
+// SL in points
+slPoints = input.int(100, "Stop Loss (points)", minval=10, maxval=500, step=10)
+// Trade session — London/NY overlap
+tradeSession = input.session("0800-1600", "Trading Session (UTC)")
+
+//--- indicators
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry logic
+// Bullish crossover: fast EMA crosses above slow EMA
+bullishCross = ta.crossover(emaFast, emaSlow)
+// Check session filter
+inSession = na(time(timeframe.period, tradeSession + ":2345")) == false
+// Long condition: crossover + RSI above minimum + within session
+longCondition = bullishCross and rsiVal > rsiMin and inSession
+
+//--- exit management
+// Calculate TP/SL levels based on points
+tpPoints = slPoints * tpRatio
+
+// Enter on long condition
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+// Exit with fixed TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long", loss=slPoints, profit=tpPoints)

@@ -1,0 +1,46 @@
+//@version=5
+strategy(title="EMA3/8 RSI30 Longonly NoSession XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)       // sweep: 5-21 step 2
+
+// RSI parameters
+rsiLen     = input.int(14, "RSI Length", minval=2, maxval=50)           // sweep: 7-21 step 2
+rsiMin     = input.float(30.0, "RSI Minimum (Long)", step=1.0)          // sweep: 20-50 step 5
+
+// TP/SL parameters
+tpPts      = input.int(150, "Take Profit (points)", minval=1)           // sweep: 50-300 step 25
+slPts      = input.int(100, "Stop Loss (points)", minval=1)             // sweep: 50-200 step 25
+
+//--- indicator calculations
+emaFast     = ta.ema(close, emaFastLen)
+emaSlow     = ta.ema(close, emaSlowLen)
+rsiVal      = ta.rsi(close, rsiLen)
+
+//--- entry logic
+// Bullish crossover = fast EMA crosses above slow EMA
+bullishCross = ta.crossover(emaFast, emaSlow)
+// RSI confirms momentum
+rsiOk        = rsiVal >= rsiMin
+
+// Entry condition: bullish crossover + RSI > minimum
+longCondition = bullishCross and rsiOk
+
+// Exit condition: bearish crossover (fast EMA crosses below slow EMA) — no strategy.close to avoid cascade-close
+bearishCross = ta.crossunder(emaFast, emaSlow)
+
+//--- entry management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (strategy.position_size > 0)
+    // Fixed TP/SL exit via strategy.exit
+    strategy.exit("XL", "Long", loss=slPts, profit=tpPts)
+
+//--- plot indicators for visual reference
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+hline(rsiMin, "RSI Min", color=color.green, linestyle=hline.style_dashed)

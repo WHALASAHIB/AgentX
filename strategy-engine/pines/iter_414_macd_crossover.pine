@@ -1,0 +1,53 @@
+//@version=5
+// --- Strategy: MACD Crossover on XAUUSD H1 ---
+// MACD(12,26,9) crossover generates long entries.
+// Cross below = exit. 1:1.5 TP/SL. Long-only, 24h trading.
+
+// --- inputs ---
+strategy(title="XAUUSD H1 MACD Crossover", overlay=true,
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.04,
+         process_orders_on_close=true)
+
+// MACD parameters
+fast_len  = input.int(12, title="MACD Fast Length", minval=2, maxval=50, step=1)    // sweep: 8-20 step 2
+slow_len  = input.int(26, title="MACD Slow Length", minval=10, maxval=100, step=1)   // sweep: 18-34 step 2
+sig_len   = input.int(9, title="MACD Signal Length", minval=3, maxval=20, step=1)    // sweep: 5-15 step 2
+
+// Risk management
+tp_pts    = input.int(150, title="Take Profit (points)", minval=10, maxval=500, step=10)    // sweep: 50-300 step 25
+sl_pts    = input.int(100, title="Stop Loss (points)", minval=10, maxval=500, step=10)      // sweep: 50-300 step 25
+
+// RSI filter (optional)
+rsi_enabled = input.bool(true, title="Enable RSI Filter")
+rsi_thresh  = input.int(50, title="RSI Threshold (long if >)", minval=20, maxval=80, step=5) // sweep: 40-60 step 5
+
+// --- indicator calculations ---
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, sig_len)
+rsi_val = ta.rsi(close, 14)
+
+// --- entry logic ---
+var bool in_trade = false
+var bool macd_bullish_cross = ta.crossover(macd_line, signal_line)
+var bool macd_bearish_cross = ta.crossunder(macd_line, signal_line)
+
+// Entry condition: MACD bullish crossover + optional RSI filter
+entry_condition = macd_bullish_cross and (not rsi_enabled or rsi_val > rsi_thresh)
+
+// --- exit management ---
+if (macd_bullish_cross and entry_condition)
+    strategy.entry("MACD_LONG", strategy.long)
+    in_trade := true
+
+if (macd_bearish_cross)
+    strategy.close("MACD_LONG")
+    in_trade := false
+
+// TP/SL via strategy.exit after entry
+if (macd_bullish_cross and entry_condition)
+    strategy.exit("TP_SL", "MACD_LONG",
+                  profit=tp_pts * syminfo.mintick,
+                  loss=sl_pts * syminfo.mintick)

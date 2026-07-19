@@ -250,6 +250,16 @@
       "root_cause": "3 propfirm_pass_bot.py instances running simultaneously (PIDs 15596, 5752, 19640). Cron launcher started new instance without killing prior one from 17h earlier. Lock file at C:\\Hermess\\bots\\locks\\ only covers one deployment path; Hermess-path instances have no lock protection.",
       "fix": "Add pre-launch cleanup: kill ALL matching instances before starting new one. Ensure lock file works across both deployment paths (C:\\Trading and C:\\Hermess).",
       "prevention_rule": "Before launching propfirm_pass_bot.py, kill all existing instances matching the script name."
+    },
+    {
+      "date": "2026-07-15 to 2026-07-17",
+      "direction": "MIXED (3 BUY, 3 SELL)",
+      "entry": 0,
+      "exit": 0,
+      "pnl": -3081.85,
+      "root_cause": "M780012 placed 6 trades over 3 days with 0% WR and -$3,081.85 PnL. 5 of 6 trades executed OUTSIDE the declared 13:00-15:00 UTC session window (at 12:26, 16:41, 17:44, 16:06, 19:24 UTC). Only 1 trade (13:34 UTC) was within window. The session detection bug causes the bot to trade in hours when liquidity is low and the VWAP mean reversion signal quality degrades. Risk per trade at ~$1,000 (1.04% on $96K account) is double the FTMO-optimized 0.5%. 3 duplicate bot instances running concurrently.",
+      "fix": "1) Kill 2 of 3 duplicate bot instances. 2) Add pre-launch cleanup to launcher cron. 3) Fix session window detection to use UTC time, not local. 4) Reduce RISK_PCT to 0.5% (target ~4 lots). 5) Implement cooldown timer and session trend filter from Jul 13 post-trade critique.",
+      "prevention_rule": "Verify trade timestamps against declared session window after every trading day. Any trade outside the window signals a timezone bug."
     }
   ],
   "lessons_learned": [
@@ -266,6 +276,10 @@
     "Counter-trade bias without failure detection caused -$1,045 second consecutive loss on July 13.",
     "Bot instance accumulation: cron launchers start new instances without killing prior ones. 3 instances ran simultaneously for the same bot.",
     "Risk per trade at 1% ($1,245 SL hit) is double the FTMO-optimized 0.5%. At 8.3 lots EURUSD, 3 consecutive losses hit the 4.5% daily DD cap.",
-    "State file sync is incomplete — shows 2 trades vs 4 actual MT5 history entries for same period."
+    "State file sync is incomplete — shows 2 trades vs 4 actual MT5 history entries for same period.",
+    "Session window bug: 5 of 6 M780012 trades executed outside declared 13-15 UTC window. Bot's timezone detection is broken.",
+    "Risk per trade (~1%) on $100K FTMO account should be 0.5% ($500/target). Current $1,000/trade is double the safe level.",
+    "3 duplicate bot instances each trying to trade the same account — adds confusion, not redundancy.",
+    "Cooldown timer and session trend filter from Jul 13 critique still not implemented in deployed bot code."
   ]
 }
