@@ -1,6 +1,6 @@
 {
-  "iteration": 415,
-  "last_run": "2026-07-17T15:52:30Z",
+  "iteration": 416,
+  "last_run": "2026-07-19T19:59:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Disable RSI filter on MACD crossover. MACD(12,26,9) with RSI>50 filter generated 0 trades on XAUUSD 1h — the RSI filter is blocking all entries. Remove RSI filter entirely to let MACD bullish crossovers trade freely. Keep MACD(12,26,9) + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.",
+  "current_hypothesis": "MACD(12,26,9) without RSI filter only got 16 trades on XAUUSD 1h — still below the 20-trade minimum. Shorten MACD parameters to MACD(5,13,5) for faster crossovers and more signals. Keep no RSI filter, 1:1.5 TP/SL (150/100 pts), long-only on XAUUSD 1h. If still below 20 trades, next step will be switching to 30m timeframe.",
   "evolution_log": [
     {
       "iteration": 402,
@@ -222,6 +222,22 @@
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-17T15:52:30Z"
+    },
+    {
+      "iteration": 415,
+      "hypothesis": "Disable RSI filter on MACD crossover. MACD(12,26,9) with RSI>50 filter generated 0 trades on XAUUSD 1h — the RSI filter is blocking all entries. Remove RSI filter entirely to let MACD bullish crossovers trade freely. Keep MACD(12,26,9) + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.",
+      "metrics": {
+        "pf": 0.36037289,
+        "sharpe": -11.44949487,
+        "wr": 25.0,
+        "dd": 2.9140363,
+        "trades": 16,
+        "net_profit": -268.41133479153
+      },
+      "verdict": "invalid (low sample, 16 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-19T19:59:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

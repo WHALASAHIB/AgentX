@@ -1,0 +1,29 @@
+//@version=5
+strategy(title="iter_415_MACD_NoRSI_LongOnly", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=5, maxval=30, tooltip="Fast EMA period for MACD line")    // sweep: 8-20 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=15, maxval=50, tooltip="Slow EMA period for MACD line")  // sweep: 20-40 step 5
+signalLength = input.int(9, "MACD Signal Length", minval=5, maxval=20, tooltip="Signal line EMA period")         // sweep: 7-12 step 1
+
+// TP/SL parameters
+tpPoints = input.int(150, "Take Profit (points)", minval=50, maxval=500, tooltip="Profit target in points")     // sweep: 100-300 step 50
+slPoints = input.int(100, "Stop Loss (points)", minval=30, maxval=300, tooltip="Stop loss in points")           // sweep: 50-200 step 25
+
+//--- MACD calculation
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+macdHist = macdLine - signalLine
+
+//--- entry logic
+// MACD bullish crossover: MACD line crosses above signal line
+longCondition = ta.crossover(macdLine, signalLine)
+
+//--- exit management
+// Enter on MACD bullish crossover
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+// Set TP/SL for each entry
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints)
