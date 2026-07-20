@@ -1,6 +1,6 @@
 {
-  "iteration": 429,
-  "last_run": "2026-07-20T10:39:00Z",
+  "iteration": 433,
+  "last_run": "2026-07-20T11:53:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,17 +13,8 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Sharpe ratio (-10.13) is the weakest metric by far. Increase ADX(14) minimum from 20 to 25 to only trade in stronger trending markets, which should improve risk-adjusted returns. Keep MACD(5,13,5) crossover, RSI(14)>50 long / <50 short, TP=100/SL=150 (1:1.5), bidirectional on XAUUSD 30m.",
+  "current_hypothesis": "Switching from bidirectional to long-only halved trade count from 48 to 14, below the statistical significance threshold of 20. The weakest metric is now totalTrades (14 < 20). This iteration changes: go back to bidirectional trading and instead reduce the MACD entry threshold by trying faster EMA crossover (EMA3/EMA8) instead of MACD(5,13,5) to see if a simpler crossover produces more consistent signals. Keep RSI(14)>50 long / <50 short, ADX(14)>20, TP=125/SL=125 (1:1), bidirectional on XAUUSD 30m.",
   "evolution_log": [
-    {
-      "iteration": 402,
-      "hypothesis": "EMA3/8 bullish crossover + RSI(14)>50 + manual ADX(14)>25 + 1:1.5 TP/SL (67/100) + long-only on XAUUSD 30m.",
-      "metrics": {"pf": 0.0409434, "sharpe": -3.40070591, "wr": 25.0, "dd": 4.29361673, "trades": 4, "net_profit": -235.680289938351},
-      "verdict": "invalid (low sample, 4 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-17T04:54:09Z"
-    },
     {
       "iteration": 428,
       "hypothesis": "Switch to XAUUSD 30m timeframe. MACD(5,13,5) crossover + RSI(14)>50 long / <50 short + ADX(14)>20 + TP=100/SL=150 (1:1.5) bidirectional.",
@@ -32,6 +23,42 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-20T10:39:00Z"
+    },
+    {
+      "iteration": 429,
+      "hypothesis": "Increase ADX(14) minimum from 20 to 25 to only trade in stronger trending markets, which should improve risk-adjusted returns. Keep MACD(5,13,5) crossover, RSI(14)>50 long / <50 short, TP=100/SL=150 (1:1.5), bidirectional on XAUUSD 30m.",
+      "metrics": {"pf": 0.81620789, "sharpe": -10.34116314, "wr": 28.125, "dd": 3.01847293, "trades": 32, "net_profit": -300.886039233388},
+      "verdict": "rejected (PF=0.82 Sharpe=-10.34 DD=3.02%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T10:53:00Z"
+    },
+    {
+      "iteration": 430,
+      "hypothesis": "Flip TP/SL to 1.5 reward:risk (TP=150, SL=100) so winners pay 1.5x losses. Revert ADX(14) from 25 back to 20 (ADX>25 overfiltered). Keep MACD(5,13,5) crossover, RSI(14)>50 long / <50 short, bidirectional on XAUUSD 30m.",
+      "metrics": {"pf": 1.14338706, "sharpe": -10.20536429, "wr": 35.41666667, "dd": 3.52701379, "trades": 48, "net_profit": -331.267797158045},
+      "verdict": "rejected (PF=1.14 Sharpe=-10.21 DD=3.53%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T11:35:00Z"
+    },
+    {
+      "iteration": 431,
+      "hypothesis": "Try 1:1 TP/SL (TP=125, SL=125) to balance reward and loss — should increase win rate by giving trades more room to reach TP while keeping SL wide enough to avoid premature stops. Keep MACD(5,13,5) crossover, RSI(14)>50 long / <50 short, ADX(14)>20, bidirectional on XAUUSD 30m.",
+      "metrics": {"pf": 1.16348567, "sharpe": -10.03849971, "wr": 35.41666667, "dd": 3.46530783, "trades": 48, "net_profit": -325.083492135907},
+      "verdict": "rejected (PF=1.16 Sharpe=-10.04 DD=3.47%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T12:03:00Z"
+    },
+    {
+      "iteration": 432,
+      "hypothesis": "Switch MACD(5,13,5) to long-only (no short trades) on XAUUSD 30m. Keep RSI(14)>50 filter, ADX(14)>20 filter, TP=125/SL=125 (1:1). Eliminating short-side whipsaws should improve Sharpe ratio since XAUUSD has upward bias.",
+      "metrics": {"pf": 1.03308516, "sharpe": -9.26705258, "wr": 28.57142857, "dd": 1.14141395, "trades": 14, "net_profit": -109.039216910365},
+      "verdict": "invalid (low sample, 14 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T11:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

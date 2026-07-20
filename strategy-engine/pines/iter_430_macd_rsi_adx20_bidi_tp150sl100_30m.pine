@@ -1,0 +1,58 @@
+//@version=5
+strategy(title="iter_430_macd_rsi_adx20_bidi_tp150sl100_30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(5, title="MACD Fast Length", minval=2, maxval=20)       // sweep: 3-10 step 1
+slowLength = input.int(13, title="MACD Slow Length", minval=5, maxval=30)      // sweep: 8-21 step 2
+signalLength = input.int(5, title="MACD Signal Length", minval=2, maxval=15)   // sweep: 3-9 step 2
+
+// RSI filter
+rsiLength = input.int(14, title="RSI Length", minval=7, maxval=21)              // sweep: 7-21 step 7
+rsiLongThreshold = input.int(50, title="RSI Long Threshold (above = long)", minval=40, maxval=70)  // sweep: 40-60 step 5
+rsiShortThreshold = input.int(50, title="RSI Short Threshold (below = short)", minval=30, maxval=60) // sweep: 30-50 step 5
+
+// ADX filter — REVERTED from 25 back to 20 (ADX>25 overfiltered, PF fell to 0.82)
+adxLength = input.int(14, title="ADX Length", minval=7, maxval=21)              // sweep: 7-21 step 7
+adxThreshold = input.int(20, title="ADX Minimum Threshold", minval=10, maxval=40)  // sweep: 15-35 step 5 — reverted to 20 after ADX>25 gave PF=0.82
+
+// TP/SL — FLIPPED to 1.5 reward:risk (was 0.67, now TP>SL so winners pay 1.5x losers)
+tpTicks = input.int(150, title="Take Profit (ticks)", minval=20, maxval=500)    // sweep: 50-200 step 25
+slTicks = input.int(100, title="Stop Loss (ticks)", minval=20, maxval=500)     // sweep: 50-200 step 25
+
+//--- indicator calculations
+// MACD
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// RSI
+rsiValue = ta.rsi(close, rsiLength)
+
+// ADX (DMI)
+[diPlus, diMinus, adxValue] = ta.dmi(adxLength, adxLength)
+
+//--- entry logic
+// Long conditions: MACD crossover + RSI > threshold + ADX > threshold
+longCondition = macdCrossOver and rsiValue > rsiLongThreshold and adxValue > adxThreshold
+
+// Short conditions: MACD crossunder + RSI < threshold + ADX > threshold
+shortCondition = macdCrossUnder and rsiValue < rsiShortThreshold and adxValue > adxThreshold
+
+//--- entry management
+// Enter long on MACD crossover + RSI bullish + ADX trending
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+// Enter short on MACD crossunder + RSI bearish + ADX trending
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Exit long with TP/SL (now TP=150 > SL=100, 1.5 reward:risk)
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+// Exit short with TP/SL
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)
