@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent X — Autonomous Trading Intelligence</title>
+  <meta name="description" content="Agent X is an AI-powered autonomous trading platform. Deploy intelligent agents across MT5, FTMO, and demo accounts with smart risk management, real backtesting, and 24/7 execution." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== RESET & BASE ===== */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;scroll-padding-top:80px}
+    body{
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:#0f172a;color:#f8fafc;line-height:1.6;
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    ::-webkit-scrollbar{width:8px}
+    ::-webkit-scrollbar-track{background:#0f172a}
+    ::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:#475569}
+
+    /* ===== UTILITY ===== */
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
+    .section{padding:100px 0}
+    .section-label{
+      display:inline-block;font-size:0.75rem;font-weight:600;letter-spacing:2px;
+      text-transform:uppercase;padding:6px 16px;border-radius:100px;
+      background:rgba(99,102,241,0.12);color:#818cf8;margin-bottom:16px;
+      border:1px solid rgba(99,102,241,0.2);
+    }
+    .section-title{
+      font-size:clamp(2rem,4vw,3rem);font-weight:800;line-height:1.15;
+      margin-bottom:16px;
+    }
+    .section-subtitle{
+      font-size:1.125rem;color:#94a3b8;max-width:600px;line-height:1.7;
+    }
+    .gradient-text{
+      background:linear-gradient(135deg,#818cf8,#06b6d4);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .gradient-border{
+      position:relative;
+    }
+    .gradient-border::before{
+      content:'';position:absolute;inset:0;border-radius:inherit;
+      padding:1px;background:linear-gradient(135deg,rgba(99,102,241,0.3),rgba(6,182,212,0.3));
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;mask-composite:exclude;
+      pointer-events:none;
+    }
+
+    /* ===== GLOW EFFECTS ===== */
+    .glow-orb{
+      position:absolute;width:600px;height:600px;border-radius:50%;
+      filter:blur(120px);opacity:0.08;pointer-events:none;
+    }
+    .glow-orb-1{background:#6366f1;top:-200px;left:-200px}
+    .glow-orb-2{background:#06b6d4;bottom:-300px;right:-200px}
+    .glow-orb-3{background:#f59e0b;top:50%;left:50%;transform:translate(-50%,-50%)}
+
+    /* ===== NAVBAR ===== */
+    .navbar{
+      position:fixed;top:0;left:0;right:0;z-index:1000;
+      padding:16px 0;transition:all .3s ease;
+    }
+    .navbar.scrolled{
+      background:rgba(15,23,42,0.85);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(99,102,241,0.1);
+      padding:12px 0;
+    }
+    .navbar .container{display:flex;align-items:center;justify-content:space-between}
+    .nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.25rem}
+    .nav-logo-icon{
+      width:36px;height:36px;border-radius:10px;
+      background:linear-gradient(135deg,#6366f1,#06b6d4);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1rem;font-weight:800;
+    }
+    .nav-links{display:flex;align-items:center;gap:32px;list-style:none}
+    .nav-links a{
+      font-size:0.875rem;font-weight:500;color:#94a3b8;
+      transition:color .2s;position:relative;
+    }
+    .nav-links a:hover{color:#f8fafc}
+    .nav-links a::after{
+      content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;
+      background:#6366f1;transition:width .3s;border-radius:2px;
+    }
+    .nav-links a:hover::after{width:100%}
+    .nav-cta{
+      padding:10px 24px;border-radius:8px;font-weight:600;font-size:0.875rem;
+      background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;
+      transition:transform .2s,box-shadow .3s;border:none;cursor:pointer;
+    }
+    .nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(99,102,241,0.4)}
+    .mobile-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px}
+    .mobile-toggle span{display:block;width:24px;height:2px;background:#f8fafc;border-radius:2px;transition:.3s}
+    .mobile-toggle.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+    .mobile-toggle.open span:nth-child(2){opacity:0}
+    .mobile-toggle.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+
+    /* ===== HERO ===== */
+    .hero{
+      min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;
+      padding-top:80px;
+    }
+    .hero-bg{
+      position:absolute;inset:0;overflow:hidden;
+      background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,0.06) 0%,transparent 50%),
+                 radial-gradient(ellipse at 80% 50%,rgba(6,182,212,0.06) 0%,transparent 50%);
+    }
+    .hero-grid{
+      position:absolute;inset:0;
+      background-image:linear-gradient(rgba(99,102,241,0.03) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(99,102,241,0.03) 1px,transparent 1px);
+      background-size:60px 60px;
+    }
+    .hero .container{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 14px 6px 6px;border-radius:100px;
+      background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);
+      font-size:0.8rem;color:#67e8f9;margin-bottom:24px;
+    }
+    .hero-badge-dot{
+      width:8px;height:8px;border-radius:50%;background:#22d3ee;
+      animation:pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.3}}
+    .hero h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:900;line-height:1.08;margin-bottom:20px}
+    .hero p{font-size:1.125rem;color:#94a3b8;max-width:520px;line-height:1.7;margin-bottom:32px}
+    .hero-actions{display:flex;gap:16px;flex-wrap:wrap}
+    .btn-primary{
+      padding:14px 32px;border-radius:10px;font-weight:600;font-size:0.95rem;
+      background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;
+      cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(99,102,241,0.35)}
+    .btn-secondary{
+      padding:14px 32px;border-radius:10px;font-weight:600;font-size:0.95rem;
+      background:rgba(255,255,255,0.05);color:#f8fafc;border:1px solid rgba(255,255,255,0.1);
+      cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn-secondary:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2)}
+    .hero-stats{display:flex;gap:40px;margin-top:48px;padding-top:32px;border-top:1px solid rgba(255,255,255,0.06)}
+    .hero-stat-value{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .hero-stat-label{font-size:0.8rem;color:#64748b;margin-top:4px}
+
+    /* Hero Mockup */
+    .hero-mockup{
+      position:relative;border-radius:16px;overflow:hidden;
+      background:rgba(30,41,59,0.6);border:1px solid rgba(99,102,241,0.15);
+      backdrop-filter:blur(10px);box-shadow:0 20px 80px rgba(0,0,0,0.4);
+    }
+    .mockup-header{
+      display:flex;align-items:center;gap:8px;padding:14px 20px;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .mockup-dot{width:10px;height:10px;border-radius:50%}
+    .mockup-dot:nth-child(1){background:#ef4444}
+    .mockup-dot:nth-child(2){background:#eab308}
+    .mockup-dot:nth-child(3){background:#22c55e}
+    .mockup-title{font-size:0.75rem;color:#64748b;margin-left:8px;font-weight:500}
+    .mockup-body{padding:20px}
+    .mockup-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem}
+    .mockup-row:last-child{border:none}
+    .mockup-label{color:#64748b}
+    .mockup-value{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:0.8rem}
+    .mockup-value.green{color:#22c55e}
+    .mockup-value.red{color:#ef4444}
+    .mockup-value.blue{color:#818cf8}
+    .mockup-chart{display:flex;align-items:flex-end;gap:4px;height:60px;margin-top:16px;padding:0 4px}
+    .mockup-bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,#6366f1,#818cf8);opacity:0.6;transition:opacity .3s;min-height:4px}
+    .mockup-bar:hover{opacity:1}
+    .mockup-bar:nth-child(1){height:30%}
+    .mockup-bar:nth-child(2){height:55%}
+    .mockup-bar:nth-child(3){height:40%}
+    .mockup-bar:nth-child(4){height:70%}
+    .mockup-bar:nth-child(5){height:45%}
+    .mockup-bar:nth-child(6){height:85%}
+    .mockup-bar:nth-child(7){height:60%}
+    .mockup-bar:nth-child(8){height:90%}
+    .mockup-bar:nth-child(9){height:65%}
+    .mockup-bar:nth-child(10){height:75%}
+    .mockup-bar:nth-child(11){height:50%}
+    .mockup-bar:nth-child(12){height:95%}
+    .mockup-bar:nth-child(13){height:72%}
+    .mockup-bar:nth-child(14){height:88%}
+    .mockup-legend{display:flex;justify-content:space-between;margin-top:8px;font-size:0.65rem;color:#475569}
+    .mockup-glow{
+      position:absolute;top:50%;left:50%;width:200px;height:200px;
+      background:radial-gradient(circle,rgba(99,102,241,0.15),transparent);
+      border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:60px}
+    .step-card{
+      padding:32px;border-radius:16px;position:relative;
+      background:rgba(30,41,59,0.4);border:1px solid rgba(255,255,255,0.05);
+      transition:all .4s;
+    }
+    .step-card:hover{transform:translateY(-4px);border-color:rgba(99,102,241,0.2);background:rgba(30,41,59,0.6)}
+    .step-number{
+      width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:1.125rem;margin-bottom:20px;
+      background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(6,182,212,0.2));
+      color:#818cf8;border:1px solid rgba(99,102,241,0.2);
+    }
+    .step-card h3{font-size:1.125rem;font-weight:700;margin-bottom:10px}
+    .step-card p{font-size:0.875rem;color:#94a3b8;line-height:1.7}
+    .step-connector{display:none}
+
+    /* ===== FEATURES ===== */
+    .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px}
+    .feature-card{
+      padding:32px;border-radius:16px;
+      background:rgba(30,41,59,0.3);border:1px solid rgba(255,255,255,0.04);
+      transition:all .4s;position:relative;overflow:hidden;
+    }
+    .feature-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:linear-gradient(90deg,#6366f1,#06b6d4);
+      transform:scaleX(0);transform-origin:left;transition:transform .4s;
+    }
+    .feature-card:hover::before{transform:scaleX(1)}
+    .feature-card:hover{transform:translateY(-3px);border-color:rgba(99,102,241,0.15);background:rgba(30,41,59,0.5)}
+    .feature-icon{
+      width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-size:1.25rem;margin-bottom:16px;
+    }
+    .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+    .feature-card p{font-size:0.85rem;color:#94a3b8;line-height:1.7}
+
+    /* ===== PRICING ===== */
+    .pricing-toggle{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:48px}
+    .pricing-toggle span{font-size:0.9rem;font-weight:500;color:#94a3b8;transition:color .3s}
+    .pricing-toggle span.active{color:#f8fafc}
+    .toggle-switch{
+      width:48px;height:26px;border-radius:13px;background:#334155;cursor:pointer;
+      position:relative;transition:background .3s;border:none;padding:0;
+    }
+    .toggle-switch.active{background:#6366f1}
+    .toggle-switch-knob{
+      width:20px;height:20px;border-radius:50%;background:#f8fafc;
+      position:absolute;top:3px;left:3px;transition:transform .3s;
+    }
+    .toggle-switch.active .toggle-switch-knob{transform:translateX(22px)}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
+    .pricing-card{
+      padding:40px 32px;border-radius:20px;
+      background:rgba(30,41,59,0.3);border:1px solid rgba(255,255,255,0.06);
+      transition:all .4s;position:relative;
+    }
+    .pricing-card:hover{transform:translateY(-4px);border-color:rgba(99,102,241,0.2)}
+    .pricing-card.popular{
+      background:rgba(30,41,59,0.6);
+      border-color:rgba(99,102,241,0.3);transform:scale(1.03);
+    }
+    .pricing-card.popular:hover{transform:scale(1.03) translateY(-4px)}
+    .popular-badge{
+      position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+      padding:4px 16px;border-radius:100px;font-size:0.7rem;font-weight:600;
+      background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;
+      text-transform:uppercase;letter-spacing:1px;
+    }
+    .pricing-name{font-size:0.875rem;font-weight:600;color:#94a3b8;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
+    .pricing-price{font-size:3rem;font-weight:800;line-height:1}
+    .pricing-price span{font-size:1rem;font-weight:500;color:#64748b}
+    .pricing-desc{font-size:0.85rem;color:#64748b;margin:12px 0 24px}
+    .pricing-features{list-style:none;margin-bottom:32px}
+    .pricing-features li{
+      padding:10px 0;font-size:0.875rem;color:#cbd5e1;
+      display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .pricing-features li:last-child{border:none}
+    .pricing-features li .check{color:#22c55e;font-weight:700}
+    .pricing-features li .cross{color:#ef4444}
+    .pricing-btn{
+      width:100%;padding:14px;border-radius:10px;font-weight:600;font-size:0.9rem;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#f8fafc;
+      cursor:pointer;transition:all .3s;text-align:center;
+    }
+    .pricing-btn:hover{background:rgba(255,255,255,0.1)}
+    .pricing-card.popular .pricing-btn{
+      background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;
+    }
+    .pricing-card.popular .pricing-btn:hover{box-shadow:0 8px 30px rgba(99,102,241,0.35)}
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonials-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:60px}
+    .testimonial-card{
+      padding:32px;border-radius:16px;
+      background:rgba(30,41,59,0.3);border:1px solid rgba(255,255,255,0.04);
+      transition:all .3s;
+    }
+    .testimonial-card:hover{transform:translateY(-2px);border-color:rgba(99,102,241,0.12)}
+    .testimonial-stars{color:#f59e0b;margin-bottom:12px;font-size:0.9rem}
+    .testimonial-text{font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:20px;font-style:italic}
+    .testimonial-author{display:flex;align-items:center;gap:12px}
+    .testimonial-avatar{
+      width:44px;height:44px;border-radius:50%;
+      background:linear-gradient(135deg,#6366f1,#06b6d4);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:0.9rem;color:#fff;flex-shrink:0;
+    }
+    .testimonial-name{font-weight:600;font-size:0.9rem}
+    .testimonial-role{font-size:0.8rem;color:#64748b}
+
+    /* ===== STATS COUNTER ===== */
+    .stats-section{background:rgba(30,41,59,0.2);border-top:1px solid rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.04)}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;text-align:center}
+    .stat-item{padding:24px}
+    .stat-number{
+      font-size:2.5rem;font-weight:800;font-family:'JetBrains Mono',monospace;
+      background:linear-gradient(135deg,#818cf8,#06b6d4);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .stat-label{font-size:0.85rem;color:#64748b;margin-top:8px}
+
+    /* ===== FAQ ===== */
+    .faq-list{max-width:720px;margin:48px auto 0}
+    .faq-item{
+      border-bottom:1px solid rgba(255,255,255,0.06);padding:8px 0;
+    }
+    .faq-question{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:16px 0;cursor:pointer;font-weight:600;font-size:0.95rem;
+      background:none;border:none;color:#f8fafc;width:100%;text-align:left;
+    }
+    .faq-question .icon{transition:transform .3s;font-size:1.25rem;color:#64748b}
+    .faq-question.open .icon{transform:rotate(45deg)}
+    .faq-answer{
+      max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;
+      font-size:0.875rem;color:#94a3b8;line-height:1.7;
+    }
+    .faq-answer.open{max-height:300px;padding:0 0 20px}
+
+    /* ===== CTA SECTION ===== */
+    .cta-section{
+      background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(6,182,212,0.08));
+      border-radius:24px;padding:80px 60px;text-align:center;
+      position:relative;overflow:hidden;border:1px solid rgba(99,102,241,0.1);
+    }
+    .cta-section h2{font-size:clamp(1.8rem,3vw,2.5rem);font-weight:800;margin-bottom:16px}
+    .cta-section p{color:#94a3b8;max-width:520px;margin:0 auto 32px;font-size:1.05rem}
+    .cta-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+
+    /* ===== FOOTER ===== */
+    .footer{
+      padding:48px 0 32px;border-top:1px solid rgba(255,255,255,0.04);
+      margin-top:80px;
+    }
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+    .footer-brand p{font-size:0.85rem;color:#64748b;margin-top:12px;max-width:320px;line-height:1.7}
+    .footer-socials{display:flex;gap:12px;margin-top:16px}
+    .footer-socials a{
+      width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);
+      font-size:0.85rem;transition:all .3s;
+    }
+    .footer-socials a:hover{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.2)}
+    .footer-col h4{font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:16px}
+    .footer-col ul{list-style:none}
+    .footer-col ul li{margin-bottom:10px}
+    .footer-col ul li a{font-size:0.85rem;color:#64748b;transition:color .2s}
+    .footer-col ul li a:hover{color:#f8fafc}
+    .footer-bottom{
+      display:flex;justify-content:space-between;align-items:center;
+      padding-top:24px;border-top:1px solid rgba(255,255,255,0.04);
+      font-size:0.8rem;color:#475569;
+    }
+    .footer-disclaimer{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 12px;border-radius:6px;
+      background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.15);
+      font-size:0.7rem;color:#fbbf24;
+    }
+
+    /* ===== ANIMATIONS (Scroll Reveal) ===== */
+    .reveal{opacity:0;transform:translateY(30px);transition:all .7s cubic-bezier(0.16,1,0.3,1)}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .reveal-left{opacity:0;transform:translateX(-40px);transition:all .7s cubic-bezier(0.16,1,0.3,1)}
+    .reveal-left.visible{opacity:1;transform:translateX(0)}
+    .reveal-right{opacity:0;transform:translateX(40px);transition:all .7s cubic-bezier(0.16,1,0.3,1)}
+    .reveal-right.visible{opacity:1;transform:translateX(0)}
+    .reveal-scale{opacity:0;transform:scale(0.9);transition:all .7s cubic-bezier(0.16,1,0.3,1)}
+    .reveal-scale.visible{opacity:1;transform:scale(1)}
+    .stagger-children > *{opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(0.16,1,0.3,1)}
+    .stagger-children.visible > *{opacity:1;transform:translateY(0)}
+    .stagger-children.visible > *:nth-child(1){transition-delay:0s}
+    .stagger-children.visible > *:nth-child(2){transition-delay:0.1s}
+    .stagger-children.visible > *:nth-child(3){transition-delay:0.2s}
+    .stagger-children.visible > *:nth-child(4){transition-delay:0.3s}
+    .stagger-children.visible > *:nth-child(5){transition-delay:0.4s}
+    .stagger-children.visible > *:nth-child(6){transition-delay:0.5s}
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:1024px){
+      .hero .container{grid-template-columns:1fr;text-align:center}
+      .hero p{margin:0 auto 32px}
+      .hero-actions{justify-content:center}
+      .hero-stats{justify-content:center}
+      .hero-mockup{max-width:520px;margin:0 auto}
+      .features-grid{grid-template-columns:repeat(2,1fr)}
+      .footer-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:768px){
+      .section{padding:64px 0}
+      .nav-links,.nav-cta{display:none}
+      .mobile-toggle{display:flex}
+      .nav-links.mobile-open{
+        display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;
+        background:rgba(15,23,42,0.98);backdrop-filter:blur(20px);
+        padding:24px;gap:20px;border-bottom:1px solid rgba(255,255,255,0.06);
+      }
+      .steps-grid,.features-grid,.pricing-grid,.testimonials-grid{grid-template-columns:1fr}
+      .pricing-card.popular{transform:none}
+      .pricing-card.popular:hover{transform:translateY(-4px)}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .stat-number{font-size:1.8rem}
+      .cta-section{padding:48px 24px;border-radius:16px}
+      .footer-grid{grid-template-columns:1fr;gap:32px}
+      .footer-bottom{flex-direction:column;gap:12px;text-align:center}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">X</div>
+        Agent X
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <button class="nav-cta" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Get Started</button>
+      <button class="mobile-toggle" id="mobileToggle" onclick="toggleMobile()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="container">
+      <div class="reveal-left">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          v2.0 — Now Live on FTMO & MetaTrader 5
+        </div>
+        <h1>
+          Autonomous Trading<br/>
+          <span class="gradient-text">Powered by AI</span>
+        </h1>
+        <p>
+          Deploy intelligent trading agents that analyze markets, manage risk, and execute
+          strategies 24/7 across multiple accounts — no manual intervention required.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+            Start Free Trial
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn-secondary" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 5.5v5l4-2.5-4-2.5z" fill="currentColor"/></svg>
+            See How It Works
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div><div class="hero-stat-value">$2.4M+</div><div class="hero-stat-label">Total Volume Traded</div></div>
+          <div><div class="hero-stat-value">1,247</div><div class="hero-stat-label">Active Agents</div></div>
+          <div><div class="hero-stat-value">99.9%</div><div class="hero-stat-label">Platform Uptime</div></div>
+        </div>
+      </div>
+      <div class="reveal-right">
+        <div class="hero-mockup">
+          <div class="mockup-glow"></div>
+          <div class="mockup-header">
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+            <span class="mockup-title">Agent Dashboard • FTMO-100K</span>
+          </div>
+          <div class="mockup-body">
+            <div class="mockup-row">
+              <span class="mockup-label">Account</span>
+              <span class="mockup-value blue">FTMO-Demo • 1513990433</span>
+            </div>
+            <div class="mockup-row">
+              <span class="mockup-label">Balance</span>
+              <span class="mockup-value green">$98,896.42</span>
+            </div>
+            <div class="mockup-row">
+              <span class="mockup-label">Equity</span>
+              <span class="mockup-value green">$98,237.22</span>
+            </div>
+            <div class="mockup-row">
+              <span class="mockup-label">Open Position</span>
+              <span class="mockup-value red">EURUSD SELL • 8.24 lots</span>
+            </div>
+            <div class="mockup-row">
+              <span class="mockup-label">Win Rate</span>
+              <span class="mockup-value blue">39.5%</span>
+            </div>
+            <div class="mockup-row">
+              <span class="mockup-label">Daily Drawdown</span>
+              <span class="mockup-value red">-0.67%</span>
+            </div>
+            <div class="mockup-chart">
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+              <div class="mockup-bar"></div>
+            </div>
+            <div class="mockup-legend">
+              <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <span class="section-label">Process</span>
+        <h2 class="section-title">Start Trading in <span class="gradient-text">3 Simple Steps</span></h2>
+        <p class="section-subtitle" style="margin:0 auto 0">From setup to autonomous execution — get your AI agent running in under 10 minutes.</p>
+      </div>
+      <div class="steps-grid stagger-children reveal" style="margin-top:60px">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3>Connect Your Broker</h3>
+          <p>Link your MT5 account — FTMO, demo, or live. Agent X's Bridge connects securely via encrypted API, supporting multiple accounts simultaneously.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h3>Configure Your Agent</h3>
+          <p>Set risk parameters (1% per trade, drawdown limits, daily caps), choose strategies, and enable news-aware trading. No coding required.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3>Let AI Trade 24/7</h3>
+          <p>Your agent runs autonomously — analyzing markets, managing risk, and executing trades around the clock. Monitor everything from the live dashboard.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="section" id="features" style="background:rgba(30,41,59,0.15)">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <span class="section-label">Platform Capabilities</span>
+        <h2 class="section-title">Everything You Need to <span class="gradient-text">Trade Smarter</span></h2>
+        <p class="section-subtitle" style="margin:0 auto 0">Agent X combines AI reasoning with institutional-grade infrastructure for relentless execution.</p>
+      </div>
+      <div class="features-grid stagger-children reveal" style="margin-top:60px">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(99,102,241,0.12);color:#818cf8">🤖</div>
+          <h3>Autonomous Trading Bots</h3>
+          <p>Deploy AI agents that execute strategies 24/7 without manual intervention. Each bot adapts to market conditions in real-time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(6,182,212,0.12);color:#22d3ee">🔗</div>
+          <h3>Multi-Account Bridge</h3>
+          <p>Manage FTMO, demo, and live accounts from one dashboard. Switch between accounts instantly with zero downtime.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(34,197,94,0.12);color:#4ade80">🛡️</div>
+          <h3>Smart Risk Management</h3>
+          <p>Per-trade risk limits at 1%, drawdown protection, and daily trade caps. Your capital is protected by hard enforcement rules.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.12);color:#fbbf24">📊</div>
+          <h3>Real Backtesting Engine</h3>
+          <p>Test strategies against 300+ real historical bars sourced directly from your broker — not synthetic data. See realistic performance.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(239,68,68,0.12);color:#f87171">📰</div>
+          <h3>News-Aware Decisions</h3>
+          <p>ForexFactory calendar integration. Your agent adjusts position sizing and avoids high-impact events automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(168,85,247,0.12);color:#c084fc">🔄</div>
+          <h3>Self-Healing Watchdog</h3>
+          <p>Infrastructure Watchdog restarts bridges, tunnels, and bots automatically if anything goes offline. 99.9% uptime guaranteed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATS ===== -->
+  <section class="section stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item reveal"><div class="stat-number" data-target="2.4">0</div><div class="stat-label">Million+ Traded Volume</div></div>
+        <div class="stat-item reveal"><div class="stat-number" data-target="1247">0</div><div class="stat-label">Active Trading Agents</div></div>
+        <div class="stat-item reveal"><div class="stat-number" data-target="99.9">0</div><div class="stat-label">% Platform Uptime</div></div>
+        <div class="stat-item reveal"><div class="stat-number" data-target="15">0</div><div class="stat-label">Supported Markets</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <span class="section-label">Pricing</span>
+        <h2 class="section-title">Simple, Transparent <span class="gradient-text">Pricing</span></h2>
+        <p class="section-subtitle" style="margin:0 auto 32px">Choose the plan that fits your trading journey. All plans include a 14-day free trial.</p>
+      </div>
+
+      <div class="pricing-toggle reveal">
+        <span class="active" id="monthlyLabel">Monthly</span>
+        <button class="toggle-switch" id="pricingToggle" onclick="togglePricing()" aria-label="Toggle pricing">
+          <span class="toggle-switch-knob"></span>
+        </button>
+        <span id="yearlyLabel">Annual <span style="color:#22c55e;font-size:0.75rem;font-weight:600">Save 20%</span></span>
+      </div>
+
+      <div class="pricing-grid stagger-children reveal" id="pricingCards">
+        <!-- Free -->
+        <div class="pricing-card">
+          <div class="pricing-name">Free</div>
+          <div class="pricing-price" data-monthly="$0" data-yearly="$0">$0<span>/month</span></div>
+          <p class="pricing-desc">Perfect for testing Agent X with a single account.</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 1 Trading Account</li>
+            <li><span class="check">✓</span> 1 Bot Instance</li>
+            <li><span class="check">✓</span> 7-Day Backtest History</li>
+            <li><span class="check">✓</span> Basic Risk Profiles</li>
+            <li><span class="cross" style="color:#64748b">✗</span> News Integration</li>
+            <li><span class="cross" style="color:#64748b">✗</span> Priority Support</li>
+          </ul>
+          <button class="pricing-btn">Get Started Free</button>
+        </div>
+
+        <!-- Pro (Popular) -->
+        <div class="pricing-card popular">
+          <span class="popular-badge">Most Popular</span>
+          <div class="pricing-name">Pro</div>
+          <div class="pricing-price" data-monthly="$29" data-yearly="$23">$29<span>/month</span></div>
+          <p class="pricing-desc">For serious traders managing multiple strategies.</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Up to 5 Trading Accounts</li>
+            <li><span class="check">✓</span> Up to 5 Bot Instances</li>
+            <li><span class="check">✓</span> Full Backtest History</li>
+            <li><span class="check">✓</span> Advanced Risk Profiles</li>
+            <li><span class="check">✓</span> News Integration</li>
+            <li><span class="cross" style="color:#64748b">✗</span> Priority Support</li>
+          </ul>
+          <button class="pricing-btn">Start 14-Day Trial</button>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="pricing-card">
+          <div class="pricing-name">Enterprise</div>
+          <div class="pricing-price" data-monthly="$99" data-yearly="$79">$99<span>/month</span></div>
+          <p class="pricing-desc">Maximum power for institutional-grade trading.</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Unlimited Trading Accounts</li>
+            <li><span class="check">✓</span> Unlimited Bot Instances</li>
+            <li><span class="check">✓</span> Full + Custom Backtest History</li>
+            <li><span class="check">✓</span> Custom Risk Profiles</li>
+            <li><span class="check">✓</span> News Integration</li>
+            <li><span class="check">✓</span> Priority Support + API Access</li>
+          </ul>
+          <button class="pricing-btn">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIALS ===== -->
+  <section class="section" id="testimonials" style="background:rgba(30,41,59,0.15)">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <span class="section-label">Testimonials</span>
+        <h2 class="section-title">Trusted by <span class="gradient-text">Traders Worldwide</span></h2>
+        <p class="section-subtitle" style="margin:0 auto 0">See how Agent X is transforming the way traders approach the markets.</p>
+      </div>
+      <div class="testimonials-grid stagger-children reveal" style="margin-top:60px">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Prop firm passed on first try. Agent X managed drawdown like a pro — I was at 3% the whole challenge. Set it and forget it actually works."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">AC</div>
+            <div>
+              <div class="testimonial-name">Alex Chen</div>
+              <div class="testimonial-role">Prop Firm Challenger</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Set it up in 10 minutes. Been running 3 months across 5 accounts without a single manual trade. The multi-account bridge is a lifesaver."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">SM</div>
+            <div>
+              <div class="testimonial-name">Sarah Mitchell</div>
+              <div class="testimonial-role">Algo Trader</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Backtesting saved me from a losing strategy. Would've cost me $5K in drawdown. The real broker data makes all the difference — no synthetic garbage."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">MR</div>
+            <div>
+              <div class="testimonial-name">Marcus Rivera</div>
+              <div class="testimonial-role">Independent Trader</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"News-aware trading is a game changer. No more surprise spikes at 2:30 PM. My agent just sits out the NFP announcements and gets back in when it's safe."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">PS</div>
+            <div>
+              <div class="testimonial-name">Priya Sharma</div>
+              <div class="testimonial-role">Forex Analyst</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="section" id="faq">
+    <div class="container" style="max-width:800px">
+      <div class="reveal" style="text-align:center">
+        <span class="section-label">FAQ</span>
+        <h2 class="section-title">Frequently Asked <span class="gradient-text">Questions</span></h2>
+      </div>
+      <div class="faq-list reveal" style="margin-top:48px">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>What is Agent X and how does it work?</span>
+            <span class="icon">+</span>
+          </button>
+          <div class="faq-answer">
+            Agent X is an autonomous AI-powered trading platform. You connect your MT5 accounts (FTMO, demo, or live), configure risk parameters and strategy preferences, and deploy AI agents that execute trades 24/7. Agents analyze market conditions, manage position sizing, and stop out of trades per your risk rules — no manual intervention required.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>Which brokers and accounts are supported?</span>
+            <span class="icon">+</span>
+          </button>
+          <div class="faq-answer">
+            Agent X supports any MetaTrader 5 account — FTMO challenge & verification accounts, demo accounts from any broker (MetaQuotes-Demo, FTMO-Demo, IC Markets, etc.), and live brokerage accounts. The Bridge connects securely via the MT5 API and can manage up to 5+ accounts simultaneously on paid plans.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>Is my capital safe? How does risk management work?</span>
+            <span class="icon">+</span>
+          </button>
+          <div class="faq-answer">
+            Risk management is enforced at the infrastructure level — not just recommended. You set a max risk per trade (default 1% of balance), daily drawdown limits, and daily trade caps. The agent physically respects these limits. Our Self-Healing Watchdog monitors everything 24/7 and restarts any failed components automatically. No strategy can override your risk parameters.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>Do I need coding experience to use Agent X?</span>
+            <span class="icon">+</span>
+          </button>
+          <div class="faq-answer">
+            Zero coding required. The entire setup is configuration-based through the dashboard. You pick your account, set your risk numbers (percentage, stop-loss, trade limits), and the agent handles everything. Advanced users can customize strategies, but the default configuration is production-ready out of the box.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>What happens if my agent opens a losing trade?</span>
+            <span class="icon">+</span>
+          </button>
+          <div class="faq-answer">
+            Every trade follows your predefined risk rules — the agent will close the trade at SL if it moves against you, and the per-trade risk cap ensures no single trade can damage your account. After a loss, the agent adjusts position sizing on the next trade automatically. Our backtesting engine lets you validate strategies on 300+ real bars before going live so you know the risk profile upfront.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-section reveal">
+        <div class="glow-orb glow-orb-3" style="opacity:0.05"></div>
+        <h2>Ready to Transform Your <span class="gradient-text">Trading?</span></h2>
+        <p>Join 1,200+ traders already using Agent X. Start your free trial today — no credit card required.</p>
+        <div class="cta-actions">
+          <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+            Start Free Trial
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn-secondary" onclick="window.open('https://github.com','_blank')">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1C4.136 1 1 4.136 1 8c0 3.092 2.006 5.715 4.787 6.641.35.064.478-.152.478-.338 0-.166-.006-.606-.01-1.19-1.947.423-2.357-.939-2.357-.939-.318-.808-.777-1.023-.777-1.023-.635-.434.048-.426.048-.426.702.05 1.073.722 1.073.722.624 1.07 1.638.761 2.037.582.063-.452.245-.761.445-.936-1.554-.177-3.188-.778-3.188-3.46 0-.764.273-1.39.72-1.88-.072-.177-.312-.89.07-1.855 0 0 .587-.188 1.925.718A6.709 6.709 0 018 4.337c.595.003 1.194.08 1.753.236 1.336-.906 1.923-.718 1.923-.718.382.965.142 1.678.07 1.855.447.49.72 1.116.72 1.88 0 2.688-1.637 3.28-3.196 3.454.251.217.476.645.476 1.3 0 .938-.008 1.694-.008 1.924 0 .188.126.404.482.336A6.996 6.996 0 0015 8c0-3.864-3.136-7-7-7z" fill="currentColor"/></svg>
+            GitHub
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo" style="margin-bottom:0">
+            <div class="nav-logo-icon">X</div>
+            Agent X
+          </a>
+          <p>Autonomous trading intelligence for modern markets. AI-powered agents that run 24/7, manage risk, and adapt to market conditions in real-time.</p>
+          <div class="footer-socials">
+            <a href="#" aria-label="Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+            <a href="#" aria-label="GitHub"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+            <a href="#" aria-label="Discord"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#testimonials">Testimonials</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">API Reference</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Community</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Agent X. All rights reserved.</span>
+        <span class="footer-disclaimer">⚠ School Project — Not a real financial service</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ===== NAVBAR SCROLL EFFECT =====
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // ===== MOBILE MENU =====
+    function toggleMobile() {
+      const links = document.getElementById('navLinks');
+      const toggle = document.getElementById('mobileToggle');
+      links.classList.toggle('mobile-open');
+      toggle.classList.toggle('open');
+    }
+    // Close mobile on link click
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.addEventListener('click', () => {
+        document.getElementById('navLinks').classList.remove('mobile-open');
+        document.getElementById('mobileToggle').classList.remove('open');
+      });
+    });
+
+    // ===== SCROLL REVEAL (Intersection Observer) =====
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Don't unobserve — let re-entering re-trigger is fine
+          // But stagger-children only needs to fire once
+          if (entry.target.classList.contains('stagger-children')) {
+            revealObserver.unobserve(entry.target);
+          }
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // ===== STAT COUNTERS =====
+    function animateCounters() {
+      document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+        const target = parseFloat(el.dataset.target);
+        const isDecimal = target % 1 !== 0;
+        const duration = 2000;
+        const start = performance.now();
+
+        function update(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          // Ease out cubic
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = eased * target;
+          el.textContent = isDecimal ? current.toFixed(1) : Math.floor(current);
+          if (progress < 1) requestAnimationFrame(update);
+          else el.textContent = isDecimal ? target.toFixed(1) : Math.floor(target);
+        }
+        requestAnimationFrame(update);
+      });
+    }
+
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounters();
+          counterObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    const statsGrid = document.querySelector('.stats-grid');
+    if (statsGrid) counterObserver.observe(statsGrid);
+
+    // ===== PRICING TOGGLE =====
+    let isYearly = false;
+
+    function togglePricing() {
+      isYearly = !isYearly;
+      const toggle = document.getElementById('pricingToggle');
+      const monthlyLabel = document.getElementById('monthlyLabel');
+      const yearlyLabel = document.getElementById('yearlyLabel');
+      toggle.classList.toggle('active');
+      monthlyLabel.classList.toggle('active', !isYearly);
+      yearlyLabel.classList.toggle('active', isYearly);
+
+      document.querySelectorAll('.pricing-price').forEach(el => {
+        const monthly = el.dataset.monthly;
+        const yearly = el.dataset.yearly;
+        el.innerHTML = (isYearly ? yearly : monthly) + '<span>/month</span>';
+      });
+    }
+
+    // ===== FAQ ACCORDION =====
+    function toggleFaq(btn) {
+      const answer = btn.nextElementSibling;
+      const isOpen = answer.classList.contains('open');
+      // Close all
+      document.querySelectorAll('.faq-answer.open').forEach(a => a.classList.remove('open'));
+      document.querySelectorAll('.faq-question.open').forEach(q => q.classList.remove('open'));
+      // Toggle this one
+      if (!isOpen) {
+        answer.classList.add('open');
+        btn.classList.add('open');
+      }
+    }
+
+    // ===== SMOOTH SCROLL for anchor links (fallback) =====
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // ===== PARALLAX ORB on hero =====
+    document.addEventListener('mousemove', e => {
+      const orbs = document.querySelectorAll('.glow-orb-1, .glow-orb-2');
+      const x = (e.clientX / window.innerWidth - 0.5) * 20;
+      const y = (e.clientY / window.innerHeight - 0.5) * 20;
+      orbs.forEach(orb => {
+        orb.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    });
+
+    // ===== AUTH CHECK: redirect already-logged-in users to dashboard =====
+    if (localStorage.getItem('token')) {
+      window.location.href = 'dashboard.html';
+    }
+
+    console.log('%c🤖 Agent X — Autonomous Trading Intelligence', 'font-size:24px;font-weight:bold;color:#818cf8');
+    console.log('%c⚠ School Project — Not a real financial service', 'font-size:12px;color:#fbbf24');
+  </script>
+</body>
+</html>

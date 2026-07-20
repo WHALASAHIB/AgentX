@@ -86,8 +86,8 @@ def _fetch_from_bridge(
     import requests
     global _last_fetch_source, _last_fetch_count
 
-    # Use mt5-demo account (has market data access)
-    account_id = "mt5-demo"
+    # Use ftmo-100k account (has market data access via bridge)
+    account_id = "ftmo-100k"
 
     # Map interval to bridge format
     interval_map = {

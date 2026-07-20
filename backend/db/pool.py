@@ -330,6 +330,22 @@ class PostgresPool:
     def get_active_account(self) -> Optional[str]:
         return self._mock_store.get("active_account_id")
 
+    # ── Account balance cache (persists last-known values across restarts) ──
+
+    def cache_account_balance(self, account_id: str, balance: float, equity: float, profit: float):
+        if "account_balances" not in self._mock_store:
+            self._mock_store["account_balances"] = {}
+        self._mock_store["account_balances"][account_id] = {
+            "balance": balance,
+            "equity": equity,
+            "profit": profit,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        self._save_json_store()
+
+    def get_cached_account_balance(self, account_id: str) -> Optional[dict]:
+        return self._mock_store.get("account_balances", {}).get(account_id)
+
     # ── System Events ─────────────────────────────────────────────────────────
 
     def save_system_event(self, event_type: str, severity: str, message: str, metadata: dict = None):

@@ -1,0 +1,49 @@
+//@version=5
+strategy(title="MACD RSI40 ADX14 Long-Only XAUUSD 1H", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+// --- inputs
+// MACD parameters
+fastLen = input.int(5, "MACD Fast Length", minval=1)      // sweep: 3-12 step 1
+slowLen = input.int(13, "MACD Slow Length", minval=1)      // sweep: 10-26 step 1
+sigLen = input.int(5, "MACD Signal Length", minval=1)      // sweep: 3-9 step 1
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=1)             // sweep: 7-21 step 1
+rsiMin = input.int(40, "RSI Minimum", minval=1)            // sweep: 30-60 step 5
+
+// ADX parameters
+adxLen = input.int(14, "ADX Length", minval=1)             // sweep: 7-21 step 1
+adxMin = input.int(14, "ADX Minimum", minval=1)            // sweep: 10-30 step 2
+
+// TP/SL parameters
+tpPoints = input.int(150, "Take Profit Points", minval=1)  // sweep: 50-300 step 25
+slPoints = input.int(100, "Stop Loss Points", minval=1)    // sweep: 50-200 step 25
+
+// --- MACD calculation
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, sigLen)
+macdBullish = ta.crossover(macdLine, signalLine)
+
+// --- RSI calculation
+rsi = ta.rsi(close, rsiLen)
+rsiOk = rsi > rsiMin
+
+// --- ADX calculation (manual, full calculation)
+trueRange = ta.tr
+plusDM = high - high[1] > low[1] - low ? math.max(high - high[1], 0) : 0
+minusDM = low[1] - low > high - high[1] ? math.max(low[1] - low, 0) : 0
+atr = ta.rma(trueRange, adxLen)
+diPlus = 100 * ta.rma(plusDM, adxLen) / atr
+diMinus = 100 * ta.rma(minusDM, adxLen) / atr
+dx = 100 * math.abs(diPlus - diMinus) / (diPlus + diMinus)
+adx = ta.rma(dx, adxLen)
+adxOk = adx > adxMin
+
+// --- entry logic
+longCondition = macdBullish and rsiOk and adxOk
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+// --- exit management
+if strategy.position_size > 0
+    strategy.exit("TP/SL", "Long", loss=slPoints, profit=tpPoints)

@@ -1023,17 +1023,36 @@ async def list_accounts(auth=Depends(require_auth)):
                 "enabled": a.get("enabled", True),
             }
     # Enrich with balance/equity and trade_allowed from bridge account details
+    # Always try to get balance data — use cached values from DB when bridge is stale
     for acct in merged.values():
-        if acct.get("connected"):
-            try:
-                info = await bridge.get_account(acct["id"])
-                if isinstance(info, dict):
-                    acct["balance"] = float(info.get("balance", 0) or 0)
-                    acct["equity"] = float(info.get("equity", 0) or 0)
-                    acct["profit"] = float(info.get("profit", 0) or 0)
-                    acct["trade_allowed"] = info.get("trade_allowed", None)
-            except Exception as exc:
-                logger.warning("Failed to fetch account detail for %s: %s", acct["id"], exc)
+        balance = 0.0
+        equity = 0.0
+        profit = 0.0
+        trade_allowed = None
+        try:
+            info = await bridge.get_account(acct["id"])
+            if isinstance(info, dict):
+                balance = float(info.get("balance", 0) or 0)
+                equity = float(info.get("equity", 0) or 0)
+                profit = float(info.get("profit", 0) or 0)
+                trade_allowed = info.get("trade_allowed", None)
+            # Cache successful balance/equity for fallback during outages
+            if balance > 0 or equity > 0:
+                db.cache_account_balance(acct["id"], balance, equity, profit)
+        except Exception as exc:
+            logger.warning("Failed to fetch account detail for %s: %s", acct["id"], exc)
+            # Fallback to cached balance from DB when bridge is down
+            cached = db.get_cached_account_balance(acct["id"])
+            if cached:
+                balance = float(cached.get("balance", 0))
+                equity = float(cached.get("equity", 0))
+                profit = float(cached.get("profit", 0))
+                logger.info("Using cached balance for %s: balance=%.2f equity=%.2f",
+                            acct["id"], balance, equity)
+        acct["balance"] = balance
+        acct["equity"] = equity
+        acct["profit"] = profit
+        acct["trade_allowed"] = trade_allowed
     return list(merged.values())
 
 @app.get("/api/accounts/active")
