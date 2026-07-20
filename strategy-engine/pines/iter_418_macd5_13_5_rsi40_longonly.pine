@@ -1,0 +1,31 @@
+//@version=5
+strategy(title="MACD(5,13,5) + RSI(14)>40 Long-Only XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(5, "MACD Fast Length", minval=1, maxval=50)       // sweep: 3-10 step 1
+slowLength = input.int(13, "MACD Slow Length", minval=5, maxval=50)      // sweep: 10-26 step 2
+sigLength  = input.int(5, "MACD Signal Length", minval=1, maxval=20)     // sweep: 3-9 step 1
+
+// RSI filter
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30)             // sweep: 7-21 step 2
+rsiMin    = input.int(40, "RSI Minimum for Long", minval=20, maxval=60)  // sweep: 30-55 step 5
+
+// TP/SL in points
+tpPoints  = input.int(150, "Take Profit (points)", minval=10, maxval=500)  // sweep: 50-300 step 25
+slPoints  = input.int(100, "Stop Loss (points)", minval=10, maxval=500)   // sweep: 50-300 step 25
+
+//--- indicator calculations
+[macdLine, signalLine, _hist] = ta.macd(close, fastLength, slowLength, sigLength)
+rsiVal = ta.rsi(close, rsiLength)
+
+//--- entry logic
+bullishCrossover = ta.crossover(macdLine, signalLine)
+rsiOK = rsiVal > rsiMin
+
+longCondition = bullishCrossover and rsiOK
+
+//--- exit management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)

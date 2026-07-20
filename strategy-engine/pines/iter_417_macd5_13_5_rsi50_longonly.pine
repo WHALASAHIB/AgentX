@@ -1,0 +1,53 @@
+//@version=5
+strategy(title="MACD(5,13,5) RSI>50 Long Only XAUUSD 1H", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// MACD parameters
+macdFastLen = input.int(5, "MACD Fast Length", minval=2, maxval=30, group="MACD")
+macdSlowLen = input.int(13, "MACD Slow Length", minval=5, maxval=40, group="MACD")
+macdSigLen  = input.int(5, "MACD Signal Length", minval=2, maxval=20, group="MACD")
+
+// RSI filter
+rsiLen  = input.int(14, "RSI Length", minval=7, maxval=28, group="RSI Filter")
+rsiMin  = input.int(50, "RSI Minimum (long)", minval=30, maxval=70, group="RSI Filter")
+
+// TP/SL in points (XAUUSD = 0.01 per point)
+tpPoints = input.int(150, "Take Profit (points)", minval=30, maxval=500, group="Risk Management")
+slPoints = input.int(100, "Stop Loss (points)", minval=20, maxval=300, group="Risk Management")
+
+//--- indicator calculations
+
+// MACD line and signal
+[macdLine, signalLine, _] = ta.macd(close, macdFastLen, macdSlowLen, macdSigLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry logic
+
+// Long condition: MACD line crosses above signal AND RSI > minimum threshold
+bullishCross = ta.crossover(macdLine, signalLine)
+longCondition = bullishCross and rsiVal > rsiMin
+
+// Exit condition: MACD crosses back below signal (bearish cross)
+bearishCross = ta.crossunder(macdLine, signalLine)
+
+//--- entry management
+
+// Convert points to price distance for XAUUSD (tick size = 0.01)
+// syminfo.mintick is the minimum price movement (0.01 for XAUUSD)
+tpPrice = close + (tpPoints * syminfo.mintick)
+slPrice = close - (slPoints * syminfo.mintick)
+
+// Long entry on bullish MACD crossover with RSI filter
+if longCondition
+    strategy.entry("MACD_LONG", strategy.long)
+
+// Exit with fixed TP/SL
+if strategy.position_size > 0
+    strategy.exit("MACD_EXIT", "MACD_LONG", loss=slPoints, profit=tpPoints)
+
+// Bearish MACD crossover closes the position (no short entries)
+if bearishCross and strategy.position_size > 0
+    strategy.close("MACD_LONG", comment="MACD_Bearish")

@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 175,
+    "total_ideas": 178,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1218,6 +1218,61 @@
       "diversification_value": "Vanna_Flow_Momentum_Capture relies on the 3-factor gamma x spot x implied vol interaction (vanna = the rate of change of delta with respect to vol), requiring option surface data and implied vol calculations. This idea uses a simpler, more robust mechanism: plain delta-hedging acceleration near known high-OI strikes, independent of vol data. It targets the gravitational-pull effect toward strikes rather than using gamma levels as a confirmation filter. The two are complementary: Vanna_Flow_Momentum_Capture filters entry direction based on gamma regime; Gamma_Strike_Momentum_Gravitation uses strikes as direct price targets. A systematic strategy could run both \u2014 the vanna filter says 'long entries are favourable', the gravitation signal says 'enter now and target $2000'. No existing momentum idea uses strike-level price targeting as the core mechanism.",
       "self_grade": "A-",
       "generated_at": "2026-07-17T02:23:58Z"
+    },
+    {
+      "name": "Gamma_Wall_Regime_Map",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Classifies gold regime by dealer gamma wall proximity \u2014 when price approaches a high-concentration strike, dealer hedging flow flips from mean-reverting (long gamma) to trend-amplifying (short gamma), creating persistent directional bias until the wall breaks or expires.",
+      "market_behaviour": "Options dealers at major gold hubs (LBMA, COMEX) maintain delta-hedged books. When gold approaches a high-concentration strike (a 'gamma wall'), dealer hedging flow flips from stabilizing to amplifying. At zero-GLP (gamma long) concentrations near strikes above/below spot, dealers buy dips and sell rallies (mean-reverting). At negative GLP concentrations (short gamma), dealers must sell into weakness and buy into strength (trend-amplifying). These gamma regime flips create persistent directional biases that last until price breaks through the wall or expiry. The regime is detectable by combining COT options positioning with GLD option chain snapshots.",
+      "entry_logic": "1. Estimate GLD options open interest concentration per strike using weekly COT puts/calls data and GLD option chain snapshots. 2. Identify the nearest gamma wall within 1.5-2.0 ATR of current price. 3. Classify regime: LONG_GAMMA if price is below a long gamma concentration zone (dealers buy dips), SHORT_GAMMA if above a short gamma concentration zone (dealers sell rallies), NEUTRAL if no wall within 2 ATR. 4. In LONG_GAMMA regime and RSI(14) < 40 on H1 \u2192 prepare long entry on H1 close with volume > 1.5x 20-period average. 5. In SHORT_GAMMA regime and RSI(14) > 60 on H1 \u2192 prepare short entry on H1 close with volume confirmation. 6. In NEUTRAL regime \u2192 no entry from this signal; rely on other filters.",
+      "exit_logic": "Stop loss: 1.0 ATR(14) below/above entry candle low/high. Take profit: 2.0 ATR. Time stop: exit if price hasn't reached the gamma wall zone within 5 bars. Re-entry allowed if price re-enters the gamma wall zone with fresh volume confirmation.",
+      "failure_mode": "1. COT data is weekly \u2014 gamma wall positions between Wednesday snapshots can change materially during high-volatility weeks (FOMC, NFP). Intraweek wall migration makes the map stale. 2. GLD options volume may not perfectly proxy COMEX gold futures options \u2014 basis risk between ETF and futures options. 3. During expiry week, gamma exposure collapses rapidly regardless of price action, creating false regime signals.",
+      "diversification_value": "All existing regime_filter ideas classify regime by volatility statistics (ATR/ADX), macro indicators (DXY, yields), or fractal math. None use derivatives market structure (dealer gamma positioning) as a regime classifier. This opens an entirely new sub-niche in the Options/Gamma cluster, complementing Options_Market_Regime_Classifier and Gamma_Flip_Regime_Divergence with a concrete gamma-wall mapping methodology rather than aggregate put/call ratios or divergence detection.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-19T07:07:53Z"
+    },
+    {
+      "name": "Regime_Entropy_Adaptive_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "market_behaviour": "During periods of high cross-asset entropy (unpredictable correlation structure between gold, USD, bonds, and equities), fixed position sizing leads to outsized losses because all assets can move against positions simultaneously \u2014 the diversification benefit vanishes. When entropy drops to a stable regime, the correlation matrix condenses into a few dominant eigenvectors (everything trades together), which is the most dangerous time for multi-pair portfolios. The market alternates between 'correlation clustering' stress regimes (low entropy, 1-2 factors explain >70% of variance) and 'normal-diversification' regimes (high entropy, risk spread across many independent factors). Known in risk parity literature as correlation breakdown / regime clustering.",
+      "entry_logic": "1. Compute rolling 20-day correlation matrix across XAUUSD, EURUSD, GBPUSD, US10Y yields, and SPY (5 assets, 10 unique correlations). 2. Perform eigendecomposition of the correlation matrix to extract eigenvalues. 3. Calculate spectral entropy: E = -sum(p_i * log(p_i) / log(N)) where p_i = eigenvalue_i / sum(eigenvalues) and N = number of assets. Normalized to [0,1]. 4. When E < 0.25 (highly concentrated correlation structure, 1-2 factors dominate \u2192 dangerous, no diversification benefit) \u2192 reduce all position sizes by 40%. 5. When E between 0.25 and 0.55 \u2192 reduce sizes by 20% (moderate regime). 6. When E > 0.55 (diversified correlation structure) \u2192 use baseline position sizing. 7. Re-check entropy weekly (every Monday) and adjust sizing accordingly.",
+      "exit_logic": "Not an entry/exit strategy \u2014 this is a risk overlay that modulates position sizing. Sizing adjustments persist until the next weekly entropy check. If entropy drops below 0.25 mid-week (re-check triggered by daily data refresh), apply the 40% reduction immediately. If entropy rises above 0.55, gradual restoration over 2 days.",
+      "failure_mode": "1. The 20-day lookback window is arbitrary \u2014 a 10-day or 40-day window may produce different entropy readings, adding model risk. 2. The eigenvalues from a 5-asset correlation matrix are noisy on short lookbacks \u2014 a single outlier day can swing entropy significantly. 3. This is a slow-moving regime filter that may lag during fast market dislocations (March 2020-style flash crash), where entropy collapses too fast for weekly reassessment.",
+      "diversification_value": "The only existing idea in the Correlation/Entropy cluster is Risk_Premium_Chase_Decay (B- grade), which models gold's beta to equities/bonds as a decaying signal. That is a single-correlation approach. This idea uses the FULL eigendecomposition of the correlation matrix \u2014 capturing interactions across 5 assets simultaneously via spectral entropy \u2014 a fundamentally more robust method from random matrix theory. It covers an entirely different mathematical basis: portfolio-level regime detection vs single-pair beta decay.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-19T07:07:53Z"
+    },
+    {
+      "name": "Volatility_Skew_Adaptive_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "market_behaviour": "Gold's options volatility smile flattens or steepens depending on macro regime. During risk-off, demand for out-of-the-money puts surges as institutional holders hedge gold longs \u2014 the put skew steepens (puts become expensive relative to calls). During risk-on or complacent periods, the skew flattens toward parity. The slope of the volatility skew reveals whether professional money is systematically hedging a particular tail risk. A steepening put skew indicates the dealer community expects downside \u2014 reducing long position size is prudent. A steepening call skew indicates speculative upside demand \u2014 reducing shorts is prudent. This is a well-documented phenomenon in commodity options markets (the 'skew regime').",
+      "entry_logic": "1. Derive gold options skew proxy from GLD options daily settlement: compute (25-delta put implied volatility) / (25-delta call implied volatility) ratio from the GLD option chain. 2. Smooth with EMA-5 to filter daily noise. 3. When skew ratio > 1.15 (puts significantly more expensive than calls \u2192 protective hedging dominant) AND skew EMA slope positive over 5 days \u2192 reduce all XAUUSD long position sizes by 30%. 4. When skew ratio < 0.88 (calls more expensive than puts \u2192 speculative upside demand) AND skew EMA slope negative over 5 days \u2192 reduce all XAUUSD short position sizes by 30%. 5. When skew ratio 0.92-1.10 (neutral band) \u2192 use baseline sizing. 6. Revert to baseline if skew stays in neutral band for 5+ consecutive days. 7. If GLD options data is unavailable (weekend/holiday), hold last known skew regime adjustment.",
+      "exit_logic": "Overlay sizer, not an entry strategy. Adjustments persist until the skew ratio moves out of the extreme zone or reverts to neutral for 5+ days. If skew ratio moves deeper into extreme (>1.25 or <0.80), increase reduction to 45%. If skew reverses direction (put skew falling from 1.15 back toward 1.0), start restoring sizing immediately at 10% per day.",
+      "failure_mode": "1. GLD options chain data may not be reliably available from free sources \u2014 requires either an options data subscription or COT weekly reporting (stale). 2. The 25-delta IV calculation is non-trivial: it requires interpolating the volatility smile from discrete strikes, which introduces approximation error. 3. During central bank intervention (BOJ, PBOC gold buying), options skew may reflect hedging of non-gold-specific risks (FX intervention hedges flowing through gold options), creating false signals. 4. A single large institutional trade can temporarily distort the skew for 1-2 days, causing a premature sizing adjustment.",
+      "diversification_value": "The Slippage/Convexity cluster has 1 existing idea (Multi_TF_Vol_Convexity_Sizer) which focuses on multi-timeframe volatility convexity. This idea introduces an entirely different concept \u2014 options volatility skew as a risk-sentiment gauge for position sizing. No existing risk_overlay idea uses options market structure (skew/smile) as an input. It bridges the gap between options market intelligence and execution risk management. Conceptually orthogonal to all 19 existing risk_overlay ideas.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-19T07:07:53Z"
     }
   ],
   "archived": [
@@ -3373,7 +3428,8 @@
       "ML_Regime_Ensemble_Switch",
       "Options_Market_Regime_Classifier",
       "Regime_Transition_Velocity_Detector",
-      "Options_Realized_Vol_Regime_Spread"
+      "Options_Realized_Vol_Regime_Spread",
+      "Gamma_Wall_Regime_Map"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
@@ -3394,7 +3450,9 @@
       "Position_Aging_Theta_Decay_Overlay",
       "Portfolio_Correlation_Sizing_Gate",
       "Spread_Regime_Adaptive_Sizer",
-      "Correlation_Breakdown_Contingency_Sizer"
+      "Correlation_Breakdown_Contingency_Sizer",
+      "Regime_Entropy_Adaptive_Sizer",
+      "Volatility_Skew_Adaptive_Sizer"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
