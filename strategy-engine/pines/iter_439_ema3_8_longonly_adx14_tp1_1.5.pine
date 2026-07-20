@@ -1,0 +1,37 @@
+//@version=5
+strategy(title="EMA3/8 Long-Only ADX14 TP1:1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods — fast crossover signals for XAUUSD 30m
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=100)      // sweep: 5-20 step 1
+
+// ADX filter — ensure trending market only
+adx_len = input.int(14, "ADX Length", minval=1, maxval=50)                // sweep: 10-20 step 1
+adx_threshold = input.float(14, "ADX Minimum", minval=1, maxval=50)       // sweep: 10-25 step 1
+
+// TP/SL with 1:1.5 ratio — TP=83, SL=125 gives ~1:1.5 to capture smaller wins more often
+tp_points = input.int(83, "Take Profit (points)", minval=10, maxval=500)  // sweep: 50-150 step 10
+sl_points = input.int(125, "Stop Loss (points)", minval=10, maxval=500)   // sweep: 75-200 step 10
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+
+// ADX using DMI (same as ta.dmi for consistency)
+[di_plus, di_minus, adx] = ta.dmi(adx_len, adx_len)
+
+//--- entry logic
+// Long entry: EMA3 crosses above EMA8 AND ADX > minimum (trending market)
+long_condition = ta.crossover(ema_fast, ema_slow) and adx > adx_threshold
+
+//--- exit management
+// TP/SL exit at 1:1.5 ratio — tighter TP to capture more smaller wins
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=sl_points, profit=tp_points)
+
+//--- visual plots for analysis
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=1)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=1)
+hline(adx_threshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)

@@ -1,0 +1,38 @@
+//@version=5
+strategy(title="EMA3/8 Long-Only ADX14 RSI50 TP1:1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)          // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)          // sweep: 5-20 step 1
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=1, maxval=50)                  // sweep: 10-30 step 2
+adxThreshold = input.float(14, "ADX Minimum", step=0.5, minval=1)          // sweep: 10-25 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)                  // sweep: 7-21 step 2
+rsiThreshold = input.float(50, "RSI Minimum (Long)", step=1, minval=1)     // sweep: 40-60 step 5
+
+// TP/SL — 1:1.5 ratio (tight TP, wider SL)
+tpPct = input.float(1.0, "Take Profit %", step=0.1, minval=0.1)           // sweep: 0.5-2.0 step 0.25
+slPct = input.float(1.5, "Stop Loss %", step=0.1, minval=0.1)             // sweep: 1.0-3.0 step 0.25
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+adxVal = ta.sma(ta.tr(true), adxLen)  // placeholder — using DX for ADX
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry logic
+longCondition = false
+if (ta.crossover(emaFast, emaSlow))
+    if (adx >= adxThreshold)
+        if (rsiVal >= rsiThreshold)
+            longCondition := true
+
+//--- exit management
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit Long", "Long", loss=close * slPct / 100 / syminfo.mintick, profit=close * tpPct / 100 / syminfo.mintick)

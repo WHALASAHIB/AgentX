@@ -1,6 +1,6 @@
 {
-  "iteration": 437,
-  "last_run": "2026-07-20T12:40:00Z",
+  "iteration": 441,
+  "last_run": "2026-07-20T14:00:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Remove RSI(14)>50 filter from EMA3/8 long-only strategy — only 1 trade in 899 bars with both RSI and ADX filters active. Keep ADX>14 as the only filter. Keep EMA3/8 crossover, TP=125/SL=125 (1:1), long-only, XAUUSD 30m.",
+  "current_hypothesis": "RSI>50 filter overfiltered — only 1 trade with EMA3/8 + ADX>14 + RSI>50 + TP=83/SL=125. Drop RSI entirely, widen entry by reducing ADX threshold from 14 to 10. Trades<20 at 1 — reduce entry threshold per rules (shorter EMAs: try EMA2/5 cross instead of EMA3/8). Keep TP=83/SL=125 (1:1.5), long-only, XAUUSD 30m.",
   "evolution_log": [
     {
       "iteration": 433,
@@ -26,7 +26,7 @@
     },
     {
       "iteration": 434,
-      "hypothesis": "Increase ADX(14) minimum from 20 to 25 to only trade in stronger trending markets, which should improve risk-adjusted returns. Keep EMA3/8 crossover, RSI>50 long / <50 short, TP=125/SL=125 (1:1), bidirectional on XAUUSD 30m.",
+      "hypothesis": "Increase ADX(14) minimum from 20 to 25 to only trade in stronger trending markets. Keep EMA3/8 crossover, RSI>50 long / <50 short, TP=125/SL=125 (1:1), bidirectional on XAUUSD 30m.",
       "metrics": {"pf": 0, "sharpe": 0, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
       "verdict": "invalid (no trades — ADX>25 overfiltered)",
       "symbol": "XAUUSD",
@@ -35,7 +35,7 @@
     },
     {
       "iteration": 435,
-      "hypothesis": "ADX>25 overfiltered — zero trades in 900 bars. Lower ADX minimum from 25 to 14 to restore trade frequency. Keep EMA3/8 crossover, RSI>50 long / <50 short, TP=125/SL=125 (1:1), bidirectional on XAUUSD 30m.",
+      "hypothesis": "ADX>25 overfiltered — zero trades. Lower ADX from 25 to 14. Keep EMA3/8 crossover, RSI>50 long / <50 short, TP=125/SL=125 (1:1), bidirectional on XAUUSD 30m.",
       "metrics": {"pf": 0.71224343, "sharpe": -7.99013067, "wr": 28.94736842, "dd": 5.51492872, "trades": 38, "net_profit": -445.013169259124},
       "verdict": "rejected (PF=0.71 Sharpe=-7.99 WR=28.9% DD=5.5%)",
       "symbol": "XAUUSD",
@@ -44,12 +44,48 @@
     },
     {
       "iteration": 436,
-      "hypothesis": "Switch EMA3/8 crossover from bidirectional to LONG ONLY. Keep ADX>14, RSI>50 long entry filter, TP=125/SL=125 (1:1). XAUUSD 30m. The best-ever strategy (PF 3.6) was long-only; bidirectional on 30m has consistently underperformed.",
+      "hypothesis": "Switch EMA3/8 to LONG ONLY. Keep ADX>14, RSI>50, TP=125/SL=125 (1:1). XAUUSD 30m. Best strategy (PF 3.6) was long-only.",
       "metrics": {"pf": 0, "sharpe": -3.5809176, "wr": 0, "dd": 6.14525502, "trades": 1, "net_profit": -431.915766738661},
       "verdict": "invalid (low sample, 1 trade)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-20T12:40:00Z"
+    },
+    {
+      "iteration": 437,
+      "hypothesis": "Remove RSI>50 filter from EMA3/8 long-only — only 1 trade with RSI+ADX. Keep ADX>14 only, TP=125/SL=125 (1:1), long-only, XAUUSD 30m.",
+      "metrics": {"pf": 1.26952824, "sharpe": -0.83822635, "wr": 38.46153846, "dd": 5.70231818, "trades": 26, "net_profit": -73.969798933795},
+      "verdict": "rejected (PF=1.27 Sharpe=-0.84 WR=38.5% DD=5.7%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T12:55:00Z"
+    },
+    {
+      "iteration": 438,
+      "hypothesis": "PF=1.27 below 1.5 — add RSI(14) filter at lower threshold (RSI>40) to avoid overfiltering. Keep EMA3/8, ADX>14, TP=125/SL=125 (1:1), long-only, XAUUSD 30m.",
+      "metrics": {"pf": 0.77307137, "sharpe": -15.89202796, "wr": 32.72727273, "dd": 5.44660143, "trades": 55, "net_profit": -529.521415125075},
+      "verdict": "rejected (PF=0.77 Sharpe=-15.89 DD=5.4%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T13:11:00Z"
+    },
+    {
+      "iteration": 439,
+      "hypothesis": "RSI>40 made PF worse (0.77). WR=32.7% below 40% — tighten TP/SL to 1:1.5 (TP=83, SL=125). Drop RSI filter. Keep EMA3/8, ADX>14, long-only, XAUUSD 30m.",
+      "metrics": {"pf": 1.26829698, "sharpe": -0.84705199, "wr": 38.46153846, "dd": 5.70907367, "trades": 26, "net_profit": -74.643015179574},
+      "verdict": "rejected (PF=1.27 Sharpe=-0.85 DD=5.7%)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T13:30:00Z"
+    },
+    {
+      "iteration": 440,
+      "hypothesis": "PF=1.27 below target. Add RSI(14)>50 filter for higher-quality entries. Keep EMA3/8 crossover, ADX>14, TP=83/SL=125 (1:1.5), long-only, XAUUSD 30m.",
+      "metrics": {"pf": 0, "sharpe": -3.58, "wr": 0, "dd": 6.15, "trades": 1, "net_profit": -431.92},
+      "verdict": "invalid (low sample, 1 trade)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T14:00:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
