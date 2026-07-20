@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 178,
+    "total_ideas": 180,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1273,6 +1273,44 @@
       "diversification_value": "The Slippage/Convexity cluster has 1 existing idea (Multi_TF_Vol_Convexity_Sizer) which focuses on multi-timeframe volatility convexity. This idea introduces an entirely different concept \u2014 options volatility skew as a risk-sentiment gauge for position sizing. No existing risk_overlay idea uses options market structure (skew/smile) as an input. It bridges the gap between options market intelligence and execution risk management. Conceptually orthogonal to all 19 existing risk_overlay ideas.",
       "self_grade": "A-",
       "generated_at": "2026-07-19T07:07:53Z"
+    },
+    {
+      "name": "Precious_Metals_Seasonal_Spread",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Trades the gold-silver ratio's predictable seasonal pattern \u2014 gold outperforms silver from May to August (safe-haven + wedding season demand), silver outperforms from October to January (industrial demand peak + holiday manufacturing).",
+      "market_behaviour": "Gold and silver have historically diverged in predictable seasonal patterns. Silver's dual nature (industrial + monetary) means it outperforms gold during global growth phases (Jan-May, Oct-Dec industrial demand) and underperforms during risk-off/safe-haven periods (Jun-Sep). The gold-silver ratio mean-reverts within a 60-90 range but has a strong seasonal component: ratio rises (gold outperforms) from May to August, and falls (silver outperforms) from October to January. This is driven by: (1) Indian wedding season (Aug-Nov) boosts gold physical demand more than silver; (2) industrial silver demand peaks in Oct-Dec ahead of electronics/holiday manufacturing; (3) Chinese New Year (Jan-Feb) boosts both but silver's industrial component responds faster. The edge exists because institutional rebalancing flows treat gold and silver as a basket, but the physical demand drivers diverge systematically by calendar quarter.",
+      "entry_logic": "1) Track calendar for seasonal windows: Gold Outperformance (May 1 - Aug 31, ratio rises), Silver Outperformance (Oct 1 - Jan 31, ratio falls). 2) At window start, calculate Gold/Silver Ratio = XAUUSD / XAGUSD (daily close). 3) For Gold Outperformance window: enter LONG ratio (long gold, short silver) if ratio is at or above its 50-day SMA at window open. If ratio is below 50-SMA, wait for it to cross back above. 4) For Silver Outperformance window: enter SHORT ratio (short gold, long silver) if ratio is at or below its 50-day SMA. If above, wait for cross below. 5) Hold position for the duration of the seasonal window. 6) If ratio reaches extreme territory (>90 for long exit, <55 for short exit), take full profit immediately regardless of calendar window.",
+      "exit_logic": "Primary exit: Close position at window end date. Secondary exits: (a) 5% trailing stop on the ratio from peak/valley since entry. (b) For LONG ratio: if ratio exceeds 90, take full profit \u2014 this is statistically extreme territory. (c) For SHORT ratio: if ratio drops below 55, take full profit. No re-entry within the same window. Re-enter in the opposite window at the correct season.",
+      "failure_mode": "1. Global recession/safe-haven event (banking crisis, COVID-style) that crushes silver's industrial demand independently of season. Silver can crash 30%+ in weeks regardless of calendar, blowing out the ratio past 120. 2. If silver industrial demand remains structurally strong through summer (solar boom, EV battery surge, semiconductor cycle), the gold-outperformance window fails entirely \u2014 ratio stays flat or falls. 3. Gold supply shock (mine strike, central bank buying spree) that overrides seasonal demand patterns.",
+      "diversification_value": "Completely different from Cross_Commodity_Seasonal_Rotation (the only other idea in the Cross-Commodity Seasonal PARTIAL cluster). Cross_Commodity_Seasonal_Rotation picks individual metals (silver, platinum, palladium) based on their strongest calendar months and goes long that single metal. This trades the gold-silver ratio's seasonal mean reversion as a spread \u2014 a fundamentally different market behaviour measuring the correlation breakdown between two precious metals. Also different from Institutional Flow cluster ideas (EndOfQuarter_Rebalance_Flow, Turn_Of_Month_Gold) which trade calendar windows around quarter-end and month-end \u2014 this trades 3-month seasonal windows on a specific pair ratio.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-20T00:43:00Z"
+    },
+    {
+      "name": "Gold_RealYield_Extreme_Divergence_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1 entry",
+        "H4 confirmation"
+      ],
+      "description": "Mean reversion when gold and US 10-year TIPS real yields diverge from their normal negative correlation \u2014 the relationship breaks temporarily then snaps back within 2-3 weeks.",
+      "market_behaviour": "Gold and US real yields (10-year TIPS yield) have a well-documented negative correlation \u2014 when real yields fall, gold rises as the opportunity cost of holding gold decreases. This relationship isn't mechanical; it breaks down during specific regimes. When gold and real yields move in the SAME direction for 5+ consecutive days (divergence from their normal -0.5 correlation), it signals a dislocation driven by temporary factors: positioning flush, liquidity vacuum, option gamma hedging, or forced deleveraging. These dislocations historically mean-revert within 2-3 weeks as the temporary factor subsides and the structural gold-real yield relationship reasserts itself. The edge is recognizing that the structural relationship (negative correlation driven by opportunity cost) is more persistent than any temporary dislocation driver.",
+      "entry_logic": "1) Calculate 20-day rolling Pearson correlation between daily XAUUSD returns and US10Y-TIPS real yield daily changes. 2) Flag a divergence when 20-day correlation crosses above -0.10 (anomalous territory \u2014 gold and real yields moving together or uncorrelated). 3) Confirmation: 3 consecutive days in divergence territory with the weekly z-score of the gold-real yield residual exceeding |1.5|. 4) If gold ROSE alongside RISING real yields: SHORT gold. Expect reversion as either real yields drop or gold corrects. 5) If gold FELL alongside FALLING real yields: LONG gold. Expect reversion as real yields rise or gold bounces. 6) Entry at market on the fourth divergence day after confirmation. Stop loss at 2x ATR(14) on D1. Take profit at 1.5x ATR(14) \u2014 reversion is sharp but not deep.",
+      "exit_logic": "Stop loss: 2x ATR(14) from entry on D1 timeframe. Take profit: 1.5x ATR(14). Time-stop: force exit at 21 calendar days if neither SL nor TP hit \u2014 the reversion took too long and the opportunity cost of holding is too high. Re-entry allowed only after a 10-day cooldown.",
+      "failure_mode": "1. Structural regime change: If the gold-real yield relationship permanently shifts (as it partially did in 2022-2023 when gold rallied despite rising real yields due to geopolitical premium + de-dollarization), the divergence isn't a reversion opportunity \u2014 it's a new equilibrium. Monitor the 200-day correlation trend; if it stays above -0.10 for 60+ days, permanently disable this strategy. 2. Slow bleed reversion: Correlation bounces back above -0.10 but the price reversion takes 4+ weeks. Time-stop at 21 days prevents excessive bleed but captures only sharp reversions. 3. Data feed dependency: TIPS yield data comes from FRED with a 1-day delay. Intra-week divergences may already have reverted before the delayed data confirms them.",
+      "diversification_value": "Distinct from Gold_Oil_Ratio_Extreme_Reverter (the only other idea in the Cross-Asset Ratio PARTIAL cluster). Gold_Oil_Ratio_Extreme_Reverter trades the gold-to-oil price ratio at z-score extremes using a 200-day lookback \u2014 it's a long-term commodity cross-ratio play. This idea trades the rolling correlation breakdown between gold and US real yields \u2014 a macro driver (interest rates) rather than a commodity cross. Also different from DXY_Gold_Correlation_Mean_Reverter (which trades DXY correlation breakdown and sits in the saturated RSI/Divergence cluster). Real yields are a separate macro channel from DXY \u2014 DXY measures the USD against a basket of currencies; real yields measure the inflation-adjusted return on US debt. The gold-real yield mechanism is about opportunity cost; the DXY-gold mechanism is about FX valuation. These are orthogonal signal chains.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-20T00:43:00Z"
     }
   ],
   "archived": [
@@ -3365,7 +3403,8 @@
       "Regime_Adaptive_Dynamic_Reversion",
       "Real_Yield_Divergence_Reverter",
       "DXY_Gold_Correlation_Mean_Reverter",
-      "Tick_Volume_Divergence_Reverter"
+      "Tick_Volume_Divergence_Reverter",
+      "Gold_RealYield_Extreme_Divergence_Reverter"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -3497,7 +3536,8 @@
       "Agricultural_Harvest_Cycle_Gold_Demand",
       "Base_Metals_Gold_Seasonal_Demand_Proxy",
       "Gold_Silver_Ratio_Seasonal_Reverser",
-      "CPI_Seasonal_Base_Effect_Gold"
+      "CPI_Seasonal_Base_Effect_Gold",
+      "Precious_Metals_Seasonal_Spread"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

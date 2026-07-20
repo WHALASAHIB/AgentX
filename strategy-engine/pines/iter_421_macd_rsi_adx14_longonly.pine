@@ -1,0 +1,75 @@
+//@version=5
+strategy(title="MACD RSI ADX14 Long Only XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macd_fast = input.int(5, "MACD Fast Length", minval=2, maxval=50)
+macd_slow = input.int(13, "MACD Slow Length", minval=5, maxval=100)
+macd_signal = input.int(5, "MACD Signal Length", minval=2, maxval=50)
+
+// RSI parameters
+rsi_length = input.int(14, "RSI Length", minval=5, maxval=50)
+rsi_min = input.int(30, "RSI Minimum (long)", minval=10, maxval=80)
+
+// ADX parameters
+adx_length = input.int(14, "ADX Length", minval=5, maxval=50)
+adx_min = input.int(14, "ADX Minimum", minval=5, maxval=50)  // sweep: 5-50 step 3
+
+// TP/SL parameters
+tp_points = input.int(150, "Take Profit (points)", minval=10, maxval=1000)
+sl_points = input.int(100, "Stop Loss (points)", minval=10, maxval=1000)
+
+//--- indicator calculations
+// MACD
+[macd_line, signal_line, _] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+macd_bullish = ta.crossover(macd_line, signal_line)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_length)
+rsi_ok_long = rsi_val > rsi_min
+
+// Manual ADX calculation (no ta.adx - avoid built-in issues)
+true_range = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr = ta.rma(true_range, adx_length)
+
+// +DM and -DM
+plus_dm = high - high[1]
+minus_dm = low[1] - low
+plus_dm_pos = plus_dm > minus_dm and plus_dm > 0 ? plus_dm : 0
+minus_dm_pos = minus_dm > plus_dm and minus_dm > 0 ? minus_dm : 0
+
+plus_di = 100 * ta.rma(plus_dm_pos, adx_length) / atr
+minus_di = 100 * ta.rma(minus_dm_pos, adx_length) / atr
+
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx = ta.rma(dx, adx_length)
+
+adx_ok = adx > adx_min
+
+//--- entry logic
+// MACD bullish crossover + RSI > min + ADX > min
+long_condition = macd_bullish and rsi_ok_long and adx_ok
+
+// Exit condition: MACD bearish crossover (signal line crosses above MACD line)
+bearish_crossover = ta.crossunder(macd_line, signal_line)
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+// Exit via SL/TP only — no strategy.close on every bar to avoid cascade-close
+if (strategy.position_size > 0 and bearish_crossover)
+    strategy.close("Long", comment="MACD_Bearish")
+
+//--- exit management
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=sl_points * syminfo.mintick, profit=tp_points * syminfo.mintick)
+
+//--- plot indicators for visual reference
+hline(0, "Zero", color=color.gray)
+plot(macd_line, "MACD", color=color.blue)
+plot(signal_line, "Signal", color=color.orange)
+hline(0, "Zero", color=color.gray)
+plot(rsi_val, "RSI", color=color.purple)
+hline(rsi_min, "RSI Min", color=color.green)
+plot(adx, "ADX", color=color.red)
+hline(adx_min, "ADX Min", color=color.orange)

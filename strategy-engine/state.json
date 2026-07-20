@@ -1,6 +1,6 @@
 {
-  "iteration": 420,
-  "last_run": "2026-07-19T15:53:00Z",
+  "iteration": 423,
+  "last_run": "2026-07-20T08:52:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,304 +13,31 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "Add ADX(14) > 25 filter (manual ADX calculation) to MACD(5,13,5) bullish crossover + RSI(14)>30 strategy. ADX ensures only strongly trending markets are traded, filtering choppy conditions that caused negative Sharpe (-8.33) and PF (0.72). Iteration 419 finally achieved 32 trades (above the 20 minimum) — the RSI>30 filter is working for trade frequency. Now the weakest metrics are PF (0.72 < 1.5) and Sharpe (-8.33 < 1.0). ADX > 25 addresses both by restricting entries to trending markets only. Keep 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.",
+  "current_hypothesis": "RSI>50 reduced trade count from 31 (iter 421, RSI>30) to 12 — too restrictive, below the statistical minimum of 20. Reduce RSI minimum from 50 to 40 to allow more entries while still filtering weak momentum. Keep MACD(5,13,5) bullish crossover + ADX(14)>14 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. Target >20 trades to get sufficient statistical significance, then iterate on PF and Sharpe.",
   "evolution_log": [
-    {
-      "iteration": 402,
-      "hypothesis": "EMA3/8 bullish crossover + RSI(14)>50 + manual ADX(14)>25 + 1:1.5 TP/SL (67/100) + long-only on XAUUSD 30m. ADX > 25 ensures only strongly trending markets are traded, filtering choppiness that caused negative Sharpe.",
-      "metrics": {
-        "pf": 0.0409434,
-        "sharpe": -3.40070591,
-        "wr": 25.0,
-        "dd": 4.29361673,
-        "trades": 4,
-        "net_profit": -235.680289938351
-      },
-      "verdict": "invalid (low sample, 4 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-17T04:54:09Z"
-    },
-    {
-      "iteration": 403,
-      "hypothesis": "Reduce ADX threshold from 25 to 14 to allow moderate-trending entries while still filtering the choppiest periods. Keep EMA3/8 crossover + RSI(14)>50 + manual ADX(14)>14 + 1:1.5 TP/SL (67/100) + long-only on XAUUSD 30m.",
-      "metrics": {
-        "pf": 0.90911244,
-        "sharpe": -10.69276785,
-        "wr": 34.375,
-        "dd": 2.76979642,
-        "trades": 32,
-        "net_profit": -272.808606936571
-      },
-      "verdict": "rejected (PF=0.91 Sharpe=-10.69 DD=2.77%)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-17T15:05:00Z"
-    },
-    {
-      "iteration": 404,
-      "hypothesis": "Increase RSI threshold from 50 to 55 to improve signal quality. A higher RSI ensures stronger bullish momentum before entry, which should improve both WR and PF. Keep EMA3/8 crossover + 1:1.5 TP/SL (100/150 points) + long-only on XAUUSD 30m.",
-      "metrics": {
-        "pf": 0.91341929,
-        "sharpe": -0.87716839,
-        "wr": 57.14285714,
-        "dd": 6.14524621,
-        "trades": 7,
-        "net_profit": -99.619843577648
-      },
-      "verdict": "invalid (low sample, 7 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-17T15:28:00Z"
-    },
-    {
-      "iteration": 405,
-      "hypothesis": "Reduce RSI threshold from 55 to 50 to restore trade count. Keep EMA3/8 crossover + 1:1.5 TP/SL (100/150 points) + long-only on XAUUSD 30m.",
-      "metrics": {
-        "pf": 0.50070855,
-        "sharpe": -3.19687783,
-        "wr": 20.0,
-        "dd": 6.78194917,
-        "trades": 5,
-        "net_profit": -372.224852128991
-      },
-      "verdict": "invalid (low sample, 5 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-17T15:43:00Z"
-    },
-    {
-      "iteration": 406,
-      "hypothesis": "EMA3/8 crossover on 30m is only generating 5 trades with RSI>50 — still far below the statistical minimum of 20. The RSI filter is too restrictive. Remove RSI filter entirely and let pure EMA3/8 crossover trade freely. 1:1.5 TP/SL (100/150 pts) long-only. If trade count jumps above 20 and PF > 1.0, we can re-add a lighter filter (RSI>40 or ADX>14) in the next iteration.",
-      "metrics": {
-        "pf": 0.75609148,
-        "sharpe": -8.65763804,
-        "wr": 19.67213115,
-        "dd": 7.07774975,
-        "trades": 61,
-        "net_profit": -706.227102184106
-      },
-      "verdict": "rejected (PF=0.76 Sharpe=-8.66 DD=7.08%)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-17T15:52:00Z"
-    },
-    {
-      "iteration": 407,
-      "hypothesis": "Add RSI(14) > 50 filter to EMA3/8 crossover. RSI ensures bullish momentum before entry. Keep 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. Switched from 30m to 1h due to server timeout on 30m data fetch.",
-      "metrics": {
-        "pf": 1.01819757,
-        "sharpe": -1.61462374,
-        "wr": 26.66666667,
-        "dd": 2.91621544,
-        "trades": 15,
-        "net_profit": -112.825363488544
-      },
-      "verdict": "invalid (low sample, 15 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T06:14:26Z"
-    },
-    {
-      "iteration": 408,
-      "hypothesis": "Reduce RSI threshold from 50 to 40 to allow more entries while maintaining basic signal filtering. Keep EMA3/8 crossover + 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.91105973,
-        "sharpe": -6.37134891,
-        "wr": 40.0,
-        "dd": 2.34308861,
-        "trades": 25,
-        "net_profit": -224.314399912259
-      },
-      "verdict": "rejected (PF=0.91 Sharpe=-6.37 DD=2.88%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T07:07:00Z"
-    },
-    {
-      "iteration": 409,
-      "hypothesis": "Add ADX(14) > 25 filter using manual ADX calculation. EMA5/13 crossover + RSI(14)>40 + manual ADX(14)>25 + 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. ADX > 25 ensures only strongly trending markets are traded.",
-      "metrics": {
-        "pf": 1.07354855,
-        "sharpe": -4.22045748,
-        "wr": 27.27272727,
-        "dd": 0.849721,
-        "trades": 11,
-        "net_profit": -80.775419573518
-      },
-      "verdict": "invalid (low sample, 11 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T07:22:00Z"
-    },
-    {
-      "iteration": 410,
-      "hypothesis": "Reduce ADX threshold from 25 to 14 to allow more entries. ADX(14) > 25 reduced trade count from 25 (iter 408, no ADX) to 11 — too restrictive. Lowering to ADX > 14 should filter only the flattest markets while allowing moderate-trending entries. Keep EMA5/13 crossover + RSI(14)>40 + 1:1.5 TP/SL (150/100 pts) + manual ADX calculation, long-only on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.16518613,
-        "sharpe": -4.01393841,
-        "wr": 28.57142857,
-        "dd": 4.60497128,
-        "trades": 7,
-        "net_profit": -274.882889731693
-      },
-      "verdict": "invalid (low sample, 7 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T07:37:00Z"
-    },
-    {
-      "iteration": 411,
-      "hypothesis": "Remove ADX filter entirely. ADX(14)>14 reduced trade count to 7 (vs 25 without ADX in iter 408) — ADX kills statistical significance at any threshold on 1h. Pure EMA5/13 crossover + RSI(14)>40 + 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. Fix low sample first (target >20 trades), then iterate on PF from a statistically sound baseline.",
-      "metrics": {
-        "pf": 1.2458493,
-        "sharpe": -4.29686816,
-        "wr": 35.71428571,
-        "dd": 1.08611524,
-        "trades": 14,
-        "net_profit": -85.500016968006
-      },
-      "verdict": "invalid (low sample, 14 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T07:39:00Z"
-    },
-    {
-      "iteration": 412,
-      "hypothesis": "Use even shorter EMA3/8 crossover (was EMA5/13) + lower RSI(14) > 30 (was > 40) + remove session filter (trade 24h, was 8-16 UTC). Removing ADX doubled trade count to 14 but still below 20. Shorter EMAs catch more crossovers and lower RSI allows entries in weaker momentum. Keep 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. Target >20 trades first.",
-      "metrics": {
-        "pf": 0.84834491,
-        "sharpe": -7.52795677,
-        "wr": 39.28571429,
-        "dd": 2.8189632,
-        "trades": 28,
-        "net_profit": -271.950562064299
-      },
-      "verdict": "rejected (PF=0.85 Sharpe=-7.53 DD=2.82%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T15:29:00Z"
-    },
-    {
-      "iteration": 413,
-      "hypothesis": "Raise RSI minimum from 30 to 50 to filter out weak momentum signals. With 28 trades (above the 20 threshold), we finally have statistical significance but PF=0.85 means the strategy loses money. RSI>50 ensures only stronger bullish momentum entries, which should improve PF at the cost of some trade count. If trade count drops below 20 again, we'll try raising RSI to 40 instead. Keep EMA3/8 crossover + 1:1.5 TP/SL (150/100 pts) + no session filter (24h) + long-only on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.96854155,
-        "sharpe": -4.26128673,
-        "wr": 46.66666667,
-        "dd": 1.44618192,
-        "trades": 15,
-        "net_profit": -133.256454935197
-      },
-      "verdict": "invalid (low sample, 15 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T15:52:00Z"
-    },
-    {
-      "iteration": 414,
-      "hypothesis": "MACD(12,26,9) crossover on XAUUSD 1h. MACD line crosses above signal = long entry, crosses below = exit. Fixed 1:1.5 TP/SL (150/100 pts). Long-only with RSI(14)>50 filter, 24h trading. MACD captures momentum shifts differently from EMA crossovers and may identify better entry points for XAUUSD.",
-      "metrics": {
-        "pf": 0,
-        "sharpe": null,
-        "wr": 0,
-        "dd": 0,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-17T15:52:30Z"
-    },
-    {
-      "iteration": 415,
-      "hypothesis": "Disable RSI filter on MACD crossover. MACD(12,26,9) with RSI>50 filter generated 0 trades on XAUUSD 1h — the RSI filter is blocking all entries. Remove RSI filter entirely to let MACD bullish crossovers trade freely. Keep MACD(12,26,9) + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.36037289,
-        "sharpe": -11.44949487,
-        "wr": 25.0,
-        "dd": 2.9140363,
-        "trades": 16,
-        "net_profit": -268.41133479153
-      },
-      "verdict": "invalid (low sample, 16 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-19T19:59:00Z"
-    },
-    {
-      "iteration": 416,
-      "hypothesis": "MACD(5,13,5) crossover on XAUUSD 1h — shorter MACD parameters for faster signals and more entries. MACD line crosses above signal = long entry. Fixed 1:1.5 TP/SL (150/100 pts). Long-only, 24h trading, no RSI filter.",
-      "metrics": {
-        "pf": 0.70847551,
-        "sharpe": -8.62530779,
-        "wr": 36.36363636,
-        "dd": 4.04625694,
-        "trades": 33,
-        "net_profit": -401.94846111303
-      },
-      "verdict": "rejected (PF=0.71 Sharpe=-8.63 DD=4.05%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-19T20:03:00Z"
-    },
-    {
-      "iteration": 417,
-      "hypothesis": "MACD(5,13,5) bullish crossover + RSI(14) > 50 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. RSI ensures bullish momentum before entry.",
-      "metrics": {
-        "pf": 0.4367829,
-        "sharpe": -8.28344772,
-        "wr": 33.33333333,
-        "dd": 2.5595866,
-        "trades": 12,
-        "net_profit": -255.958659673919
-      },
-      "verdict": "invalid (low sample, 12 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-19T07:23:56Z"
-    },
-    {
-      "iteration": 418,
-      "hypothesis": "MACD(5,13,5) bullish crossover + RSI(14) > 40 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. RSI(14) > 50 restricted trade count to 12 (iter 417). Reducing to RSI>40 should allow more entries while maintaining basic momentum filtering.",
-      "metrics": {
-        "pf": 1.03369345,
-        "sharpe": -1.06200057,
-        "wr": 30.76923077,
-        "dd": 3.80055994,
-        "trades": 13,
-        "net_profit": -89.124396177365
-      },
-      "verdict": "invalid (low sample, 13 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-19T15:23:00Z"
-    },
-    {
-      "iteration": 419,
-      "hypothesis": "Reduce RSI minimum from 40 to 30 (allowing weaker momentum entries) to increase trade count while keeping MACD(5,13,5) bullish crossover signals. Keep 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.",
-      "metrics": {
-        "pf": 0.72002105,
-        "sharpe": -8.33298969,
-        "wr": 37.5,
-        "dd": 3.91142846,
-        "trades": 32,
-        "net_profit": -388.461851379203
-      },
-      "verdict": "rejected (PF=0.72 Sharpe=-8.33 DD=3.91%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-19T15:53:00Z"
-    }
+    {"iteration": 402, "hypothesis": "EMA3/8 bullish crossover + RSI(14)>50 + manual ADX(14)>25 + 1:1.5 TP/SL (67/100) + long-only on XAUUSD 30m. ADX > 25 ensures only strongly trending markets are traded, filtering choppiness that caused negative Sharpe.", "metrics": {"pf": 0.0409434, "sharpe": -3.40070591, "wr": 25.0, "dd": 4.29361673, "trades": 4, "net_profit": -235.680289938351}, "verdict": "invalid (low sample, 4 trades)", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-17T04:54:09Z"},
+    {"iteration": 403, "hypothesis": "Reduce ADX threshold from 25 to 14 to allow moderate-trending entries while still filtering the choppiest periods. Keep EMA3/8 crossover + RSI(14)>50 + manual ADX(14)>14 + 1:1.5 TP/SL (67/100) + long-only on XAUUSD 30m.", "metrics": {"pf": 0.90911244, "sharpe": -10.69276785, "wr": 34.375, "dd": 2.76979642, "trades": 32, "net_profit": -272.808606936571}, "verdict": "rejected (PF=0.91 Sharpe=-10.69 DD=2.77%)", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-17T15:05:00Z"},
+    {"iteration": 404, "hypothesis": "Increase RSI threshold from 50 to 55 to improve signal quality. A higher RSI ensures stronger bullish momentum before entry, which should improve both WR and PF. Keep EMA3/8 crossover + 1:1.5 TP/SL (100/150 points) + long-only on XAUUSD 30m.", "metrics": {"pf": 0.91341929, "sharpe": -0.87716839, "wr": 57.14285714, "dd": 6.14524621, "trades": 7, "net_profit": -99.619843577648}, "verdict": "invalid (low sample, 7 trades)", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-17T15:28:00Z"},
+    {"iteration": 405, "hypothesis": "Reduce RSI threshold from 55 to 50 to restore trade count. Keep EMA3/8 crossover + 1:1.5 TP/SL (100/150 points) + long-only on XAUUSD 30m.", "metrics": {"pf": 0.50070855, "sharpe": -3.19687783, "wr": 20.0, "dd": 6.78194917, "trades": 5, "net_profit": -372.224852128991}, "verdict": "invalid (low sample, 5 trades)", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-17T15:43:00Z"},
+    {"iteration": 406, "hypothesis": "EMA3/8 crossover on 30m is only generating 5 trades with RSI>50 — still far below the statistical minimum of 20. The RSI filter is too restrictive. Remove RSI filter entirely and let pure EMA3/8 crossover trade freely. 1:1.5 TP/SL (100/150 pts) long-only. If trade count jumps above 20 and PF > 1.0, we can re-add a lighter filter (RSI>40 or ADX>14) in the next iteration.", "metrics": {"pf": 0.75609148, "sharpe": -8.65763804, "wr": 19.67213115, "dd": 7.07774975, "trades": 61, "net_profit": -706.227102184106}, "verdict": "rejected (PF=0.76 Sharpe=-8.66 DD=7.08%)", "symbol": "XAUUSD", "timeframe": "30m", "time": "2026-07-17T15:52:00Z"},
+    {"iteration": 407, "hypothesis": "Add RSI(14) > 50 filter to EMA3/8 crossover. RSI ensures bullish momentum before entry. Keep 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. Switched from 30m to 1h due to server timeout on 30m data fetch.", "metrics": {"pf": 1.01819757, "sharpe": -1.61462374, "wr": 26.66666667, "dd": 2.91621544, "trades": 15, "net_profit": -112.825363488544}, "verdict": "invalid (low sample, 15 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T06:14:26Z"},
+    {"iteration": 408, "hypothesis": "Reduce RSI threshold from 50 to 40 to allow more entries while maintaining basic signal filtering. Keep EMA3/8 crossover + 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h.", "metrics": {"pf": 0.91105973, "sharpe": -6.37134891, "wr": 40.0, "dd": 2.34308861, "trades": 25, "net_profit": -224.314399912259}, "verdict": "rejected (PF=0.91 Sharpe=-6.37 DD=2.88%)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T07:07:00Z"},
+    {"iteration": 409, "hypothesis": "Add ADX(14) > 25 filter using manual ADX calculation. EMA5/13 crossover + RSI(14)>40 + manual ADX(14)>25 + 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. ADX > 25 ensures only strongly trending markets are traded.", "metrics": {"pf": 1.07354855, "sharpe": -4.22045748, "wr": 27.27272727, "dd": 0.849721, "trades": 11, "net_profit": -80.775419573518}, "verdict": "invalid (low sample, 11 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T07:22:00Z"},
+    {"iteration": 410, "hypothesis": "Reduce ADX threshold from 25 to 14 to allow more entries. ADX(14) > 25 reduced trade count from 25 (iter 408, no ADX) to 11 — too restrictive. Lowering to ADX > 14 should filter only the flattest markets while allowing moderate-trending entries. Keep EMA5/13 crossover + RSI(14)>40 + 1:1.5 TP/SL (150/100 pts) + manual ADX calculation, long-only on XAUUSD 1h.", "metrics": {"pf": 0.16518613, "sharpe": -4.01393841, "wr": 28.57142857, "dd": 4.60497128, "trades": 7, "net_profit": -274.882889731693}, "verdict": "invalid (low sample, 7 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T07:37:00Z"},
+    {"iteration": 411, "hypothesis": "Remove ADX filter entirely. ADX(14)>14 reduced trade count to 7 (vs 25 without ADX in iter 408) — ADX kills statistical significance at any threshold on 1h. Pure EMA5/13 crossover + RSI(14)>40 + 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. Fix low sample first (target >20 trades), then iterate on PF from a statistically sound baseline.", "metrics": {"pf": 1.2458493, "sharpe": -4.29686816, "wr": 35.71428571, "dd": 1.08611524, "trades": 14, "net_profit": -85.500016968006}, "verdict": "invalid (low sample, 14 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T07:39:00Z"},
+    {"iteration": 412, "hypothesis": "Use even shorter EMA3/8 crossover (was EMA5/13) + lower RSI(14) > 30 (was > 40) + remove session filter (trade 24h, was 8-16 UTC). Removing ADX doubled trade count to 14 but still below 20. Shorter EMAs catch more crossovers and lower RSI allows entries in weaker momentum. Keep 1:1.5 TP/SL (150/100 pts) long-only on XAUUSD 1h. Target >20 trades first.", "metrics": {"pf": 0.84834491, "sharpe": -7.52795677, "wr": 39.28571429, "dd": 2.8189632, "trades": 28, "net_profit": -271.950562064299}, "verdict": "rejected (PF=0.85 Sharpe=-7.53 DD=2.82%)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T15:29:00Z"},
+    {"iteration": 413, "hypothesis": "Raise RSI minimum from 30 to 50 to filter out weak momentum signals. With 28 trades (above the 20 threshold), we finally have statistical significance but PF=0.85 means the strategy loses money. RSI>50 ensures only stronger bullish momentum entries, which should improve PF at the cost of some trade count. If trade count drops below 20 again, we'll try raising RSI to 40 instead. Keep EMA3/8 crossover + 1:1.5 TP/SL (150/100 pts) + no session filter (24h) + long-only on XAUUSD 1h.", "metrics": {"pf": 0.96854155, "sharpe": -4.26128673, "wr": 46.66666667, "dd": 1.44618192, "trades": 15, "net_profit": -133.256454935197}, "verdict": "invalid (low sample, 15 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T15:52:00Z"},
+    {"iteration": 414, "hypothesis": "MACD(12,26,9) crossover on XAUUSD 1h. MACD line crosses above signal = long entry, crosses below = exit. Fixed 1:1.5 TP/SL (150/100 pts). Long-only with RSI(14)>50 filter, 24h trading. MACD captures momentum shifts differently from EMA crossovers and may identify better entry points for XAUUSD.", "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0}, "verdict": "invalid (no trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-17T15:52:30Z"},
+    {"iteration": 415, "hypothesis": "Disable RSI filter on MACD crossover. MACD(12,26,9) with RSI>50 filter generated 0 trades on XAUUSD 1h — the RSI filter is blocking all entries. Remove RSI filter entirely to let MACD bullish crossovers trade freely. Keep MACD(12,26,9) + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.", "metrics": {"pf": 0.36037289, "sharpe": -11.44949487, "wr": 25.0, "dd": 2.9140363, "trades": 16, "net_profit": -268.41133479153}, "verdict": "invalid (low sample, 16 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-19T19:59:00Z"},
+    {"iteration": 416, "hypothesis": "MACD(5,13,5) crossover on XAUUSD 1h — shorter MACD parameters for faster signals and more entries. MACD line crosses above signal = long entry. Fixed 1:1.5 TP/SL (150/100 pts). Long-only, 24h trading, no RSI filter.", "metrics": {"pf": 0.70847551, "sharpe": -8.62530779, "wr": 36.36363636, "dd": 4.04625694, "trades": 33, "net_profit": -401.94846111303}, "verdict": "rejected (PF=0.71 Sharpe=-8.63 DD=4.05%)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-19T20:03:00Z"},
+    {"iteration": 417, "hypothesis": "MACD(5,13,5) bullish crossover + RSI(14) > 50 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. RSI ensures bullish momentum before entry.", "metrics": {"pf": 0.4367829, "sharpe": -8.28344772, "wr": 33.33333333, "dd": 2.5595866, "trades": 12, "net_profit": -255.958659673919}, "verdict": "invalid (low sample, 12 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-19T07:23:56Z"},
+    {"iteration": 418, "hypothesis": "MACD(5,13,5) bullish crossover + RSI(14) > 40 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. RSI(14) > 50 restricted trade count to 12 (iter 417). Reducing to RSI>40 should allow more entries while maintaining basic momentum filtering.", "metrics": {"pf": 1.03369345, "sharpe": -1.06200057, "wr": 30.76923077, "dd": 3.80055994, "trades": 13, "net_profit": -89.124396177365}, "verdict": "invalid (low sample, 13 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-19T15:23:00Z"},
+    {"iteration": 419, "hypothesis": "Reduce RSI minimum from 40 to 30 (allowing weaker momentum entries) to increase trade count while keeping MACD(5,13,5) bullish crossover signals. Keep 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.", "metrics": {"pf": 0.72002105, "sharpe": -8.33298969, "wr": 37.5, "dd": 3.91142846, "trades": 32, "net_profit": -388.461851379203}, "verdict": "rejected (PF=0.72 Sharpe=-8.33 DD=3.91%)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-19T15:53:00Z"},
+    {"iteration": 420, "hypothesis": "Add ADX(14) > 25 filter (manual ADX calculation) to MACD(5,13,5) bullish crossover + RSI(14)>30 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. ADX ensures only strongly trending markets are traded, filtering choppy conditions that caused negative Sharpe (-8.33) and PF (0.72) in iter 419. Now the weakest metrics are PF (0.72 < 1.5) and Sharpe (-8.33 < 1.0). ADX > 25 addresses both by restricting entries to trending markets only.", "metrics": {"pf": 0.50352902, "sharpe": -4.67682867, "wr": 60.0, "dd": 5.89689625, "trades": 10, "net_profit": -414.093291773614}, "verdict": "invalid (low sample, 10 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-20T00:00:00Z"},
+    {"iteration": 421, "hypothesis": "Reduce ADX(14) minimum from 25 to 14 to allow more entries while still filtering the flattest choppy markets. ADX(14)>25 in iteration 420 cut the trade count from 32 (iter 419, no ADX) to just 10 — far below the statistical minimum of 20. Lowering to ADX(14)>14 should filter only dead-flat markets while allowing moderate-trending entries. Keep MACD(5,13,5) bullish crossover + RSI(14)>30 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h.", "metrics": {"pf": 0.67618162, "sharpe": -9.35814861, "wr": 35.48387097, "dd": 4.28629542, "trades": 31, "net_profit": -428.629542465855}, "verdict": "rejected (PF=0.68 Sharpe=-9.36 DD=4.29%)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-20T00:00:00Z"},
+    {"iteration": 422, "hypothesis": "Tighten RSI minimum from 30 to 50 to improve profit factor. Iter 421 had PF=0.68 (weakest metric, target >1.5) and Sharpe=-9.36 (target >1.0). ADX(14)>14 allowed 31 trades (above 20 min), but PF remains poor. RSI>50 ensures only stronger bullish momentum entries, filtering weak signals that lose money. Keep MACD(5,13,5) bullish crossover + ADX(14)>14 + 1:1.5 TP/SL (150/100 pts) + long-only on XAUUSD 1h. If trade count drops below 20, try RSI>40 next.", "metrics": {"pf": 0.43678075, "sharpe": -7.95545103, "wr": 33.33333333, "dd": 2.40340051, "trades": 12, "net_profit": -240.340050616984}, "verdict": "invalid (low sample, 12 trades)", "symbol": "XAUUSD", "timeframe": "1h", "time": "2026-07-20T08:52:00Z"}
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": [
-    "XAUUSD",
-    "BYBIT:BTCUSDT.P"
-  ],
-  "timeframes_explored": [
-    "1h",
-    "30m"
-  ]
+  "pairs_explored": ["XAUUSD", "BYBIT:BTCUSDT.P"],
+  "timeframes_explored": ["1h", "30m"]
 }

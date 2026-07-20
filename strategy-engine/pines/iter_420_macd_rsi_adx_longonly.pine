@@ -1,0 +1,67 @@
+//@version=5
+strategy(title="MACD RSI ADX Long Only XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// MACD parameters
+macdFast = input.int(5, "MACD Fast Length", minval=2, maxval=20)          // sweep: 2-20 step 1
+macdSlow = input.int(13, "MACD Slow Length", minval=5, maxval=30)         // sweep: 5-30 step 1
+macdSignal = input.int(5, "MACD Signal Smoothing", minval=2, maxval=15)   // sweep: 2-15 step 1
+
+// RSI parameters
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=21)              // sweep: 7-21 step 2
+rsiMin = input.int(30, "RSI Minimum (Long)", minval=20, maxval=60)        // sweep: 20-60 step 5
+
+// ADX parameters
+adxLength = input.int(14, "ADX Length", minval=7, maxval=28)              // sweep: 7-28 step 3
+adxMin = input.int(25, "ADX Minimum", minval=14, maxval=40)               // sweep: 14-40 step 3
+
+// TP/SL parameters
+tpPoints = input.int(150, "Take Profit (points)", minval=50, maxval=500)  // sweep: 50-500 step 25
+slPoints = input.int(100, "Stop Loss (points)", minval=30, maxval=300)    // sweep: 30-300 step 20
+
+// Trade filter
+useAdxFilter = input.bool(true, "Use ADX Trend Filter")                   // sweep: true/false
+
+//--- MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, macdFast, macdSlow, macdSignal)
+
+//--- RSI calculation
+rsiValue = ta.rsi(close, rsiLength)
+
+//--- Manual ADX calculation
+calcADX(len) =>
+    up = ta.change(high)
+    down = -ta.change(low)
+    plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
+    minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
+    tr = ta.tr(true)
+    atrVal = ta.rma(tr, len)
+    plusDI = 100 * ta.rma(plusDM, len) / atrVal
+    minusDI = 100 * ta.rma(minusDM, len) / atrVal
+    dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+    adx = ta.rma(dx, len)
+    [adx, plusDI, minusDI]
+
+[adxValue, plusDIVal, minusDIVal] = calcADX(adxLength)
+
+//--- entry logic
+// MACD bullish crossover: MACD line crosses above signal
+macdBullishCross = ta.crossover(macdLine, signalLine)
+
+// Long entry conditions
+longCondition = macdBullishCross and rsiValue >= rsiMin and (not useAdxFilter or adxValue >= adxMin)
+
+//--- exit management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=slPoints * syminfo.mintick, profit=tpPoints * syminfo.mintick)
+
+//--- visual plots
+plot(macdLine, "MACD Line", color=color.blue)
+plot(signalLine, "Signal Line", color=color.orange)
+hline(0, "Zero Line", color=color.gray)
+plot(rsiValue, "RSI", color=color.purple)
+hline(rsiMin, "RSI Min", color=color.green, linestyle=hline.style_dashed)
+plot(adxValue, "ADX", color=color.red)
+hline(adxMin, "ADX Min", color=color.orange, linestyle=hline.style_dashed)
