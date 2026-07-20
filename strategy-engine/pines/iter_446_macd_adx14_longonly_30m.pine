@@ -1,0 +1,47 @@
+//@version=5
+// --- iter_446: MACD crossover, ADX>14, long-only, TP=104/SL=104 (1:1)
+// Iter 443/445 showed EMA2/5 + ADX>10 consistently gives PF~1.0 on 30m.
+// Switching to MACD (12,26,9) — different indicator family entirely.
+strategy(title="MACD ADX14 Long-Only XAUUSD 30m", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macdFast = input.int(12, "MACD Fast Length", minval=5, maxval=30, step=1)    // sweep: 8-20 step 2
+macdSlow = input.int(26, "MACD Slow Length", minval=10, maxval=50, step=1)   // sweep: 18-34 step 4
+macdSignal = input.int(9, "MACD Signal Length", minval=3, maxval=20, step=1) // sweep: 5-15 step 2
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=5, maxval=30, step=1)            // sweep: 10-25 step 5
+adxThresh = input.int(14, "ADX Threshold", minval=5, maxval=50, step=1)      // sweep: 10-25 step 5
+
+// TP/SL (points) — 1:1 ratio
+tpPoints = input.int(104, "Take Profit (points)", minval=10, maxval=500, step=1)  // sweep: 50-200 step 10
+slPoints = input.int(104, "Stop Loss (points)", minval=10, maxval=500, step=1)   // sweep: 50-200 step 10
+
+//--- indicator calculations
+[macdLine, signalLine, macdHist] = ta.macd(close, macdFast, macdSlow, macdSignal)
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+//--- entry logic
+// MACD line crosses above signal line = bullish, with ADX confirming trend
+buySignal = ta.crossover(macdLine, signalLine) and adx > adxThresh
+
+//--- exit management
+if buySignal and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long",
+                  loss=slPoints,
+                  profit=tpPoints,
+                  comment="TP/SL")
+
+//--- debug plots
+hline(0, "Zero Line", color.gray, hline.style_dotted)
+plot(macdLine, "MACD", color.blue, 2)
+plot(signalLine, "Signal", color.orange, 1)
+plot(adx, "ADX", color.purple, 1)
+hline(adxThresh, "ADX Threshold", color.gray, hline.style_dashed)

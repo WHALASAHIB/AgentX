@@ -1,0 +1,44 @@
+//@version=5
+// --- iter_443: EMA2/5 crossover, ADX>10 (via DMI), long-only, TP=83/SL=125 (1:1.5)
+// Removed RSI>50 filter (caused 0 trades in iter_442)
+strategy(title="EMA2/5 ADX10 Long-Only XAUUSD 30m", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=50, step=1)    // sweep: 1-10 step 1
+slowLen = input.int(5, "Slow EMA Length", minval=2, maxval=50, step=1)    // sweep: 3-21 step 2
+
+// ADX filter — using DMI as ta.adx is not supported by Trader Dev
+adxLen = input.int(14, "DMI/ADX Length", minval=5, maxval=30, step=1)     // sweep: 5-30 step 5
+adxThresh = input.int(10, "ADX Threshold", minval=5, maxval=50, step=1)   // sweep: 5-25 step 5
+
+// TP/SL (points)
+tpPoints = input.int(83, "Take Profit (points)", minval=10, maxval=500, step=1)  // sweep: 50-200 step 10
+slPoints = input.int(125, "Stop Loss (points)", minval=10, maxval=500, step=1)  // sweep: 80-200 step 10
+
+//--- indicator calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+//--- entry logic
+// Entry on bullish EMA crossover + ADX > threshold (trending market)
+buySignal = ta.crossover(emaFast, emaSlow) and adx > adxThresh
+
+//--- exit management
+if buySignal and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long",
+                  loss=slPoints,
+                  profit=tpPoints,
+                  comment="TP/SL")
+
+//--- debug plots
+plot(emaFast, "Fast EMA", color.blue, 2)
+plot(emaSlow, "Slow EMA", color.red, 2)
+hline(adxThresh, "ADX Threshold", color.gray, hline.style_dashed)
