@@ -1047,6 +1047,10 @@ async def list_accounts(auth=Depends(require_auth)):
                 balance = float(cached.get("balance", 0))
                 equity = float(cached.get("equity", 0))
                 profit = float(cached.get("profit", 0))
+                # Mark as connected when we have valid cached data
+                if balance > 0 or equity > 0:
+                    acct["connected"] = True
+                    acct["last_error"] = None
                 logger.info("Using cached balance for %s: balance=%.2f equity=%.2f",
                             acct["id"], balance, equity)
         acct["balance"] = balance
@@ -1593,9 +1597,10 @@ async def proxy_stats(account_id: str, days: int = 30, auth=Depends(require_auth
     except Exception:
         pass
 
-    # Fallback: compute stats from trade history (bridge doesn't cache stats)
+    # Fallback: compute stats from cached trade history (DB)
     try:
-        trades = await bridge.get_trades(account_id, days)
+        db = get_db()
+        trades = db.get_trades(account_id, limit=days * 10)
         trades = [t for t in (trades or [])
                   if isinstance(t, dict) and t.get("symbol")
                   and t.get("type") in ("BUY", "SELL")]

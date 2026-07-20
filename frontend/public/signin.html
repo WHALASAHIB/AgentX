@@ -85,7 +85,7 @@
         if (!res.ok) { throw new Error(data.detail || 'Invalid credentials'); }
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify({ email: data.email, name: data.name }));
-        window.location.href = 'index.html';
+        window.location.href = 'dashboard.html';
       } catch (err) {
         errEl.textContent = err.message;
         errEl.style.display = 'block';

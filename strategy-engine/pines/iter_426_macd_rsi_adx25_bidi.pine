@@ -1,0 +1,71 @@
+//@version=5
+strategy(title="MACD RSI ADX25 BIDI XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_len = input.int(5, "MACD Fast Length", minval=2, maxval=30)       // sweep: 3-15 step 2
+slow_len = input.int(13, "MACD Slow Length", minval=5, maxval=50)      // sweep: 8-26 step 3
+sig_len  = input.int(5, "MACD Signal Length", minval=2, maxval=20)     // sweep: 3-12 step 2
+
+// ADX filter (manual calculation)
+adx_len  = input.int(14, "ADX Length", minval=7, maxval=30)            // sweep: 7-21 step 2
+adx_min  = input.int(25, "ADX Minimum", minval=10, maxval=50)          // sweep: 15-35 step 5
+
+// RSI filter
+rsi_len  = input.int(14, "RSI Length", minval=5, maxval=30)            // sweep: 7-21 step 2
+rsi_up   = input.int(50, "RSI LONG Minimum", minval=30, maxval=70)     // sweep: 40-60 step 5
+rsi_down = input.int(50, "RSI SHORT Maximum", minval=30, maxval=70)    // sweep: 40-60 step 5
+
+// TP/SL management
+stop_loss_pts = input.int(150, "Stop Loss (points)", minval=20, maxval=500)     // sweep: 50-300 step 25
+take_profit_pts = input.int(100, "Take Profit (points)", minval=20, maxval=500)  // sweep: 50-300 step 25
+
+//--- manual ADX calculation (DMI method)
+// True Range
+tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+// Directional movement
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+// Wilder's smoothing
+smoothed_tr = ta.rma(tr, adx_len)
+smoothed_plus_dm = ta.rma(plus_dm, adx_len)
+smoothed_minus_dm = ta.rma(minus_dm, adx_len)
+// Directional Indicators
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+// DX and ADX
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx, adx_len)
+
+//--- indicator calculations
+[macd_line, signal_line, macd_hist] = ta.macd(close, fast_len, slow_len, sig_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+// LONG: MACD bullish crossover + RSI above threshold + ADX above minimum
+long_condition = macd_line > signal_line and macd_hist > 0 and macd_hist[1] <= 0 and adx_val >= adx_min and rsi_val > rsi_up
+
+// SHORT: MACD bearish crossover + RSI below threshold + ADX above minimum
+short_condition = macd_line < signal_line and macd_hist < 0 and macd_hist[1] >= 0 and adx_val >= adx_min and rsi_val < rsi_down
+
+//--- entry management
+// LONG entry
+if long_condition and strategy.position_size == 0
+    strategy.entry("LONG", strategy.long)
+    strategy.exit("EXIT_LONG", "LONG", loss=stop_loss_pts, profit=take_profit_pts)
+
+// SHORT entry
+if short_condition and strategy.position_size == 0
+    strategy.entry("SHORT", strategy.short)
+    strategy.exit("EXIT_SHORT", "SHORT", loss=stop_loss_pts, profit=take_profit_pts)
+
+//--- plots for visual reference
+plot(adx_val, "ADX", color=color.purple, linewidth=1)
+hline(adx_min, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)
+plot(plus_di, "+DI", color=color.green, linewidth=1)
+plot(minus_di, "-DI", color=color.red, linewidth=1)
+hline(50, "RSI Mid", color=color.gray, linestyle=hline.style_dotted)
+hline(rsi_up, "RSI Up", color=color.green, linestyle=hline.style_dotted)
+hline(rsi_down, "RSI Down", color=color.red, linestyle=hline.style_dotted)

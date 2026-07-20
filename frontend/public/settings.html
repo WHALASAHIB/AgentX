@@ -106,8 +106,8 @@
 
   <script>
     const API='';
-    function authCheck(){if(!localStorage.getItem('token'))window.location.href='signin.html';}
-    function logout(){localStorage.removeItem('token');localStorage.removeItem('user');window.location.href='signin.html';}
+    function authCheck(){if(!localStorage.getItem('token'))window.location.href='index.html';}
+    function logout(){localStorage.removeItem('token');localStorage.removeItem('user');window.location.href='index.html';}
     function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
     function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
     function toggleTheme(){document.body.classList.toggle('light');const l=document.body.classList.contains('light');localStorage.setItem('theme',l?'light':'dark');document.getElementById('themeBtn').textContent=l?'☀️ Light Mode':'🌙 Dark Mode';}

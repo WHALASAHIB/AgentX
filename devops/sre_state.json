@@ -1,7 +1,7 @@
 {
   "mt5_was_down": true,
   "autotrading_was_off": false,
-  "bridge_was_down": true,
+  "bridge_was_down": false,
   "backend_was_down": false,
   "trade_retcodes_warned": false,
   "bots_were_stopped": true
