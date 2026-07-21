@@ -1,6 +1,6 @@
 {
-  "iteration": 453,
-  "last_run": "2026-07-21T09:00:00Z",
+  "iteration": 456,
+  "last_run": "2026-07-21T17:53:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "All metrics solid on BTCUSDT 30m with EMA3/8 (PF=1.93, Sharpe=10.19, WR=48.8%, 287 trades). Try a different indicator family entirely: Bollinger Bands(20,2) breakout on BTCUSDT 30m. Long when close crosses above upper band, short when close crosses below lower band. TP=200/SL=100 ticks (2:1), both directions.",
+  "current_hypothesis": "MACD(12,26,9) crossover on BTCUSDT 30m without any filter lost money (PF=0.90, Sharpe=-2.08). The MACD gives too many false signals on crypto without a trend filter. Add RSI(14) filter: long only when MACD crosses above signal AND RSI>50, short only when MACD crosses below signal AND RSI<50. Same 1:1 TP/SL at 104 ticks.",
   "evolution_log": [
     {
       "iteration": 450,
@@ -28,19 +28,46 @@
       "iteration": 451,
       "hypothesis": "Remove RSI entirely. Keep MACD(12,26,9), ADX>10, TP=104/SL=104, long-only, XAUUSD 30m. See if MACD crossover alone generates 20+ trades with viable PF.",
       "metrics": {"pf": 0.0, "sharpe": null, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades — XAUUSD not available on TV_ENGINE_JUL_26 path, mapped to BTCUSDT. MACD(12,26,9)+ADX>10 produced 0 trade signals on BTCUSDT 30m)",
+      "verdict": "invalid (no trades — XAUUSD not available on TV_ENGINE_JUL_26 path, mapped to BTCUSDT. MACD(12,26,9)+ADX>10 produced 0 trade signals)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-21T00:37:00Z"
     },
     {
       "iteration": 452,
-      "hypothesis": "EMA3/8 crossover on BTCUSDT 30m (explicit symbol, not XAUUSD-mapped). Remove ADX filter (too restrictive — 0 trades previously). TP=200/SL=100 ticks (2:1), long-only. Fast EMAs for crypto momentum.",
-      "metrics": {"pf": 1.92580371, "sharpe": 10.19266386, "wr": 48.7804878, "dd": 0.01241561, "trades": 287, "net_profit": 19.639999999999},
-      "verdict": "accepted (PF>1.5, Sharpe>1.0, WR>40%, DD<15%, trades>20 — all metrics good. Not new best vs iter 44 PF=3.61)",
+      "hypothesis": "EMA3/8 crossover on BTCUSDT 30m. No ADX. TP=200/SL=100 ticks (2:1), long-only.",
+      "metrics": {"pf": 1.92580371, "sharpe": 10.19266386, "wr": 48.7804878, "dd": 0.01241561, "trades": 287, "net_profit": 19.64},
+      "verdict": "accepted (all metrics good, not new best vs iter 44 PF=3.61)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-21T09:00:00Z"
+    },
+    {
+      "iteration": 453,
+      "hypothesis": "Bollinger Bands(20,2) breakout on BTCUSDT 30m. Long when close above upper band, short below lower band. TP=200/SL=100.",
+      "metrics": {"pf": 0.09711785, "sharpe": -6.67541891, "wr": 39.37007874, "dd": 23.76840017, "trades": 254, "net_profit": -2317.6843},
+      "verdict": "rejected (PF=0.10, Sharpe=-6.68, DD=23.77% — false breakouts without filter)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T17:20:00Z"
+    },
+    {
+      "iteration": 454,
+      "hypothesis": "BB breakout with RSI(14) filter on BTCUSDT 30m. Long above upper band + RSI>50, short below lower band + RSI<50.",
+      "metrics": {"pf": 1.99490094, "sharpe": 10.2200182, "wr": 49.80842912, "dd": 0.0123367, "trades": 261, "net_profit": 18.731},
+      "verdict": "accepted (PF=1.99, all metrics healthy, RSI filter fixed false breakouts)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T17:42:00Z"
+    },
+    {
+      "iteration": 455,
+      "hypothesis": "MACD(12,26,9) crossover on BTCUSDT 30m, long-only, TP=104/SL=104 ticks (1:1), no RSI or ADX filter.",
+      "metrics": {"pf": 0.89748432, "sharpe": -2.07655515, "wr": 47.82608696, "dd": 0.05946574, "trades": 368, "net_profit": -2.99208},
+      "verdict": "rejected (PF=0.90, Sharpe=-2.08 — MACD crossover without trend filter loses money on BTCUSDT 30m)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T17:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

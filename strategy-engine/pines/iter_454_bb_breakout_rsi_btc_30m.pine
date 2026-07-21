@@ -1,0 +1,46 @@
+//@version=6
+strategy(title="BB Breakout RSI BTC 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands parameters
+bbLength = input.int(20, "BB Length", minval=5, maxval=50, step=1)  // sweep: 10-30 step 5
+bbStdDev = input.float(2.0, "BB StdDev", minval=0.5, maxval=4.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+
+// RSI filter
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=21, step=1)  // sweep: 7-21 step 7
+rsiOverbought = input.int(70, "RSI Overbought", minval=60, maxval=85, step=5)  // sweep: 65-80 step 5
+rsiOversold = input.int(30, "RSI Oversold", minval=15, maxval=40, step=5)  // sweep: 20-40 step 5
+
+// TP/SL in ticks
+tpTicks = input.int(200, "Take Profit (ticks)", minval=50, maxval=500, step=10)  // sweep: 100-400 step 50
+slTicks = input.int(100, "Stop Loss (ticks)", minval=30, maxval=300, step=10)  // sweep: 50-200 step 25
+
+// Trade direction
+allowLong = input.bool(true, "Allow Long")
+allowShort = input.bool(true, "Allow Short")
+
+//--- indicators
+[bbMiddle, bbUpper, bbLower] = ta.bb(close, bbLength, bbStdDev)
+rsi = ta.rsi(close, rsiLength)
+
+//--- entry logic
+// Long: close crosses above upper BB AND RSI > 50 (bullish momentum confirmation)
+longEntry = ta.crossover(close, bbUpper) and rsi > 50
+
+// Short: close crosses below lower BB AND RSI < 50 (bearish momentum confirmation)
+shortEntry = ta.crossunder(close, bbLower) and rsi < 50
+
+//--- exit management
+if (longEntry and allowLong)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slTicks * syminfo.mintick, profit=tpTicks * syminfo.mintick)
+
+if (shortEntry and allowShort)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=slTicks * syminfo.mintick, profit=tpTicks * syminfo.mintick)
+
+//--- plot
+plot(bbMiddle, "BB Middle", color=color.blue)
+plot(bbUpper, "BB Upper", color=color.gray)
+plot(bbLower, "BB Lower", color=color.gray)
+// fill removed — not supported in TV_ENGINE_JUL_26

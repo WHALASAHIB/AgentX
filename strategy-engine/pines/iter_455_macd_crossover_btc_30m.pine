@@ -1,0 +1,27 @@
+//@version=6
+strategy(title="Iter 455 — MACD Crossover BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+macd_fast = input.int(12, title="MACD Fast Length", minval=5, maxval=30, tooltip="Fast EMA length for MACD line. sweep: 8-20 step 2")
+macd_slow = input.int(26, title="MACD Slow Length", minval=15, maxval=50, tooltip="Slow EMA length for MACD line. sweep: 20-40 step 5")
+macd_signal = input.int(9, title="MACD Signal Length", minval=5, maxval=20, tooltip="Signal line EMA length. sweep: 7-15 step 2")
+
+tp_ticks = input.int(104, title="Take Profit (ticks)", minval=10, maxval=500, tooltip="Fixed TP in ticks. sweep: 50-200 step 25")
+sl_ticks = input.int(104, title="Stop Loss (ticks)", minval=10, maxval=500, tooltip="Fixed SL in ticks. sweep: 50-200 step 25")
+
+//--- indicators
+[macd_line, signal_line, _] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+hist = macd_line - signal_line
+
+//--- entry logic: MACD crossover → long, crossunder → short
+long_condition = ta.crossover(macd_line, signal_line)
+short_condition = ta.crossunder(macd_line, signal_line)
+
+//--- exit management using fixed ticks
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks * syminfo.mintick, profit=tp_ticks * syminfo.mintick)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks * syminfo.mintick, profit=tp_ticks * syminfo.mintick)
