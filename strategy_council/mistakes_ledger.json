@@ -9,7 +9,7 @@
       "pnl": -793.03,
       "root_cause": "Multi-pair MACD bots (M200200, M200100) continued trading on FTMO account during REDUCE risk state, accumulating -$356 combined losses in a single day. USDJPY positions (M0) closed by FTMO risk desk for additional -$436.",
       "fix": "Kill multi-pair bots on FTMO account until risk state returns to GREEN. These bots were designed for unlimited demo, not FTMO challenge with 10% max DD.",
-      "prevention_rule": "When risk state is REDUCE and drawdown > 8%, ALL bots on FTMO account must be paused — not just switched strategies."
+      "prevention_rule": "When risk state is REDUCE and drawdown > 8%, ALL bots on FTMO account must be paused \u2014 not just switched strategies."
     },
     {
       "date": "2026-06-25",
@@ -18,7 +18,7 @@
       "exit": 0,
       "pnl": 0,
       "root_cause": "Propfirm Pass bot (M780012) ran once at 15:29 UTC, synced state from other bots' trades (found 9 actual trades), immediately hit daily max limit, and went to sleep without ever placing a trade with its own magic number. State sync function does not filter by magic.",
-      "fix": "State sync in sync_state_from_mt5() already filters by MAGIC and SYMBOL — but the log message 'found 9 trades' suggests it may have read trades from other bots incorrectly. Root cause: the bot ran at 15:29 UTC, which is past the 13:00-15:00 US Open window (session ends at 15:00). The 'Max trades per day' trigger at startup means a stale state file from a previous run persisted trade counts.",
+      "fix": "State sync in sync_state_from_mt5() already filters by MAGIC and SYMBOL \u2014 but the log message 'found 9 trades' suggests it may have read trades from other bots incorrectly. Root cause: the bot ran at 15:29 UTC, which is past the 13:00-15:00 US Open window (session ends at 15:00). The 'Max trades per day' trigger at startup means a stale state file from a previous run persisted trade counts.",
       "prevention_rule": "Verify the bot actually trades on its own magic number before reporting execution success."
     },
     {
@@ -26,19 +26,19 @@
       "direction": "N/A",
       "entry": 0,
       "exit": 0,
-      "pnl": -455.00,
-      "root_cause": "USDJPY trades (magic 0, likely FTMO manual closure or orphan bot trades) lost -$455 today with CLOSED_BY_FTMO comment — FTMO's risk desk is actively intervening on this account.",
-      "fix": "Emergency: reduce exposure immediately. Account at 8.6% drawdown — only 1.4% from FTMO 10% liquidation.",
+      "pnl": -455.0,
+      "root_cause": "USDJPY trades (magic 0, likely FTMO manual closure or orphan bot trades) lost -$455 today with CLOSED_BY_FTMO comment \u2014 FTMO's risk desk is actively intervening on this account.",
+      "fix": "Emergency: reduce exposure immediately. Account at 8.6% drawdown \u2014 only 1.4% from FTMO 10% liquidation.",
       "prevention_rule": "Monitor FTMO account drawdown in real-time. At 8% DD, auto-pause ALL trading. At 9%, send emergency alert."
     },
     {
       "date": "2026-06-26",
       "direction": "SELL",
-      "entry": 161.550,
+      "entry": 161.55,
       "exit": 161.652,
-      "pnl": -455.00,
+      "pnl": -455.0,
       "root_cause": "8.5 lots of USDJPY (5.0+2.5+1.0 at magic 0) opened at 19:10-19:17 UTC, closed by FTMO risk desk at 19:32 UTC. Only 15-22 minutes of holding time. FTMO static drawdown reached 9.23%.",
-      "fix": "Emergency stop must trigger at 8% static DD (not 8% trailing DD). The risk supervisor's REDUCE state used trailing DD (8.6%) while FTMO uses static DD (9.23%) — leaving only 0.77% headroom with no emergency stop.",
+      "fix": "Emergency stop must trigger at 8% static DD (not 8% trailing DD). The risk supervisor's REDUCE state used trailing DD (8.6%) while FTMO uses static DD (9.23%) \u2014 leaving only 0.77% headroom with no emergency stop.",
       "prevention_rule": "Risk supervisor must track BOTH trailing and static drawdown. Emergency stop triggers at 8% STATIC DD (relative to initial FTMO balance), not 8% trailing DD."
     },
     {
@@ -67,7 +67,7 @@
       "entry": 0,
       "exit": 0,
       "pnl": 0,
-      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded — 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: (-10001, 'IPC send failed') — wrong-account rejection disguised as IPC failure.",
+      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded \u2014 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: (-10001, 'IPC send failed') \u2014 wrong-account rejection disguised as IPC failure.",
       "fix": "Terminal must be manually logged into FTMO-Demo before the bot can connect. mt5.initialize() with different credentials cannot switch accounts on a running terminal.",
       "prevention_rule": "Before deploying a bot to a specific broker account, verify the MT5 terminal is logged into that account."
     },
@@ -107,7 +107,7 @@
       "entry": 1.14069,
       "exit": 1.13945,
       "pnl": -1045.32,
-      "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing EURUSD continue lower, bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.' Volume was larger (8.52→8.43 lots) on the second attempt.",
+      "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing EURUSD continue lower, bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.' Volume was larger (8.52\u21928.43 lots) on the second attempt.",
       "fix": "Add direction-failure detection: if a trade in direction X loses and price continues beyond exit, do not open another trade in direction X for 2 hours.",
       "prevention_rule": "If a trade loses and price moves further in the same direction (beyond SL+5 pips), the bot must not re-enter that direction for the rest of the session."
     },
@@ -138,7 +138,7 @@
       "exit": 0,
       "pnl": 0,
       "root_cause": "Propfirm Pass bot (M780012) ran once at 15:29 UTC, synced state from other bots' trades (found 9 actual trades), immediately hit daily max limit, and went to sleep without ever placing a trade with its own magic number. State sync function does not filter by magic.",
-      "fix": "State sync in sync_state_from_mt5() already filters by MAGIC and SYMBOL — but the log message 'found 9 trades' suggests it may have read trades from other bots incorrectly. Root cause: the bot ran at 15:29 UTC, which is past the 13:00-15:00 US Open window (session ends at 15:00). The 'Max trades per day' trigger at startup means a stale state file from a previous run persisted trade counts.",
+      "fix": "State sync in sync_state_from_mt5() already filters by MAGIC and SYMBOL \u2014 but the log message 'found 9 trades' suggests it may have read trades from other bots incorrectly. Root cause: the bot ran at 15:29 UTC, which is past the 13:00-15:00 US Open window (session ends at 15:00). The 'Max trades per day' trigger at startup means a stale state file from a previous run persisted trade counts.",
       "prevention_rule": "Verify the bot actually trades on its own magic number before reporting execution success."
     },
     {
@@ -146,19 +146,19 @@
       "direction": "N/A",
       "entry": 0,
       "exit": 0,
-      "pnl": -455.00,
-      "root_cause": "USDJPY trades (magic 0, likely FTMO manual closure or orphan bot trades) lost -$455 today with CLOSED_BY_FTMO comment — FTMO's risk desk is actively intervening on this account.",
-      "fix": "Emergency: reduce exposure immediately. Account at 8.6% drawdown — only 1.4% from FTMO 10% liquidation.",
+      "pnl": -455.0,
+      "root_cause": "USDJPY trades (magic 0, likely FTMO manual closure or orphan bot trades) lost -$455 today with CLOSED_BY_FTMO comment \u2014 FTMO's risk desk is actively intervening on this account.",
+      "fix": "Emergency: reduce exposure immediately. Account at 8.6% drawdown \u2014 only 1.4% from FTMO 10% liquidation.",
       "prevention_rule": "Monitor FTMO account drawdown in real-time. At 8% DD, auto-pause ALL trading. At 9%, send emergency alert."
     },
     {
       "date": "2026-06-26",
       "direction": "SELL",
-      "entry": 161.550,
+      "entry": 161.55,
       "exit": 161.652,
-      "pnl": -455.00,
+      "pnl": -455.0,
       "root_cause": "8.5 lots of USDJPY (5.0+2.5+1.0 at magic 0) opened at 19:10-19:17 UTC, closed by FTMO risk desk at 19:32 UTC. Only 15-22 minutes of holding time. FTMO static drawdown reached 9.23%.",
-      "fix": "Emergency stop must trigger at 8% static DD (not 8% trailing DD). The risk supervisor's REDUCE state used trailing DD (8.6%) while FTMO uses static DD (9.23%) — leaving only 0.77% headroom with no emergency stop.",
+      "fix": "Emergency stop must trigger at 8% static DD (not 8% trailing DD). The risk supervisor's REDUCE state used trailing DD (8.6%) while FTMO uses static DD (9.23%) \u2014 leaving only 0.77% headroom with no emergency stop.",
       "prevention_rule": "Risk supervisor must track BOTH trailing and static drawdown. Emergency stop triggers at 8% STATIC DD (relative to initial FTMO balance), not 8% trailing DD."
     },
     {
@@ -187,7 +187,7 @@
       "entry": 0,
       "exit": 0,
       "pnl": 0,
-      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded — 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: (-10001, 'IPC send failed') — wrong-account rejection disguised as IPC failure.",
+      "root_cause": "Propfirm Pass v8 bot (M780012) has NEVER traded \u2014 0 deals across entire lifecycle. 3 launch attempts (Jun 25, 27, 30) all failed. Jun 30: (-10001, 'IPC send failed') \u2014 wrong-account rejection disguised as IPC failure.",
       "fix": "Terminal must be manually logged into FTMO-Demo before the bot can connect. mt5.initialize() with different credentials cannot switch accounts on a running terminal.",
       "prevention_rule": "Before deploying a bot to a specific broker account, verify the MT5 terminal is logged into that account."
     },
@@ -227,7 +227,7 @@
       "entry": 1.14069,
       "exit": 1.13945,
       "pnl": -1045.32,
-      "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing EURUSD continue lower, bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.' Volume was larger (8.52→8.43 lots) on the second attempt.",
+      "root_cause": "Repeated counter-trade bias. After losing a BUY (Trade 4) and seeing EURUSD continue lower, bot opened ANOTHER BUY. No mechanism to detect 'this direction is failing today, stop entering it.' Volume was larger (8.52\u21928.43 lots) on the second attempt.",
       "fix": "Add direction-failure detection: if a trade in direction X loses and price continues beyond exit, do not open another trade in direction X for 2 hours.",
       "prevention_rule": "If a trade loses and price moves further in the same direction (beyond SL+5 pips), the bot must not re-enter that direction for the rest of the session."
     },
@@ -260,26 +260,47 @@
       "root_cause": "M780012 placed 6 trades over 3 days with 0% WR and -$3,081.85 PnL. 5 of 6 trades executed OUTSIDE the declared 13:00-15:00 UTC session window (at 12:26, 16:41, 17:44, 16:06, 19:24 UTC). Only 1 trade (13:34 UTC) was within window. The session detection bug causes the bot to trade in hours when liquidity is low and the VWAP mean reversion signal quality degrades. Risk per trade at ~$1,000 (1.04% on $96K account) is double the FTMO-optimized 0.5%. 3 duplicate bot instances running concurrently.",
       "fix": "1) Kill 2 of 3 duplicate bot instances. 2) Add pre-launch cleanup to launcher cron. 3) Fix session window detection to use UTC time, not local. 4) Reduce RISK_PCT to 0.5% (target ~4 lots). 5) Implement cooldown timer and session trend filter from Jul 13 post-trade critique.",
       "prevention_rule": "Verify trade timestamps against declared session window after every trading day. Any trade outside the window signals a timezone bug."
+    },
+    {
+      "date": "2026-07-20",
+      "direction": "BUY",
+      "entry": 1.14331,
+      "exit": 1.1421,
+      "pnl": -980.1,
+      "root_cause": "SL hit at 15:15 UTC \u2014 just 15 min AFTER the declared 13-15 UTC session window closed. Entry was within window (13:58 UTC) but exit SL triggered after the window ended. Holding 77 min. Volume 8.10 lots = 1.03% risk on $95K balance.",
+      "fix": "Fix session window detection to use UTC time, not local time, so that trades are only placed within the declared window. Reduce position size from 8+ lots to ~4 lots for 0.5% risk.",
+      "prevention_rule": "Verify EVERY trade's entry AND exit UTC hour against the 13-15 UTC session window. Any trade with entry or exit outside the window = timezone detection bug."
+    },
+    {
+      "date": "2026-07-20",
+      "direction": "BUY",
+      "entry": 1.14192,
+      "exit": 1.14068,
+      "pnl": -994.48,
+      "root_cause": "SL hit at 17:41 UTC \u2014 2h41m AFTER the 13-15 UTC session window closed. BOTH entry (15:25 UTC) and exit (17:41 UTC) were outside the declared window. This is the SECOND consecutive BUY loss on the same day (previous BUY also hit SL at 15:15 UTC). Counter-trade bias: bot entered BUY again after the first BUY proved unprofitable. Holding 136 min. Volume 8.02 lots = 1.04% risk.",
+      "fix": "Add direction-failure detection: if a BUY loses and price continues below the SL level, do not re-enter BUY for the rest of the session. Reduce position sizing to 0.5% risk ($500 target on $95K balance).",
+      "prevention_rule": "After a loss in direction X, block all re-entries in direction X for 2 hours. If the loss was the second consecutive in direction X, block for the rest of the session."
     }
   ],
   "lessons_learned": [
     "Multi-pair bots (MACD/SMA) should NEVER be run on an FTMO challenge account.",
-    "CLOSED_BY_FTMO comment in trade history is a RED FLAG — FTMO risk desk is manually closing positions.",
+    "CLOSED_BY_FTMO comment in trade history is a RED FLAG \u2014 FTMO risk desk is manually closing positions.",
     "PropFirm Pass v8 bot (M780012) has zero trades to date across 4 launch attempts.",
-    "Risk supervisor MT5 connectivity failed for 30 hours from Jun 25 16:40 UTC — no risk monitoring during a drawdown event.",
-    "Risk supervisor uses trailing drawdown — FTMO uses STATIC drawdown. Static DD must be the primary metric.",
+    "Risk supervisor MT5 connectivity failed for 30 hours from Jun 25 16:40 UTC \u2014 no risk monitoring during a drawdown event.",
+    "Risk supervisor uses trailing drawdown \u2014 FTMO uses STATIC drawdown. Static DD must be the primary metric.",
     "Propfirm Pass variant bots (M780003-M780008): 36 trades at 15.3% WR, -$100.76 PnL.",
     "Stale PID lock files accumulate between runs. Launch scripts must clean stale locks.",
     "Risk supervisor peak_balance=$100K from prior demo must be reset to $10K for FTMO challenge.",
-    "mt5.account_info().login must be verified after every mt5.initialize() — True return does not mean correct account is connected.",
+    "mt5.account_info().login must be verified after every mt5.initialize() \u2014 True return does not mean correct account is connected.",
     "Direction flip without cooldown caused -$945 loss on July 13. Entered BUY 3 min after SELL TP hit.",
     "Counter-trade bias without failure detection caused -$1,045 second consecutive loss on July 13.",
     "Bot instance accumulation: cron launchers start new instances without killing prior ones. 3 instances ran simultaneously for the same bot.",
     "Risk per trade at 1% ($1,245 SL hit) is double the FTMO-optimized 0.5%. At 8.3 lots EURUSD, 3 consecutive losses hit the 4.5% daily DD cap.",
-    "State file sync is incomplete — shows 2 trades vs 4 actual MT5 history entries for same period.",
+    "State file sync is incomplete \u2014 shows 2 trades vs 4 actual MT5 history entries for same period.",
     "Session window bug: 5 of 6 M780012 trades executed outside declared 13-15 UTC window. Bot's timezone detection is broken.",
     "Risk per trade (~1%) on $100K FTMO account should be 0.5% ($500/target). Current $1,000/trade is double the safe level.",
-    "3 duplicate bot instances each trying to trade the same account — adds confusion, not redundancy.",
-    "Cooldown timer and session trend filter from Jul 13 critique still not implemented in deployed bot code."
+    "3 duplicate bot instances each trying to trade the same account \u2014 adds confusion, not redundancy.",
+    "Cooldown timer and session trend filter from Jul 13 critique still not implemented in deployed bot code.",
+    "July 20: 2 consecutive BUY losses (-$1,974.58 total). Both trades had entries/exits OUTSIDE the declared 13-15 UTC session window. Direction-failure detection still not implemented. Risk per trade still ~1% when FTMO-optimized target is 0.5%."
   ]
 }

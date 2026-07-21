@@ -1,0 +1,56 @@
+//@version=6
+strategy(title="EMA3/8 XAU 30m ATR Trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+emaFastLen = input.int(3, title="EMA Fast Length", minval=1, maxval=50)    // sweep: 2-10 step 1
+emaSlowLen = input.int(8, title="EMA Slow Length", minval=2, maxval=50)    // sweep: 5-21 step 1
+
+// ATR trailing stop parameters
+atrLen       = input.int(14, title="ATR Length", minval=5, maxval=50)       // sweep: 10-21 step 1
+atrTrailMult  = input.float(2.0, title="ATR Trail Multiplier", step=0.5)    // sweep: 1.0-4.0 step 0.5
+atrInitSLMult = input.float(1.5, title="Initial SL ATR Multiplier", step=0.5) // sweep: 1.0-3.0 step 0.5
+
+// Trade direction
+tradeLong = input.bool(true, title="Long Only")
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+atrVal = ta.atr(atrLen)
+
+//--- entry logic: long when EMA3 crosses above EMA8
+enterLong = ta.crossover(emaFast, emaSlow)
+
+//--- exit management: trailing stop at ATR multiple below highest since entry
+var float trailStopLevel = na
+var int   barSinceEntry  = na
+
+if (strategy.position_size > 0)
+    // Update trailing stop: atrTrailMult * ATR below highest close since entry
+    float highestSinceEntry = ta.highest(high, barSinceEntry + 1)
+    trailStopLevel := highestSinceEntry - (atrTrailMult * atrVal)
+    // trail can only move up (not down)
+    trailStopLevel := math.max(trailStopLevel, nz(trailStopLevel[1], trailStopLevel))
+    barSinceEntry := barSinceEntry + 1
+
+if (strategy.position_size == 0)
+    trailStopLevel := na
+    barSinceEntry  := na
+
+//--- entry
+if (tradeLong and enterLong and strategy.position_size == 0)
+    float initialSL = close - (atrInitSLMult * atrVal)
+    trailStopLevel := initialSL
+    barSinceEntry  := 0
+    strategy.entry("Long", strategy.long)
+
+//--- trail exit via strategy.exit
+if (strategy.position_size > 0 and not na(trailStopLevel))
+    strategy.exit("TrailExit", "Long", stop=trailStopLevel)
+
+//--- visual indicators
+plot(emaFast, color=color.blue, linewidth=1, title="EMA Fast")
+plot(emaSlow, color=color.red, linewidth=1, title="EMA Slow")
+plot(strategy.position_size > 0 ? trailStopLevel : na, color=color.green, style=plot.style_linebr, linewidth=1, title="Trail Stop")

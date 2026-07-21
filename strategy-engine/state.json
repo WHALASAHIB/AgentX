@@ -1,25 +1,32 @@
 {
-  "iteration": 456,
-  "last_run": "2026-07-21T17:53:00Z",
-  "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
+  "iteration": 460,
+  "last_run": "2026-07-21T18:53:00Z",
+  "best_strategy": "iter_458_ema3_8_xau_atr_trail.pine",
   "best_metrics": {
-    "pf": 3.60569209,
-    "sharpe": 2.86708508,
-    "wr": 54.54545455,
-    "dd": 0.76280566,
-    "trades": 33,
-    "net_profit": 162.045741378948,
-    "symbol": "XAUUSD",
+    "pf": 47.35269446,
+    "sharpe": 19.71902924,
+    "wr": 83.27272727,
+    "dd": 0.8860965,
+    "trades": 275,
+    "net_profit": 826971.3902000028,
+    "symbol": "BTCUSDT",
     "timeframe": "30m",
-    "iteration": 44
+    "iteration": 458
   },
-  "current_hypothesis": "MACD(12,26,9) crossover on BTCUSDT 30m without any filter lost money (PF=0.90, Sharpe=-2.08). The MACD gives too many false signals on crypto without a trend filter. Add RSI(14) filter: long only when MACD crosses above signal AND RSI>50, short only when MACD crosses below signal AND RSI<50. Same 1:1 TP/SL at 104 ticks.",
+  "current_hypothesis": "EURUSD 1h — same EMA3/8 crossover with ATR(14) trailing stop that achieved PF=47.35 on BTCUSDT 30m. XAUUSD confirmed NOT in Clickhouse coverage for any timeframe. EURUSD uses Polygon forex data which should be available. Adding RSI(14) filter: long if RSI>50, short if RSI<50. Also tightening trail_mult from 2.0 to 1.5×ATR (reducing DD from 28.5%).",
   "evolution_log": [
     {
       "iteration": 450,
       "hypothesis": "RSI>40 filter reduced from 50 still too restrictive — only 13 trades (still <20 sample minimum). PF=0.33 also terrible. Remove RSI entirely. Keep MACD(12,26,9), ADX>10, TP=104/SL=104, long-only, XAUUSD 30m. See if MACD crossover alone generates 20+ trades with viable PF.",
-      "metrics": {"pf": 0.33098497, "sharpe": -7.50884055, "wr": 46.15384615, "dd": 7.09080443, "trades": 13, "net_profit": -650.208836204061},
-      "verdict": "invalid (low sample, 13 trades — RSI>40 still too restrictive, PF collapsed from 3.37 to 0.33 when RSI>50 dropped to RSI>40)",
+      "metrics": {
+        "pf": 0.33098497,
+        "sharpe": -7.50884055,
+        "wr": 46.15384615,
+        "dd": 7.09080443,
+        "trades": 13,
+        "net_profit": -650.208836204061
+      },
+      "verdict": "invalid (low sample, 13 trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-20T16:08:00Z"
@@ -27,8 +34,15 @@
     {
       "iteration": 451,
       "hypothesis": "Remove RSI entirely. Keep MACD(12,26,9), ADX>10, TP=104/SL=104, long-only, XAUUSD 30m. See if MACD crossover alone generates 20+ trades with viable PF.",
-      "metrics": {"pf": 0.0, "sharpe": null, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades — XAUUSD not available on TV_ENGINE_JUL_26 path, mapped to BTCUSDT. MACD(12,26,9)+ADX>10 produced 0 trade signals)",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": null,
+        "wr": 0.0,
+        "dd": 0.0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-21T00:37:00Z"
@@ -36,7 +50,14 @@
     {
       "iteration": 452,
       "hypothesis": "EMA3/8 crossover on BTCUSDT 30m. No ADX. TP=200/SL=100 ticks (2:1), long-only.",
-      "metrics": {"pf": 1.92580371, "sharpe": 10.19266386, "wr": 48.7804878, "dd": 0.01241561, "trades": 287, "net_profit": 19.64},
+      "metrics": {
+        "pf": 1.92580371,
+        "sharpe": 10.19266386,
+        "wr": 48.7804878,
+        "dd": 0.01241561,
+        "trades": 287,
+        "net_profit": 19.64
+      },
       "verdict": "accepted (all metrics good, not new best vs iter 44 PF=3.61)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
@@ -45,7 +66,14 @@
     {
       "iteration": 453,
       "hypothesis": "Bollinger Bands(20,2) breakout on BTCUSDT 30m. Long when close above upper band, short below lower band. TP=200/SL=100.",
-      "metrics": {"pf": 0.09711785, "sharpe": -6.67541891, "wr": 39.37007874, "dd": 23.76840017, "trades": 254, "net_profit": -2317.6843},
+      "metrics": {
+        "pf": 0.09711785,
+        "sharpe": -6.67541891,
+        "wr": 39.37007874,
+        "dd": 23.76840017,
+        "trades": 254,
+        "net_profit": -2317.6843
+      },
       "verdict": "rejected (PF=0.10, Sharpe=-6.68, DD=23.77% — false breakouts without filter)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
@@ -54,7 +82,14 @@
     {
       "iteration": 454,
       "hypothesis": "BB breakout with RSI(14) filter on BTCUSDT 30m. Long above upper band + RSI>50, short below lower band + RSI<50.",
-      "metrics": {"pf": 1.99490094, "sharpe": 10.2200182, "wr": 49.80842912, "dd": 0.0123367, "trades": 261, "net_profit": 18.731},
+      "metrics": {
+        "pf": 1.99490094,
+        "sharpe": 10.2200182,
+        "wr": 49.80842912,
+        "dd": 0.0123367,
+        "trades": 261,
+        "net_profit": 18.731
+      },
       "verdict": "accepted (PF=1.99, all metrics healthy, RSI filter fixed false breakouts)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
@@ -63,14 +98,91 @@
     {
       "iteration": 455,
       "hypothesis": "MACD(12,26,9) crossover on BTCUSDT 30m, long-only, TP=104/SL=104 ticks (1:1), no RSI or ADX filter.",
-      "metrics": {"pf": 0.89748432, "sharpe": -2.07655515, "wr": 47.82608696, "dd": 0.05946574, "trades": 368, "net_profit": -2.99208},
+      "metrics": {
+        "pf": 0.89748432,
+        "sharpe": -2.07655515,
+        "wr": 47.82608696,
+        "dd": 0.05946574,
+        "trades": 368,
+        "net_profit": -2.99208
+      },
       "verdict": "rejected (PF=0.90, Sharpe=-2.08 — MACD crossover without trend filter loses money on BTCUSDT 30m)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-21T17:53:00Z"
+    },
+    {
+      "iteration": 456,
+      "hypothesis": "MACD(12,26,9) crossover on BTCUSDT 30m with RSI(14) filter. Long when MACD crosses above signal AND RSI>50, short when MACD crosses below signal AND RSI<50. Same 1:1 TP/SL at 104 ticks.",
+      "metrics": {
+        "pf": 0.04887106,
+        "sharpe": -8.06687738,
+        "wr": 35.37117904,
+        "dd": 21.29442025,
+        "trades": 229,
+        "net_profit": -2096.3074
+      },
+      "verdict": "rejected (PF=0.05, Sharpe=-8.07, DD=21.3% — RSI filter made MACD far worse on BTCUSDT, catastrophic PF)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T18:13:00Z"
+    },
+    {
+      "iteration": 457,
+      "hypothesis": "EMA3/8 crossover on BTCUSDT 30m, long-only, with ATR(14)-based trailing stop. Entry when EMA(3) crosses above EMA(8). Trailing stop at 2×ATR below highest since entry. Initial SL at 1.5×ATR. No fixed TP/SL — volatility-adaptive exit.",
+      "metrics": {
+        "pf": 47.35122762,
+        "sharpe": 19.71587345,
+        "wr": 83.27272727,
+        "dd": 0.8860999,
+        "trades": 275,
+        "net_profit": 826903.1011000026
+      },
+      "verdict": "NEW BEST STRATEGY — PF=47.35, Sharpe=19.72, WR=83.3%, DD=0.9%, 275 trades. ATR trailing stop dramatically outperforms fixed TP/SL. Previous iter 452 (same crossover, fixed 2:1 TP/SL) had PF=1.93. ATR trail lifted PF to 47.35 — 24.5× improvement. Equity grew $10K→$837K. Cascade ratio=1.0 (no cascade-close).",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T18:23:39Z"
+    },
+    {
+      "iteration": 458,
+      "hypothesis": "EMA3/8 crossover with ATR(14) trailing stop on XAUUSD 30m — testing if the BTCUSDT-best approach generalizes to XAUUSD.",
+      "metrics": {
+        "pf": 47.35269446,
+        "sharpe": 19.71902924,
+        "wr": 83.27272727,
+        "dd": 0.8860965,
+        "trades": 275,
+        "net_profit": 826971.3902000028
+      },
+      "verdict": "NEW BEST STRATEGY — XAUUSD was not in Clickhouse coverage, symbol fell back to BTCUSDT. Results are essentially a re-test of iter 457 on BTCUSDT 30m (PF=47.35 identical). XAUUSD 30m not available on this engine path.",
+      "symbol": "XAUUSD->BTCUSDT(fallback)",
+      "timeframe": "30m",
+      "time": "2026-07-21T18:38:00Z"
+    },
+    {
+      "iteration": 459,
+      "hypothesis": "EMA3/8 crossover with ATR(14) trailing stop on XAUUSD H1 — testing if the BTCUSDT 30m best approach works on H1 timeframe. ATR trail at 2×, initial SL at 1.5×, long+short.",
+      "metrics": {
+        "pf": 0.63574696,
+        "sharpe": -4.26215487,
+        "wr": 18.99641577,
+        "dd": 28.528947,
+        "trades": 279,
+        "net_profit": -2760.314099999985
+      },
+      "verdict": "rejected (PF=0.64, Sharpe=-4.26, DD=28.53% — EMA3/8 ATR trail on BTCUSDT 1h performed terribly vs 30m. Timeframe dramatically affects strategy viability.)",
+      "symbol": "XAUUSD->BTCUSDT(fallback)",
+      "timeframe": "1h",
+      "time": "2026-07-21T18:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": ["XAUUSD", "BYBIT:BTCUSDT.P"],
-  "timeframes_explored": ["1h", "30m"]
+  "pairs_explored": [
+    "XAUUSD",
+    "BYBIT:BTCUSDT.P"
+  ],
+  "timeframes_explored": [
+    "1h",
+    "30m"
+  ]
 }

@@ -1,0 +1,55 @@
+//@version=6
+strategy(title="BTC MACD RSI 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast Length", minval=1, group="MACD")       // sweep: 8-16 step 2
+slowLen = input.int(26, "MACD Slow Length", minval=1, group="MACD")       // sweep: 20-34 step 2
+sigLen  = input.int(9, "MACD Signal Length", minval=1, group="MACD")      // sweep: 7-12 step 1
+
+// RSI filter
+rsiLen  = input.int(14, "RSI Length", minval=1, group="RSI Filter")       // sweep: 10-20 step 2
+rsiHigh = input.int(50, "RSI Long Threshold (> this)", minval=1, group="RSI Filter")  // sweep: 45-60 step 5
+rsiLow  = input.int(50, "RSI Short Threshold (< this)", minval=1, group="RSI Filter")  // sweep: 40-55 step 5
+
+// TP/SL
+tpTicks = input.int(104, "Take Profit (ticks)", minval=1, group="TP/SL")  // sweep: 50-200 step 25
+slTicks = input.int(104, "Stop Loss (ticks)", minval=1, group="TP/SL")    // sweep: 50-200 step 25
+
+// Trade direction
+allowLong  = input.bool(true, "Allow Long", group="Direction")
+allowShort = input.bool(true, "Allow Short", group="Direction")
+
+// Session filter
+useSessionFilter = input.bool(false, "Session Filter (8-20 UTC)", group="Session")
+sessionStart     = input.int(8, "Session Start (UTC hour)", minval=0, maxval=23, group="Session")
+sessionEnd       = input.int(20, "Session End (UTC hour)", minval=0, maxval=23, group="Session")
+
+//--- calculations
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, sigLen)
+rsi = ta.rsi(close, rsiLen)
+
+// Cross conditions
+macdCrossOver  = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+// Session check
+inSession = not useSessionFilter or (hour >= sessionStart and hour < sessionEnd)
+
+//--- entry logic
+// Long entry: MACD crossover AND RSI > threshold
+if macdCrossOver and rsi > rsiHigh and allowLong and inSession
+    strategy.entry("Long", strategy.long)
+
+// Short entry: MACD crossunder AND RSI < threshold
+if macdCrossUnder and rsi < rsiLow and allowShort and inSession
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Long exit via TP/SL
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", profit=tpTicks, loss=slTicks)
+
+// Short exit via TP/SL
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", profit=tpTicks, loss=slTicks)

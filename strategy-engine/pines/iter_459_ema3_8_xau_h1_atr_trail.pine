@@ -1,0 +1,63 @@
+//@version=6
+strategy(title="EMA3/8 ATR Trail XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)       // sweep: 5-20 step 1
+atr_len = input.int(14, "ATR Length", minval=1, maxval=50)                // sweep: 7-21 step 2
+trail_mult = input.float(2.0, "Trail Multiplier (×ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+initial_sl_mult = input.float(1.5, "Initial SL Multiplier (×ATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-2.5 step 0.5
+use_trailing = input.bool(true, "Use ATR Trailing Stop")                  // on/off toggle
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA3 crosses above EMA8 = long, crosses below = short
+long_entry = ta.crossover(ema_fast, ema_slow)
+short_entry = ta.crossunder(ema_fast, ema_slow)
+
+//--- long entry
+if long_entry
+    strategy.entry("EL", strategy.long)
+
+//--- short entry
+if short_entry
+    strategy.entry("ES", strategy.short)
+
+//--- exit management: ATR trailing stop
+var float long_trail_stop = na
+var float short_trail_stop = na
+var int last_long_bar = na
+var int last_short_bar = na
+
+// Reset trail stops on new entry
+if strategy.position_size > 0 and nz(last_long_bar) != bar_index
+    long_trail_stop := close - (initial_sl_mult * atr_val)
+    last_long_bar := bar_index
+
+if strategy.position_size < 0 and nz(last_short_bar) != bar_index
+    short_trail_stop := close + (initial_sl_mult * atr_val)
+    last_short_bar := bar_index
+
+// Update trailing stop for long positions
+if strategy.position_size > 0 and use_trailing
+    new_stop = close - (trail_mult * atr_val)
+    if na(long_trail_stop) or new_stop > long_trail_stop
+        long_trail_stop := new_stop
+    strategy.exit("XL", "EL", stop=long_trail_stop)
+
+// Update trailing stop for short positions
+if strategy.position_size < 0 and use_trailing
+    new_stop = close + (trail_mult * atr_val)
+    if na(short_trail_stop) or new_stop < short_trail_stop
+        short_trail_stop := new_stop
+    strategy.exit("XS", "ES", stop=short_trail_stop)
+
+// Fixed TP/SL fallback if trailing is disabled
+if strategy.position_size > 0 and not use_trailing
+    strategy.exit("XL_FIXED", "EL", loss=long(initial_sl_mult * atr_val / syminfo.mintick), profit=long(2 * initial_sl_mult * atr_val / syminfo.mintick))
+
+if strategy.position_size < 0 and not use_trailing
+    strategy.exit("XS_FIXED", "ES", loss=long(initial_sl_mult * atr_val / syminfo.mintick), profit=long(2 * initial_sl_mult * atr_val / syminfo.mintick))
