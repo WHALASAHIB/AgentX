@@ -1,0 +1,49 @@
+//@version=5
+strategy(title="MACD ADX10 RSI30 Long Only XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=1)  // sweep: 8-16 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=1)  // sweep: 20-30 step 2
+signalLength = input.int(9, "MACD Signal Length", minval=1)  // sweep: 7-12 step 1
+
+// ADX filter — lowered from 14 to 10 to allow more entries
+adxLen = input.int(14, "ADX Length", minval=1)  // sweep: 10-20 step 2
+adxThreshold = input.int(10, "ADX Threshold", minval=1)  // sweep: 8-14 step 2
+
+// RSI filter (gentle — only require RSI > 30, not > 50)
+rsiLength = input.int(14, "RSI Length", minval=1)  // sweep: 10-20 step 2
+rsiMin = input.int(30, "RSI Minimum (long)", minval=1)  // sweep: 20-50 step 5
+
+// TP/SL in ticks
+tpTicks = input.int(104, "Take Profit (ticks)", minval=1)  // sweep: 80-120 step 8
+slTicks = input.int(104, "Stop Loss (ticks)", minval=1)  // sweep: 80-120 step 8
+
+//--- manual ADX calculation
+up = high - high[1]
+down = low[1] - low
+tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+plusDM = up > down and up > 0 ? up : 0
+minusDM = down > up and down > 0 ? down : 0
+atr = ta.sma(tr, adxLen)
+plusDI = 100 * ta.sma(plusDM, adxLen) / atr
+minusDI = 100 * ta.sma(minusDM, adxLen) / atr
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adx = ta.sma(dx, adxLen)
+
+//--- RSI calculation
+rsi = ta.rsi(close, rsiLength)
+
+//--- MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+
+//--- entry logic: MACD crossover + ADX > threshold + RSI > minimum
+macdCrossover = ta.crossover(macdLine, signalLine)
+longCondition = macdCrossover and adx > adxThreshold and rsi > rsiMin
+
+//--- exit management
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=slTicks * syminfo.mintick, profit=tpTicks * syminfo.mintick)

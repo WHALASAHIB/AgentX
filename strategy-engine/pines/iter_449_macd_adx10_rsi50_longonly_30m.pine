@@ -1,0 +1,34 @@
+//@version=5
+strategy(title="MACD ADX10 RSI50 Long Only 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast Length", minval=2, maxval=50)          // sweep: 8-20 step 2
+slowLen = input.int(26, "MACD Slow Length", minval=5, maxval=100)         // sweep: 18-34 step 4
+sigLen  = input.int(9,  "MACD Signal Length", minval=2, maxval=30)        // sweep: 5-15 step 2
+
+// ADX/DMI parameters
+diLen   = input.int(14, "DI Length", minval=5, maxval=30)                 // sweep: 10-20 step 2
+adxSmooth = input.int(14, "ADX Smoothing", minval=5, maxval=30)           // sweep: 10-20 step 2
+adxThresh = input.int(10, "ADX Threshold", minval=5, maxval=50)           // sweep: 8-20 step 2
+
+// RSI parameters
+rsiLen  = input.int(14, "RSI Length", minval=5, maxval=30)                // sweep: 10-20 step 2
+rsiThresh = input.int(50, "RSI Threshold (long if RSI >)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// TP/SL in points
+tpPoints  = input.int(104, "Take Profit (points)", minval=10, maxval=500) // sweep: 50-200 step 30
+slPoints  = input.int(104, "Stop Loss (points)", minval=10, maxval=500)   // sweep: 50-200 step 30
+
+//--- indicator calculations
+[macdLine, signalLine, _] = ta.macd(close, fastLen, slowLen, sigLen)
+[plusDI, minusDI, adxVal] = ta.dmi(diLen, adxSmooth)
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry logic
+longCondition = ta.crossover(macdLine, signalLine) and adxVal > adxThresh and rsiVal > rsiThresh
+
+//--- exit management
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints)

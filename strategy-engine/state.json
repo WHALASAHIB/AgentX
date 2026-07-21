@@ -1,6 +1,6 @@
 {
-  "iteration": 447,
-  "last_run": "2026-07-20T15:00:00Z",
+  "iteration": 451,
+  "last_run": "2026-07-20T16:08:00Z",
   "best_strategy": "iter_44_ema_cross_h30_rsi_adx_longonly.pine",
   "best_metrics": {
     "pf": 3.60569209,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 44
   },
-  "current_hypothesis": "MACD+ADX>14 less bad than EMA2/5 (PF=1.08 vs 1.03, DD=2% vs 6.3%) but WR=29.6% still low. PF<1.5 — add RSI(14)>30 filter (gentler than RSI>50 which killed trades before) to filter out bearish conditions. Keep MACD, ADX>14, TP=104/SL=104, long-only, XAUUSD 30m.",
+  "current_hypothesis": "RSI>40 filter reduced from 50 still too restrictive — only 13 trades (still <20 sample minimum). PF=0.33 also terrible. Remove RSI entirely. Keep MACD(12,26,9), ADX>10, TP=104/SL=104, long-only, XAUUSD 30m. See if MACD crossover alone generates 20+ trades with viable PF.",
   "evolution_log": [
     {
       "iteration": 442,
@@ -50,6 +50,42 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-20T15:00:00Z"
+    },
+    {
+      "iteration": 447,
+      "hypothesis": "MACD+ADX>14+RSI(14)>30 — add RSI(14)>30 filter (long only if RSI>30, gentler than RSI>50 which killed trades). Keep MACD(12,26,9), ADX>14, TP=104/SL=104, long-only, XAUUSD 30m.",
+      "metrics": {"pf": 0.60134815, "sharpe": -4.92143729, "wr": 35.71428571, "dd": 6.01868484, "trades": 14, "net_profit": -421.623772526727},
+      "verdict": "rejected (PF=0.60 Sharpe=-4.92 Trades=14 — RSI>30 filter too restrictive, cut trades from 27 to 14)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T15:15:00Z"
+    },
+    {
+      "iteration": 448,
+      "hypothesis": "Reduce entry threshold: lower ADX from 14 to 10 while keeping RSI(30) filter. More trades should enter in weaker trends. Keep MACD(12,26,9), TP=104/SL=104, long-only, XAUUSD 30m.",
+      "metrics": {"pf": 0.87580892, "sharpe": -9.86729281, "wr": 31.03448276, "dd": 2.63065468, "trades": 29, "net_profit": -261.178569117272},
+      "verdict": "rejected (PF=0.88 Sharpe=-9.87 — ADX 14->10 increased trades from 14 to 29 but MACD still unprofitable on 30m)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T15:23:00Z"
+    },
+    {
+      "iteration": 449,
+      "hypothesis": "PF=0.88 below 1.5 — strengthen RSI filter from RSI>30 to RSI>50 (per rule: PF<1.5 -> add RSI>50 filter). Keep MACD(12,26,9), ADX>10, TP=104/SL=104, long-only, XAUUSD 30m.",
+      "metrics": {"pf": 3.36811675, "sharpe": 1.89736478, "wr": 25.0, "dd": 2.83485437, "trades": 8, "net_profit": 141.834964574949},
+      "verdict": "invalid (low sample, 8 trades — RSI>50 too restrictive, PF=3.37 Sharpe=1.90 are excellent but 8 trades not significant)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T15:38:00Z"
+    },
+    {
+      "iteration": 450,
+      "hypothesis": "RSI>50 filter too restrictive — only 8 trades (invalid sample). Reduce entry threshold: lower RSI threshold from 50 to 40. Keep MACD(12,26,9), ADX>10, TP=104/SL=104, long-only, XAUUSD 30m.",
+      "metrics": {"pf": 0.33098497, "sharpe": -7.50884055, "wr": 46.15384615, "dd": 7.09080443, "trades": 13, "net_profit": -650.208836204061},
+      "verdict": "invalid (low sample, 13 trades — RSI>40 still too restrictive, PF collapsed from 3.37 to 0.33 when RSI>50 dropped to RSI>40)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-20T16:08:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
