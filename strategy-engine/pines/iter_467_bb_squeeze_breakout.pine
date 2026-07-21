@@ -1,0 +1,64 @@
+//@version=6
+strategy(title="BTCUSDT 30m — BB Squeeze Breakout", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bbLength = input.int(20, "BB Length", minval=5, maxval=50, step=1)           // sweep: 10-30 step 2
+bbStdDev = input.float(2.0, "BB Std Dev", minval=1.0, maxval=3.0, step=0.1)  // sweep: 1.5-2.5 step 0.1
+smaWidthLen = input.int(20, "BB Width SMA Length", minval=5, maxval=50, step=1) // sweep: 10-30 step 5
+atrLength = input.int(14, "ATR Length", minval=5, maxval=30, step=1)         // sweep: 7-21 step 7
+atrMultTrail = input.float(2.0, "ATR Trail Multiplier", minval=1.0, maxval=4.0, step=0.25) // sweep: 1.5-3.0 step 0.5
+tpRatio = input.float(1.0, "TP Ratio (1:1 = 1.0)", minval=0.5, maxval=3.0, step=0.25) // sweep: 0.5-2.0 step 0.25
+
+//--- indicator calculations
+[bbMiddle, bbUpper, bbLower] = ta.bb(close, bbLength, bbStdDev)
+bbWidth = (bbUpper - bbLower) / bbMiddle
+bbWidthSma = ta.sma(bbWidth, smaWidthLen)
+bbWidthExpanding = bbWidth > bbWidthSma
+atrValue = ta.atr(atrLength)
+
+//--- entry logic
+var float entryPrice = na
+var int tradeDirection = 0  // 1 = long, -1 = short
+var int barSinceEntry = 0
+
+// Long: close above upper BB AND BB width expanding
+longCondition = close > bbUpper and bbWidthExpanding
+
+// Short: close below lower BB AND BB width expanding
+shortCondition = close < bbLower and bbWidthExpanding
+
+//--- exit management via ATR trailing stop
+var float trailStop = na
+
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    entryPrice := close
+    tradeDirection := 1
+    trailStop := close - (atrValue * atrMultTrail)
+
+if (shortCondition and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+    entryPrice := close
+    tradeDirection := -1
+    trailStop := close + (atrValue * atrMultTrail)
+
+// Update trailing stop for open positions
+if (strategy.position_size > 0)
+    // trail up only
+    trailStop := math.max(trailStop, close - (atrValue * atrMultTrail))
+    // Fixed TP at entryPrice + tpRatio * (entryPrice - trailStop)
+    tpPrice = entryPrice + (entryPrice - trailStop) * tpRatio
+    strategy.exit("Long Exit", "Long", stop=trailStop, limit=tpPrice)
+
+if (strategy.position_size < 0)
+    // trail down only
+    trailStop := math.min(trailStop, close + (atrValue * atrMultTrail))
+    tpPrice = entryPrice - (trailStop - entryPrice) * tpRatio
+    strategy.exit("Short Exit", "Short", stop=trailStop, limit=tpPrice)
+
+//--- plot
+plot(bbMiddle, "BB Middle", color=color.blue, linewidth=1)
+plot(bbUpper, "BB Upper", color=color.blue, linewidth=1)
+plot(bbLower, "BB Lower", color=color.blue, linewidth=1)
+plotshape(longCondition, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
+plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small)

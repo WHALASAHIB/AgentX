@@ -1,0 +1,52 @@
+//@version=6
+strategy(title="EMA3_8_ATR15_RSI50 — BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len   = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)            // sweep: 2-10 step 1
+ema_slow_len   = input.int(8, "Slow EMA Length", minval=1, maxval=100, step=1)           // sweep: 5-30 step 1
+atr_len        = input.int(14, "ATR Length", minval=1, maxval=100, step=1)               // sweep: 7-21 step 2
+trail_mult     = input.float(1.5, "ATR Trail Multiplier", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.25
+initial_sl_mult= input.float(1.5, "Initial SL (xATR)", minval=0.5, maxval=5.0, step=0.1)    // sweep: 1.0-3.0 step 0.25
+rsi_len        = input.int(14, "RSI Length", minval=5, maxval=30, step=1)                // sweep: 7-21 step 2
+rsi_threshold  = input.int(50, "RSI Entry Threshold", minval=30, maxval=70, step=5)      // sweep: 40-65 step 5
+
+//--- core indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+atr_val  = ta.atr(atr_len)
+rsi_val  = ta.rsi(close, rsi_len)
+
+//--- entry logic: EMA3 crosses above EMA8 AND RSI > 50 (momentum filter)
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+
+//--- state tracking
+var float entry_price = na
+var float trail_stop = na
+var int bars_since_entry = 0
+
+if (strategy.position_size > 0)
+    bars_since_entry := bars_since_entry + 1
+    // Update trailing stop: highest close since entry minus trail_mult * ATR
+    float highest_since = ta.highest(close, bars_since_entry)
+    trail_stop := highest_since - (trail_mult * atr_val)
+    // Trail stop cannot go below entry initial stop
+    trail_stop := math.max(trail_stop, entry_price - (initial_sl_mult * atr_val))
+else
+    bars_since_entry := 0
+    trail_stop := na
+
+//--- entry
+if (long_condition and strategy.position_size == 0)
+    entry_price := close
+    trail_stop := close - (initial_sl_mult * atr_val)
+    strategy.entry("Long", strategy.long)
+
+//--- exit: trailing stop
+if (strategy.position_size > 0 and not na(trail_stop))
+    strategy.exit("TrailExit", "Long", stop=trail_stop)
+
+//--- plot indicators
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
+plot(strategy.position_size > 0 ? trail_stop : na, "Trail Stop", color=color.green, style=plot.style_linebr)
+hline(rsi_threshold, "RSI Threshold", color=color.purple, linestyle=hline.style_dashed)
