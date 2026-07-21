@@ -1,0 +1,82 @@
+//@version=6
+strategy(title="iter_475 — EMA3/8 + ADX>25 + Fixed TP 1.5:1 SL", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//============================================
+//--- inputs
+//============================================
+
+// EMA period inputs
+int emaFast = input.int(3, "EMA Fast Period", minval=1, group="EMA Settings")
+int emaSlow = input.int(8, "EMA Slow Period", minval=1, group="EMA Settings")
+
+// ADX inputs
+int adxLength = input.int(14, "ADX Length", minval=1, group="ADX Filter")
+int adxThreshold = input.int(25, "ADX Threshold", minval=1, group="ADX Filter")
+
+// ATR for TP/SL
+int atrLength = input.int(14, "ATR Length", minval=1, group="TP/SL Management")
+float tpMultiplier = input.float(1.5, "TP Multiplier (×ATR)", minval=0.1, step=0.1, group="TP/SL Management")
+float slMultiplier = input.float(1.0, "SL Multiplier (×ATR)", minval=0.1, step=0.1, group="TP/SL Management")
+
+// Trade direction (long-only for BTCUSDT)
+bool enableLong = input.bool(true, "Enable Long Entries", group="Trade Direction")
+
+//============================================
+//--- indicator calculations
+//============================================
+
+// EMAs
+float emaFastVal = ta.ema(close, emaFast)
+float emaSlowVal = ta.ema(close, emaSlow)
+
+// Manual ADX calculation (since ta.adx is not in this runtime)
+// True Range
+float tr = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+float atrVal = ta.rma(tr, atrLength)
+
+// Directional Movement
+float upMove = high - high[1]
+float downMove = low[1] - low
+float plusDM = upMove > downMove and upMove > 0 ? upMove : 0
+float minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+
+// Smoothed DM
+float plusDi = 100 * ta.rma(plusDM, atrLength) / atrVal
+float minusDi = 100 * ta.rma(minusDM, atrLength) / atrVal
+
+// Directional Index
+float dx = 100 * math.abs(plusDi - minusDi) / (plusDi + minusDi)
+float adxVal = ta.rma(dx, atrLength)
+
+// Crossover detection
+bool emaBullCross = ta.crossover(emaFastVal, emaSlowVal)
+
+// ADX filter — only enter trending markets
+bool adxFilter = adxVal > adxThreshold
+
+//============================================
+//--- entry logic (long-only)
+//============================================
+
+// No position yet AND bull cross AND ADX > threshold
+bool longEntry = emaBullCross and adxFilter and enableLong
+
+if (longEntry)
+    float slDist = slMultiplier * atrVal
+    float tpDist = tpMultiplier * atrVal
+    float slPrice = close - slDist
+    float tpPrice = close + tpDist
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", limit=tpPrice, stop=slPrice)
+
+//============================================
+//--- exit management
+//============================================
+
+// Visual signals
+plot(emaFastVal, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlowVal, "EMA Slow", color=color.red, linewidth=1)
+hline(adxThreshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)
+
+// Plot entry markers
+plotshape(longEntry, "BUY Signal", style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)

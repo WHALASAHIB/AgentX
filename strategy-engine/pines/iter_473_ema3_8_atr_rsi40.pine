@@ -1,0 +1,33 @@
+//@version=6
+strategy(title="EMA3/8 ATR Trail RSI40 — BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen     = input.int(3,   "EMA Fast Length",     inline="ema",    group="EMA")    // sweep: 2-5 step 1
+emaSlowLen     = input.int(8,   "EMA Slow Length",     inline="ema",    group="EMA")    // sweep: 7-13 step 1
+rsiLen         = input.int(14,  "RSI Length",          inline="rsi",    group="RSI")    // sweep: 7-21 step 2
+rsiThresh      = input.int(40,  "RSI Entry Threshold", inline="rsi",    group="RSI")    // sweep: 30-50 step 5
+atrLen         = input.int(14,  "ATR Trail Length",    inline="atr",    group="Trail")  // sweep: 7-21 step 2
+atrMult        = input.float(2.0, "ATR Trail Multiplier", inline="atr", group="Trail", step=0.1) // sweep: 1.5-3.0 step 0.25
+useTrail       = input.bool(true, "Use ATR Trailing Stop", group="Trail")
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atrVal  = ta.atr(atrLen)
+
+//--- entry logic: long only
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: ATR trailing stop
+if useTrail and strategy.position_size > 0
+    stopPrice = close - atrVal * atrMult
+    strategy.exit("XL", "Long", stop=stopPrice)
+
+//--- visual plots
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+hline(50, "RSI 50", color=color.gray, linestyle=hline.style_dashed)
