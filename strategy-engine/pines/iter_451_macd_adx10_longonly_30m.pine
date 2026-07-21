@@ -1,0 +1,41 @@
+//@version=6
+strategy(title="Iter 451 — MACD DMI ADX10 Long Only 30m", overlay=true,
+     initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100, commission_type=strategy.commission.percent,
+     commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macd_fast   = input.int(12, "MACD Fast", minval=2, maxval=50)         // sweep: 5-20 step 1
+macd_slow   = input.int(26, "MACD Slow", minval=5, maxval=100)        // sweep: 12-30 step 2
+macd_signal = input.int(9, "MACD Signal", minval=2, maxval=30)        // sweep: 5-15 step 1
+
+// DMI/ADX filter
+dmi_len     = input.int(14, "DMI Length", minval=5, maxval=30)        // sweep: 10-20 step 2
+adx_thresh  = input.int(10, "ADX Threshold", minval=3, maxval=50)     // sweep: 5-25 step 5
+
+// TP/SL in ticks
+tp_ticks    = input.int(104, "Take Profit (ticks)", minval=10, maxval=1000)  // sweep: 50-300 step 20
+sl_ticks    = input.int(104, "Stop Loss (ticks)", minval=10, maxval=1000)   // sweep: 50-300 step 20
+
+//--- indicator calculations
+[macd_line, signal_line, hist] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+[di_plus, di_minus, adx_val]   = ta.dmi(high, low, close, dmi_len)
+
+//--- entry logic
+long_condition = false
+// MACD crossover (bullish signal)
+if ta.crossover(macd_line, signal_line)
+    // DMI/ADX filter: only enter if ADX is above threshold (trending market)
+    if adx_val > adx_thresh
+        long_condition := true
+
+// Execute entry
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "Long",
+         loss=sl_ticks * syminfo.mintick,
+         profit=tp_ticks * syminfo.mintick)

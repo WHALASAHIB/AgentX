@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 180,
+    "total_ideas": 182,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1311,6 +1311,47 @@
       "diversification_value": "Distinct from Gold_Oil_Ratio_Extreme_Reverter (the only other idea in the Cross-Asset Ratio PARTIAL cluster). Gold_Oil_Ratio_Extreme_Reverter trades the gold-to-oil price ratio at z-score extremes using a 200-day lookback \u2014 it's a long-term commodity cross-ratio play. This idea trades the rolling correlation breakdown between gold and US real yields \u2014 a macro driver (interest rates) rather than a commodity cross. Also different from DXY_Gold_Correlation_Mean_Reverter (which trades DXY correlation breakdown and sits in the saturated RSI/Divergence cluster). Real yields are a separate macro channel from DXY \u2014 DXY measures the USD against a basket of currencies; real yields measure the inflation-adjusted return on US debt. The gold-real yield mechanism is about opportunity cost; the DXY-gold mechanism is about FX valuation. These are orthogonal signal chains.",
       "self_grade": "A-",
       "generated_at": "2026-07-20T00:43:00Z"
+    },
+    {
+      "name": "Fractal_Efficiency_Ratio_Switcher",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Uses the Fractal Efficiency Ratio (FER) \u2014 a faster, more stable proxy for the Hurst exponent \u2014 to classify market state into 3 regimes (trending, mean-reverting, random walk) and auto-switches between 3 corresponding micro-strategies within a single bot, rather than just filtering an external strategy.",
+      "market_behaviour": "Financial markets exhibit persistent fractal structure \u2014 price movements at different time scales are statistically self-similar. The Fractal Efficiency Ratio (FER), defined as the ratio of net price change over N bars to the sum of absolute bar-to-bar changes, quantifies how 'directed' vs 'erratic' price action is. A high FER (close to 1.0) indicates strong directional efficiency (trending behavior), a low FER (near 0) indicates chaotic back-and-forth motion (mean-reverting or range-bound behavior), and mid-range FER (0.3-0.6) indicates random-walk conditions where neither trend nor reversion dominates. This fractal property is not just descriptive but predictive \u2014 markets tend to persist in their efficiency state for 8-20 bars before transitioning, creating a measurable regime that can drive strategy selection.",
+      "entry_logic": "1. Compute FER over 20 bars on H1 close: FER = abs(close[N] - close[0]) / sum(abs(close[i] - close[i-1]) for i=1..N). Smooth with 5-EMA.\n2. If FER >= 0.65 (trending regime): Enter on 20-EMA pullback with price touching EMA, confirmed by H4 ADX > 25. Go long on bounce up from EMA, short on rejection down.\n3. If FER <= 0.35 (mean-reverting regime): Enter on 2-standard-deviation Bollinger Band touch, confirmed by H4 ATR < 20-period median ATR (low volatility = clean reversals). Take counter-trend entry at band touch with H1 RSI < 30 (long) or > 70 (short).\n4. If 0.35 < FER < 0.65 (random-walk regime): Skip entry entirely \u2014 wait for FER to exit this zone. No trade mode.\n5. Re-check FER every 3 bars (H1). If FER crosses a threshold, reassess the active position against the new regime's logic.",
+      "exit_logic": "Stop Loss: 1.5x ATR(14) for trending trades, 0.8x ATR(14) for mean-reversion trades (tighter because reversals are quick). Take Profit: Trending \u2014 3x ATR(14) or trail with chandelier exit (highest high - 2x ATR for longs). Mean-reversion \u2014 1.5x ATR(14) or at opposite Bollinger Band touch. Time stop: If position hasn't hit SL or TP within 12 bars (H1), close at market \u2014 regime may have shifted. Re-entry allowed if FER still supports same regime class after a 4-bar cooldown.",
+      "failure_mode": "1. FER produces false regime signals during high-impact news events \u2014 a single large candle can spike FER above 0.65 for 1-2 bars even in a range market. The EMA smoothing mitigates this but doesn't eliminate it. 2. The 0.35-0.65 dead zone creates prolonged no-trade periods during mildly directional price action (slow grind trends with frequent retracements), potentially missing profitable runs. 3. The regime-based approach assumes fractal persistence extends 8-20 bars \u2014 this breaks down in VIX-spike environments where regime shifts happen in 2-3 bars. 4. FER period sensitivity: 20-bar default may be too slow for M15 scalping or too fast for D1 position trading \u2014 timeframe dependency is a real parameter risk.",
+      "diversification_value": "Unlike Hurst_Exponent_Regime_Detector (B+, 50-bar R/S analysis passing to external strategies) and Regime_Fractal_Phase_Transition (B, 120-bar fractal dimension detecting phase shifts), this idea uses FER (faster at 20 bars, computationally simpler than R/S analysis) and is a self-contained 3-state strategy switcher \u2014 it doesn't just detect regimes, it systematically trades each one. The random-walk 'no-trade' zone is unique among all 18 regime_filter ideas. Novelty score: 4/5 \u2014 novel combination of known fractal theory with explicit 3-state execution bot.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-21T00:43:37Z"
+    },
+    {
+      "name": "Cross_Commodity_Seasonal_Divergence_Capture",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD",
+        "XPTUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Trades the seasonal divergence between precious metals when gold, silver, and platinum enter OPPOSITE seasonal windows \u2014 going long the metal entering its bullish seasonal phase while shorting another entering its bearish phase \u2014 capturing the relative-value mean reversion as their cycles converge back.",
+      "market_behaviour": "Precious metals \u2014 gold (XAU), silver (XAG), and platinum (XPT) \u2014 each have distinct and partially opposing seasonal cycles driven by different end-use demand profiles. Gold's strongest seasonal windows are August-November (Indian wedding season, Diwali, Chinese New Year accumulation) and January-February (central bank reserve rebalancing). Silver's cyclical demand peaks March-May (industrial solar/electronics manufacturing ramp) and November-December (year-end physical accumulation). Platinum's seasonal strength concentrates in September-November (automotive catalyst pre-build for model-year changeover) and April-May (jewelry manufacturing ahead of wedding season). Crucially, these windows do not align \u2014 there are 4-8 week periods where one metal enters its bullish season while another enters a bearish or neutral seasonal window. During these divergence periods, institutional money rotates between metals, creating a measurable relative-value drift. The divergence is self-correcting because precious metals share common macro drivers (USD, real yields, risk sentiment) \u2014 the relative-value dislocations eventually converge as the shared macro anchor reasserts itself, typically within 4-6 weeks of the divergence peak.",
+      "entry_logic": "1. At the start of each month, map the current date against known seasonal strength windows for XAU, XAG, and XPT (monthly granularity from historical data).\n2. Classify each metal's seasonal phase: Strong Bullish (+2), Mild Bullish (+1), Neutral (0), Mild Bearish (-1), Strong Bearish (-2). Scoring based on historical average returns for that calendar month.\n3. Identify divergences: find pairs where one metal scores >= +1 (bullish) and another scores <= -1 (bearish) for the same forward 4-week window. Priority: widest score gap first.\n4. If gap >= 2 points between a pair: Enter a relative-value position. Go LONG the bullish metal and SHORT the bearish metal in equal notional value.\n5. Position size: 0.5% risk per leg (combined 1% total portfolio risk). Use D1 entries at market open of the divergence month start.\n6. Skip if D1 ATR(14) on either metal exceeds 3x its 90-day median ATR (extreme volatility makes seasonal signals unreliable).",
+      "exit_logic": "Stop Loss: 2x ATR(14) on each leg independently. Take Profit: Exit when the seasonal window ends (end of month), OR when both metals' seasonal scores converge to same sign (both bullish or both bearish \u2014 divergence closed), OR at +3x ATR(14) on the combined relative-value P&L \u2014 whichever comes first. Time stop: Hard close 5 trading days after the target seasonal window ends (if divergence persists, the shared macro anchor should have reasserted by then). No re-entry until next month's divergence assessment.",
+      "failure_mode": "1. Shared macro shock overrides seasonal divergence \u2014 a surprise Fed rate decision or geopolitical crisis can move all precious metals in the same direction, making the relative-value position lose on both legs simultaneously. 2. Seasonal windows are probabilistic, not deterministic \u2014 a metal in its 'strong bullish' month can still have a down month 30-40% of the time. 3. The relative-value convergence assumption breaks during regime shifts (e.g., silver decoupling from gold during the 2020 industrial collapse). 4. Execution complexity: requires short access on all metals, which may not be available on MT5 retail accounts for XAGUSD and XPTUSD. 5. Monthly granularity misses intra-month seasonal peaks/troughs.",
+      "diversification_value": "Cross_Commodity_Seasonal_Rotation (B+) goes long individual metals at their strongest months sequentially \u2014 it's a long-only rotation. Precious_Metals_Seasonal_Spread (A-) trades the gold-silver ratio as a single-pair instrument. This idea is fundamentally different: it is a PAIRWISE RELATIVE-VALUE trade that GOES SHORT one metal and LONG another simultaneously, exploiting SEASONAL DIVERGENCE (opposite seasonal windows) rather than seasonal strength or ratio levels. No existing seasonal idea uses the divergence-between-windows concept. Novelty score: 4/5.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-21T00:43:37Z"
     }
   ],
   "archived": [
@@ -3468,7 +3509,8 @@
       "Options_Market_Regime_Classifier",
       "Regime_Transition_Velocity_Detector",
       "Options_Realized_Vol_Regime_Spread",
-      "Gamma_Wall_Regime_Map"
+      "Gamma_Wall_Regime_Map",
+      "Fractal_Efficiency_Ratio_Switcher"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
@@ -3537,7 +3579,8 @@
       "Base_Metals_Gold_Seasonal_Demand_Proxy",
       "Gold_Silver_Ratio_Seasonal_Reverser",
       "CPI_Seasonal_Base_Effect_Gold",
-      "Precious_Metals_Seasonal_Spread"
+      "Precious_Metals_Seasonal_Spread",
+      "Cross_Commodity_Seasonal_Divergence_Capture"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
