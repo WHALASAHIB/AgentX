@@ -1,6 +1,6 @@
 {
-  "iteration": 468,
-  "last_run": "2026-07-21T20:58:00Z",
+  "iteration": 472,
+  "last_run": "2026-07-21T21:52:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m — BB squeeze breakout with RSI(14) filter. Same BB length=20, std=2.0, enter long when close > upper BB AND BB width expanding AND RSI(14) > 50. Enter short when close < lower BB AND BB width expanding AND RSI(14) < 50. ATR(14) trailing stop at 2.0x. The RSI filter should improve PF from 0.49 by preventing counter-trend entries.",
+  "current_hypothesis": "BTCUSDT 30m — EMA3/8 crossover with ATR(14) trail at 2.0x + RSI(14) filter (enter long only if RSI(14) > 50). Iter 471 PF=0.62 was RUINED by 95 losers vs 41 winners (30% WR). The ATR trail at 2.0x worked brilliantly at iter 464 (PF=104.45) but that run had different market conditions. Adding RSI>50 filter to prevent entering during weak/ranging momentum where the trail gets immediately stopped out.",
   "evolution_log": [
     {
       "iteration": 464,
@@ -78,6 +78,70 @@
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-21T20:58:00Z"
+    },
+    {
+      "iteration": 468,
+      "hypothesis": "BTCUSDT 30m — BB squeeze breakout with RSI(14) filter. Same BB length=20, std=2.0, enter long when close > upper BB AND BB width expanding AND RSI(14) > 50. Enter short when close < lower BB AND BB width expanding AND RSI(14) < 50. ATR(14) trailing stop at 2.0x. The RSI filter should improve PF from 0.49 by preventing counter-trend entries.",
+      "metrics": {
+        "pf": 0.6409371,
+        "sharpe": -2.28313521,
+        "wr": 18.26923077,
+        "dd": 17.89399017,
+        "trades": 104,
+        "net_profit": -1576.5962
+      },
+      "verdict": "rejected (PF=0.64, Sharpe=-2.28, DD=17.89% — RSI filter improved PF slightly from 0.49 to 0.64 but still losing. BB squeeze catches chop in range-bound conditions; RSI alone insufficient.)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T21:00:00Z"
+    },
+    {
+      "iteration": 469,
+      "hypothesis": "BTCUSDT 30m — BB squeeze breakout with ADX(14) + RSI(14) filters. Same BB length=20, std=2.0. Enter long when close > upper BB AND BB width expanding AND RSI(14) > 50 AND ADX(14) > 25. Enter short when close < lower BB AND BB width expanding AND RSI(14) < 50 AND ADX(14) > 25. ATR(14) trailing stop at 2.0x. The ADX > 25 filter prevents BB entries in chop (iter 468 PF=0.64 was ruined by non-trending markets).",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades) — BB squeeze + BB width expansion + RSI > 50 + ADX > 25 quadruple filter is too restrictive. 4 conditions stacked never fire simultaneously on BTCUSDT 30m.",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T21:03:00Z"
+    },
+    {
+      "iteration": 470,
+      "hypothesis": "BTCUSDT 30m — BB squeeze breakout with ADX(14, thresh=18) + RSI(14) filters. Same BB length=20, std=2.0. Enter long when close > upper BB AND BB width expanding AND RSI(14) > 50 AND ADX(14) > 18. Enter short when close < lower BB AND BB width expanding AND RSI(14) < 50 AND ADX(14) > 18. ATR(14) trailing stop at 2.0x. Iter 469 had ADX>25 too restrictive (0 trades). Lowering to ADX>18 to get trades while filtering chop.",
+      "metrics": {
+        "pf": 0.69676761,
+        "sharpe": -1.71383043,
+        "wr": 22.78481013,
+        "dd": 15.38897642,
+        "trades": 79,
+        "net_profit": -1232.71069999998
+      },
+      "verdict": "rejected (PF=0.70, Sharpe=-1.71, DD=15.39% — ADX>18 got 79 trades vs 0, but BB squeeze still loses money. All 4 BB squeeze iterations on BTCUSDT have failed. Time to pivot.)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T21:37:00Z"
+    },
+    {
+      "iteration": 471,
+      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with ATR(14) trail at 2.0x (long-only, no extra filters). BB squeeze has FAILED 4 consecutive iterations on BTCUSDT (467: PF=0.49, 468: PF=0.64, 469: 0 trades, 470: PF=0.70). The EMA3/8+ATR trail approach achieved PF=104.45 in iter 464. One change: revert from BB squeeze to the proven EMA3/8 crossover ATR trail.",
+      "metrics": {
+        "pf": 0.62370107,
+        "sharpe": -3.45245003,
+        "wr": 30.14705882,
+        "dd": 29.39566096,
+        "trades": 136,
+        "net_profit": -2297.34649999994
+      },
+      "verdict": "rejected (PF=0.62, Sharpe=-3.45, DD=29.40% — EMA3/8 + ATR trail on current v6 engine produces losses. 41W/95L, 30% WR. Different market regime than iter 464's golden run. Needs RSI filter to avoid weak entries.)",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-21T21:52:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
