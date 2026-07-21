@@ -1,0 +1,89 @@
+//@version=6
+strategy(title="EMA3/8 ATR Trail RSI EURUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=50)
+atr_len = input.int(14, "ATR Length", minval=1, maxval=50)
+trail_mult = input.float(1.5, "ATR Trail Multiplier", step=0.1)
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)
+rsi_threshold = input.int(50, "RSI Threshold", minval=1, maxval=100)
+use_short = input.bool(true, "Enable Short Entries")
+
+//--- calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+atr_val = ta.atr(atr_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry signals
+cross_over = ta.crossover(ema_fast, ema_slow)
+cross_under = ta.crossunder(ema_fast, ema_slow)
+
+long_signal = cross_over and (rsi_val >= rsi_threshold)
+short_signal = cross_under and (rsi_val <= rsi_threshold) and use_short
+
+//--- trailing stop management
+var float long_trail = na
+var float short_trail = na
+var bool in_long = false
+var bool in_short = false
+var float long_entry = na
+var float short_entry = na
+
+// Reset on new signal
+if long_signal
+    in_long := true
+    in_short := false
+    long_entry := close
+    long_trail := close - (atr_val * trail_mult)
+
+if short_signal
+    in_short := true
+    in_long := false
+    short_entry := close
+    short_trail := close + (atr_val * trail_mult)
+
+// Update trailing stops
+if in_long
+    float new_trail = close - (atr_val * trail_mult)
+    if na(long_trail)
+        long_trail := new_trail
+    else
+        long_trail := math.max(long_trail, new_trail)
+
+if in_short
+    float new_trail = close + (atr_val * trail_mult)
+    if na(short_trail)
+        short_trail := new_trail
+    else
+        short_trail := math.min(short_trail, new_trail)
+
+// Exit conditions
+long_exit = in_long and low <= long_trail
+short_exit = in_short and high >= short_trail
+
+//--- plot lines
+plot(ema_fast, "EMA Fast", color.blue, linewidth=1)
+plot(ema_slow, "EMA Slow", color.red, linewidth=1)
+
+//--- entry orders
+if long_signal
+    strategy.entry("Long", strategy.long)
+
+if short_signal
+    strategy.entry("Short", strategy.short)
+
+//--- exit management via trailing stop
+if long_exit
+    strategy.close("Long", comment="TrailExit")
+
+if short_exit
+    strategy.close("Short", comment="TrailExit")
+
+// Fallback close on opposite signal
+if short_signal and strategy.position_size > 0
+    strategy.close("Long", comment="RevExit")
+
+if long_signal and strategy.position_size < 0
+    strategy.close("Short", comment="RevExit")

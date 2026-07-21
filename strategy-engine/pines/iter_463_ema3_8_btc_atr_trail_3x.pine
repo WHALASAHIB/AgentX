@@ -1,0 +1,75 @@
+//@version=6
+strategy(title="EMA3/8 BTCUSDT 30m ATR Trail 3x", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)        // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50, step=1)        // sweep: 5-21 step 2
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50, step=1)                 // sweep: 10-20 step 2
+trail_mult = input.float(3.0, "ATR Trail Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.5-4.0 step 0.5
+initial_sl_mult = input.float(1.5, "Initial SL (×ATR)", minval=0.5, maxval=3.0, step=0.5) // sweep: 1.0-2.5 step 0.5
+use_long = input.bool(true, "Long Trades Only", group="Direction")
+use_short = input.bool(false, "Short Trades (if enabled)", group="Direction")
+
+//--- indicator calculation
+fast_ema = ta.ema(close, ema_fast_len)
+slow_ema = ta.ema(close, ema_slow_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+long_condition = ta.crossover(fast_ema, slow_ema)
+short_condition = ta.crossunder(fast_ema, slow_ema)
+
+// trailing stop tracking — persistent across bars
+var float long_trail_stop = na
+var float short_trail_stop = na
+var int bars_since_entry = 0
+var bool in_long_trade = false
+var bool in_short_trade = false
+
+// Reset tracking on position flip
+if (strategy.position_size == 0)
+    in_long_trade := false
+    in_short_trade := false
+    bars_since_entry := 0
+
+if (strategy.position_size > 0)
+    in_long_trade := true
+    bars_since_entry := bars_since_entry + 1
+    // Trail stop: highest high since entry minus trail_mult × ATR
+    long_trail_stop := math.max(long_trail_stop, close - trail_mult * atr_val)
+    // But never below initial SL level
+    if (bars_since_entry == 1)
+        long_trail_stop := close - initial_sl_mult * atr_val
+else
+    long_trail_stop := na
+
+if (strategy.position_size < 0)
+    in_short_trade := true
+    bars_since_entry := bars_since_entry + 1
+    // Trail stop: lowest low since entry plus trail_mult × ATR
+    short_trail_stop := math.min(short_trail_stop, close + trail_mult * atr_val)
+    // But never above initial SL level
+    if (bars_since_entry == 1)
+        short_trail_stop := close + initial_sl_mult * atr_val
+else
+    short_trail_stop := na
+
+//--- entry
+if (long_condition and use_long and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    long_trail_stop := close - initial_sl_mult * atr_val
+    in_long_trade := true
+    bars_since_entry := 0
+
+if (short_condition and use_short and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+    short_trail_stop := close + initial_sl_mult * atr_val
+    in_short_trade := true
+    bars_since_entry := 0
+
+//--- exit management — trailing stop
+if (strategy.position_size > 0 and not na(long_trail_stop))
+    strategy.exit("XL", "Long", stop=long_trail_stop)
+
+if (strategy.position_size < 0 and not na(short_trail_stop))
+    strategy.exit("XS", "Short", stop=short_trail_stop)

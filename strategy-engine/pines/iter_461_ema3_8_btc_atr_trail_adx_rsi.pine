@@ -1,0 +1,64 @@
+//@version=6
+strategy(title="EMA3/8 + ATR Trail + ADX(25) + RSI(50) — BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+// --- inputs
+emaFast = input.int(3, "EMA Fast Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+emaSlow = input.int(8, "EMA Slow Length", minval=1, maxval=50)        // sweep: 5-21 step 1
+adxLen  = input.int(14, "ADX Length", minval=1, maxval=50)            // sweep: 10-20 step 2
+adxThresh = input.int(25, "ADX Threshold", minval=1, maxval=50)       // sweep: 20-30 step 5
+rsiLen  = input.int(14, "RSI Length", minval=1, maxval=50)            // sweep: 10-20 step 2
+rsiThreshLong = input.int(50, "RSI Long Min", minval=1, maxval=100)   // sweep: 40-60 step 5
+rsiThreshShort = input.int(50, "RSI Short Max", minval=1, maxval=100) // sweep: 40-60 step 5
+atrLen  = input.int(14, "ATR Length", minval=1, maxval=50)            // sweep: 10-20 step 2
+trailMult = input.float(2.0, "ATR Trail Multiplier", step=0.25)       // sweep: 1.0-3.0 step 0.5
+initialSLMult = input.float(1.5, "Initial SL ATR Mult", step=0.25)    // sweep: 1.0-2.5 step 0.5
+
+// --- indicator calculations
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+adx  = ta.dmi(adxLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+// --- entry logic
+crossOver = ta.crossover(emaF, emaS)
+crossUnder = ta.crossunder(emaF, emaS)
+
+// Long: EMA3 crosses above EMA8 AND trending (ADX>=25) AND RSI>50
+enterLong = crossOver and adx >= adxThresh and rsi > rsiThreshLong
+
+// Short: EMA3 crosses below EMA8 AND trending (ADX>=25) AND RSI<50
+enterShort = crossUnder and adx >= adxThresh and rsi < rsiThreshShort
+
+if enterLong
+    strategy.entry("EL", strategy.long)
+
+if enterShort
+    strategy.entry("ES", strategy.short)
+
+// --- ATR trailing stop management
+var float longTrailStop = na
+var float shortTrailStop = na
+
+// New long: set initial SL at 1.5x ATR below entry
+if strategy.position_size > 0 and strategy.position_size[1] == 0
+    longTrailStop := close - initialSLMult * atr
+
+// Existing long: trail stop up as price rises
+if strategy.position_size > 0
+    longTrailStop := math.max(longTrailStop, close - trailMult * atr)
+
+// New short: set initial SL at 1.5x ATR above entry
+if strategy.position_size < 0 and strategy.position_size[1] == 0
+    shortTrailStop := close + initialSLMult * atr
+
+// Existing short: trail stop down as price falls
+if strategy.position_size < 0
+    shortTrailStop := math.min(shortTrailStop, close + trailMult * atr)
+
+// --- exit management
+if strategy.position_size > 0
+    strategy.exit("XL", "EL", stop=longTrailStop)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "ES", stop=shortTrailStop)
