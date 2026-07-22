@@ -1,0 +1,53 @@
+//@version=6
+strategy(title="MACD Cross ATR Trail BTC 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=1, group="MACD")       // sweep: 8-16 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=1, group="MACD")       // sweep: 20-30 step 2
+signalLength = input.int(9, "MACD Signal Length", minval=1, group="MACD")    // sweep: 7-12 step 1
+
+// ATR Trailing Stop parameters
+atrLength = input.int(14, "ATR Length", minval=1, group="Trailing Stop")    // sweep: 10-20 step 2
+atrMult = input.float(2.0, "ATR Multiplier", minval=0.1, step=0.1, group="Trailing Stop") // sweep: 1.0-3.0 step 0.5
+
+// Long-only toggle
+longOnly = input.bool(true, "Long Only", group="Direction")
+
+//--- MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+
+//--- ATR for trailing stop
+atrVal = ta.atr(atrLength)
+
+//--- entry logic
+longEntry = ta.crossover(macdLine, signalLine)
+shortEntry = ta.crossunder(macdLine, signalLine)
+
+//--- trailing stop variables
+var float longStopPrice = na
+var float shortStopPrice = na
+
+// On long entry, set initial trailing stop at close - atrMult * atrVal
+if (longEntry and longOnly)
+    strategy.entry("MACD_L", strategy.long)
+    longStopPrice := close - atrMult * atrVal
+
+// On short entry
+if (shortEntry and not longOnly)
+    strategy.entry("MACD_S", strategy.short)
+    shortStopPrice := close + atrMult * atrVal
+
+//--- trail long stop upward as price moves favorably
+if (strategy.position_size > 0)
+    newStop = high - atrMult * atrVal
+    if (newStop > longStopPrice)
+        longStopPrice := newStop
+    strategy.exit("XL_MACD", "MACD_L", stop=longStopPrice)
+
+//--- trail short stop downward
+if (strategy.position_size < 0)
+    newStop = low + atrMult * atrVal
+    if (newStop < shortStopPrice)
+        shortStopPrice := newStop
+    strategy.exit("XS_MACD", "MACD_S", stop=shortStopPrice)

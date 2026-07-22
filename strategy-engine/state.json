@@ -1,6 +1,6 @@
 {
-  "iteration": 486,
-  "last_run": "2026-07-22T02:53:55Z",
+  "iteration": 490,
+  "last_run": "2026-07-22T03:53:19Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,167 +13,39 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m \u2014 Tighten ATR trail multiplier from 2.0\u00d7 to 1.5\u00d7 to improve win rate (currently 32% < 40% target). Iter 485 (PF=40.7 artificial, WR=31.96%, DD=0.94%, cascade ratio 1.22 > 1.2). Rule: WR < 40% \u2192 tighten TP/SL ratio. In ATR trail terms, reduce trail_mult from 2.0 to 1.5. ONE change: trail 2.0\u21921.5\u00d7, same EMA3/8 crossover, same 100% equity sizing.",
+  "current_hypothesis": "BTCUSDT 30m — Iter 489 (EMA3/8 + ADX(14)>25 + ATR trail 2.0x) produced PF=0.37, Sharpe=-3.70 — weakest metric is PF far below 1.5. ONE change: add RSI(14)>50 filter to EMA3/8 crossover + ADX(14)>25 + ATR(14) trail at 2.0x, long-only. RSI>50 ensures entries only occur when momentum is bullish.",
   "evolution_log": [
     {
-      "iteration": 464,
-      "hypothesis": "BTCUSDT 30m \u2014 Re-test iter 457 base on the new v6 engine to verify baseline PF=47.35 hasn't shifted. EMA3/8 crossover, ATR(14) trail 2.0x, long-only, no filters.",
+      "iteration": 488,
+      "hypothesis": "BTCUSDT 30m — Add RSI(14)>50 filter to MACD(12,26,9) crossover, same ATR(14) trail at 2.0x, long-only. Iter 487 produced PF=0.47 (weakest metric). ONE change: filter entries with RSI>50 for long-only.",
       "metrics": {
-        "pf": 104.45174129,
-        "sharpe": 22.27611106,
-        "wr": 92.42424242,
-        "dd": 0.8924053,
-        "trades": 264,
-        "net_profit": 3011277299.3836074
+        "pf": 0.52730456,
+        "sharpe": -3.79114453,
+        "wr": 32.14285714,
+        "dd": 19.07590718,
+        "trades": 84,
+        "net_profit": -1664.822088049959
       },
-      "verdict": "NEW BEST STRATEGY \u2014 PF=104.45, Sharpe=22.28, WR=92.4%, DD=0.89%, 264 trades. v6 engine confirms the EMA3/8 ATR trail approach.",
+      "verdict": "rejected (PF=0.53, Sharpe=-3.79, DD=19.1%, WR=32.1%, 84 trades, cascade 1.0) — RSI>50 filter on MACD crossover still loses money. MACD approach is not viable on BTCUSDT 30m in current regime.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
-      "time": "2026-07-21T20:11:00Z"
+      "time": "2026-07-22T03:38:36Z"
     },
     {
-      "iteration": 477,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with SuperTrend trend filter + RSI(14)>40 (lowered from 50) + fixed TP=1.5\u00d7ATR / SL=1\u00d7ATR.",
+      "iteration": 489,
+      "hypothesis": "BTCUSDT 30m — Revert to EMA3/8 crossover baseline (proven best PF=104.45 at iter 464) and add ADX(14)>25 trend filter. MACD approach failed twice: iter 487 bare (PF=0.47) and iter 488 with RSI>50 filter (PF=0.53). ONE change: add ADX(14)>25 filter to EMA3/8 crossover + ATR(14) trail at 2.0x, long-only.",
       "metrics": {
-        "pf": 0,
-        "sharpe": 0,
-        "wr": 0,
-        "dd": 0,
-        "trades": 0,
-        "net_profit": 0
+        "pf": 0.37314775,
+        "sharpe": -3.70144893,
+        "wr": 30.0,
+        "dd": 30.48878588,
+        "trades": 50,
+        "net_profit": -2672.757469749979
       },
-      "verdict": "invalid (no trades) \u2014 SuperTrend + RSI>40 + EMA3/8 crossover still produces 0 trades on 4305 bars.",
+      "verdict": "rejected (PF=0.37, Sharpe=-3.70, DD=30.5%, WR=30.0%, 50 trades, cascade 1.0) — ADX(14)>25 filter on EMA3/8 ATR trail lost money. Manual ADX calc worked but strategy underperformed badly. Regime may have shifted since iter 464's record.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
-      "time": "2026-07-21T15:23:00Z"
-    },
-    {
-      "iteration": 478,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with RSI(14)>40 filter ONLY (no SuperTrend) + fixed TP=1.5\u00d7ATR / SL=1\u00d7ATR.",
-      "metrics": {
-        "pf": 1.24796934,
-        "sharpe": 3.2623516,
-        "wr": 44.0433213,
-        "dd": 0.4994019,
-        "trades": 277,
-        "net_profit": 156.963178207743
-      },
-      "verdict": "rejected (PF=1.25, below 1.3 threshold) \u2014 Got 277 trades, Sharpe 3.26 excellent, DD 0.5% tiny.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-21T15:38:00Z"
-    },
-    {
-      "iteration": 479,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with RSI(14)>50 filter (tightened from 40) + fixed TP=1.5\u00d7ATR / SL=1\u00d7ATR.",
-      "metrics": {
-        "pf": 1.13658813,
-        "sharpe": 1.60360076,
-        "wr": 43.91534392,
-        "dd": 0.54340375,
-        "trades": 189,
-        "net_profit": 58.898855545607
-      },
-      "verdict": "rejected (PF=1.14, below 1.3 threshold) \u2014 RSI>50 reduced trades (277\u2192189) but also reduced PF (1.25\u21921.14).",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T15:52:47Z"
-    },
-    {
-      "iteration": 480,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with RSI(14)>40 filter + widened TP=2\u00d7ATR / SL=1\u00d7ATR.",
-      "metrics": {
-        "pf": 0.03213538,
-        "sharpe": -35.96588498,
-        "wr": 6.81003584,
-        "dd": 24.0822378,
-        "trades": 279,
-        "net_profit": -2408.223780206195
-      },
-      "verdict": "rejected (PF=0.03) \u2014 Widening TP from 1.5\u00d7ATR to 2\u00d7ATR with 100% equity sizing was catastrophic.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T01:43:00Z"
-    },
-    {
-      "iteration": 481,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with RSI(14)>40 filter + SMA200 trend filter + TP=1.5\u00d7ATR / SL=1\u00d7ATR.",
-      "metrics": {
-        "pf": 0.0,
-        "sharpe": -0.35,
-        "wr": 0.0,
-        "dd": 21.1,
-        "trades": 1,
-        "net_profit": -951.8
-      },
-      "verdict": "invalid (low sample, 1 trade) \u2014 SMA200 trend filter far too restrictive.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T09:43:00Z"
-    },
-    {
-      "iteration": 482,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with RSI(14)>40 filter only, TP=1.5\u00d7ATR/SL=1\u00d7ATR.",
-      "metrics": {
-        "pf": 0.01955988,
-        "sharpe": -37.23971055,
-        "wr": 5.01792115,
-        "dd": 22.99274889,
-        "trades": 279,
-        "net_profit": -2299.274888999636
-      },
-      "verdict": "rejected (PF=0.02, Sharpe=-37.24, DD=23.0%, WR=5.02%) \u2014 Regime shift: same params as iter 478 produced PF=1.25 then, PF=0.02 now.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T10:00:00Z"
-    },
-    {
-      "iteration": 483,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover with RSI(14)>50 filter (tightened from 40) + fixed TP=1.5\u00d7ATR / SL=1\u00d7ATR. Tightening RSI from >40 to >50 to filter choppy entries that killed iter 482.",
-      "metrics": {
-        "pf": 0,
-        "sharpe": -1.39706462,
-        "wr": 0,
-        "dd": 29.42778927,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades) \u2014 RSI>50 was too restrictive on BTCUSDT 30m. Zero crossover triggers with RSI>50 in 4315 bars.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T10:50:00Z"
-    },
-    {
-      "iteration": 484,
-      "hypothesis": "BTCUSDT 30m \u2014 Remove RSI filter entirely, use bare EMA3/8 crossover with TP=1.5\u00d7ATR / SL=1\u00d7ATR. Iter 483's RSI>50 filter produced 0 trades. Going back to bare EMA3/8 crossover to re-establish a baseline on this engine.",
-      "metrics": {
-        "pf": 0.63410362,
-        "sharpe": -8.81254427,
-        "wr": 28.74251497,
-        "dd": 42.50270154,
-        "trades": 668,
-        "net_profit": -4116.669254799997
-      },
-      "verdict": "rejected (PF=0.63, Sharpe=-8.81, DD=42.5%) \u2014 Bare EMA3/8 crossover with fixed TP/SL on the v6 parity profile (100% equity, 0.05% commission) was a complete disaster. Fixed TP/SL exits with full equity sizing create catastrophic drawdown.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T11:15:00Z"
-    },
-    {
-      "iteration": 485,
-      "hypothesis": "BTCUSDT 30m \u2014 Switch exit method from fixed TP/SL to ATR(14) trailing stop at 2.0\u00d7ATR. Iter 484's bare EMA3/8 with fixed 1.5\u00d7ATR TP / 1\u00d7ATR SL was a disaster (PF=0.63, DD=42.5%). The best-ever strategy for this engine (iter 464, PF=104.45, DD=0.89%) used ATR trailing stop instead of fixed targets. ONE change: exit method only, same EMA3/8 crossover entry.",
-      "metrics": {
-        "pf": 40.7,
-        "sharpe": 9.95,
-        "wr": 31.96,
-        "dd": 0.94,
-        "trades": 219,
-        "net_profit": 189726634510.69
-      },
-      "verdict": "rejected (cascade ratio 1.22 > 1.2, WR 32% < 40%, unrealistic 100% equity compounding)",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-22T02:53:55Z"
+      "time": "2026-07-22T03:53:19Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

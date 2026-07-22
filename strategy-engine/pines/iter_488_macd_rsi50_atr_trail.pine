@@ -1,0 +1,35 @@
+//@version=6
+strategy(title="MACD RSI50 ATR Trail BTC 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD params — sweep: fast 8-16 step 2, slow 18-30 step 4, signal 5-12 step 2
+fastLen = input.int(12, "MACD Fast Length", minval=1, group="MACD")
+slowLen = input.int(26, "MACD Slow Length", minval=1, group="MACD")
+sigLen = input.int(9, "MACD Signal Length", minval=1, group="MACD")
+// RSI filter — sweep: 40-60 step 5
+rsiLen = input.int(14, "RSI Length", minval=1, group="Filters")
+rsiThreshold = input.int(50, "RSI Threshold (long if >)", minval=1, maxval=100, group="Filters")
+// ATR trailing stop — sweep: 1.0-3.0 step 0.5
+atrLen = input.int(14, "ATR Length", minval=1, group="Trailing Stop")
+trailMult = input.float(2.0, "ATR Trail Multiplier", step=0.1, group="Trailing Stop")
+
+//--- indicators
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, sigLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// MACD line crosses above Signal line AND RSI > threshold = long entry
+longCondition = ta.crossover(macdLine, signalLine) and rsiVal > rsiThreshold
+
+//--- exit management (ATR trailing stop)
+var float longStop = na
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+    longStop := close - atrVal * trailMult
+
+if strategy.position_size > 0
+    // Trail the stop up as price moves in favor — never down
+    longStop := math.max(nz(longStop[1]), close - atrVal * trailMult)
+    strategy.exit("XL", "Long", stop=longStop)
