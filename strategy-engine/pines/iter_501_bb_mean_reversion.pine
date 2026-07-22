@@ -1,0 +1,84 @@
+//@version=6
+strategy(title="BB Mean Reversion BTCUSDT 1h (iter 501)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== INPUTS ===
+
+// Bollinger Bands parameters
+bbLength = input.int(20, "BB Length", minval=5, maxval=50, step=1)          // sweep: 10-30 step 2
+bbStdDev = input.float(2.0, "BB StdDev", minval=0.5, maxval=4.0, step=0.5)   // sweep: 1.5-3.0 step 0.5
+
+// RSI parameters
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30, step=1)         // sweep: 10-20 step 2
+rsiOversold = input.int(35, "RSI Oversold Threshold", minval=20, maxval=45, step=5) // sweep: 25-40 step 5
+
+// Exit strategy selection
+useMiddleBandExit = input.bool(true, "Exit at Middle Band (vs TP/SL only)")
+useFixedTPSL = input.bool(false, "Use Fixed TP/SL instead of Middle Band exit")
+
+// ATR for fixed TP/SL
+atrLength = input.int(14, "ATR Length", minval=7, maxval=28, step=1)         // sweep: 10-20 step 2
+atrMultiplier = input.float(2.0, "ATR Multiplier for TP/SL", minval=0.5, maxval=4.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//=== INDICATOR CALCULATIONS ===
+
+// Bollinger Bands
+basis = ta.sma(close, bbLength)
+dev = ta.stdev(close, bbLength) * bbStdDev
+upperBand = basis + dev
+lowerBand = basis - dev
+
+// RSI
+rsi = ta.rsi(close, rsiLength)
+
+// ATR for fixed TP/SL distance
+atr = ta.atr(atrLength)
+slPoints = math.floor(atr * atrMultiplier / syminfo.mintick)
+tpPoints = slPoints  // 1:1 TP/SL ratio
+
+//=== ENTRY LOGIC ===
+
+// Long entry: close < lower band AND RSI < oversold threshold (oversold bounce)
+longCondition = close < lowerBand and rsi < rsiOversold
+
+// Exit signal: price returns to middle band (basis)
+middleBandExit = close >= basis
+
+// Position management
+var float entryPrice = na
+var int barsSinceEntry = 0
+
+// Track entry price on new long
+if strategy.position_size > 0 and strategy.position_size[1] <= 0
+    entryPrice := close
+    barsSinceEntry := 0
+
+if strategy.position_size > 0
+    barsSinceEntry := barsSinceEntry + 1
+
+//=== ENTRY ===
+if longCondition and strategy.position_size == 0
+    strategy.entry("BB_Long", strategy.long)
+
+//=== EXIT MANAGEMENT ===
+if strategy.position_size > 0
+    // Exit 1: Middle band touch (mean reversion target reached)
+    if useMiddleBandExit and high >= basis
+        strategy.close("BB_Long", comment="MidBand")
+
+    // Exit 2: Fixed TP/SL (alternative to middle band exit)
+    if useFixedTPSL and useMiddleBandExit == false
+        strategy.exit("BB_TPSL", "BB_Long", loss=slPoints, profit=tpPoints)
+
+    // Exit 3: Alternative RSI overbought exit — close when RSI > 70 (overbought)
+    if rsi > 70
+        strategy.close("BB_Long", comment="RSI_Oversold")
+
+//=== PLOTS ===
+plot(basis, "Middle Band", color=color.blue, linewidth=1)
+plot(upperBand, "Upper Band", color=color.gray, linewidth=1)
+plot(lowerBand, "Lower Band", color=color.gray, linewidth=1)
+
+// RSI subchart for reference
+hline(rsiOversold, "RSI Oversold", color=color.red, linestyle=hline.style_dashed)
+plot(rsi, "RSI", color=color.purple, linewidth=1)
+hline(50, "RSI Mid", color=color.gray, linestyle=hline.style_dotted)
