@@ -1,0 +1,26 @@
+//@version=6
+strategy(title="XAUUSD 30m — EMA3/8 + RSI>50 + TP/SL 1:1 at 2×ATR (Iter 497)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50, group="EMA Settings")        // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50, group="EMA Settings")        // sweep: 5-21 step 2
+rsiLen     = input.int(14, "RSI Length", minval=2, maxval=50, group="RSI Filter")               // sweep: 7-21 step 2
+rsiThresh  = input.int(50, "RSI Threshold (long only above)", minval=20, maxval=80, group="RSI Filter") // sweep: 30-60 step 5
+atrLen     = input.int(14, "ATR Length", minval=5, maxval=50, group="TP/SL")                    // sweep: 7-21 step 2
+atrMultSL  = input.float(2.0, "ATR Multiplier for SL", minval=0.5, maxval=5.0, step=0.25, group="TP/SL") // sweep: 1.0-3.0 step 0.5
+atrMultTP  = input.float(2.0, "ATR Multiplier for TP", minval=0.5, maxval=5.0, step=0.25, group="TP/SL") // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atrVal  = ta.atr(atrLen)
+
+//--- entry logic — long only
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh
+
+if longCondition
+    stopLossDist  = atrMultSL * atrVal
+    takeProfitDist = atrMultTP * atrVal
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", loss=stopLossDist / syminfo.mintick, profit=takeProfitDist / syminfo.mintick)
