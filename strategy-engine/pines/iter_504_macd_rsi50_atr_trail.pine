@@ -1,0 +1,51 @@
+//@version=6
+strategy(title="MACD RSI50 ATR Trail — Iter 504", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+macdFastLen   = input.int(12, "MACD Fast Length", minval=5, maxval=30, tooltip="Fast EMA length for MACD calculation")        // sweep: 8-16 step 2
+macdSlowLen   = input.int(26, "MACD Slow Length", minval=15, maxval=50, tooltip="Slow EMA length for MACD calculation")       // sweep: 20-35 step 3
+macdSignalLen = input.int(9, "MACD Signal Length", minval=5, maxval=20, tooltip="Signal line EMA length")                      // sweep: 7-12 step 1
+
+// RSI filter
+rsiLen        = input.int(14, "RSI Length", minval=5, maxval=30, tooltip="RSI period for momentum filter")                    // sweep: 10-20 step 2
+rsiThreshold  = input.int(50, "RSI Threshold (long)", minval=30, maxval=70, tooltip="RSI must be above this for long entry")  // sweep: 40-60 step 5
+
+// ATR trailing stop
+atrLen        = input.int(14, "ATR Length", minval=5, maxval=30, tooltip="ATR period for trailing stop")                      // sweep: 10-20 step 2
+atrMult       = input.float(2.0, "ATR Multiplier", minval=1.0, maxval=5.0, step=0.5, tooltip="ATR multiplier for stop distance") // sweep: 1.5-3.0 step 0.5
+
+//--- indicator calculations
+[macdLine, signalLine, _hist] = ta.macd(close, macdFastLen, macdSlowLen, macdSignalLen)
+rsiVal = ta.rsi(close, rsiLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+// Long entry: MACD crosses above signal AND RSI > threshold (momentum confirmed uptrend)
+longCondition = ta.crossover(macdLine, signalLine) and rsiVal > rsiThreshold
+
+//--- position tracking
+var float trailStop = na
+var int barSinceEntry = 0
+
+if (strategy.position_size == 0 and longCondition)
+    strategy.entry("Long", strategy.long)
+    trailStop := close - atrVal * atrMult
+    barSinceEntry := 0
+
+// Update trailing stop while in position
+if (strategy.position_size > 0)
+    barSinceEntry := barSinceEntry + 1
+    // Trail stop upward only
+    float newStop = close - atrVal * atrMult
+    trailStop := math.max(trailStop, newStop)
+    strategy.exit("XL", "Long", stop=trailStop)
+
+//--- exit logic: MACD crosses below signal (trend reversal exit)
+if (strategy.position_size > 0 and ta.crossunder(macdLine, signalLine))
+    strategy.close("Long")
+
+//--- plot for visual reference
+plot(macdLine, "MACD Line", color=color.blue, linewidth=1)
+plot(signalLine, "Signal Line", color=color.orange, linewidth=1)
+hline(0, "Zero Line", color=color.gray)

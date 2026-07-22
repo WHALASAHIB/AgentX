@@ -1,0 +1,53 @@
+//@version=6
+strategy(title="MACD Crossover + ATR Trail — BTCUSDT 1H", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=5, maxval=30, step=1)     // sweep: 8-16 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=15, maxval=50, step=1)     // sweep: 20-35 step 3
+signalLength = input.int(9, "MACD Signal Length", minval=5, maxval=15, step=1)   // sweep: 7-12 step 1
+
+// ATR trailing stop parameters
+atrLength = input.int(14, "ATR Length", minval=7, maxval=30, step=1)             // sweep: 10-20 step 2
+atrMultiplier = input.float(2.0, "ATR Multiplier", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.5-3.0 step 0.5
+
+// Trade direction
+useLong = input.bool(true, "Long Only", group="Direction")
+
+//--- MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+macdCrossOver = ta.crossover(macdLine, signalLine)
+macdCrossUnder = ta.crossunder(macdLine, signalLine)
+
+//--- ATR for trailing stop
+atrValue = ta.atr(atrLength)
+
+//--- Ratcheted trailing stop level (in price)
+var float longTrailStop = na
+
+// Initialize trail stop on new entry (bar after entry signal fires)
+if (strategy.position_size > 0)
+    // Start trail at entry_price - atrMultiplier * ATR
+    if (na(longTrailStop[1]) or strategy.position_size[1] <= 0)
+        longTrailStop := close - (atrValue * atrMultiplier)
+    else
+        // Ratchet up: new stop = max(old stop, current close - ATR*mult)
+        longTrailStop := math.max(longTrailStop[1], close - (atrValue * atrMultiplier))
+else
+    longTrailStop := na
+
+//--- Entry logic
+longEntry = macdCrossOver and useLong and strategy.position_size == 0
+
+//--- Exit via strategy.exit each bar when in position
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", from_entry="Long", stop=longTrailStop, comment="ATR_Trail")
+
+//--- Entry
+if (longEntry)
+    strategy.entry("Long", strategy.long)
+
+//--- Visual aids
+plot(ta.sma(close, 50), "SMA 50", color=color.gray, linewidth=1)
+plot(ta.sma(close, 200), "SMA 200", color=color.purple, linewidth=1)
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dotted)
