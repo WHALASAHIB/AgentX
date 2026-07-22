@@ -301,6 +301,7 @@
     "Risk per trade (~1%) on $100K FTMO account should be 0.5% ($500/target). Current $1,000/trade is double the safe level.",
     "3 duplicate bot instances each trying to trade the same account \u2014 adds confusion, not redundancy.",
     "Cooldown timer and session trend filter from Jul 13 critique still not implemented in deployed bot code.",
-    "July 20: 2 consecutive BUY losses (-$1,974.58 total). Both trades had entries/exits OUTSIDE the declared 13-15 UTC session window. Direction-failure detection still not implemented. Risk per trade still ~1% when FTMO-optimized target is 0.5%."
+    "July 20: 2 consecutive BUY losses (-$1,974.58 total). Both trades had entries/exits OUTSIDE the declared 13-15 UTC session window. Direction-failure detection still not implemented. Risk per trade still ~1% when FTMO-optimized target is 0.5%.",
+    "July 21: State file NOT reconciled after overnight SL closes. propfirm_pass_state.json shows total_losses=0 and consecutive_losses=0 while both Jul 20 trades actually lost -$1,974.58. Bot will start next session with wrong baseline unless sync_state_from_mt5() reconciles before launch."
   ]
 }

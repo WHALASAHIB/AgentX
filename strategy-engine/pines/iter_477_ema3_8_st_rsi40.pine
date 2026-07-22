@@ -1,0 +1,44 @@
+//@version=6
+strategy(title="BTCUSDT 30m EMA3/8 SuperTrend RSI40 TP15ATR", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, tooltip="Short EMA period")  // sweep: 2-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50, tooltip="Long EMA period")  // sweep: 5-20 step 1
+
+// SuperTrend parameters (replaces ADX trend filter)
+st_atr_len = input.int(10, "SuperTrend ATR Length", minval=5, maxval=30)  // sweep: 7-14 step 2
+st_mult = input.float(3.0, "SuperTrend Multiplier", minval=1.0, maxval=5.0, step=0.5)  // sweep: 2.0-4.0 step 0.5
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=30)  // sweep: 7-21 step 2
+rsi_thresh = input.int(40, "RSI Threshold (long if above)", minval=20, maxval=60)  // sweep: 30-50 step 5
+
+// ATR parameters for TP/SL
+atr_len = input.int(14, "ATR Length", minval=7, maxval=30)  // sweep: 10-20 step 2
+tp_mult = input.float(1.5, "Take Profit (×ATR)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 1.0-2.0 step 0.2
+sl_mult = input.float(1.0, "Stop Loss (×ATR)", minval=0.3, maxval=3.0, step=0.1)  // sweep: 0.5-1.5 step 0.2
+
+//--- calculations
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+// SuperTrend for trend direction
+[supertrend_dir, supertrend_line] = ta.supertrend(st_mult, st_atr_len)
+
+//--- crossover detection
+cross_over = ta.crossover(fast_ema, slow_ema)
+
+//--- entry conditions (long only)
+// SuperTrend direction = 1 means uptrend; + RSI > threshold
+long_entry = cross_over and supertrend_dir == 1 and rsi_val > rsi_thresh
+
+//--- entry/exit
+if (long_entry)
+    strategy.entry("Long", strategy.long)
+
+//--- exit: fixed TP/SL based on ATR
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=int(sl_mult * atr_val / syminfo.mintick), profit=int(tp_mult * atr_val / syminfo.mintick))
