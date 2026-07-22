@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 182,
+    "total_ideas": 185,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1352,6 +1352,63 @@
       "diversification_value": "Cross_Commodity_Seasonal_Rotation (B+) goes long individual metals at their strongest months sequentially \u2014 it's a long-only rotation. Precious_Metals_Seasonal_Spread (A-) trades the gold-silver ratio as a single-pair instrument. This idea is fundamentally different: it is a PAIRWISE RELATIVE-VALUE trade that GOES SHORT one metal and LONG another simultaneously, exploiting SEASONAL DIVERGENCE (opposite seasonal windows) rather than seasonal strength or ratio levels. No existing seasonal idea uses the divergence-between-windows concept. Novelty score: 4/5.",
       "self_grade": "A-",
       "generated_at": "2026-07-21T00:43:37Z"
+    },
+    {
+      "name": "Yield_Curve_Commodity_Seasonal_Rotator",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1 for yield curve regime",
+        "D1 for seasonal window",
+        "H1 entry"
+      ],
+      "description": "Overlays yield curve phase (10Y-2Y spread steepening/flattening) onto gold's seasonal demand windows to identify regime-conditional position trades. Yield curve steepening concentrated in Q1/Q4, flattening in Q2/Q3 \u2014 gold's response differs by regime.",
+      "market_behaviour": "The US Treasury yield curve slope (10Y-2Y spread) exhibits well-documented seasonal patterns: steepening predominantly occurs in Q1 (growth expectations) and Q4 (year-end positioning), while flattening dominates Q2-Q3 (mid-year uncertainty). Gold's response to yield curve changes is asymmetric: steepening is gold-bearish when driven by real growth, but gold-bullish when driven by inflation expectations. By overlaying the yield curve's seasonal phase onto gold's seasonal demand windows, we identify regime-conditional position opportunities. When the yield curve is flattening (reducing gold's opportunity cost) and gold is entering its seasonal strength window (Jul-Sep fabrication + wedding demand), the two tailwinds compound. When steepening and seasonal weakness coincide, the headwinds compound on the short side.",
+      "entry_logic": "1. At the start of each calendar month, determine yield curve phase: STEEPENING if 10Y-2Y spread 20-day ROC > 0, FLATTENING if < 0.\n2. Identify gold seasonal window: STRONG (Jul-Sep peak fabrication + wedding demand), MODERATE (Oct-Dec Diwali/festival, Jan-Feb Chinese New Year), WEAK (Mar-Jun post-holiday lull).\n3. If FLATTENING + STRONG seasonal \u2192 BUY gold. D1 close must be above 20EMA for trend confirmation.\n4. If STEEPENING + STRONG seasonal \u2192 BUY but SL is tighter (steepening from growth optimism dampens safe-haven appeal \u2014 only enter if gold is above 50EMA).\n5. If FLATTENING + WEAK seasonal \u2192 no entry (no seasonal tailwind, flattening alone is insufficient).\n6. If STEEPENING + WEAK seasonal \u2192 SHORT gold on D1 close below 20EMA.\n7. If STEEPENING + MODERATE seasonal \u2192 SHORT with above-50EMA filter.\n8. Exit at end of seasonal window (next calendar month change) or if SL/TP hit.",
+      "exit_logic": "Stop Loss: 1.5 x ATR(14) on D1. Take Profit: 2 x ATR(14) on D1. Maximum hold: end of current seasonal window (calendar month boundary). No trailing stop \u2014 this is a position trade with a defined holding period. Re-entry in same direction allowed if still within same seasonal window and SL/TP not hit within 5 days.",
+      "failure_mode": "1. Yield curve dynamics dominated by unexpected central bank action (emergency rate cut/hike during banking crisis) overwhelms both seasonal and yield-curve signals. 2. Persistent deeply inverted yield curve (2022-2024 regime) removes the steepening/flattening distinction \u2014 the spread is just 'how deeply negative' rather than directional. 3. Gold decouples from yield curve entirely during geopolitical flight-to-safety events (e.g. Russia-Ukraine invasion) where gold rallies regardless of curve positioning.",
+      "diversification_value": "Unlike Cross_Commodity_Seasonal_Rotation (B+) which rotates among precious metals on their strongest calendar months, this idea overlays the macro bond cycle onto gold's own seasonal window. Unlike Cross_Commodity_Seasonal_Divergence_Capture (A-) which trades divergence between precious metals, this is a single-instrument position trade blending yield-curve regime with gold seasonality. No existing seasonal idea conditions entry on the yield curve phase \u2014 every existing seasonal idea uses demand cycles, event windows, or calendar anomalies independently of macro rates.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-22T01:48:06Z"
+    },
+    {
+      "name": "TIPS_Breakeven_Gold_Momentum_Spreader",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1 for breakeven velocity signal",
+        "H1 for entry"
+      ],
+      "description": "Trades the discontinuous catch-up between US 10Y breakeven inflation rate velocity and gold price. Gold only responds to breakeven rate movements above ~5bp/week threshold, with a 2-5 day lag \u2014 the lagged catch-up is the exploitable edge.",
+      "market_behaviour": "The US 10-year breakeven inflation rate (nominal 10Y yield minus 10Y TIPS yield) represents the market's implied inflation expectation over the next decade. Gold has a well-documented positive correlation with breakeven rates \u2014 higher inflation expectations should drive gold demand as a store of value. However, this relationship is discontinuous: gold only responds to breakeven rate movements above a certain velocity threshold (approximately 5bp per week). Below this threshold, gold trades on other factors (USD, geopolitics, real yields). When breakeven velocity exceeds the threshold, gold catches up with a 2-to-5 day lag. This lagged catch-up exists because gold is traded by a different set of market participants (macro funds, CTAs, retail) than breakeven rates (inflation swap desks, pension funds), and the information propagates across the two markets with a delay.",
+      "entry_logic": "1. On D1, compute the 5-day change in the US 10Y breakeven inflation rate (nominal 10Y yield minus 10Y TIPS yield).\n2. If breakeven 5-day change > +5bp AND gold 5-day return < 1.5% (gold has NOT yet caught up) \u2192 BUY signal.\n3. If breakeven 5-day change < -5bp AND gold 5-day return > -1.5% (gold has NOT yet caught up on the downside) \u2192 SELL signal.\n4. Enter at next H1 candle open following the signal.\n5. Skip entry if VIX > 30 (volatility regime invalidates the normal breakeven-to-gold transmission channel \u2014 everything trades on liquidity).\n6. Skip entry if gold is within 24 hours of a major macro release (NFP, CPI, FOMC) to avoid event-driven volatility.\n7. Exit when gold has 'caught up': gold 5-day return reaches 80% of the breakeven 5-day change magnitude.",
+      "exit_logic": "Stop Loss: 1.5 x ATR(14) on H1. Take Profit: gold 5-day return = 80% of breakeven 5-day change magnitude. Maximum hold: 5 trading days. If not caught up by day 5, exit at market. Time-stop at day 5 regardless of P&L \u2014 the lagged catch-up edge decays after 5 days.",
+      "failure_mode": "1. Gold and breakeven rates decouple during liquidity crises when everything is sold for cash (March 2020 \u2014 both breakevens fell AND gold fell despite breakeven velocity exceeding threshold). 2. Fed jawboning or forward guidance changes can move breakevens independently of genuine inflation expectations (2021 'transitory' narrative caused breakevens to spike without gold following). 3. Breakeven rate data only available during US bond market hours (approx 14 hours/day) \u2014 overnight gaps can destroy the 5bp threshold signal. 4. Zero lower bound or near-ZIRP environments compress breakevens into a narrow range where 5bp represents a large relative move.",
+      "diversification_value": "Unlike Real_Yield_Gold_Inverse_Corr (A-) which trades the static inverse relationship between real yields and gold, this idea focuses on the breakeven RATE OF CHANGE (velocity) and the lagged catch-up mechanism. Unlike Cross_Asset_Gamma_Flip (B) which looks at bond+equity joint moves, this is a pure TIPS breakeven to gold transmission idea. No existing cross_asset idea trades the velocity of breakeven rate changes with a defined catch-up target \u2014 the closest is Real_Yield_Gold_Inverse_Corr which trades the static level relationship rather than the velocity discontinuity.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-22T01:48:06Z"
+    },
+    {
+      "name": "Industrial_Metals_Gold_Activity_Proxy",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1 for regime classification and entry"
+      ],
+      "description": "Uses copper as a 'Dr. Copper' economic activity proxy, but conditions the gold trade on whether the copper move is growth-driven or inflation-driven (using breakeven rates as a discriminator). Copper rallies accompanied by rising breakevens = inflation-driven \u2192 buy lagging gold. Copper rallies with flat breakevens = growth-driven \u2192 gold likely to underperform.",
+      "market_behaviour": "Copper ('Dr. Copper') is a leading indicator of global economic activity. Gold and copper share commodity status (positive correlation in broad inflation/deflation regimes) but diverge when the macro driver is specifically growth vs risk. The key distinction lies in the concurrent behaviour of breakeven inflation rates: when copper rallies AND breakevens are rising, the move is inflation-driven (input cost pass-through, supply constraints) and gold should rally in sympathy. When copper rallies AND breakevens are stable, the move is growth-driven (industrial demand) and gold tends to lag or fall as safe-haven demand diminishes. This regime-distinction approach transforms copper from a noisy input into a regime-conditional gold signal.",
+      "entry_logic": "1. On D1, compute copper 5-day return. Ignore moves under 2% (noise threshold).\n2. Compute US 10Y breakeven rate 5-day change. If > +5bp \u2192 'inflation regime'; if \u2264 +5bp \u2192 'growth regime'.\n3. If copper up > 2% AND inflation regime \u2192 BUY gold if gold 5-day return < copper 5-day return (gold lagging the inflation-driven commodity rally).\n4. If copper down > 2% AND growth regime \u2192 SELL gold if gold 5-day return > copper 5-day return (gold hasn't fully priced in the growth slowdown).\n5. If copper up > 2% AND growth regime \u2192 DO NOT trade (growth-driven copper rally coincides with reduced safe-haven demand for gold \u2014 no edge).\n6. If copper down > 2% AND inflation regime \u2192 DO NOT trade (conflicting signals).\n7. Enter at next D1 open after signal generation.",
+      "exit_logic": "Stop Loss: 1 x ATR(14) on D1. Take Profit: 2 x ATR(14) on D1. Maximum hold: 10 trading days. Exit early if the breakeven/copper regime flips (e.g., inflation regime becomes growth regime mid-trade) \u2014 the condition that created the edge has expired. Position size: 0.5x standard allocation to account for the regime-classification risk.",
+      "failure_mode": "1. Global recession disconnects both copper and gold from normal drivers \u2014 all correlations break down toward 1.0 (everything sold for cash). 2. Supply-side shocks to copper (mine closures, strikes, export restrictions) drive copper prices independently of demand, breaking the activity-proxy signal. 3. Gold decouples due to geopolitical safe-haven flows that overwhelm the copper signal. 4. The 5bp breakeven threshold may need recalibration during high-inflation regimes (2021-2023) where normal volatility is elevated.",
+      "diversification_value": "Unlike CRB_Gold_Momentum_Spread (A-) which trades the general catch-up of gold to the broad CRB index using pure momentum, this idea disaggregates copper specifically and uses breakeven rates to distinguish growth-driven vs inflation-driven commodity rallies. This is a regime-conditional approach, not a pure momentum catch-up. Unlike EM_Currency_Gold_Transmission_Divergence (A-) which focuses on EM FX channels, this uses industrial metals as the activity proxy. No existing cross_asset idea conditions copper moves on breakeven rate regimes to infer the macro driver.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-22T01:48:06Z"
     }
   ],
   "archived": [
@@ -3550,7 +3607,9 @@
       "Gold_USD_Cross_Rate_Carry_Trade_Proxy",
       "VIX_Gold_Regime_Divergence",
       "Gold_Bitcoin_Divergence_Rotator",
-      "EM_Currency_Gold_Transmission_Divergence"
+      "EM_Currency_Gold_Transmission_Divergence",
+      "TIPS_Breakeven_Gold_Momentum_Spreader",
+      "Industrial_Metals_Gold_Activity_Proxy"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
@@ -3580,7 +3639,8 @@
       "Gold_Silver_Ratio_Seasonal_Reverser",
       "CPI_Seasonal_Base_Effect_Gold",
       "Precious_Metals_Seasonal_Spread",
-      "Cross_Commodity_Seasonal_Divergence_Capture"
+      "Cross_Commodity_Seasonal_Divergence_Capture",
+      "Yield_Curve_Commodity_Seasonal_Rotator"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

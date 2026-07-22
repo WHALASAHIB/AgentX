@@ -1,6 +1,6 @@
 {
-  "iteration": 480,
-  "last_run": "2026-07-21T15:52:47Z",
+  "iteration": 482,
+  "last_run": "2026-07-22T09:43:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>40 filter (reverted from 50 — RSI>50 reduced PF from 1.25 to 1.14) + widened TP=2×ATR / SL=1×ATR. RSI>40 gave 277 trades (PF=1.25) while RSI>50 gave 189 trades (PF=1.14). Widening TP from 1.5×ATR to 2×ATR should let winners run further and improve PF.",
+  "current_hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>40 filter only, TP=1.5×ATR/SL=1×ATR. Iter 481 tried SMA200 trend filter but it was too restrictive — only 1 trade on 4316 bars. Remove trend filter entirely, keep only RSI>40 to restore the iter 478 baseline (PF=1.25, 277 trades). The commission parity profile applied 0.05% instead of the Pine's 0.04%, which may reduce PF slightly.",
   "evolution_log": [
     {
       "iteration": 464,
@@ -26,22 +26,36 @@
       "iteration": 477,
       "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with SuperTrend trend filter + RSI(14)>40 (lowered from 50) + fixed TP=1.5×ATR / SL=1×ATR. Iter 476 had triple filter (ADX>25+RSI>50) producing 0 trades. Swapping ADX for SuperTrend (both trend filters) and lowering RSI threshold from 50 to 40 to get entries while still filtering weakest momentum.",
       "metrics": {"pf": 0, "sharpe": 0, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
-      "verdict": "invalid (no trades) — SuperTrend + RSI>40 + EMA3/8 crossover still produces 0 trades on 4305 bars. The trend filter (ADX or SuperTrend) combined with RSI threshold blocks ALL entries on BTCUSDT 30m. Need to remove SuperTrend and try RSI>40 alone.",
+      "verdict": "invalid (no trades) — SuperTrend + RSI>40 + EMA3/8 crossover still produces 0 trades on 4305 bars.",
       "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-21T15:23:00Z"
     },
     {
       "iteration": 478,
       "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>40 filter ONLY (no SuperTrend) + fixed TP=1.5×ATR / SL=1×ATR. Remove SuperTrend, keep only RSI>40 to see the base trade count.",
       "metrics": {"pf": 1.24796934, "sharpe": 3.2623516, "wr": 44.0433213, "dd": 0.4994019, "trades": 277, "net_profit": 156.963178207743},
-      "verdict": "rejected (PF=1.25, below 1.3 threshold) — Got 277 trades, Sharpe 3.26 excellent, DD 0.5% tiny. RSI>40 filter allowed many weak entries. PF needs improvement.",
+      "verdict": "rejected (PF=1.25, below 1.3 threshold) — Got 277 trades, Sharpe 3.26 excellent, DD 0.5% tiny.",
       "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-21T15:38:00Z"
     },
     {
       "iteration": 479,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>50 filter (tightened from 40) + fixed TP=1.5×ATR / SL=1×ATR. Tightening RSI threshold from 40 to 50 should filter weaker entries and improve PF.",
+      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>50 filter (tightened from 40) + fixed TP=1.5×ATR / SL=1×ATR.",
       "metrics": {"pf": 1.13658813, "sharpe": 1.60360076, "wr": 43.91534392, "dd": 0.54340375, "trades": 189, "net_profit": 58.898855545607},
-      "verdict": "rejected (PF=1.14, below 1.3 threshold) — RSI>50 reduced trades (277→189) but also reduced PF (1.25→1.14). Tightening the filter backfired — RSI>40 was actually more productive.",
+      "verdict": "rejected (PF=1.14, below 1.3 threshold) — RSI>50 reduced trades (277→189) but also reduced PF (1.25→1.14).",
       "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-21T15:52:47Z"
+    },
+    {
+      "iteration": 480,
+      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>40 filter + widened TP=2×ATR / SL=1×ATR. Widening TP from 1.5×ATR to 2×ATR should let winners run further and improve PF.",
+      "metrics": {"pf": 0.03213538, "sharpe": -35.96588498, "wr": 6.81003584, "dd": 24.0822378, "trades": 279, "net_profit": -2408.223780206195},
+      "verdict": "rejected (PF=0.03, below 1.3 threshold) — Widening TP from 1.5×ATR to 2×ATR with 100% equity sizing was catastrophic. Win rate collapsed from 44% to 6.8%. Commission ($2,431 on $10k) overwhelmed small winning trades.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-22T01:43:00Z"
+    },
+    {
+      "iteration": 481,
+      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with RSI(14)>40 filter, revert TP from 2×ATR to 1.5×ATR. Adding SMA200 trend filter (ADX was unavailable in v6 engine) alongside RSI>40 to filter out choppy periods and improve PF from 1.25 baseline.",
+      "metrics": {"pf": 0.0, "sharpe": -0.35, "wr": 0.0, "dd": 21.1, "trades": 1, "net_profit": -951.80},
+      "verdict": "invalid (low sample, 1 trade) — SMA200 trend filter was far too restrictive on BTC 30m. Only 1 trade triggered in 4316 bars. Need to drop the trend filter and restore the RSI>40-only baseline.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-22T09:43:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

@@ -1,0 +1,57 @@
+//@version=6
+strategy(title="iter_481_ema3_8_rsi40_adx25_tp15", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== Inputs ===
+// EMA periods
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)      // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)      // sweep: 5-21 step 2
+
+//=== Trend filter (SMA200 directional bias instead of ADX)
+trendLen = input.int(200, "Trend SMA Length", minval=50, maxval=400)  // sweep: 100-300 step 50
+
+// RSI filter
+rsiLen     = input.int(14, "RSI Length", minval=2, maxval=50)          // sweep: 7-21 step 2
+rsiMin     = input.float(40, "RSI Minimum (long)", minval=1, maxval=99) // sweep: 30-60 step 5
+
+// ATR-based TP/SL
+atrLen     = input.int(14, "ATR Length", minval=2, maxval=50)          // sweep: 7-21 step 2
+tpMult     = input.float(1.5, "TP Multiplier (×ATR)", minval=0.5, maxval=5.0)  // sweep: 1.0-3.0 step 0.5
+slMult     = input.float(1.0, "SL Multiplier (×ATR)", minval=0.5, maxval=5.0)  // sweep: 0.5-2.0 step 0.5
+
+// Direction
+tradeLong  = input.bool(true, "Trade Long")
+
+//=== Indicator calculations ===
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+trendSma = ta.sma(close, trendLen)
+atrVal  = ta.atr(atrLen)
+
+//=== Entry logic ===
+// Bullish crossover
+bullishCross = ta.crossover(emaFast, emaSlow)
+
+// Filters: RSI > threshold AND price above trend SMA (bullish bias)
+trendFilter  = close >= trendSma
+rsiFilter    = rsiVal >= rsiMin
+
+longSignal = bullishCross and trendFilter and rsiFilter and tradeLong
+
+//=== Exit management ===
+// Calculate TP/SL prices once per bar
+var float tpPrice = na
+var float slPrice = na
+
+if longSignal
+    tpPrice := close + (atrVal * tpMult * syminfo.mintick * 10)  // 10 ticks per ATR pip adjustment
+    slPrice := close - (atrVal * slMult * syminfo.mintick * 10)
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=slPrice, profit=tpPrice, comment="TP/SL")
+
+//=== Plotting ===
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+plot(trendSma, "Trend SMA", color=color.purple, linewidth=1)
