@@ -1,0 +1,36 @@
+//@version=6
+strategy(title="Iter 493 — EMA3/8 + RSI(14)>50 + Fixed TP/SL 1:1.5 (BTC 30m)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=100)      // sweep: 5-21 step 2
+rsiLen     = input.int(14, "RSI Length", minval=2, maxval=50)            // sweep: 7-21 step 2
+rsiThresh  = input.int(50, "RSI Threshold (long above)", minval=1, maxval=100) // sweep: 30-70 step 5
+atrLen     = input.int(14, "ATR Length for SL/TP", minval=5, maxval=50) // sweep: 7-21 step 2
+slMulti    = input.float(2.0, "SL Multiplier (×ATR)", step=0.1)         // sweep: 1.0-3.0 step 0.5
+tpMulti    = input.float(3.0, "TP Multiplier (×ATR)", step=0.5)         // sweep: 1.5-4.0 step 0.5 (1:1.5 ratio)
+
+//--- derived values
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atrVal  = ta.atr(atrLen)
+
+//--- entry logic: EMA3 crosses above EMA8 AND RSI > 50 (long only)
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThresh
+
+//--- calculate fixed SL and TP distances in ticks
+slDistanceTicks = math.floor(atrVal * slMulti / syminfo.mintick)
+tpDistanceTicks = math.floor(atrVal * tpMulti / syminfo.mintick)
+
+//--- exit management: fixed TP/SL using loss/profit params
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long",
+         loss=slDistanceTicks,
+         profit=tpDistanceTicks)
+
+//--- visual aids
+plot(emaFast, "EMA Fast", color.blue, 2)
+plot(emaSlow, "EMA Slow", color.red, 2)
+hline(rsiThresh, "RSI Threshold", color.gray, hline.style_dashed)

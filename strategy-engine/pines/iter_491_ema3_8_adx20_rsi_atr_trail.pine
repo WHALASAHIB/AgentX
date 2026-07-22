@@ -1,0 +1,67 @@
+//@version=6
+strategy(title="EMA3_8_ADX20_RSI_ATR_Trail BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//═════════════════════════════════════════════════════════════
+//  inputs
+//═════════════════════════════════════════════════════════════
+
+// EMA parameters
+fast_len  = input.int(3,  "Fast EMA Length",  minval=1, maxval=50, step=1)       // sweep: 2-10 step 1
+slow_len  = input.int(8,  "Slow EMA Length",  minval=5, maxval=50, step=1)       // sweep: 5-26 step 3
+
+// ADX parameters — lowered threshold from 25 to 20 to allow more entries
+adx_len   = input.int(14, "ADX Length",       minval=7, maxval=30, step=1)       // sweep: 7-21 step 7
+adx_thresh= input.int(20, "ADX Threshold",    minval=10, maxval=40, step=5)      // sweep: 15-30 step 5  (was 25, now 20)
+
+// RSI parameters
+rsi_len   = input.int(14, "RSI Length",       minval=7, maxval=21, step=1)       // sweep: 7-21 step 7
+rsi_thresh= input.int(50, "RSI Threshold (long above)", minval=30, maxval=70, step=5) // sweep: 30-60 step 10
+
+// ATR trail parameters
+atr_len   = input.int(14, "ATR Trailing Length", minval=5, maxval=30, step=1)    // sweep: 5-21 step 4
+atr_mult  = input.float(2.0, "ATR Multiplier",  minval=1.0, maxval=5.0, step=0.5) // sweep: 1.5-4.0 step 0.5
+
+//═════════════════════════════════════════════════════════════
+//  indicator calculations
+//═════════════════════════════════════════════════════════════
+
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+
+// ADX with true range (uses DMI)
+[adx_val, plus_di, minus_di] = ta.dmi(high, low, close, adx_len)
+
+// RSI
+rsi_val = ta.rsi(close, rsi_len)
+
+// ATR for trailing exit
+atr_val = ta.atr(atr_len)
+
+//═════════════════════════════════════════════════════════════
+//  entry signals — ONE CHANGE: ADX threshold lowered from 25 to 20
+//═════════════════════════════════════════════════════════════
+
+// LONG condition: EMA3 > EMA8 (crossover confirmed), ADX > 20 (trending, lower threshold), RSI > 50 (bullish momentum)
+long_condition = ema_fast > ema_slow and adx_val > adx_thresh and rsi_val > rsi_thresh
+
+// Enter long on bar close when conditions are met and we are flat
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+//═════════════════════════════════════════════════════════════
+//  exit management — ATR trailing stop
+//═════════════════════════════════════════════════════════════
+
+// ATR-based trailing stop level
+trail_stop = close - (atr_val * atr_mult)
+
+// Exit long when price closes below the trailing stop level
+if (strategy.position_size > 0 and close < trail_stop)
+    strategy.close("Long", comment="ATR_Trail")
+
+//═════════════════════════════════════════════════════════════
+//  plot
+//═════════════════════════════════════════════════════════════
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
+hline(rsi_thresh, "RSI Threshold", color=color.green, linestyle=hline.style_dashed)

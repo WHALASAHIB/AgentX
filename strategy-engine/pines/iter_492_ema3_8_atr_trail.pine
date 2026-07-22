@@ -1,0 +1,48 @@
+//@version=6
+strategy(title="EMA3/8 + RSI50 + ATR Trail - Long Only (No ADX)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50)          // sweep: 2-10 step 1
+slowLen = input.int(8, "Slow EMA Length", minval=1, maxval=50)          // sweep: 5-20 step 1
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)               // sweep: 7-21 step 2
+rsiMin = input.int(50, "RSI Minimum (long)", minval=1, maxval=99)       // sweep: 40-60 step 5
+
+// ATR trailing stop parameters
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)               // sweep: 7-21 step 2
+atrMult = input.float(2.0, "ATR Multiplier", minval=0.5, maxval=5.0, step=0.1)  // sweep: 1.0-4.0 step 0.5
+
+// Position management
+useTrail = input.bool(true, "Use ATR Trailing Stop")                    // toggle: true/false
+
+//--- calculations
+
+// EMAs
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+
+// RSI
+rsi = ta.rsi(close, rsiLen)
+
+// ATR for trailing stop
+atr = ta.atr(atrLen)
+
+//--- entry logic
+
+// Long condition: EMA3 > EMA8 AND RSI > 50
+longCondition = ta.crossover(fastMA, slowMA) and rsi > rsiMin
+
+//--- strategy
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+
+// ATR trailing stop (long only)
+if strategy.position_size > 0 and useTrail
+    stopLevel = close - (atr * atrMult)
+    strategy.exit("Trail Exit", "Long", stop=stopLevel)
