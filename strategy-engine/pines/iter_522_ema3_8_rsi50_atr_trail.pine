@@ -1,0 +1,51 @@
+//@version=6
+strategy(title="BTCUSDT 30m EMA3/8 + RSI(14)>50 + ATR Trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=2, maxval=20, step=1)       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=5, maxval=50, step=1)        // sweep: 5-20 step 1
+rsi_len      = input.int(14, "RSI Length", minval=7, maxval=28, step=1)            // sweep: 7-28 step 2
+rsi_min      = input.int(50, "RSI Minimum (long)", minval=20, maxval=70, step=5)   // sweep: 30-70 step 5
+atr_len      = input.int(14, "ATR Length", minval=7, maxval=28, step=1)             // sweep: 7-28 step 2
+atr_mult     = input.float(2.0, "ATR Trail Multiplier", minval=0.5, maxval=5.0, step=0.5) // sweep: 1.0-4.0 step 0.5
+
+//--- indicators
+ema_fast      = ta.ema(close, ema_fast_len)
+ema_slow      = ta.ema(close, ema_slow_len)
+rsi_val       = ta.rsi(close, rsi_len)
+atr_val       = ta.atr(atr_len)
+
+//--- entry conditions (long only)
+cross_over  = ta.crossover(ema_fast, ema_slow)
+long_condition = cross_over and rsi_val > rsi_min
+
+//--- trailing stop using var — track highest close since entry
+var float highest_since_entry = na
+var int   bars_since_entry  = na
+
+if (strategy.position_size > 0)
+    // Update highest close since entry
+    if na(highest_since_entry) or close > highest_since_entry
+        highest_since_entry := close
+    bars_since_entry := nz(bars_since_entry) + 1
+else
+    highest_since_entry := na
+    bars_since_entry := na
+
+//--- exit — trailing stop at ATR multiplier below highest close since entry
+stop_price = na(highest_since_entry) ? na : highest_since_entry - atr_mult * atr_val
+
+if (strategy.position_size > 0 and not na(stop_price))
+    strategy.exit("XL", "L", stop=stop_price, comment="trail_exit")
+
+//--- entry
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("L", strategy.long, comment="ema_rsi_long")
+    highest_since_entry := close
+    bars_since_entry := 1
+
+//--- plots
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=2)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=2)
+hline(50, "RSI 50", color=color.gray, linestyle=hline.style_dashed)
+plotshape(long_condition, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
