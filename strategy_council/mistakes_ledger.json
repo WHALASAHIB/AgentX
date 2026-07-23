@@ -277,9 +277,19 @@
       "entry": 1.14192,
       "exit": 1.14068,
       "pnl": -994.48,
-      "root_cause": "SL hit at 17:41 UTC \u2014 2h41m AFTER the 13-15 UTC session window closed. BOTH entry (15:25 UTC) and exit (17:41 UTC) were outside the declared window. This is the SECOND consecutive BUY loss on the same day (previous BUY also hit SL at 15:15 UTC). Counter-trade bias: bot entered BUY again after the first BUY proved unprofitable. Holding 136 min. Volume 8.02 lots = 1.04% risk.",
+      "root_cause": "SL hit at 17:41 UTC — 2h41m AFTER the 13-15 UTC session window closed. BOTH entry (15:25 UTC) and exit (17:41 UTC) were outside the declared window. This is the SECOND consecutive BUY loss on the same day (previous BUY also hit SL at 15:15 UTC). Counter-trade bias: bot entered BUY again after the first BUY proved unprofitable. Holding 136 min. Volume 8.02 lots = 1.04% risk.",
       "fix": "Add direction-failure detection: if a BUY loses and price continues below the SL level, do not re-enter BUY for the rest of the session. Reduce position sizing to 0.5% risk ($500 target on $95K balance).",
       "prevention_rule": "After a loss in direction X, block all re-entries in direction X for 2 hours. If the loss was the second consecutive in direction X, block for the rest of the session."
+    },
+    {
+      "date": "2026-07-23",
+      "direction": "SELL",
+      "entry": 1.14154,
+      "exit": 1.14279,
+      "pnl": -991.25,
+      "root_cause": "SELL @ 1.14154 entered at 16:30 UTC July 22 (1.5h AFTER the 13-15 UTC US session window closed). SL hit at 05:46 UTC July 23 (next day, during Asian session). Position 7.93 lots = ~1.03% risk ($80/pip). Held 13h16m overnight with no cooldown or session filter. This is the 6th+ consecutive trade outside the declared session window, confirming the timezone detection bug remains unfixed.",
+      "fix": "Fix session window detection to use UTC time (datetime.now(timezone.utc)) instead of local time. Reduce position sizing to ~4 lots for 0.5% risk. Add pre-launch process cleanup to prevent duplicate instances (4 running).",
+      "prevention_rule": "Verify EVERY trade's entry UTC hour against 13-15 UTC session window. If entry is outside window, the bot's timezone detection is still broken and must be fixed before the next session."
     }
   ],
   "lessons_learned": [
@@ -302,6 +312,7 @@
     "3 duplicate bot instances each trying to trade the same account \u2014 adds confusion, not redundancy.",
     "Cooldown timer and session trend filter from Jul 13 critique still not implemented in deployed bot code.",
     "July 20: 2 consecutive BUY losses (-$1,974.58 total). Both trades had entries/exits OUTSIDE the declared 13-15 UTC session window. Direction-failure detection still not implemented. Risk per trade still ~1% when FTMO-optimized target is 0.5%.",
-    "July 21: State file NOT reconciled after overnight SL closes. propfirm_pass_state.json shows total_losses=0 and consecutive_losses=0 while both Jul 20 trades actually lost -$1,974.58. Bot will start next session with wrong baseline unless sync_state_from_mt5() reconciles before launch."
+    "July 21: State file NOT reconciled after overnight SL closes. propfirm_pass_state.json shows total_losses=0 and consecutive_losses=0 while both Jul 20 trades actually lost -$1,974.58. Bot will start next session with wrong baseline unless sync_state_from_mt5() reconciles before launch.",
+    "July 23: SELL M780012 @ 1.14154 lost -$991.25. Entry at 16:30 UTC (outside 13-15 window). 7.93 lots ($80/pip) = 1.03% risk. This is the 6th+ consecutive trade outside the declared session window. The UTC/local timezone bug remains unfixed in the deployed bot code. 4 duplicate bot instances running (up from 3 on Jul 16)."
   ]
 }

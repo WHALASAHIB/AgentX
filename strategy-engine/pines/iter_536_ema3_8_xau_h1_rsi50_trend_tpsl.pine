@@ -1,0 +1,78 @@
+//@version=6
+strategy(title="EMA3/8 XAUUSD H1 — RSI50 + EMA50 Trend + TP/SL 1:1.5 + MinHold5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+ema_fast = input.int(3, "Fast EMA", minval=1, maxval=50)       // sweep: 2-10 step 1
+ema_slow = input.int(8, "Slow EMA", minval=1, maxval=50)       // sweep: 5-21 step 1
+ema_trend = input.int(50, "Trend EMA", minval=10, maxval=200)  // sweep: 20-200 step 10
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)     // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long >=)", minval=20, maxval=80)  // sweep: 30-60 step 5
+
+// TP/SL
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", step=0.1, minval=0.5, maxval=5.0)    // sweep: 0.5-3.0 step 0.3
+tp_sl_ratio = input.float(1.5, "TP:SL Ratio", step=0.1, minval=0.5, maxval=5.0)          // sweep: 1.0-2.5 step 0.25
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                               // sweep: 7-21 step 2
+
+// Cooldown
+min_hold_bars = input.int(5, "Min Bars After Exit Before Re-entry", minval=1, maxval=20)  // sweep: 2-10 step 1
+
+//--- calculations
+ema_f = ta.ema(close, ema_fast)
+ema_s = ta.ema(close, ema_slow)
+ema_t = ta.ema(close, ema_trend)
+
+rsi = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- trend filter
+trend_up = close > ema_t  // price above trend EMA = bullish bias
+
+//--- exit tracking
+var int last_exit_bar = na
+last_position_size = strategy.position_size[1]
+
+// Detect exit: had a position open last bar and now flat
+exit_occurred = (nz(last_position_size) != 0) and (strategy.position_size == 0)
+if exit_occurred
+    last_exit_bar := bar_index
+
+// Cooldown gate: require enough bars since last exit
+cooldown_ok = na(last_exit_bar) or (bar_index - last_exit_bar >= min_hold_bars)
+
+//--- entry conditions
+// Only trade if no current position, cooldown ok, and trend aligned
+no_position = strategy.position_size == 0
+
+// Long: fast crosses above slow, RSI >= threshold, price above trend EMA
+long_entry = ta.crossover(ema_f, ema_s) and rsi >= rsi_threshold and trend_up
+short_entry = ta.crossunder(ema_f, ema_s) and rsi <= (100 - rsi_threshold) and not trend_up
+
+//--- entry logic
+if no_position and cooldown_ok
+    if long_entry
+        strategy.entry("Long", strategy.long)
+    if short_entry
+        strategy.entry("Short", strategy.short)
+
+//--- exit management
+if strategy.position_size > 0
+    sl_dist = sl_atr_mult * atr_val
+    tp_dist = tp_sl_ratio * sl_dist
+    sl_price = close - sl_dist
+    tp_price = close + tp_dist
+    strategy.exit("XL", "Long", stop=sl_price, limit=tp_price)
+
+if strategy.position_size < 0
+    sl_dist = sl_atr_mult * atr_val
+    tp_dist = tp_sl_ratio * sl_dist
+    sl_price = close + sl_dist
+    tp_price = close - tp_dist
+    strategy.exit("XS", "Short", stop=sl_price, limit=tp_price)
+
+//--- plot
+plot(ema_f, "Fast EMA", color.blue, 1)
+plot(ema_s, "Slow EMA", color.red, 1)
+plot(ema_t, "Trend EMA", color.purple, 2)

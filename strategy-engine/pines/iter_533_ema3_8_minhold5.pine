@@ -1,0 +1,45 @@
+//@version=6
+strategy(title="iter_533_ema3_8_minhold5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)        // sweep: 1-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50, step=2)         // sweep: 5-20 step 2
+rsi_len  = input.int(14, "RSI Length", minval=2, maxval=50, step=1)             // sweep: 7-21 step 2
+ema50_len = input.int(50, "EMA Trend Length", minval=20, maxval=200, step=5)    // sweep: 50-200 step 20
+atr_len  = input.int(14, "ATR Length", minval=5, maxval=50, step=1)             // sweep: 7-21 step 2
+sl_atr_mult = input.float(1.5, "SL as ATR multiple", minval=0.5, maxval=5.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+tp_sl_ratio = input.float(1.5, "TP / SL ratio", minval=0.5, maxval=5.0, step=0.5)       // sweep: 1.0-3.0 step 0.5
+min_hold_bars = input.int(5, "Minimum Bars Between Entries", minval=1, maxval=20, step=1) // sweep: 1-10 step 1 — prevents cascade re-entry
+
+//--- state tracking
+var int last_entry_bar = na  // bar_index of the most recent entry
+
+//--- calculations
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+ema_trend = ta.ema(close, ema50_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA3/8 crossover + RSI50 filter + EMA50 trend filter + min_hold_bars cooldown
+// min_hold_bars prevents re-entry within N bars of the last entry (fixes cascade re-entry pattern)
+can_enter = na(last_entry_bar) or bar_index - last_entry_bar >= min_hold_bars
+long_condition  = ta.crossover(ema_fast, ema_slow) and rsi_val > 50 and close > ema_trend and can_enter
+short_condition = ta.crossunder(ema_fast, ema_slow) and rsi_val < 50 and close < ema_trend and can_enter
+
+//--- exit management: fixed TP/SL based on ATR
+// SL = sl_atr_mult * ATR  (in price units)
+// TP = tp_sl_ratio * SL  (in price units)
+// Convert to ticks using syminfo.mintick
+sl_ticks = math.round((sl_atr_mult * atr_val) / syminfo.mintick)
+tp_ticks = math.round((sl_atr_mult * atr_val * tp_sl_ratio) / syminfo.mintick)
+
+if (long_condition)
+    last_entry_bar := bar_index
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+
+if (short_condition)
+    last_entry_bar := bar_index
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)
