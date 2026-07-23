@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 185,
+    "total_ideas": 187,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1409,6 +1409,44 @@
       "diversification_value": "Unlike CRB_Gold_Momentum_Spread (A-) which trades the general catch-up of gold to the broad CRB index using pure momentum, this idea disaggregates copper specifically and uses breakeven rates to distinguish growth-driven vs inflation-driven commodity rallies. This is a regime-conditional approach, not a pure momentum catch-up. Unlike EM_Currency_Gold_Transmission_Divergence (A-) which focuses on EM FX channels, this uses industrial metals as the activity proxy. No existing cross_asset idea conditions copper moves on breakeven rate regimes to infer the macro driver.",
       "self_grade": "A-",
       "generated_at": "2026-07-22T01:48:06Z"
+    },
+    {
+      "name": "XAUXAG_Extreme_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD",
+        "XAGUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Mean reversion of the Gold-Silver ratio (XAU/XAG) from historical extremes. The ratio oscillates within a 50-100 range over decades, and deviations beyond 2.0 z-score revert as institutional arbitrage capital rebalances between the two precious metals.",
+      "market_behaviour": "Gold and silver share a centuries-old monetary relationship, with their price ratio oscillating within a 50-100 range. At extremes \u2014 ratio above 90 (gold expensive relative to silver) or below 55 (silver expensive relative to gold) \u2014 the ratio tends to revert as: (a) industrial users switch between metals based on relative cost, (b) institutional precious-metal arbitrage desks step in with paired positions, and (c) retail sentiment exhaustion stops pushing the divergence wider. Silver's higher industrial demand component (50%+ vs gold's ~10%) creates divergent fundamentals during economic cycles that eventually re-converge as the monetary premium adjusts.",
+      "entry_logic": "1) Compute Gold-Silver Ratio = XAUUSD close / XAGUSD close on daily data. 2) Calculate 200-session rolling z-score of the ratio. 3) Entry conditions: (a) If z-score < -2.0 (ratio extremely compressed, silver overvalued vs gold) \u2192 BUY XAUUSD / SELL XAGUSD via ratio-adjusted sizing. For single-instrument XAUUSD-only: BUY XAUUSD when ratio z-score < -2.0, anticipating gold catch-up. (b) If z-score > +2.0 (ratio extremely expanded, silver undervalued vs gold) \u2192 SELL XAUUSD / BUY XAGUSD. For single-instrument: SELL XAUUSD when ratio z-score > +2.0. 4) Confirmation: Ratio must have moved in the same direction for 3+ consecutive daily candles (showing conviction, not noise). 5) Skip if ratio extreme coincides with a major macro event (NFP, FOMC) in the next 24 hours \u2014 event-driven overshoots can persist beyond the mean-reversion timeframe.",
+      "exit_logic": "Take profit: 50% of position at 1.0 z-score (closer to equilibrium), remaining 50% at 0.0 z-score (at the mean). Stop loss: exit if ratio continues to extreme beyond 2.5 z-score (failure of the thesis \u2014 structural regime change). Time stop: if not reverted within 20 trading days, exit 50% and reassess on the next daily close. Re-entry: allowed only after ratio returns to 0 z-score and re-extends to 2.0+ z-score in the opposite direction.",
+      "failure_mode": "1) Structural regime change \u2014 if silver gains a permanent new industrial use (e.g., solar/EV demand at scale) or loses monetary premium, the historical ratio range shifts permanently. 2) Extended divergence during macro crises \u2014 in 2020 COVID crash, the ratio hit 125+ as silver's industrial demand collapsed faster than gold's monetary bid. 3) FX conversion noise \u2014 XAGUSD liquidity is significantly lower than XAUUSD, spreads widen during volatile periods, and execution slippage can erode the mean-reversion edge.",
+      "diversification_value": "Completely orthogonal to Gold_Oil_Ratio_Extreme_Reverter (which uses a commodity with no monetary premium \u2014 oil is purely industrial). The Gold-Silver ratio captures precious-metal monetary dynamics that Gold-Oil cannot. It also differs from DXY_Gold_Correlation_Mean_Reverter (USD-driven) and Real_Yield_Divergence_Reverter (yield-driven) by targeting a cross-precious-metal relative-value signal. No existing mean_reversion idea uses the XAU/XAG ratio.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-23T00:39:33Z"
+    },
+    {
+      "name": "Session_Value_Area_Reversion",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Mean reversion exploiting inter-session price gap fills \u2014 when price from one trading session pushes beyond the previous session's value area high/low by >1 ATR, it reverts to fill the gap as institutional order flow balances across session boundaries.",
+      "market_behaviour": "Gold trades in three distinct sessions (Asian, London, US) with different liquidity profiles and participant bases. Each session establishes its own value area \u2014 the price range where 70% of that session's volume transacts. When the next session's price action extends more than 1 ATR(14) beyond the prior session's value area boundary (VAH or VAL), a statistical bias toward reversion develops because: (a) the extension represents out-of-equilibrium pricing relative to the prior session's consensus value, (b) institutional flow from the prior session's participants (who set that value area) acts as a counterbalancing force when price leaves their accepted range, and (c) limit-order traders who missed the initial move lean against the extension knowing the inter-session gap will likely fill before the next major move. This is distinct from intraday VWAP reversion (continuous) or fair-value gap fills (single impulsive candles) \u2014 it targets session-structural rebalancing.",
+      "entry_logic": "1) Define sessions: Asian = 00:00-09:00 HKT, London = 09:00-17:00 HKT, US = 17:00-00:00 HKT. 2) For each completed session, compute the session value area using M15 candles: find the price bin (10-pip buckets) with highest total range contribution, then expand outward until 70% of session range is included. VAH = top of value area, VAL = bottom. 3) Entry condition: During an active session, if price extends >= 1.0 x ATR(14 on H1) beyond the immediately prior session's VAH (for upward extension) or VAL (for downward extension). 4) Direction: SHORT if price closes an M15 candle above VAH + 1 ATR. LONG if price closes an M15 candle below VAL - 1 ATR. 5) Confirmation: The M15 candle closing beyond the value area must have a wick on the extension side (rejection from the extreme) \u2014 a full-bodied close through the boundary suggests momentum continuation, not exhaustion. 6) Skip if ADX(14 on H1) > 35 (strong trend overrides mean-reversion tendencies at session boundaries). 7) Skip within 2 hours of major news (FOMC, NFP, CPI).",
+      "exit_logic": "Take profit: 1:1 risk-reward (exit 50%), remaining 50% at the prior session's VAH/VAL (mean reversion point). Stop loss: 1.5 x ATR(14 on H1) from entry. Time stop: if position hasn't hit TP within 8 hours, close at market (inter-session mean reversion edge decays as the current session matures). No trailing \u2014 this is a mean-reversion scalp, not a trend hold. Re-entry: allowed on the next session boundary if conditions re-trigger.",
+      "failure_mode": "1) Trending days with sustained momentum \u2014 if ADX > 35 and price keeps pushing through multiple session boundaries without fill, the mean-reversion thesis is wrong (the edge requires mean-reverting conditions). 2) News-driven breaks \u2014 fundamentally-driven extension (FOMC surprise, NFP beat) won't revert to the prior session's value area because the macro context has structurally changed. 3) Low-liquidity sessions \u2014 during holidays or after-hours thin markets, the value area computation becomes unreliable (few ticks, wide spreads, arbitrary boundaries). 4) Session definition mismatch during DST transitions \u2014 session start/end times shift by 1 hour, and if the script doesn't adjust, value areas cross boundaries incorrectly.",
+      "diversification_value": "Different from Intraday_Volume_Profile_Mean_Reverter (which uses a continuous 24-hour volume profile \u2014 no session segmentation, no ATR extension threshold, no ADX override). Different from VWAP_Entropy_Mean_Drift (entropy-based, not session-structured). Different from Session_Boundary_Mean_Reverter (which trades the session transition itself, not extension beyond the prior session's value area). This targets inter-session structural rebalancing \u2014 a mechanism none of the other 18 mean_reversion ideas exploit.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-23T00:39:33Z"
     }
   ],
   "archived": [
@@ -3502,7 +3540,9 @@
       "Real_Yield_Divergence_Reverter",
       "DXY_Gold_Correlation_Mean_Reverter",
       "Tick_Volume_Divergence_Reverter",
-      "Gold_RealYield_Extreme_Divergence_Reverter"
+      "Gold_RealYield_Extreme_Divergence_Reverter",
+      "XAUXAG_Extreme_Reverter",
+      "Session_Value_Area_Reversion"
     ],
     "breakout": [
       "London_Killzone_Breakout",

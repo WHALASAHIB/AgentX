@@ -1,0 +1,85 @@
+//@version=6
+strategy(title="Ichimoku Kijun LONG-ONLY — BTCUSDT 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Ichimoku parameters
+kijunPeriod = input.int(26, "Kijun-sen Period", minval=9, maxval=60, step=1)       // sweep: 9-60 step 5
+tenkanPeriod = input.int(9, "Tenkan-sen Period", minval=5, maxval=30, step=1)       // sweep: 5-30 step 5
+spanBPeriod = input.int(52, "Span B Period", minval=26, maxval=104, step=2)         // sweep: 26-104 step 13
+
+// RSI parameters
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30, step=1)                // sweep: 7-21 step 7
+rsiThreshold = input.int(50, "RSI Threshold (long if RSI > N)", minval=40, maxval=70, step=5) // sweep: 40-65 step 5
+
+// ADX parameters
+adxLength = input.int(14, "ADX Length", minval=7, maxval=30, step=1)                // sweep: 7-21 step 7
+adxThreshold = input.int(25, "ADX Threshold", minval=15, maxval=40, step=5)         // sweep: 15-35 step 5
+
+// ATR stop parameters
+atrLength = input.int(14, "ATR Length", minval=7, maxval=30, step=1)                // sweep: 7-21 step 7
+tpMultiplier = input.float(1.5, "TP Multiplier (xATR)", minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (xATR)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-2.0 step 0.25
+
+//--- Ichimoku components
+tenkan = (ta.highest(tenkanPeriod) + ta.lowest(tenkanPeriod)) / 2.0
+kijun = (ta.highest(kijunPeriod) + ta.lowest(kijunPeriod)) / 2.0
+spanA = (tenkan + kijun) / 2.0
+spanB = (ta.highest(spanBPeriod) + ta.lowest(spanBPeriod)) / 2.0
+
+//--- Indicator values
+rsiVal = ta.rsi(close, rsiLength)
+atrVal = ta.atr(atrLength)
+
+//--- Manual ADX calculation
+// True Range
+hiLo = high - low
+hiCl = high - close[1]
+loCl = close[1] - low
+tr = hiLo >= hiCl and hiLo >= loCl ? hiLo : hiCl >= loCl ? hiCl : loCl
+
+// +DM and -DM
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+
+// Smoothed (Wilder smoothing)
+alpha = 1.0 / adxLength
+smoothedTR = 0.0
+smoothedPlusDM = 0.0
+smoothedMinusDM = 0.0
+smoothedTR := na(smoothedTR[1]) ? ta.sma(tr, adxLength) : alpha * tr + (1 - alpha) * nz(smoothedTR[1])
+smoothedPlusDM := na(smoothedPlusDM[1]) ? ta.sma(plusDM, adxLength) : alpha * plusDM + (1 - alpha) * nz(smoothedPlusDM[1])
+smoothedMinusDM := na(smoothedMinusDM[1]) ? ta.sma(minusDM, adxLength) : alpha * minusDM + (1 - alpha) * nz(smoothedMinusDM[1])
+
+// +DI and -DI
+plusDI = 100.0 * smoothedPlusDM / smoothedTR
+minusDI = 100.0 * smoothedMinusDM / smoothedTR
+
+// DX and ADX
+dx = 100.0 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = 0.0
+adxVal := na(adxVal[1]) ? ta.sma(dx, adxLength) : alpha * dx + (1 - alpha) * nz(adxVal[1])
+
+adxStrong = adxVal > adxThreshold
+
+//--- LONG-ONLY entry conditions
+// Price above cloud (cloud top = max of spanA, spanB)
+priceAboveCloud = close > (spanA >= spanB ? spanA : spanB)
+
+// Kijun-sen cross above (price crosses above Kijun)
+kijunCrossAbove = ta.crossover(close, kijun)
+
+// RSI filter — only enter long if RSI > threshold
+rsiLongOk = rsiVal > rsiThreshold
+
+//--- Entry (LONG ONLY — no short entries to prevent cascade-close)
+if kijunCrossAbove and priceAboveCloud and rsiLongOk and adxStrong
+    strategy.entry("Long", strategy.long)
+
+//--- Exit management (only long exits needed)
+tpPts = tpMultiplier * atrVal / syminfo.mintick
+slPts = slMultiplier * atrVal / syminfo.mintick
+
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=slPts, profit=tpPts)

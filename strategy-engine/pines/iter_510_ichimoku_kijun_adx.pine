@@ -1,0 +1,99 @@
+//@version=6
+strategy(title="Ichimoku Kijun + ADX + RSI — BTCUSDT 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Ichimoku parameters
+kijunPeriod = input.int(26, "Kijun-sen Period", minval=9, maxval=60, step=1)
+tenkanPeriod = input.int(9, "Tenkan-sen Period", minval=5, maxval=30, step=1)
+spanBPeriod = input.int(52, "Span B Period", minval=26, maxval=104, step=2)
+
+// RSI parameters
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30, step=1)
+rsiThreshold = input.int(50, "RSI Threshold", minval=40, maxval=70, step=5)
+
+// ADX parameters
+adxLength = input.int(14, "ADX Length", minval=7, maxval=30, step=1)
+adxThreshold = input.int(25, "ADX Threshold", minval=15, maxval=40, step=5)
+
+// ATR stop parameters
+atrLength = input.int(14, "ATR Length", minval=7, maxval=30, step=1)
+tpMultiplier = input.float(1.5, "TP Multiplier (xATR)", minval=0.5, maxval=5.0, step=0.5)
+slMultiplier = input.float(1.0, "SL Multiplier (xATR)", minval=0.5, maxval=5.0, step=0.1)
+
+//--- Ichimoku components
+tenkan = (ta.highest(tenkanPeriod) + ta.lowest(tenkanPeriod)) / 2.0
+kijun = (ta.highest(kijunPeriod) + ta.lowest(kijunPeriod)) / 2.0
+spanA = (tenkan + kijun) / 2.0
+spanB = (ta.highest(spanBPeriod) + ta.lowest(spanBPeriod)) / 2.0
+
+//--- Indicator values
+rsiVal = ta.rsi(close, rsiLength)
+atrVal = ta.atr(atrLength)
+
+//--- Manual ADX calculation (ta.adx not available in this runtime)
+// True Range
+hiLo = high - low
+hiCl = high - close[1]
+loCl = close[1] - low
+tr = hiLo >= hiCl and hiLo >= loCl ? hiLo : hiCl >= loCl ? hiCl : loCl
+
+// +DM and -DM
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+
+// Smoothed (Wilder smoothing = EMA with alpha = 1/period)
+alpha = 1.0 / adxLength
+smoothedTR = 0.0
+smoothedPlusDM = 0.0
+smoothedMinusDM = 0.0
+smoothedTR := na(smoothedTR[1]) ? ta.sma(tr, adxLength) : alpha * tr + (1 - alpha) * nz(smoothedTR[1])
+smoothedPlusDM := na(smoothedPlusDM[1]) ? ta.sma(plusDM, adxLength) : alpha * plusDM + (1 - alpha) * nz(smoothedPlusDM[1])
+smoothedMinusDM := na(smoothedMinusDM[1]) ? ta.sma(minusDM, adxLength) : alpha * minusDM + (1 - alpha) * nz(smoothedMinusDM[1])
+
+// +DI and -DI
+plusDI = 100.0 * smoothedPlusDM / smoothedTR
+minusDI = 100.0 * smoothedMinusDM / smoothedTR
+
+// DX and ADX
+dx = 100.0 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxVal = 0.0
+adxVal := na(adxVal[1]) ? ta.sma(dx, adxLength) : alpha * dx + (1 - alpha) * nz(adxVal[1])
+
+adxStrong = adxVal > adxThreshold
+
+//--- Entry conditions
+
+// Price relative to cloud
+priceAboveCloud = close > (spanA >= spanB ? spanA : spanB)
+priceBelowCloud = close < (spanA <= spanB ? spanA : spanB)
+
+// Kijun-sen cross
+kijunCrossAbove = ta.crossover(close, kijun)
+kijunCrossBelow = ta.crossunder(close, kijun)
+
+// RSI filter
+rsiLongOk = rsiVal > rsiThreshold
+rsiShortOk = rsiVal < (100 - rsiThreshold)
+
+// Cloud filter
+cloudOkLong = priceAboveCloud
+cloudOkShort = priceBelowCloud
+
+//--- Entry
+if kijunCrossAbove and cloudOkLong and rsiLongOk and adxStrong
+    strategy.entry("Long", strategy.long)
+
+if kijunCrossBelow and cloudOkShort and rsiShortOk and adxStrong
+    strategy.entry("Short", strategy.short)
+
+//--- Exit management
+tpPts = tpMultiplier * atrVal / syminfo.mintick
+slPts = slMultiplier * atrVal / syminfo.mintick
+
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=slPts, profit=tpPts)
+
+if strategy.position_size < 0
+    strategy.exit("Short Exit", "Short", loss=slPts, profit=tpPts)
