@@ -809,13 +809,25 @@ async def _resolve_account_id(account_id: Optional[str], bridge=None) -> Optiona
     """
     Resolve an account ID from various sources. Priority:
     1. Provided account_id (if not None/empty/default)
-    2. DB active account
-    3. First account from bridge list
-    4. None (caller handles this)
+    2. Bridge's active account (the account the coordinator is refreshing)
+    3. DB active account (persisted preference)
+    4. First account from bridge list
+    5. None (caller handles this)
     Never returns a hardcoded string.
     """
     if account_id and account_id not in ("null", "None", "", "default"):
         return account_id
+    if bridge is None:
+        bridge = get_bridge()
+    # First: ask the bridge which account is active (reflects the live MT5 state)
+    try:
+        active_resp = await bridge.get("/api/v1/active-account")
+        active_id = active_resp.get("active_account_id") if isinstance(active_resp, dict) else None
+        if active_id and active_id not in ("null", "None", "", "default"):
+            return active_id
+    except Exception:
+        pass
+    # Second: check DB active account (persisted user preference)
     try:
         db = get_db()
         active = db.get_active_account()
@@ -823,8 +835,7 @@ async def _resolve_account_id(account_id: Optional[str], bridge=None) -> Optiona
             return active
     except Exception:
         pass
-    if bridge is None:
-        bridge = get_bridge()
+    # Third: fall back to first account from bridge list
     try:
         bridge_accts = await bridge.list_accounts()
         if bridge_accts and len(bridge_accts) > 0:
@@ -1036,6 +1047,11 @@ async def list_accounts(auth=Depends(require_auth)):
                 equity = float(info.get("equity", 0) or 0)
                 profit = float(info.get("profit", 0) or 0)
                 trade_allowed = info.get("trade_allowed", None)
+                # Override connected status when we have valid balance data
+                if balance > 0 or equity > 0:
+                    acct["connected"] = True
+                    acct["stale"] = False
+                    acct["last_error"] = None
             # Cache successful balance/equity for fallback during outages
             if balance > 0 or equity > 0:
                 db.cache_account_balance(acct["id"], balance, equity, profit)
@@ -1061,11 +1077,34 @@ async def list_accounts(auth=Depends(require_auth)):
 
 @app.get("/api/accounts/active")
 async def active_account_route(auth=Depends(require_auth)):
+    bridge = get_bridge()
     db = get_db()
-    active_id = db.get_active_account()
+
+    # Priority: bridge's active account > DB active account
+    active_id = None
+    try:
+        active_resp = await bridge.get("/api/v1/active-account")
+        active_id = active_resp.get("active_account_id") if isinstance(active_resp, dict) else None
+    except Exception:
+        pass
+
+    if not active_id or active_id in ("null", "None", "", "default"):
+        active_id = db.get_active_account()
+
+    if not active_id or active_id in ("null", "None", "", "default"):
+        # Try first bridge account
+        try:
+            bridge_accts = await bridge.list_accounts()
+            if bridge_accts and len(bridge_accts) > 0:
+                first = bridge_accts[0].get("id")
+                if first and first not in ("null", "None", "", "default"):
+                    active_id = first
+        except Exception:
+            pass
+
     if not active_id:
         return {"active_account_id": None, "account": None}
-    bridge = get_bridge()
+
     try:
         info = await bridge.get_account(active_id)
     except HTTPException:

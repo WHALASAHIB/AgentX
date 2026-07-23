@@ -1,0 +1,43 @@
+//@version=6
+strategy(title="iter_531_ema3_8_atr_trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)        // sweep: 1-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50, step=1)         // sweep: 5-20 step 2
+rsi_len  = input.int(14, "RSI Length", minval=2, maxval=50, step=1)             // sweep: 7-21 step 2
+ema50_len = input.int(50, "EMA Trend Length", minval=20, maxval=200, step=5)    // sweep: 50-200 step 20
+atr_len  = input.int(14, "ATR Length", minval=5, maxval=50, step=1)             // sweep: 7-21 step 2
+atr_mult = input.float(3.0, "ATR Multiplier for Trailing Stop", minval=0.5, maxval=10.0, step=0.5)  // sweep: 1.5-5.0 step 0.5
+use_trailing = input.bool(true, "Use ATR Trailing Stop", group="Exit")
+use_profit_target = input.bool(false, "Use Fixed Profit Target", group="Exit")
+fixed_tp = input.int(100, "Fixed TP (points)", minval=10, maxval=1000, step=10, group="Exit")
+use_fixed_sl = input.bool(false, "Use Fixed Stop Loss", group="Exit")
+fixed_sl = input.int(50, "Fixed SL (points)", minval=10, maxval=500, step=10, group="Exit")
+
+//--- calculations
+ema_fast = ta.ema(close, fast_len)
+ema_slow = ta.ema(close, slow_len)
+ema_trend = ta.ema(close, ema50_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA3/8 crossover + RSI50 filter + EMA50 trend filter
+long_condition  = ta.crossover(ema_fast, ema_slow) and rsi_val > 50 and close > ema_trend
+short_condition = ta.crossunder(ema_fast, ema_slow) and rsi_val < 50 and close < ema_trend
+
+//--- exit management via ATR trailing stop (fires once on position open)
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    if (use_trailing)
+        // ATR-based trailing stop: initial stop is 3×ATR below entry
+        strategy.exit("XL", "Long", trail_price=close, trail_offset=atr_val * atr_mult / syminfo.mintick)
+    if (use_fixed_sl and use_profit_target)
+        strategy.exit("XL", "Long", loss=fixed_sl, profit=fixed_tp)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    if (use_trailing)
+        // ATR-based trailing stop: initial stop is 3×ATR above entry
+        strategy.exit("XS", "Short", trail_price=close, trail_offset=atr_val * atr_mult / syminfo.mintick)
+    if (use_fixed_sl and use_profit_target)
+        strategy.exit("XS", "Short", loss=fixed_sl, profit=fixed_tp)

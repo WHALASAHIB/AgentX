@@ -1,0 +1,46 @@
+//@version=6
+strategy(title="iter_528_ema3_8_rsi50_ema50_tpsl1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)       // sweep: 1-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50, step=1)       // sweep: 5-20 step 2
+trend_len = input.int(50, "Trend EMA Length", minval=10, maxval=200, step=5)  // sweep: 20-200 step 10
+
+// RSI
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50, step=1)            // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=1, maxval=99, step=5) // sweep: 30-70 step 10
+
+// ATR for stops
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50, step=1)            // sweep: 10-20 step 2
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 0.5-3.0 step 0.5
+tp_sl_ratio = input.float(1.0, "TP/SL Ratio", minval=0.5, maxval=5.0, step=0.5)        // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+trend_ema = ta.ema(close, trend_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// Cross conditions (long only)
+bullish_cross = ta.crossover(fast_ema, slow_ema)
+
+// Entry gate: EMA crossover + RSI > threshold + price above trend EMA
+long_condition = bullish_cross and rsi_val > rsi_threshold and close > trend_ema
+
+// Flat check — no position already open
+no_position = strategy.position_size == 0
+
+//--- exit management
+sl_distance = sl_atr_mult * atr_val
+tp_distance = tp_sl_ratio * sl_distance
+
+//--- entry
+if long_condition and no_position
+    strategy.entry("Long", strategy.long)
+
+//--- stop loss and take profit
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", loss=syminfo.mintick * math.round(sl_distance / syminfo.mintick), profit=syminfo.mintick * math.round(tp_distance / syminfo.mintick))
