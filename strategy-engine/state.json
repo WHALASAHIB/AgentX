@@ -1,6 +1,6 @@
 {
-  "iteration": 513,
-  "last_run": "2026-07-23T08:54:00Z",
+  "iteration": 515,
+  "last_run": "2026-07-23T09:50:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m — Bollinger Bands %B mean reversion with tighter SL/wider TP (1:3 ratio). Iter 512 first test (ADX14 reduction on Ichimoku Kijun long-only) only increased trades 11→35 but PF worsened 0.92→0.83 — Kijun cross on BTCUSDT 1h is fundamentally unprofitable. After switching to BB %B mean reversion on BTCUSDT 30m, got 90 trades with 55.6% WR but PF=0.90 because avg loss ($85) exceeded avg win ($61). Tightening SL to 1×ATR and widening TP to 3×ATR should improve the risk/reward while keeping the 55% win rate.",
+  "current_hypothesis": "BTCUSDT 30m — BB %B mean reversion, fix RSI filter logic. Iter 514 used RSI > 50 for long entries at lower band — this is contradictory because price hitting the lower band means momentum is DOWN, so RSI is typically < 30 (oversold), not > 50. The condition returned 0 trades over 4316 bars. Fix: use RSI < 30 (oversold) at lower band for long entries, and RSI > 70 (overbought) at upper band for short entries — the standard Bollinger Bands mean reversion approach. Keep SL=1×ATR, TP=3×ATR from iter_513.",
   "evolution_log": [
     {
       "iteration": 509,
@@ -38,10 +38,24 @@
     },
     {
       "iteration": 512,
-      "hypothesis": "BTCUSDT 1h — Reduce ADX threshold from 25 to 14. Iter 511 long-only Ichimoku ADX>25 produced only 11 trades. Reducing ADX threshold to 14 lets more entries through.",
+      "hypothesis": "BTCUSDT 1h — Reduce ADX threshold from 25 to 14. Iter 511 long-only Ichimoku ADX>25 produced only 11 trades.",
       "metrics": {"pf": 0.82961344, "sharpe": -1.04417106, "wr": 42.85714286, "dd": 5.62511357, "trades": 35, "net_profit": -216.248550368444},
-      "verdict": "rejected (PF=0.83 < 1.3, Sharpe=-1.04 < 0.5) — ADX 25→14 increased trades 11→35 but PF worsened 0.92→0.83. Cascade fixed at 1.0. Ichimoku Kijun approach still losing money on BTCUSDT 1h after 4 iterations.",
+      "verdict": "rejected (PF=0.83 < 1.3, Sharpe=-1.04 < 0.5)",
       "symbol": "BTCUSDT", "timeframe": "1h", "time": "2026-07-23T08:54:00Z"
+    },
+    {
+      "iteration": 513,
+      "hypothesis": "BTCUSDT 30m — Bollinger Bands %B mean reversion. Tighten SL from 2×ATR to 1×ATR, widen TP from 2×ATR to 3×ATR.",
+      "metrics": {"pf": 0.87546429, "sharpe": -1.02338071, "wr": 30.76923077, "dd": 8.406529, "trades": 104, "net_profit": -417.538124346562},
+      "verdict": "rejected — PF=0.88 (<1.3), Sharpe=-1.02 (<0.5). 1×ATR SL too tight for BTCUSDT mean reversion.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-23T09:25:00Z"
+    },
+    {
+      "iteration": 514,
+      "hypothesis": "BTCUSDT 30m — BB %B mean reversion, tighten RSI filter from 40 to 50. RSI > 50 for long at lower band ensures only stronger bounces.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — RSI > 50 contradicts lower band touch. Price at lower band implies downward momentum (RSI typically < 30), not > 50. Zero trades over 4316 bars.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-23T09:50:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

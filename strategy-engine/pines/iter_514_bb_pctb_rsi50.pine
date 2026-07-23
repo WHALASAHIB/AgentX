@@ -1,0 +1,55 @@
+//@version=6
+strategy(title="BB %B Mean Reversion RSI50 BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Bollinger Bands parameters
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)       // sweep: 10-30 step 5
+bb_mult   = input.float(2.0, "BB StdDev", minval=1.0, maxval=4.0)  // sweep: 1.5-3.0 step 0.5
+
+// RSI parameters
+rsi_len   = input.int(14, "RSI Length", minval=5, maxval=21)       // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long> / short<)", minval=30, maxval=70) // sweep: 40-60 step 5
+
+// ATR-based SL/TP
+atr_len   = input.int(14, "ATR Length", minval=5, maxval=21)       // sweep: 7-21 step 7
+sl_atr    = input.float(1.0, "SL (×ATR)", minval=0.5, maxval=5.0)  // sweep: 0.5-3.0 step 0.5
+tp_atr    = input.float(3.0, "TP (×ATR)", minval=1.0, maxval=6.0)  // sweep: 1.0-5.0 step 1.0
+
+//--- indicator calculations
+bb = ta.bb(close, bb_length, bb_mult)
+basis = bb[0]
+upper = bb[2]
+lower = bb[1]
+rsi = ta.rsi(close, rsi_len)
+atr = ta.atr(atr_len)
+
+// %B — how close price is to the bands
+pct_b = (close - lower) / (upper - lower)
+
+//--- entry logic
+// Long: price at or below lower band, RSI above threshold (bounce confirmation)
+long_condition = close <= lower and rsi > rsi_threshold
+
+// Short: price at or above upper band, RSI below threshold (pullback confirmation)
+short_condition = close >= upper and rsi < rsi_threshold
+
+// Calculate SL/TP distances in ticks
+sl_ticks_long  = math.floor((atr * sl_atr) / syminfo.mintick)
+tp_ticks_long  = math.floor((atr * tp_atr) / syminfo.mintick)
+sl_ticks_short = math.floor((atr * sl_atr) / syminfo.mintick)
+tp_ticks_short = math.floor((atr * tp_atr) / syminfo.mintick)
+
+//--- entry management
+if (long_condition and strategy.position_size <= 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks_long, profit=tp_ticks_long)
+
+if (short_condition and strategy.position_size >= 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks_short, profit=tp_ticks_short)
+
+//--- plot bands for visual reference
+plot(basis, "BB Basis", color=color.blue)
+plot(upper, "BB Upper", color=color.gray)
+plot(lower, "BB Lower", color=color.gray)
+// fill removed — not supported on this engine
