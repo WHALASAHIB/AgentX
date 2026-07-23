@@ -1,0 +1,47 @@
+//@version=6
+strategy(title="iter_507_macd_rsi_adx15", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fast_length = input.int(12, "MACD Fast Length", minval=1)     // sweep: 8-20 step 2
+slow_length = input.int(26, "MACD Slow Length", minval=1)     // sweep: 20-30 step 2
+signal_length = input.int(9, "MACD Signal Length", minval=1)  // sweep: 5-14 step 2
+
+// RSI parameters
+rsi_length = input.int(14, "RSI Length", minval=1)            // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=1)  // sweep: 40-60 step 5
+
+// ADX parameters
+adx_length = input.int(14, "ADX Length", minval=1)            // sweep: 7-21 step 2
+adx_threshold = input.int(15, "ADX Minimum Threshold", minval=1)  // sweep: 10-25 step 5
+
+// ATR-based TP/SL
+atr_length = input.int(14, "ATR Length", minval=1)            // sweep: 10-20 step 2
+sl_mult = input.float(1.0, "SL Multiplier (x ATR)", step=0.1) // sweep: 0.5-2.0 step 0.25
+tp_mult = input.float(1.5, "TP Multiplier (x ATR)", step=0.1) // sweep: 1.0-3.0 step 0.25
+
+//--- indicator calculations
+[macd_line, signal_line, _] = ta.macd(close, fast_length, slow_length, signal_length)
+rsi_val = ta.rsi(close, rsi_length)
+[plus_di, minus_di, adx_val] = ta.dmi(high, low, close, adx_length)
+atr_val = ta.atr(atr_length)
+
+//--- entry logic: MACD crossover + RSI>50 + ADX>15
+macd_cross_above = ta.crossover(macd_line, signal_line)
+
+long_condition = macd_cross_above and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+//--- exit management via fixed TP/SL based on ATR
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    sl_price = close - (atr_val * sl_mult)
+    tp_price = close + (atr_val * tp_mult)
+    strategy.exit("Long Exit", "Long", loss=int((close - sl_price) / syminfo.mintick), profit=int((tp_price - close) / syminfo.mintick))
+
+//--- plots for debugging
+hline(0, "Zero Line", color=color.gray)
+plot(macd_line - signal_line, "MACD Histogram", color=color.blue, style=plot.style_histogram)
+plot(rsi_val, "RSI", color=color.purple)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)
+plot(adx_val, "ADX", color=color.orange)
+hline(adx_threshold, "ADX Threshold", color=color.red, linestyle=hline.style_dashed)

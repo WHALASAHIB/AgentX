@@ -1,0 +1,65 @@
+//@version=6
+strategy(title="Ichimoku Kijun-sen Cross XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+tenkan_period = input.int(9, "Tenkan-sen Period", group="Ichimoku")           // sweep: 5-15 step 2
+kijun_period  = input.int(26, "Kijun-sen Period", group="Ichimoku")           // sweep: 20-35 step 3
+senkou_span_b = input.int(52, "Senkou Span B Period", group="Ichimoku")       // sweep: 40-65 step 5
+displacement  = input.int(26, "Displacement", group="Ichimoku")               // sweep: 20-35 step 3
+atr_len       = input.int(14, "ATR Length", group="Stops")                    // sweep: 10-20 step 2
+atr_mult_tp   = input.float(1.5, "ATR TP Multiplier", group="Stops", step=0.5)   // sweep: 0.5-3.0 step 0.5
+atr_mult_sl   = input.float(1.0, "ATR SL Multiplier", group="Stops", step=0.5)   // sweep: 0.5-2.5 step 0.5
+use_cloud_filter = input.bool(true, "Cloud Filter", group="Filters")
+rsi_min_long  = input.int(50, "RSI Min (Long)", group="Filters", minval=0, maxval=100)  // sweep: 40-60 step 5
+rsi_max_short = input.int(50, "RSI Max (Short)", group="Filters", minval=0, maxval=100)  // sweep: 40-60 step 5
+
+//--- indicators
+// Donchian channel calculations (inline — no user functions for v6 compat)
+tenkan  = (ta.highest(tenkan_period) + ta.lowest(tenkan_period)) / 2.0
+kijun   = (ta.highest(kijun_period) + ta.lowest(kijun_period)) / 2.0
+senkou_a = (tenkan + kijun) / 2.0
+senkou_b = (ta.highest(senkou_span_b) + ta.lowest(senkou_span_b)) / 2.0
+
+// Ichimoku components offset by displacement for visualization
+lead_a    = senkou_a[displacement]
+lead_b    = senkou_b[displacement]
+
+// Cloud: Senkou Span A vs B
+cloud_green = lead_a > lead_b
+cloud_red  = lead_a < lead_b
+cloud_top    = math.max(lead_a, lead_b)
+cloud_bottom = math.min(lead_a, lead_b)
+
+// ATR for dynamic stops
+atr_val   = ta.atr(atr_len)
+rsi_val   = ta.rsi(close, atr_len)
+
+// Condition checks
+above_kijun = close > kijun
+below_kijun = close < kijun
+above_cloud = close > cloud_top
+below_cloud = close < cloud_bottom
+
+//--- entry logic
+// Long: Kijun-sen cross above AND close above cloud AND RSI above min
+long_condition = ta.crossover(close, kijun) and (not use_cloud_filter or above_cloud) and rsi_val > rsi_min_long
+
+// Short: Kijun-sen cross below AND close below cloud AND RSI below max
+short_condition = ta.crossunder(close, kijun) and (not use_cloud_filter or below_cloud) and rsi_val < rsi_max_short
+
+//--- exit management
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long",
+         loss = math.floor(atr_val * atr_mult_sl / syminfo.mintick),
+         profit = math.floor(atr_val * atr_mult_tp / syminfo.mintick))
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short",
+         loss = math.floor(atr_val * atr_mult_sl / syminfo.mintick),
+         profit = math.floor(atr_val * atr_mult_tp / syminfo.mintick))
+
+//--- visual plots
+plot(tenkan, "Tenkan-sen", color=color.red, linewidth=1)
+plot(kijun, "Kijun-sen", color=color.blue, linewidth=2)

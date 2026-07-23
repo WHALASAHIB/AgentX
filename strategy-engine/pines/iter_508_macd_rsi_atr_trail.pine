@@ -1,0 +1,51 @@
+//@version=6
+strategy(title="iter_508_macd_rsi_atr_trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//======================================================================
+//--- inputs
+//======================================================================
+
+// MACD parameters
+int fastLength = input.int(12, "MACD Fast Length", minval=2, maxval=50, group="MACD")     // sweep: 8-20 step 2
+int slowLength = input.int(26, "MACD Slow Length", minval=5, maxval=100, group="MACD")    // sweep: 18-34 step 4
+int signalLength = input.int(9, "MACD Signal Length", minval=2, maxval=30, group="MACD")  // sweep: 5-15 step 2
+
+// RSI filter
+int rsiLength = input.int(14, "RSI Length", minval=2, maxval=50, group="RSI")             // sweep: 7-21 step 2
+int rsiThreshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80, group="RSI")  // sweep: 40-60 step 5
+
+// ATR trailing stop
+int atrLength = input.int(14, "ATR Length", minval=5, maxval=50, group="Trailing Stop")   // sweep: 10-20 step 2
+float atrMultiplier = input.float(2.0, "ATR Multiplier", minval=0.5, maxval=5.0, step=0.5, group="Trailing Stop")  // sweep: 1.0-4.0 step 0.5
+
+//======================================================================
+//--- indicator calculations
+//======================================================================
+
+// MACD
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+bool macdBullish = ta.crossover(macdLine, signalLine)
+
+// RSI
+float rsi = ta.rsi(close, rsiLength)
+bool rsiFilter = rsi > rsiThreshold
+
+// ATR
+float atr = ta.atr(atrLength)
+
+//======================================================================
+//--- entry logic
+//======================================================================
+
+// Long entry: MACD crossover AND RSI above threshold
+bool longEntry = macdBullish and rsiFilter
+
+if longEntry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//======================================================================
+//--- exit management — ATR trailing stop
+//======================================================================
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", trail_price=close - atrMultiplier * atr, trail_offset=math.round(atrMultiplier * atr / syminfo.mintick) * syminfo.mintick)
