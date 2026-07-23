@@ -1,0 +1,48 @@
+//@version=6
+strategy(title="BTCUSDT 30m EMA3/8 + RSI>50 + EMA50 Trend + TP/SL 1:1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=2, maxval=20, step=1)       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=5, maxval=50, step=1)        // sweep: 5-20 step 1
+ema_trend_len = input.int(50, "Trend EMA Length", minval=20, maxval=200, step=5)  // sweep: 20-200 step 10
+rsi_len      = input.int(14, "RSI Length", minval=7, maxval=28, step=1)            // sweep: 7-28 step 2
+rsi_min      = input.int(50, "RSI Minimum (long)", minval=20, maxval=70, step=5)   // sweep: 30-70 step 5
+atr_len      = input.int(14, "ATR Length for SL/TP", minval=7, maxval=28, step=1)  // sweep: 7-28 step 2
+sl_atr_mult  = input.float(2.0, "SL ATR Multiplier", minval=1.0, maxval=5.0, step=0.5) // sweep: 1.0-4.0 step 0.5
+tp_sl_ratio  = input.float(1.5, "TP:SL Ratio", minval=1.0, maxval=3.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+ema_fast      = ta.ema(close, ema_fast_len)
+ema_slow      = ta.ema(close, ema_slow_len)
+ema_trend     = ta.ema(close, ema_trend_len)
+rsi_val       = ta.rsi(close, rsi_len)
+atr_val       = ta.atr(atr_len)
+
+//--- entry conditions (long only)
+// Must be in an uptrend relative to the trend EMA — price stays above it
+trend_ok      = close > ema_trend
+cross_over    = ta.crossover(ema_fast, ema_slow)
+long_condition = cross_over and rsi_val > rsi_min and trend_ok
+
+//--- store entry price for exit levels
+var float entry_stop  = na
+var float entry_tp    = na
+
+//--- entry
+if (long_condition and strategy.position_size == 0)
+    entry_stop  := close - atr_val * sl_atr_mult
+    entry_tp    := close + atr_val * sl_atr_mult * tp_sl_ratio
+    strategy.entry("L", strategy.long, comment="ema_rsi_trend_long")
+    strategy.exit("XL", "L", stop=entry_stop, limit=entry_tp, comment="tpsl_exit")
+
+//--- reset exit levels after exit
+if (strategy.position_size == 0 and not na(entry_stop))
+    entry_stop := na
+    entry_tp   := na
+
+//--- plots
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=2)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=2)
+plot(ema_trend, "EMA Trend", color=color.purple, linewidth=1)
+hline(50, "RSI 50", color=color.gray, linestyle=hline.style_dashed)
+plotshape(long_condition, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
