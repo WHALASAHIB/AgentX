@@ -1,6 +1,6 @@
 {
-  "iteration": 515,
-  "last_run": "2026-07-23T09:50:00Z",
+  "iteration": 519,
+  "last_run": "2026-07-23T10:57:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,15 +13,8 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m — BB %B mean reversion, fix RSI filter logic. Iter 514 used RSI > 50 for long entries at lower band — this is contradictory because price hitting the lower band means momentum is DOWN, so RSI is typically < 30 (oversold), not > 50. The condition returned 0 trades over 4316 bars. Fix: use RSI < 30 (oversold) at lower band for long entries, and RSI > 70 (overbought) at upper band for short entries — the standard Bollinger Bands mean reversion approach. Keep SL=1×ATR, TP=3×ATR from iter_513.",
+  "current_hypothesis": "BTCUSDT 30m — Add RSI(14) > 50 filter to EMA3/8 crossover entry. Only enter long when fast EMA crosses above slow EMA AND RSI > 50 (ensures upward momentum). ATR(14) 2.0x trailing stop for exit. Long-only, no session filter.",
   "evolution_log": [
-    {
-      "iteration": 509,
-      "hypothesis": "XAUUSD 1h — Switch to Ichimoku Kijun-sen cross strategy...",
-      "metrics": {"pf": 0.72980822, "sharpe": -2.25334937, "wr": 27.17391304, "dd": 9.49388728, "trades": 92, "net_profit": -792.8754411},
-      "verdict": "rejected — PF=0.73 (<1.3), Sharpe=-2.25 (<0.5)",
-      "symbol": "BTCUSDT", "timeframe": "1h", "time": "2026-07-23T07:53:00Z"
-    },
     {
       "iteration": 510,
       "hypothesis": "BTCUSDT 1h — Add ADX(14)>25 filter on top of existing Ichimoku Kijun + RSI setup.",
@@ -56,6 +49,34 @@
       "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
       "verdict": "invalid (no trades) — RSI > 50 contradicts lower band touch. Price at lower band implies downward momentum (RSI typically < 30), not > 50. Zero trades over 4316 bars.",
       "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-23T09:50:00Z"
+    },
+    {
+      "iteration": 515,
+      "hypothesis": "BTCUSDT 30m — BB %B mean reversion, fix RSI filter. Use RSI < 30 (oversold) at lower band for long entries, and RSI > 70 (overbought) at upper band for short entries — standard BB mean reversion approach. SL=1×ATR, TP=3×ATR.",
+      "metrics": {"pf": 0.60373899, "sharpe": -4.44361282, "wr": 16.52892562, "dd": 16.80861859, "trades": 121, "net_profit": -1477.402845226507},
+      "verdict": "rejected — PF=0.60 (<1.3), Sharpe=-4.44 (<0.5), DD=16.81%, Cascade=1.33 (>1.2 cascade-close detected). BB mean reversion failed across all 3 attempts.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-23T10:00:00Z"
+    },
+    {
+      "iteration": 516,
+      "hypothesis": "XAUUSD 1h — EMA3/8 crossover with ATR(14) 1.5x trailing stop, long-only, session filter 8-16 UTC. Return to EMA/ATR trail family after BB mean reversion failed.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — XAUUSD not in ClickHouse coverage, remapped to BTCUSDT. Session filter 8-16 UTC blocked all 2158 bars on 24/7 crypto market.",
+      "symbol": "BTCUSDT", "timeframe": "1h", "time": "2026-07-23T10:15:00Z"
+    },
+    {
+      "iteration": 517,
+      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover with ATR(14) 2.0x trailing stop, long-only, no session filter, no ADX. RSI < 30 oversold filter for entry bounces.",
+      "metrics": {"pf": 0, "sharpe": null, "wr": 0, "dd": 0, "trades": 0, "net_profit": 0},
+      "verdict": "invalid (no trades) — RSI < 30 oversold filter too restrictive with EMA3/8 crossover. 0 trades over 4314 bars on BTCUSDT 30m.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-23T10:38:00Z"
+    },
+    {
+      "iteration": 518,
+      "hypothesis": "BTCUSDT 30m — Remove RSI oversold filter (RSI < 30 is too restrictive — 0 trades on 4314 bars). Use EMA3/8 crossover with ATR(14) 2.0x trailing stop, long-only, no session filter, no RSI filter. Pure EMA crossover + ATR trail on 30m.",
+      "metrics": {"pf": 0.41577243, "sharpe": -7.70324416, "wr": 20.41522491, "dd": 39.72533034, "trades": 289, "net_profit": -3926.147625999996},
+      "verdict": "rejected — PF=0.42 (<1.3), Sharpe=-7.70 (<0.5), DD=39.7% (>30%). Pure EMA3/8 crossover without filters produces too many losing trades (230 losses, 20.4% WR) and massive drawdown.",
+      "symbol": "BTCUSDT", "timeframe": "30m", "time": "2026-07-23T10:57:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

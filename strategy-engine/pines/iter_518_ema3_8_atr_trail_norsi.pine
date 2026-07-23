@@ -1,0 +1,50 @@
+//@version=6
+strategy(title="EMA3_8_ATR_Trail BTCUSDT 30m NoRSI", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "EMA Fast Length", group="EMA", minval=1, maxval=50, tooltip="Fast EMA period for crossover entry")  // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", group="EMA", minval=2, maxval=100, tooltip="Slow EMA period for crossover entry")  // sweep: 5-21 step 2
+atrLen = input.int(14, "ATR Length", group="Trailing Stop", minval=5, maxval=50, tooltip="ATR period for trailing stop calculation")  // sweep: 7-21 step 2
+atrMult = input.float(2.0, "ATR Multiplier", group="Trailing Stop", minval=0.5, maxval=5.0, step=0.1, tooltip="ATR multiplier for trailing stop distance")  // sweep: 1.0-4.0 step 0.5
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+atr = ta.atr(atrLen)
+
+//--- trailing stop logic
+var float trailStop = na
+var bool inPosition = false
+
+//--- entry logic: EMA3 crosses above EMA8 = long (NO RSI filter — pure crossover)
+longEntry = ta.crossover(emaFast, emaSlow)
+
+//--- execute entry
+if longEntry and not inPosition
+    strategy.entry("Long", strategy.long)
+    inPosition := true
+    // Initialize trailing stop at ATR multiplier below entry
+    trailStop := close - atr * atrMult
+
+//--- update trailing stop while in position
+if inPosition
+    // Raise stop as price moves up (trailing stop never goes down)
+    newStop = close - atr * atrMult
+    if newStop > trailStop
+        trailStop := newStop
+    // Exit if price hits trailing stop
+    if close <= trailStop
+        strategy.close("Long", comment="TrailStop")
+        inPosition := false
+        trailStop := na
+
+//--- exit on opposite signal (EMA crossunder = trend reversal)
+if ta.crossunder(emaFast, emaSlow) and inPosition
+    strategy.close("Long", comment="EMAX")
+    inPosition := false
+    trailStop := na
+
+//--- visual plots
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+plot(trailStop, "Trailing Stop", color=color.purple, linewidth=1, style=plot.style_linebr)
