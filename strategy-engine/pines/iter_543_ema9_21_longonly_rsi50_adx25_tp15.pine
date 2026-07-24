@@ -1,0 +1,75 @@
+//@version=6
+strategy(title="BTCUSDT 1H Long-Only EMA9/21 RSI50 ADX25 TP15", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters — slower pair (9/21) to reduce whipsaw vs EMA3/8
+emaFastLen = input.int(9, "Fast EMA Length", minval=1, maxval=50)        // sweep: 5-15 step 2
+emaSlowLen = input.int(21, "Slow EMA Length", minval=1, maxval=100)       // sweep: 15-30 step 3
+
+// ATR for TP/SL
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)                // sweep: 10-20 step 2
+slMult = input.float(1.5, "SL Multiplier (ATR)", minval=0.5, step=0.1)  // sweep: 1.0-3.0 step 0.5
+tpMult = input.float(1.0, "TP Multiplier (ATR)", minval=0.1, step=0.1)  // sweep: 0.5-2.0 step 0.25
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)               // sweep: 7-21 step 2
+rsiLongMin = input.int(50, "RSI Minimum for Long", minval=0, maxval=100) // sweep: 40-60 step 5
+
+// ADX filter
+adxLen = input.int(14, "ADX Length", minval=1, maxval=50)               // sweep: 7-21 step 2
+adxMin = input.int(25, "ADX Minimum", minval=1, maxval=100)             // sweep: 20-30 step 5
+
+//--- indicators
+
+// EMAs — slower pair: 9/21 vs 3/8 in iter 542
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// ATR for dynamic TP/SL
+atr = ta.atr(atrLen)
+
+// RSI
+rsi = ta.rsi(close, rsiLen)
+
+// ADX (requires DMI)
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+//--- entry logic
+
+// Long entry conditions (LONG ONLY — no short entries)
+// 1. EMA crossover (fast above slow) — now 9/21 which filters more noise than 3/8
+emaCrossUp = ta.crossover(emaFast, emaSlow)
+// 2. RSI above threshold — avoid buying in weak momentum
+rsiOk = rsi > rsiLongMin
+// 3. ADX trending (above minimum — avoid range-bound markets)
+adxOk = adx > adxMin
+
+// Check if we're in a position already (flat check)
+inPosition = strategy.position_size > 0
+
+//--- entry execution
+
+// LONG ENTRY: All conditions met and flat
+if (emaCrossUp and rsiOk and adxOk and not inPosition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+
+// Exit conditions — fixed TP/SL placed on entry bar, no cascade close
+if (inPosition)
+    // Calculate entry price from trade
+    entryPrice = strategy.position_avg_price
+    // SL = entry - atr * slMult (for long)
+    slPrice = entryPrice - (atr * slMult)
+    // TP = entry + atr * tpMult (for long)
+    tpPrice = entryPrice + (atr * tpMult)
+
+    // Place exit with fixed TP/SL — only fire on new bars to avoid cascade
+    strategy.exit("Long Exit", "Long", loss=math.floor((entryPrice - slPrice) / syminfo.mintick), profit=math.floor((tpPrice - entryPrice) / syminfo.mintick))
+
+//--- plot
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsiLongMin, "RSI Min", color=color.gray, linestyle=hline.style_dashed)
+hline(adxMin, "ADX Min", color=color.gray, linestyle=hline.style_dashed)

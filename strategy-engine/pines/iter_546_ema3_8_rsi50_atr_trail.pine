@@ -1,0 +1,84 @@
+//@version=6
+strategy(title="iter_546_ema3_8_rsi50_atr_trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)            // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=100, step=1)            // sweep: 5-30 step 1
+
+// ATR trailing stop parameters
+atr_len = input.int(14, "ATR Length", minval=1, maxval=100, step=1)                     // sweep: 7-21 step 2
+trail_mult = input.float(1.5, "Trailing Stop Multiplier", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.25
+initial_sl_mult = input.float(1.5, "Initial SL Multiplier", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.25
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=28, step=1)                      // sweep: 7-21 step 2
+rsi_upper = input.int(50, "RSI Upper Threshold (long only above)", minval=30, maxval=70, step=5)  // sweep: 40-60 step 5
+rsi_lower = input.int(50, "RSI Lower Threshold (short only below)", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+
+//--- indicator calculations
+fast_ema = ta.ema(close, ema_fast_len)
+slow_ema = ta.ema(close, ema_slow_len)
+atr_val = ta.atr(atr_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic
+long_condition = ta.crossover(fast_ema, slow_ema) and rsi_val > rsi_upper
+short_condition = ta.crossunder(fast_ema, slow_ema) and rsi_val < rsi_lower
+
+//--- state tracking
+var float long_entry_price = na
+var float long_trail_stop = na
+var float short_entry_price = na
+var float short_trail_stop = na
+var int long_bars_since_entry = 0
+var int short_bars_since_entry = 0
+
+// Update trailing stop for long position
+if (strategy.position_size > 0)
+    long_bars_since_entry := long_bars_since_entry + 1
+    // Trailing stop follows highest close since entry minus trail_mult * ATR
+    float highest_since = ta.highest(close, long_bars_since_entry)
+    long_trail_stop := highest_since - (trail_mult * atr_val)
+    // Trail stop cannot go below initial stop
+    long_trail_stop := math.max(long_trail_stop, long_entry_price - (initial_sl_mult * atr_val))
+else
+    long_bars_since_entry := 0
+    long_trail_stop := na
+
+// Update trailing stop for short position
+if (strategy.position_size < 0)
+    short_bars_since_entry := short_bars_since_entry + 1
+    // Trailing stop follows lowest close since entry plus trail_mult * ATR
+    float lowest_since = ta.lowest(close, short_bars_since_entry)
+    short_trail_stop := lowest_since + (trail_mult * atr_val)
+    // Trail stop cannot go above initial stop
+    short_trail_stop := math.min(short_trail_stop, short_entry_price + (initial_sl_mult * atr_val))
+else
+    short_bars_since_entry := 0
+    short_trail_stop := na
+
+//--- entry
+if (long_condition and strategy.position_size == 0)
+    long_entry_price := close
+    long_trail_stop := close - (initial_sl_mult * atr_val)
+    strategy.entry("Long", strategy.long)
+
+if (short_condition and strategy.position_size == 0)
+    short_entry_price := close
+    short_trail_stop := close + (initial_sl_mult * atr_val)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management via trailing stop
+if (strategy.position_size > 0 and not na(long_trail_stop))
+    strategy.exit("TrailExitLong", "Long", stop=long_trail_stop)
+
+if (strategy.position_size < 0 and not na(short_trail_stop))
+    strategy.exit("TrailExitShort", "Short", stop=short_trail_stop)
+
+//--- plot
+plot(fast_ema, "EMA Fast", color=color.blue, linewidth=2)
+plot(slow_ema, "EMA Slow", color=color.red, linewidth=2)
+hline(rsi_upper, "RSI Upper", color=color.green, linestyle=hline.style_dashed)
+hline(rsi_lower, "RSI Lower", color=color.red, linestyle=hline.style_dashed)
