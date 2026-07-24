@@ -23,11 +23,13 @@ logger = logging.getLogger(__name__)
 # Backend uses port 8006 (escalated from 8003→8005→8006 due to orphaned PIDs).
 # Uses 127.0.0.1 (not 10.10.10.100) to match actual service bindings.
 try:
-    from config import BRIDGE_BASE as _CFG_BRIDGE, DASHBOARD_BASE as _CFG_DASHBOARD
+    from config import BRIDGE_BASE as _CFG_BRIDGE, DASHBOARD_BASE as _CFG_DASHBOARD, ACCOUNT_ID as _CFG_ACCT
     BRIDGE_BASE = _CFG_BRIDGE
     DASHBOARD_BASE = _CFG_DASHBOARD
+    ACCOUNT_ID = _CFG_ACCT
 except ImportError:
     BRIDGE_BASE = "http://127.0.0.1:5000"
+    ACCOUNT_ID = "default"
     DASHBOARD_BASE = "http://127.0.0.1:8006"
 
 # ── Request defaults ───────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ def fetch_trade_history(days: int = 30) -> List[dict]:
 
     Returns a list of trade dicts (empty list on failure).
     """
-    url = f"{BRIDGE_BASE}/api/v1/accounts/default/history"
+    url = f"{BRIDGE_BASE}/api/v1/accounts/{ACCOUNT_ID}/history"
     data = _get_json(url, params={"days": days})
     return _ensure_list(data)
 
@@ -99,7 +101,7 @@ def fetch_open_positions() -> List[dict]:
 
     Returns a list of position dicts (empty list on failure).
     """
-    url = f"{BRIDGE_BASE}/api/v1/accounts/default/positions"
+    url = f"{BRIDGE_BASE}/api/v1/accounts/{ACCOUNT_ID}/positions"
     data = _get_json(url)
     return _ensure_list(data)
 
@@ -109,7 +111,7 @@ def fetch_equity_curve(days: int = 30) -> List[dict]:
 
     Returns a list of equity-point dicts (empty list on failure).
     """
-    url = f"{BRIDGE_BASE}/api/v1/accounts/default/equity"
+    url = f"{BRIDGE_BASE}/api/v1/accounts/{ACCOUNT_ID}/equity"
     data = _get_json(url, params={"days": days})
     return _ensure_list(data)
 
@@ -119,7 +121,7 @@ def fetch_account_stats(days: int = 30) -> dict:
 
     Returns a dict (empty dict on failure).
     """
-    url = f"{BRIDGE_BASE}/api/v1/accounts/default/stats"
+    url = f"{BRIDGE_BASE}/api/v1/accounts/{ACCOUNT_ID}/stats"
     data = _get_json(url, params={"days": days})
     return _ensure_dict(data)
 
@@ -129,7 +131,7 @@ def get_live_tick(symbol: str) -> dict:
 
     Returns a dict (empty dict on failure).
     """
-    url = f"{BRIDGE_BASE}/api/v1/accounts/default/tick/{symbol}"
+    url = f"{BRIDGE_BASE}/api/v1/accounts/{ACCOUNT_ID}/tick/{symbol}"
     data = _get_json(url)
     return _ensure_dict(data)
 

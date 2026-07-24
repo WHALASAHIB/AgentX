@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 187,
+    "total_ideas": 189,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1447,6 +1447,44 @@
       "diversification_value": "Different from Intraday_Volume_Profile_Mean_Reverter (which uses a continuous 24-hour volume profile \u2014 no session segmentation, no ATR extension threshold, no ADX override). Different from VWAP_Entropy_Mean_Drift (entropy-based, not session-structured). Different from Session_Boundary_Mean_Reverter (which trades the session transition itself, not extension beyond the prior session's value area). This targets inter-session structural rebalancing \u2014 a mechanism none of the other 18 mean_reversion ideas exploit.",
       "self_grade": "A-",
       "generated_at": "2026-07-23T00:39:33Z"
+    },
+    {
+      "name": "Tick_Volume_Impulse_Momentum_Entry",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Captures momentum from tick-volume impulse surges that precede directional price breakouts by 1-3 bars, exploiting the institutional accumulation/distribution signature of high-frequency flow.",
+      "market_behaviour": "In liquid markets like XAUUSD, institutional orders are executed in small lots over time to minimise market impact. Before a significant directional breakout, sophisticated participants accumulate or distribute positions, which produces a tell-tale signature: tick volume (number of trades per unit time, irrespective of size) suddenly surges 1.5-2x above its 20-bar rolling average while price remains contained in a narrow range. This 'volume impulse before price impulse' pattern has been documented in market microstructure research and is distinct from retail-driven volume spikes (which tend to coincide with, not precede, price moves). The edge exists because institutional flow leaves a traceable tick-rate signature before the price reflects the full order imbalance.",
+      "entry_logic": "1. Calculate rolling 20-bar median tick count per M15 bar (trades-per-bar). 2. Monitor real-time tick rate: if current bar's tick count exceeds 1.5x the 20-bar median tick count at the 60% mark of the bar (i.e., 9 minutes into a 15-min bar), flag as a volume impulse. 3. Identify the price range during the first 60% of the bar. 4. If tick volume impulse is detected AND price has NOT yet broken beyond the current H1 consolidation range (defined as last 6 H1 bars' high-low range < 1.2x ATR(14) of H1), then the impulse is anticipatory accumulation/distribution \u2014 prepare for entry. 5. ENTRY: Go LONG if price closes above the H1 bar high following the impulse bar with tick count still above the 20-bar median. Go SHORT if price closes below the H1 bar low with tick count still elevated. 6. Skip if: (a) tick volume impulse occurs during low-liquidity Asian session (00:00-07:00 UTC), (b) the impulse bar is a news event window (NFP, FOMC, CPI within 15 min), (c) bid-ask spread > 2x the 20-bar median spread at entry trigger.",
+      "exit_logic": "Stop loss: 0.75x ATR(14) of H1 from entry price. Take profit: 1.5x ATR(14) of H1. Trailing stop: activate after price reaches 1x ATR in profit, trail at 0.5x ATR. Time stop: exit after 8 H1 bars if no TP/SL hit \u2014 the anticipated breakout failed. Re-entry allowed if a fresh volume impulse pattern forms at a different price level (not a retest of the same failed level).",
+      "failure_mode": "(1) 'False impulse' during illiquid hours \u2014 a single large institutional block trade can falsely trigger tick volume surge. Mitigated by the skip condition for Asian session and the spread filter. (2) The impulse precedes a fakeout rather than a genuine breakout \u2014 price spikes on the volume surge then reverses. Mitigated by requiring the H1 close beyond range, not an intra-bar spike. (3) Tick volume data quality varies across brokers \u2014 some MT5 brokers smooth tick counts, reducing the impulse signature's sharpness.",
+      "diversification_value": "This differs from Momentum_Volume_Convergence (the only other Volume Momentum cluster idea, B+ grade) in a critical way: Momentum_Volume_Convergence requires price ROC AND volume MA to converge \u2014 it enters AFTER the breakout is confirmed. Tick_Volume_Impulse enters BEFORE the breakout, based on anticipatory tick-rate surge during a consolidation phase. It captures the accumulation/distribution phase that Momentum_Volume_Convergence misses entirely. It also differs from Volume_Profile_POC_Momentum_Capture (Market Structure cluster, A- grade) which relies on point-of-control identification from daily volume profile \u2014 this uses intra-bar tick rate, a fundamentally different and faster signal.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-24T06:51:52Z"
+    },
+    {
+      "name": "Momentum_Implied_Vol_Alpha_Capture",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Captures gold momentum surges when implied volatility (from GLD options) diverges from realised volatility, signalling that options dealers are delta-hedging aggressively and creating self-reinforcing momentum through gamma exposure changes.",
+      "market_behaviour": "Gold's options market exhibits a persistent volatility risk premium \u2014 implied volatility (IV) trades structurally above realised volatility (RV). However, during specific market stress events or regime transitions, the IV-RV spread (the vol premium) widens dramatically. When this widening coincides with directional dealer hedging (dealers buying/selling spot to maintain delta neutrality), it creates a self-reinforcing momentum loop: higher IV \u2192 dealers re-hedge \u2192 more spot buying/selling \u2192 price moves \u2192 further IV expansion. This 'volatility alpha momentum' is distinct from standard trend-following because the edge comes from options market structure, not price momentum itself. It is strongest during options expiry weeks (monthly and quarterly) when gamma exposure is concentrated at specific strikes.",
+      "entry_logic": "1. Compute daily GLD implied volatility (from at-the-money 30-day options midpoint IV) using a free proxy: the VXGOG index or calculate from GLD option chain (strike closest to spot, average of bid/ask implied vol). 2. Compute 20-day realised volatility of XAUUSD H1 closes. 3. Calculate vol premium = IV - RV (as percentage points). 4. FLAG a vol premium expansion event when: (a) vol premium exceeds its 50-day rolling 90th percentile AND (b) the premium widened by >2pp in the last 24 hours AND (c) it's in the final 7 days before monthly/quarterly options expiry (typically Thursday/Friday after third Wednesday). 5. ENTRY direction: BUY if XAUUSD is above its 20-EMA on H1 AND GLD call volume exceeds put volume on the day (call/put ratio > 1.3). SELL if XAUUSD is below its 20-EMA AND put volume exceeds call volume (put/call ratio > 1.3). 6. If vol premium is widening but directional IV skew (25-delta risk reversal) is neutral, skip entry \u2014 this suggests the premium is driven by event risk rather than directional gamma hedging. 7. Skip if: (a) vol premium is already at its 99th percentile (too late \u2014 the move is probably priced in), (b) gold is in a known central bank intervention window (fixing periods 10:30/15:00 UTC), (c) the vol premium spike is from a known scheduled event (the edge requires gamma-driven, not event-driven, vol expansion).",
+      "exit_logic": "Stop loss: 1.5x ATR(14) of H1. Take profit: exit when the vol premium contracts by 50% from its peak value (gamma re-hedging is complete). Alternatively, exit on the third bar after vol premium starts declining. Hard time stop: 48 hours before options expiry \u2014 the gamma effect decays rapidly in the last 2 days. Do NOT re-enter the same trade within 5 days; the gamma positioning changes materially after each expiry cycle.",
+      "failure_mode": "(1) IV data quality \u2014 calculating accurate IV from GLD options requires time-series bid/ask data. A stale IV proxy will lag the real signal. (2) Event-driven IV spikes (e.g., unexpected FOMC inter-meeting cut) may trigger entries that have nothing to do with dealer gamma positioning. Mitigated by the skip condition for scheduled events and the risk-reversal filter. (3) In low-volatility environments, the vol premium may be persistently elevated without producing actual momentum (dealers are not forced to re-hedge because spot stays within gamma troughs).",
+      "diversification_value": "This belongs in the Options/Dealer Flow cluster (currently 1 idea: Vanna_Flow_Momentum_Capture, B+ grade). Vanna_Flow deals with vanna/dealer hedging from vol changes as spot moves \u2014 it's a proxy-based approach using spot-option interactions. This idea instead uses the IV-RV spread directly as the core signal, combined with directional skew to determine entry side. It captures the 'macro vol regime' dimension that Vanna_Flow's micro-level vanna proxy misses. It also differs from Gamma_Strike_Momentum_Gravitation (Session/Transition cluster, A- grade) which triggers on proximity to high-OI strikes \u2014 this triggers on vol premium expansion regardless of strike proximity. It is also distinct from Gamma_Wall_Regime_Map (regime_filter family) which classifies regimes by gamma wall proximity \u2014 this is a momentum entry trigger, not a regime classifier.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-24T06:51:52Z"
     }
   ],
   "archived": [
@@ -3519,7 +3557,9 @@
       "InterCommodity_Momentum_Divergence",
       "DXY_Momentum_Phase_Shift_Capture",
       "Volume_Profile_POC_Momentum_Capture",
-      "Gamma_Strike_Momentum_Gravitation"
+      "Gamma_Strike_Momentum_Gravitation",
+      "Tick_Volume_Impulse_Momentum_Entry",
+      "Momentum_Implied_Vol_Alpha_Capture"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",

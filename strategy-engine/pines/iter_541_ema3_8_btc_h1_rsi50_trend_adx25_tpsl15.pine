@@ -1,0 +1,63 @@
+//@version=6
+strategy(title="EMA3/8 BTC H1 RSI50 Trend ADX25 TP1.0 SL1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods (sweep: fast 2-5 step 1, slow 6-15 step 2)
+emaFast = input.int(3, "EMA Fast Period")
+emaSlow = input.int(8, "EMA Slow Period")
+// RSI (sweep: 10-25 step 5)
+rsiLen = input.int(14, "RSI Length")
+rsiLongThresh = input.int(50, "RSI Long Threshold (above)")
+rsiShortThresh = input.int(50, "RSI Short Threshold (below)")
+// EMA50 trend filter
+emaTrendLen = input.int(50, "EMA Trend Length")
+// ADX (sweep: 14-30 step 2)
+adxLen = input.int(14, "ADX Length")
+adxThresh = input.int(25, "ADX Threshold (enter only above)")
+// ATR for TP/SL (sweep: 7-21 step 2)
+atrLen = input.int(14, "ATR Length")
+slMultiplier = input.float(1.5, "SL Multiplier (ATR)")   // sweep: 1.0-2.5 step 0.25
+tpMultiplier = input.float(1.0, "TP Multiplier (ATR)")  // 1:1.5 ratio (tight TP for higher WR)
+
+//--- indicators
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+emaTrend = ta.ema(close, emaTrendLen)
+
+//--- manual ADX calculation
+tr_val = ta.tr(true)
+upMove = high - high[1]
+downMove = low[1] - low
+plusDM = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+smoothedTR = ta.rma(tr_val, adxLen)
+smoothedPlusDM = ta.rma(plusDM, adxLen)
+smoothedMinusDM = ta.rma(minusDM, adxLen)
+plusDI = 100 * smoothedPlusDM / smoothedTR
+minusDI = 100 * smoothedMinusDM / smoothedTR
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adx = ta.rma(dx, adxLen)
+
+//--- entry conditions: EMA crossover + RSI50 filter + EMA50 trend + ADX>25 trend filter
+longSignal = ta.crossover(emaF, emaS) and rsi > rsiLongThresh and close > emaTrend and adx > adxThresh
+shortSignal = ta.crossunder(emaF, emaS) and rsi < rsiShortThresh and close < emaTrend and adx > adxThresh
+
+//--- entry management
+if longSignal
+    strategy.entry("Long", strategy.long)
+
+if shortSignal
+    strategy.entry("Short", strategy.short)
+
+//--- exit management: tightened TP/SL ratio 1:1.5 (TP=1.0×ATR, SL=1.5×ATR)
+// Tightening TP relative to SL makes it easier to hit profit target, boosting win rate
+tpPoints = math.round(tpMultiplier * atr / syminfo.mintick)
+slPoints = math.round(slMultiplier * atr / syminfo.mintick)
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=slPoints, profit=tpPoints)

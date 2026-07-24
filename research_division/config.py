@@ -37,9 +37,9 @@ DIVISION_VERSION: str = "3.4.2"
 BRIDGE_BASE: str = "http://127.0.0.1:5000"
 
 # Dashboard / Backend API (sentiment, bots status, aggregated stats)
-# Backend moved from 8003→8005→8006→8008 (port escalation due to orphaned PIDs)
-# Port 8006 is a zombie (orphaned) — see agentx-platform skill "Port Zombie Problem"
-DASHBOARD_BASE: str = "http://127.0.0.1:8008"
+# Backend moved from 8003→8005→8006→8008→8005 (back to 8005 after zombie PID cleared)
+# Current active backend is on port 8005 — see agentx-platform skill "Port Zombie Problem"
+DASHBOARD_BASE: str = "http://127.0.0.1:8005"
 
 # Sentiment Engine HTTP endpoint (when accessed remotely)
 SENTIMENT_API: str = f"{DASHBOARD_BASE}/api/sentiment/score"
@@ -53,7 +53,7 @@ OLLAMA_TIMEOUT: int = 60          # seconds (increased from 30s default)
 OLLAMA_TIMEOUT_HEAVY: int = 120   # seconds for the 27b model
 
 # ── Account ───────────────────────────────────────────────────────────────────
-ACCOUNT_ID: str = "default"
+ACCOUNT_ID: str = "ftmo-100k"
 
 # ── Bridge URL helpers ─────────────────────────────────────────────────────────
 
