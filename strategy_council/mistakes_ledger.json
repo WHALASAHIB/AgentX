@@ -277,7 +277,7 @@
       "entry": 1.14192,
       "exit": 1.14068,
       "pnl": -994.48,
-      "root_cause": "SL hit at 17:41 UTC — 2h41m AFTER the 13-15 UTC session window closed. BOTH entry (15:25 UTC) and exit (17:41 UTC) were outside the declared window. This is the SECOND consecutive BUY loss on the same day (previous BUY also hit SL at 15:15 UTC). Counter-trade bias: bot entered BUY again after the first BUY proved unprofitable. Holding 136 min. Volume 8.02 lots = 1.04% risk.",
+      "root_cause": "SL hit at 17:41 UTC \u2014 2h41m AFTER the 13-15 UTC session window closed. BOTH entry (15:25 UTC) and exit (17:41 UTC) were outside the declared window. This is the SECOND consecutive BUY loss on the same day (previous BUY also hit SL at 15:15 UTC). Counter-trade bias: bot entered BUY again after the first BUY proved unprofitable. Holding 136 min. Volume 8.02 lots = 1.04% risk.",
       "fix": "Add direction-failure detection: if a BUY loses and price continues below the SL level, do not re-enter BUY for the rest of the session. Reduce position sizing to 0.5% risk ($500 target on $95K balance).",
       "prevention_rule": "After a loss in direction X, block all re-entries in direction X for 2 hours. If the loss was the second consecutive in direction X, block for the rest of the session."
     },

@@ -1,0 +1,63 @@
+{
+  "date": "2026-07-23",
+  "run_time": "2026-07-23T07:26:00+00:00",
+  "total_trades": 1,
+  "wins": 0,
+  "losses": 1,
+  "win_rate": 0.0,
+  "total_pnl": -991.25,
+  "per_symbol": { "EURUSD": {"wins": 0, "losses": 1, "total_pnl": -991.25} },
+  "patterns": [
+    {"pattern": "Below average WR", "severity": "WARNING", "detail": "0% over 1 trade in window (small sample)"},
+    {"pattern": "Duplicate bot instances detected", "severity": "CRITICAL", "detail": "4 propfirm_pass_bot.py instances running (3 idle zombies at ~27MB, 1 at 44MB)"},
+    {"pattern": "Trade outside declared session window", "severity": "HIGH", "detail": "Entry at 16:30 UTC Jul 22 (outside 13-15 UTC US session). SL hit at 05:46 UTC Jul 23 (Asian session). Timezone detection bug still unfixed."},
+    {"pattern": "Session-window extension detected", "severity": "INFO", "detail": "6th+ consecutive trade outside declared 13-15 UTC window"}
+  ],
+  "trade_critiques": [
+    {
+      "ticket": 481651176,
+      "symbol": "EURUSD",
+      "direction": "SELL",
+      "entry_price": 1.14154,
+      "exit_price": 1.14279,
+      "volume": 7.93,
+      "pnl": -991.25,
+      "commission": -19.83,
+      "swap": 2.38,
+      "score": 2,
+      "quality": "error",
+      "outcome": "loss",
+      "positives": [],
+      "negatives": [
+        "Losing trade: -$991.25",
+        "Entry outside session window (16:30 UTC)",
+        "Massive volume 7.93 lots (~$80/pip, 1.03% risk on $94K)",
+        "Held overnight 13h16m — no overnight position management",
+        "Swap credit $2.38 immaterial vs -$991.25 loss",
+        "SL comment [sl 1.14275] — 0.4 pip from entry at close"
+      ],
+      "root_cause": "SELL @ 1.14154 entered at 16:30 UTC Jul 22 (after US session closed). SL hit at 05:46 UTC Jul 23 during Asian session low liquidity. Volume 7.93 lots = 1.03% risk (double FTMO 0.5% target). Held 13h16m with no cooldown or session filter."
+    }
+  ],
+  "recommendations": [
+    "Fix timezone detection bug: change datetime.now().hour to datetime.now(timezone.utc).hour in bot main loop",
+    "Reduce position sizing: 7.93 lots → ~4 lots (0.5% risk on $94K balance)",
+    "Kill zombie bot instances: 3 idle propfirm_pass_bot.py processes at ~27MB each"
+  ],
+  "structured_recommendations": [
+    {
+      "priority": 1,
+      "change": "Fix UTC/local timezone confusion in session window detection",
+      "detail": "Bot uses datetime.now().hour (local UTC+8) but window is declared in UTC. On UTC+8, 13:00 UTC = 21:00 local, but the comparison is against local hour 13-15. Change to datetime.now(timezone.utc).hour.",
+      "testable": "Would have blocked this trade (entered at local 00:30 = 16:30 UTC) AND all 6+ prior outside-window trades.",
+      "risk": "None — this is a correction, not a strategy change. The bot will only trade during the intended 13-15 UTC window."
+    },
+    {
+      "priority": 2,
+      "change": "Reduce position sizing to 0.5% risk per trade",
+      "detail": "Current 7.93 lots on $94K balance = ~1.03% risk ($80/pip). Target: ~4 lots = 0.5% risk. Calculate as: target_risk_pct * balance / (SL_distance_in_pips * pip_value).",
+      "testable": "Would have reduced this loss from -$991 to -$500.",
+      "risk": "Smaller position means smaller gains on winners. Acceptable trade-off for FTMO challenge preservation."
+    }
+  ]
+}
