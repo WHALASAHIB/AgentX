@@ -1,6 +1,6 @@
 {
-  "iteration": 547,
-  "last_run": "2026-07-24T15:53:00Z",
+  "iteration": 551,
+  "last_run": "2026-07-25T07:53:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,187 +13,11 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m — Add ADX(14) > 25 filter to the EMA3/8 + RSI50 + ATR trail strategy. Iter 546 added RSI(14)>50 for long / RSI(14)<50 for short filter. Results: PF 0.50, WR 23.6%, DD 23.4%, 364 trades. The RSI filter reduced DD from 54% (iter 545) to 23.4% and trades from 680 to 364, but PF collapsed from 0.54 to 0.50. The issue is the strategy still enters in choppy/non-trending markets — RSI alone can't prevent that. Adding ADX(14) > 25 ensures the strategy only trades when BTC is in a strong trend, filtering out range-bound whipsaw that kills the ATR trail. One change: add ADX(14) > 25 entry filter.",
+  "current_hypothesis": "BTCUSDT 30m — Add ADX(14) > 25 filter to long-only EMA3/8 + RSI50 + ATR trail (1.5x) strategy. Iter 550 (long-only EMA3/8 + RSI50 + ATR trail) fixed the cascade ratio to 1.0, but PF=0.66, Sharpe=-2.94, DD=18.45%. The ATR trail gets whipsawed in choppy/ranging markets. Add ADX(14) > 25 filter so we only enter during trending markets. One change: add ADX filter.",
   "evolution_log": [
     {
-      "iteration": 535,
-      "hypothesis": "BTCUSDT 30m — Remove strategy.exit() entirely. Exit on reverse crossover signal (EMA crossunder exits long, EMA crossover exits short). No fixed TP/SL — eliminates cascade by removing limit orders that can trigger on the same bar as a new entry signal. One change: fixed TP/SL exit → reverse-signal exit.",
-      "metrics": {
-        "pf": 0.61865513,
-        "sharpe": -4.56972836,
-        "wr": 19.01041667,
-        "dd": 29.66728171,
-        "trades": 384,
-        "net_profit": -2949.747669099985
-      },
-      "verdict": "rejected (PF=0.62 < 1.3, Sharpe=-4.57 < 0.5, DD=29.67% > 15%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-23T14:39:00Z"
-    },
-    {
-      "iteration": 536,
-      "hypothesis": "XAUUSD H1 — Switch pair from BTCUSDT 30m to XAUUSD H1.",
-      "metrics": {
-        "pf": 0.7532164,
-        "sharpe": -1.56485329,
-        "wr": 20.38834951,
-        "dd": 15.66441116,
-        "trades": 103,
-        "net_profit": -1000.651814050005
-      },
-      "verdict": "rejected (PF=0.75 < 1.3, Sharpe=-1.56 < 0.5, DD=15.66% > 15%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-23T14:54:00Z"
-    },
-    {
-      "iteration": 537,
-      "hypothesis": "EURUSD H1 — Switch pair to EURUSD H1.",
-      "metrics": {
-        "pf": 1.53228227,
-        "sharpe": 2.16954165,
-        "wr": 22.22222222,
-        "dd": 12.19964476,
-        "trades": 72,
-        "net_profit": 1713.36341785
-      },
-      "verdict": "rejected (cascade ratio 1.76 > 1.2, WR 22.2% < 40%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-23T15:12:00Z"
-    },
-    {
-      "iteration": 538,
-      "hypothesis": "BTCUSDT 1h — Tighten TP/SL ratio from 1.5:1 to 1:1.",
-      "metrics": {
-        "pf": 1.53228227,
-        "sharpe": 2.16954165,
-        "wr": 22.22222222,
-        "dd": 12.19964476,
-        "trades": 72,
-        "net_profit": 1713.36341785
-      },
-      "verdict": "rejected (cascade ratio 1.76 > 1.2, WR 22.2% < 40%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-23T15:27:00Z"
-    },
-    {
-      "iteration": 539,
-      "hypothesis": "BTCUSDT 1h — Remove min_hold_bars constraint (set to 0).",
-      "metrics": {
-        "pf": 0.8357765,
-        "sharpe": -1.7082957,
-        "wr": 33.53293413,
-        "dd": 11.37349898,
-        "trades": 167,
-        "net_profit": -828.787147350009
-      },
-      "verdict": "rejected (PF=0.84 < 1.3, Sharpe=-1.71 < 0.5)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-23T15:39:00Z"
-    },
-    {
-      "iteration": 540,
-      "hypothesis": "BTCUSDT 1h — Add ADX(14) filter (enter only if ADX > 25).",
-      "metrics": {
-        "pf": 0.88047218,
-        "sharpe": -0.76883222,
-        "wr": 32.30769231,
-        "dd": 6.9581879,
-        "trades": 65,
-        "net_profit": -241.346142250008
-      },
-      "verdict": "rejected (PF=0.88 < 1.3, Sharpe=-0.77 < 0.5, cascadeRatio=1.48 > 1.2)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-23T15:54:00Z"
-    },
-    {
-      "iteration": 541,
-      "hypothesis": "BTCUSDT 1h — Tighten TP/SL ratio from 1:1 to 1:1.5.",
-      "metrics": {
-        "pf": 0.83099399,
-        "sharpe": -1.12059747,
-        "wr": 40.98360656,
-        "dd": 6.39204987,
-        "trades": 61,
-        "net_profit": -269.402448400011
-      },
-      "verdict": "rejected (PF=0.83 < 1.3, Sharpe=-1.12 < 0.5, cascadeRatio=1.39 > 1.2)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-24T06:49:18Z"
-    },
-    {
-      "iteration": 542,
-      "hypothesis": "BTCUSDT 1h — Go long-only. Remove all short signals.",
-      "metrics": {
-        "pf": 0.86284411,
-        "sharpe": -0.54963823,
-        "wr": 35.29411765,
-        "dd": 1.67212977,
-        "trades": 34,
-        "net_profit": -51.247348400006
-      },
-      "verdict": "rejected (PF=0.86 < 1.3, Sharpe=-0.55 < 0.5)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-24T06:54:57Z"
-    },
-    {
-      "iteration": 543,
-      "hypothesis": "BTCUSDT 1h — Switch to EMA9/21 crossover (from EMA3/8).",
-      "metrics": {
-        "pf": 0.50662883,
-        "sharpe": -1.9023522,
-        "wr": 28.57142857,
-        "dd": 2.20620009,
-        "trades": 14,
-        "net_profit": -141.626301750002
-      },
-      "verdict": "invalid (low sample, 14 trades)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-24T07:11:40Z"
-    },
-    {
-      "iteration": 544,
-      "hypothesis": "BTCUSDT 1h — Lower ADX threshold from 25 to 20.",
-      "metrics": {
-        "pf": 0.31272159,
-        "sharpe": -4.57918798,
-        "wr": 25.92592593,
-        "dd": 4.44514608,
-        "trades": 27,
-        "net_profit": -398.775529800001
-      },
-      "verdict": "rejected (PF=0.31 < 1.3, Sharpe=-4.58 < 0.5)",
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "time": "2026-07-24T07:26:00Z"
-    },
-    {
-      "iteration": 545,
-      "hypothesis": "BTCUSDT 30m — Switch back to proven EMA3/8 + ATR trailing stop on BTCUSDT 30m. Tight trail_mult=1.5.",
-      "metrics": {
-        "pf": 0.53884792,
-        "sharpe": -8.24382168,
-        "wr": 18.82352941,
-        "dd": 54.23781536,
-        "trades": 680,
-        "net_profit": -5419.291406699978
-      },
-      "verdict": "rejected (PF=0.54 < 1.3, Sharpe=-8.24 < 0.5, DD=54.24% > 30%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-24T07:50:00Z"
-    },
-    {
       "iteration": 546,
-      "hypothesis": "BTCUSDT 30m — Add RSI(14) filter to EMA3/8 ATR trail strategy. Keep 1.5× trail multiplier from iter 545, add RSI50 filter (long if RSI>50, short if RSI<50).",
+      "hypothesis": "BTCUSDT 30m — Add RSI(14) filter to EMA3/8 ATR trail strategy.",
       "metrics": {
         "pf": 0.50127644,
         "sharpe": -6.38980746,
@@ -202,10 +26,74 @@
         "trades": 364,
         "net_profit": -2241.610925999981
       },
-      "verdict": "rejected (PF=0.50 < 1.3, Sharpe=-6.39 < 0.5, DD=23.45% > 15%). RSI filter reduced DD from 54% to 23.4% and trades from 680 to 364, but PF collapsed from 0.54 to 0.50. Still entering in non-trending markets.",
+      "verdict": "rejected (PF=0.50 < 1.3, Sharpe=-6.39 < 0.5, DD=23.45% > 15%)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-24T15:53:00Z"
+    },
+    {
+      "iteration": 547,
+      "hypothesis": "BTCUSDT 30m — Add ADX(14) > 25 filter to EMA3/8 + RSI50 + ATR trail strategy.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades) — triple filter too restrictive, 4273 bars zero trades",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-25T07:08:00Z"
+    },
+    {
+      "iteration": 548,
+      "hypothesis": "BTCUSDT 30m — Lower ADX threshold from 25 to 15.",
+      "metrics": {
+        "pf": 0,
+        "sharpe": 0,
+        "wr": 0,
+        "dd": 0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades) — ADX(15) still too restrictive with triple filter",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-25T07:27:00Z"
+    },
+    {
+      "iteration": 549,
+      "hypothesis": "BTCUSDT 30m — Remove ADX filter entirely. Return to EMA3/8 crossover + RSI(14)>50 + ATR trail (1.5x) without ADX.",
+      "metrics": {
+        "pf": 0.66438941,
+        "sharpe": -4.18306555,
+        "wr": 23.33333333,
+        "dd": 27.57875922,
+        "trades": 390,
+        "net_profit": -2654.243144299969
+      },
+      "verdict": "rejected (cascade ratio 1.26 > 1.2 invalid — cascade-close pattern; PF=0.66<1.3, Sharpe=-4.18<0.5, DD=27.58%>15%). Bidirectional ATR trail causes cascade closes on reversals — 390 trades but only 310 unique entries.",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-25T07:45:00Z"
+    },
+    {
+      "iteration": 550,
+      "hypothesis": "BTCUSDT 30m — Make strategy long-only to fix cascade ratio. Iter 549 (bidirectional EMA3/8 + RSI50 + ATR trail 1.5x) produced 390 trades but cascade ratio 1.26 (>1.2 threshold, invalid). The bidirectional design causes cascade closes when a new opposite-direction signal fires while a trailing stop exit is still active. Switch to long-only: enter long on EMA3>8 crossover + RSI>50, exit via trailing ATR stop only. No short side. One change: long-only mode.",
+      "metrics": {
+        "pf": 0.65720257,
+        "sharpe": -2.93865695,
+        "wr": 35.55555556,
+        "dd": 18.44896237,
+        "trades": 135,
+        "net_profit": -1369.257301999938
+      },
+      "verdict": "rejected (PF=0.66 < 1.3, Sharpe=-2.94 < 0.5, DD=18.45% > 15%). Cascade ratio fixed at 1.0 (135 unique entries, 135 trades) — long-only eliminated cascade closes. But strategy still loses money. ATR trail gets whipsawed in ranging markets.",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-25T07:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

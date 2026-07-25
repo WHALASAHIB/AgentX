@@ -1,0 +1,65 @@
+//@version=6
+strategy(title="iter_549 BTCUSDT 30m EMA3/8 + RSI50 + ATR Trail (no ADX)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)      // sweep: 2-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)      // sweep: 5-21 step 2
+
+// RSI parameters
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=30)              // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Entry Threshold", minval=20, maxval=80) // sweep: 40-60 step 5
+
+// ATR Trailing Stop parameters
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30)              // sweep: 10-21 step 2
+atrMult = input.float(1.5, "ATR Multiplier", minval=0.5, maxval=5.0, step=0.1) // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- entry logic
+// Long: EMA3 crosses above EMA8 AND RSI(14) > 50
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold
+
+// Short: EMA3 crosses below EMA8 AND RSI(14) < 50
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsi < (100 - rsiThreshold)
+
+//--- position management
+var float longStopPrice = na
+var float shortStopPrice = na
+
+// Long entry
+if longCondition and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long)
+    longStopPrice := close - (atr * atrMult)
+    shortStopPrice := na
+
+// Short entry
+if shortCondition and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short)
+    shortStopPrice := close + (atr * atrMult)
+    longStopPrice := na
+
+//--- trailing stop management
+// Long trail: raise stop if price moves up
+if strategy.position_size > 0
+    newStop = close - (atr * atrMult)
+    if na(longStopPrice) or newStop > longStopPrice
+        longStopPrice := newStop
+    strategy.exit("Long Exit", "Long", stop=longStopPrice)
+
+// Short trail: lower stop if price moves down
+if strategy.position_size < 0
+    newStop = close + (atr * atrMult)
+    if na(shortStopPrice) or newStop < shortStopPrice
+        shortStopPrice := newStop
+    strategy.exit("Short Exit", "Short", stop=shortStopPrice)
+
+//--- visuals
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=1)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=1)
+hline(rsiThreshold, "RSI Threshold Long", color=color.green, linestyle=hline.style_dotted)
+hline(100 - rsiThreshold, "RSI Threshold Short", color=color.red, linestyle=hline.style_dotted)
