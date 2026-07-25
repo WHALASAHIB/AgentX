@@ -1,0 +1,25 @@
+//@version=6
+strategy(title="XAUUSD H1 - EMA5/13 + RSI>50 Long-Only (No ADX)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(5, "EMA Fast Length", minval=2, maxval=50)     // sweep: 3-10 step 1
+emaSlowLen = input.int(13, "EMA Slow Length", minval=5, maxval=100)    // sweep: 10-30 step 2
+rsiLen = input.int(14, "RSI Length", minval=5, maxval=30)              // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold", minval=30, maxval=70)    // sweep: 40-60 step 5
+slTicks = input.int(100, "Stop Loss (ticks)", minval=20, maxval=500)   // sweep: 50-200 step 25
+tpTicks = input.int(150, "Take Profit (ticks)", minval=30, maxval=1000) // sweep: 75-300 step 25
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsi = ta.rsi(close, rsiLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsi > rsiThreshold
+
+if (longCondition and strategy.position_size <= 0)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long", loss=slTicks, profit=tpTicks)

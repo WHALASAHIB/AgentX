@@ -1,0 +1,99 @@
+//@version=6
+strategy(title="PSAR DIYADX RSI50 TickTP 1.5 — XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//==============================================================================
+//--- inputs
+//==============================================================================
+
+// PSAR parameters
+psarStart   = input.float(0.02, "PSAR Start Step", step=0.005)  // sweep: 0.01-0.05 step 0.005
+psarIncrement = input.float(0.02, "PSAR Step Increment", step=0.005)  // sweep: 0.01-0.04 step 0.005
+psarMax     = input.float(0.2, "PSAR Max Step")  // sweep: 0.1-0.4 step 0.05
+
+// DIY ADX parameters
+adxLen      = input.int(14, "DIY ADX Length", minval=5, maxval=30)  // sweep: 10-20 step 2
+adxThresh   = input.int(25, "ADX Threshold", minval=15, maxval=35)  // sweep: 20-30 step 2
+
+// RSI parameters
+rsiLen      = input.int(14, "RSI Length", minval=5, maxval=21)  // sweep: 7-21 step 2
+rsiThresh   = input.int(50, "RSI Threshold (long >)", minval=40, maxval=60)  // sweep: 40-60 step 5
+
+// Fixed-tick TP/SL
+slTicks     = input.int(100, "Stop Loss (ticks)", minval=30, maxval=300)  // sweep: 50-200 step 25
+tpRatio     = input.float(1.5, "TP/SL Ratio", step=0.1)  // sweep: 1.2-2.0 step 0.1
+tpMultiplier = input.int(150, "TP Ticks (absolute)", minval=50, maxval=500)  // sweep: 80-250 step 20
+// tpTicks computed from ratio directly in exit call
+
+//==============================================================================
+//--- DIY ADX(14) — Wilder's smoothing method
+//==============================================================================
+
+// True Range
+trVal = ta.tr(true)
+
+// Directional Movement
+dmPlus  = high - high[1] > low[1] - low ? math.max(high - high[1], 0) : 0
+dmMinus = low[1] - low > high - high[1] ? math.max(low[1] - low, 0) : 0
+
+// Smoothed TR, +DM, -DM using Wilder's RMA (alpha = 1/length)
+smoothedTR     = ta.rma(trVal, adxLen)
+smoothedDMplus  = ta.rma(dmPlus, adxLen)
+smoothedDMminus = ta.rma(dmMinus, adxLen)
+
+// Directional Indicators
+diPlus  = 100 * smoothedDMplus / (smoothedTR + 1e-10)   // avoid div by zero
+diMinus = 100 * smoothedDMminus / (smoothedTR + 1e-10)
+
+// DX and ADX
+dx  = 100 * math.abs(diPlus - diMinus) / (diPlus + diMinus + 1e-10)
+adx = ta.rma(dx, adxLen)
+
+//==============================================================================
+//--- indicators
+//==============================================================================
+
+// Parabolic SAR — returns a single series (the SAR value)
+psarVal = ta.sar(psarStart, psarIncrement, psarMax)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+//==============================================================================
+//--- entry logic — PSAR long-only + ADX>25 + RSI>50
+//==============================================================================
+
+// Conditions
+psarUptrend  = psarVal < close          // PSAR below price = uptrend
+adxTrending  = adx > adxThresh           // ADX above threshold = trending
+rsiBullish   = rsiVal > rsiThresh        // RSI above threshold = bullish momentum
+
+longEntryCond = psarUptrend and adxTrending and rsiBullish
+
+//==============================================================================
+//--- exit management — fixed-tick TP/SL at 1.5:1
+//==============================================================================
+
+var float entryPrice = na
+var int   entryBar   = na
+
+// Entry
+if (longEntryCond and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    entryPrice := close
+    entryBar   := bar_index
+
+// Exit with fixed tick-based TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long",
+         loss  = math.round(slTicks * syminfo.mintick == 0 ? 1 : slTicks * syminfo.mintick),
+         profit = math.round(tpMultiplier * syminfo.mintick == 0 ? 1 : tpMultiplier * syminfo.mintick))
+
+//==============================================================================
+//--- plots (for visual reference)
+//==============================================================================
+
+plot(psarVal, "PSAR", color=psarUptrend ? color.green : color.red, style=plot.style_cross, linewidth=1)
+hline(adxThresh, "ADX Threshold", color=color.purple, linestyle=hline.style_dashed)
+
+// Plot RSI reference in separate pane for diagnostics
+// (RSI is not plotted here to keep the chart clean — it's a condition filter only)

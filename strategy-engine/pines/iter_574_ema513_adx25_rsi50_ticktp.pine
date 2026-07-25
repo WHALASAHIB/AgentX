@@ -1,0 +1,75 @@
+//@version=6
+strategy(title="XAUUSD H1 EMA5/13 DIY-ADX25 RSI50 Tick-TP/SL 1.5:1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+emaFastLen   = input.int(5,  "EMA Fast Length", minval=2, maxval=30, step=1)      // sweep: 2-10 step 1
+emaSlowLen   = input.int(13, "EMA Slow Length", minval=5, maxval=50, step=1)       // sweep: 8-21 step 2
+
+// ADX parameters
+adxLen       = input.int(14, "ADX Length", minval=7, maxval=30, step=1)            // sweep: 7-21 step 2
+adxThreshold = input.int(25, "ADX Threshold", minval=10, maxval=40, step=5)        // sweep: 10-30 step 5
+
+// RSI parameters
+rsiLen       = input.int(14, "RSI Length", minval=7, maxval=21, step=1)            // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold (long >)", minval=30, maxval=60, step=5) // sweep: 30-60 step 5
+
+// TP/SL tick parameters
+tpTicks      = input.int(150, "Take Profit (ticks)", minval=30, maxval=500, step=10)  // sweep: 50-300 step 25
+slTicks      = input.int(100, "Stop Loss (ticks)", minval=20, maxval=300, step=10)    // sweep: 30-200 step 20
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// DIY ADX(14) — Wilder's method (since ta.adx may not be supported in this Pine engine)
+// Step 1: True Range
+TrueRange = ta.tr
+
+// Step 2: Directional Movement
+upDM = high - high[1]
+downDM = low[1] - low
+plusDM = na(upDM) ? na : (upDM > downDM and upDM > 0 ? upDM : 0)
+minusDM = na(downDM) ? na : (downDM > upDM and downDM > 0 ? downDM : 0)
+
+// Step 3: Smoothed by Wilder's RMA
+atrRMA = ta.rma(TrueRange, adxLen)
+plusDMRMA = ta.rma(plusDM, adxLen)
+minusDMRMA = ta.rma(minusDM, adxLen)
+
+// Step 4: Directional Indicators
+plusDI = 100 * plusDMRMA / atrRMA
+minusDI = 100 * minusDMRMA / atrRMA
+
+// Step 5: Directional Index and ADX
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+adxValue = ta.rma(dx, adxLen)
+
+// RSI
+rsiValue = ta.rsi(close, rsiLen)
+
+//--- entry logic
+// Conditions: EMA5 > EMA13 (uptrend), ADX > threshold (trending), RSI > threshold (bullish momentum)
+longCondition = ta.crossover(emaFast, emaSlow) and adxValue > adxThreshold and rsiValue > rsiThreshold
+
+// Exit conditions — reverse signal or trailing
+emaCrossunder = ta.crossunder(emaFast, emaSlow)
+
+//--- entry
+if (longCondition)
+    strategy.entry("Long", strategy.long, comment="EMA_Entry")
+
+//--- exit management (fixed tick-based TP/SL)
+// Use syminfo.mintick for tick size
+tickSize = syminfo.mintick
+if (strategy.position_size > 0)
+    strategy.exit("Long_Exit", "Long", loss=slTicks, profit=tpTicks, comment="TP_SL_Exit")
+
+//--- visual plots
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)
+hline(adxThreshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)
+hline(rsiThreshold, "RSI Threshold", color=color.purple, linestyle=hline.style_dashed)
+
+// Debug plots (hidden from price chart)
+hline(0, "", display=display.none)

@@ -1,0 +1,76 @@
+//@version=6
+strategy(
+  title="PSAR + DIY ADX(14)>25 + Fixed Tick 1.5:1 — XAUUSD H1",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//=== INPUTS ===
+
+// PSAR settings
+psarStart     = input.float(0.02, "PSAR Step", step=0.005, minval=0.005, maxval=0.1)     // sweep: 0.01-0.05 step 0.01
+psarIncrement = input.float(0.02, "PSAR Increment", step=0.01, minval=0.01, maxval=0.1)   // sweep: 0.02-0.05 step 0.02
+psarMax       = input.float(0.2, "PSAR Maximum", step=0.05, minval=0.1, maxval=0.5)       // sweep: 0.1-0.5 step 0.1
+
+// ADX settings (manually calculated — ta.adx() unavailable in this engine)
+adxLen        = input.int(14, "ADX Period", minval=7, maxval=28)                          // sweep: 7-28 step 7
+adxThreshold  = input.int(25, "ADX Threshold", minval=15, maxval=35)                      // sweep: 15-35 step 5
+
+// Fixed TP/SL in ticks (ensures exact 1.5:1 ratio — no ATR drift)
+slTicks       = input.int(100, "SL Ticks", minval=30, maxval=300)                         // sweep: 50-200 step 25
+tpTicks       = input.int(150, "TP Ticks", minval=45, maxval=450)                         // sweep: 75-300 step 25
+
+//=== DIY ADX CALCULATION ===
+// Manual implementation because ta.adx() is not supported in this Pine engine
+// Uses Wilder's smoothing (RMA) for DI lines and final ADX
+
+// True Range
+trVal = ta.tr(true)
+
+// Directional Movement
+upMove   = high - high[1]
+downMove = low[1] - low
+
+// +DM and -DM
+plusDM  = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+
+// Wilder-smoothed (RMA) values
+atrSmooth   = ta.rma(trVal, adxLen)
+plusDMSmooth  = ta.rma(plusDM, adxLen)
+minusDMSmooth = ta.rma(minusDM, adxLen)
+
+// Directional Indicators
+plusDI  = 100 * plusDMSmooth / atrSmooth
+minusDI = 100 * minusDMSmooth / atrSmooth
+
+// DX = absolute difference / sum * 100
+dx = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI)
+
+// ADX = Wilder-smoothed DX
+adxVal = ta.rma(dx, adxLen)
+
+//=== INDICATORS ===
+
+// PSAR: value and direction
+psarVal = ta.sar(psarStart, psarIncrement, psarMax)
+psarDir = close > psarVal ? 1 : -1
+
+//=== ENTRY LOGIC ===
+// Long-only: PSAR bullish AND ADX > threshold (strong trend)
+longCondition = psarDir == 1 and adxVal > adxThreshold
+
+// Enter long when both conditions are met and we're flat
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//=== EXIT MANAGEMENT ===
+// Fixed tick-based stop loss and take profit
+// syminfo.mintick ensures exact 1.5:1 TP:SL ratio regardless of ATR
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=slTicks * syminfo.mintick, profit=tpTicks * syminfo.mintick)
