@@ -1,0 +1,49 @@
+//@version=6
+strategy(title="BTCUSDT 30m — EMA3/8 + ROC14 + ATR Trail (Long-Only, 50% Size)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=50, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)         // sweep: 1-10 step 1
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)         // sweep: 5-20 step 1
+
+// ROC (momentum) parameters
+rocLen      = input.int(14, "ROC Length", minval=5, maxval=40)             // sweep: 8-20 step 2
+rocMin      = input.float(0.0, "ROC Minimum %", minval=-5.0, maxval=10.0, step=0.5) // sweep: -1 to 2 step 0.5
+
+// ATR trailing stop parameters
+atrLen     = input.int(14, "ATR Length", minval=5, maxval=30)             // sweep: 10-20 step 2
+atrMult    = input.float(1.5, "ATR Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+
+//--- calculations
+emaFast   = ta.ema(close, emaFastLen)
+emaSlow   = ta.ema(close, emaSlowLen)
+momentum  = ta.roc(close, rocLen)
+atrVal    = ta.atr(atrLen)
+
+//--- entry logic
+// Long entry: EMA fast crosses above EMA slow AND momentum positive
+longCondition = ta.crossover(emaFast, emaSlow) and momentum > rocMin
+
+//--- exit management via trailing stop
+var float trailingStop = na
+
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    trailingStop := close - atrVal * atrMult
+
+// Update trailing stop when price moves up
+if strategy.position_size > 0
+    newStop = close - atrVal * atrMult
+    if na(trailingStop) or newStop > trailingStop
+        trailingStop := newStop
+    // Exit if trailing stop hit
+    if close <= trailingStop
+        strategy.close("Long")
+
+//--- plots
+plotshape(longCondition, "Long Signal", style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small)
+plot(emaFast, "EMA Fast", color.blue)
+plot(emaSlow, "EMA Slow", color.red)
+plot(momentum, "ROC Momentum", color.purple)
+hline(rocMin, "ROC Minimum", color.gray)

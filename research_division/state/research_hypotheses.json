@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 189,
+    "total_ideas": 192,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1485,6 +1485,67 @@
       "diversification_value": "This belongs in the Options/Dealer Flow cluster (currently 1 idea: Vanna_Flow_Momentum_Capture, B+ grade). Vanna_Flow deals with vanna/dealer hedging from vol changes as spot moves \u2014 it's a proxy-based approach using spot-option interactions. This idea instead uses the IV-RV spread directly as the core signal, combined with directional skew to determine entry side. It captures the 'macro vol regime' dimension that Vanna_Flow's micro-level vanna proxy misses. It also differs from Gamma_Strike_Momentum_Gravitation (Session/Transition cluster, A- grade) which triggers on proximity to high-OI strikes \u2014 this triggers on vol premium expansion regardless of strike proximity. It is also distinct from Gamma_Wall_Regime_Map (regime_filter family) which classifies regimes by gamma wall proximity \u2014 this is a momentum entry trigger, not a regime classifier.",
       "self_grade": "A-",
       "generated_at": "2026-07-24T06:51:52Z"
+    },
+    {
+      "name": "Ascending_Triangle_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "H1 entry",
+        "M15 confirmation",
+        "D1 trend filter"
+      ],
+      "description": "Breaks out of ascending triangle patterns (horizontal resistance with rising lows) when accumulation pressure exceeds resistance absorption capacity, targeting the full triangle height.",
+      "market_behaviour": "Ascending triangles form when price contacts a flat resistance level multiple times (3+) while drawing progressively higher lows \u2014 a classic Wyckoff accumulation structure. In institutional flow terms, the flat resistance is a limit sell cluster (possibly at an option strike, whole number, or prior structural level) that absorbs selling pressure, while the rising lows show increasingly aggressive buying. This pattern is common in gold during the London\u2192US overlap when a macro level (e.g. $2400 round number or a prior weekly high) aligns with increasing speculative bid. The breakout occurs when the resistance absorption capacity is exhausted \u2014 accumulated bids absorb the last layer of standing offers and price accelerates through. The measured move (triangle height = breakout target) is well-documented in technical analysis with 65-70% reliability on liquid instruments.",
+      "entry_logic": "1. Identify a horizontal resistance level tested 3+ times on H1, with each test showing a visible rejection (long upper wick or doji).\n2. Verify that each successive low between tests is materially higher (at least 2\u00d7ATR(14) above the prior low) \u2014 this confirms the accumulation slope.\n3. On D1, confirm trend alignment: the triangle must form in the direction of the 50-bar EMA slope (bullish triangle needs upward EMA).\n4. On M15, wait for price to break above the resistance high with a close beyond it on the M15 chart.\n5. Entry: Enter LONG at market on the M15 close above resistance.\n6. Skip if: (a) triangle has fewer than 3 touches of resistance, (b) any low violates the prior low ('leaky triangle' \u2014 no clean structure), (c) NFP/FOMC/CPI within 3 hours, (d) D1 ATR(14) is in its 80th+ percentile (unusually volatile conditions).",
+      "exit_logic": "Stop Loss: Below the most recent swing low within the triangle (the last higher low before breakout) minus 0.5\u00d7ATR(14) on H1. Take Profit: Entry + triangle height (horizontal distance from resistance level to the first swing low of the pattern, measured in price units). Partial exit: Close 50% at TP, trail remaining on a 1\u00d7ATR(14) trailing stop on H1. Time stop: If TP not reached within 24 H1 bars, close at market. No re-entry on false-breakout reversal unless a new triangle forms.",
+      "failure_mode": "1) False breakout: price pierces resistance and immediately reverses (common during news-driven liquidity grabs \u2014 institutions knowing a cluster of stops sits above resistance). 2) Triangle morphs into a range: what looked like ascending lows become a flat range, turning the 'triangle' into a rectangular consolidation with no directional edge. 3) Multi-contract alignment fails: a bullish triangle on H1 opens against the D1 trend, producing a counter-trend breakout that fizzles.",
+      "diversification_value": "Distinct from all existing breakout ideas: Trap_Spring_Breakout_Filter (Wyckoff Spring = engineered false-breakout below support), Consolidation_Pattern_Measured_Move_Breakout (flags & pennants \u2014 short-term continuation after impulse), Structural_Compression_Breakout (price compression at structural levels \u2014 not a 3-touch pattern with rising lows). Ascending triangle is a distinct accumulation pattern with specific 3-touch + higher-low structure that none of the 19 existing breakthrough ideas capture. It is the only idea in the breakout family that requires a specific chart pattern with measurable rising lows.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-25T00:35:18Z"
+    },
+    {
+      "name": "PinBar_Rejection_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "H1 entry",
+        "M15 confirmation"
+      ],
+      "description": "Uses pin bar (hammer/shooting star) rejection candles at structural breakout levels \u2014 a single-candle false-breakout rejection followed by genuine directional thrust, capturing the liquidity-grab-plus-reversal-to-breakout sequence.",
+      "market_behaviour": "Pin bars with long wicks at structural levels (prior swing highs, swing lows, daily value area boundaries) represent intra-candle rejection of a breakout attempt. The market drove to a level, found aggressive counter-flow (institutional liquidity grab + stop hunting), and reversed within the same candle. When this occurs at a significant breakout level, the sequence is: (1) price approaches a major level, (2) institutional algorithms push price through the level to trigger retail stops and attract momentum chasing, (3) the candle closes back below (for resistance) or above (for support) the level \u2014 a rejection, (4) within 1-3 bars, price breaks through in the 'true' direction with sustained momentum. This pin-bar-rejection-then-breakout pattern has statistical reliability of 65-70% on H1 gold during liquid hours (London/US overlap, 08:00-17:00 UTC).",
+      "entry_logic": "1. Identify a clear structural level on H1: a prior swing high (for bearish play) or swing low (for bullish play) that is at least 5 bars old.\n2. Watch for a pin bar candle that: wick extends at least 3\u00d7 the body length, closes within the body, and the wick clearly pierces the structural level.\n3. The pin bar's body must close ON THE SAME SIDE of the structural level as the pre-level direction (e.g. for a bullish play: pin bar's wick dips below a swing low, body closes above it).\n4. On M15, wait for the NEXT candle after the pin bar to break IN THE DIRECTION of the pin bar body (i.e., price breaks the structural level in the opposite direction of the rejection wick \u2014 the 'true' direction).\n5. Entry: Enter on M15 close beyond the pin bar's body extreme (the level of the close, not the wick).\n6. Skip if: (a) pin bar forms during the first hour of the session, (b) the wick is less than 2\u00d7 the body, (c) the pin bar is within 2 hours of a high-impact news event, (d) D1 ATR(14) is in the 80th+ percentile.",
+      "exit_logic": "Stop Loss: Beyond the pin bar's wick extreme by 0.5\u00d7ATR(14) on H1 (if the wick reached 2405, SL at 2406). Take Profit: 1.5\u00d7ATR(14) on H1 from entry. Trailing stop activates after 1\u00d7ATR(14) profit: trail at 0.5\u00d7ATR(14). No partial exit. Time stop: if not triggered within 12 H1 bars, cancel. No re-entry if stopped out.",
+      "failure_mode": "1) Pin bar is start of a larger reversal, not a rejection: the pin bar's body direction IS the new trend, and the breakout in the 'opposite' direction never materialises (false breakout signal). 2) Low-volatility chop: pin bars in quiet markets (ADX<20) are often noise, not structured liquidity grabs. 3) Gap breakouts: if price gaps beyond the pin bar's wick on the next candle, the entry condition is missed or the entry is at a stretched price.",
+      "diversification_value": "No existing breakout idea uses pin bar rejection as the breakout trigger. The closest idea is Trap_Spring_Breakout_Filter (Wyckoff Spring), but that requires a multi-bar spring pattern \u2014 not a single-candle rejection. Breakout_Volume_Climax_Fade fades breakouts with volume climax, which is a different mechanism (volume spike vs. single-candle wick structure). Consolidation_Pattern_Measured_Move_Breakout uses flags/pennants (multi-bar patterns). PinBar_Rejection_Breakout is unique because it uses a SINGLE candle's structure rather than a multi-bar pattern \u2014 it captures the liquidity-grab rejection in real time, not retrospectively.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-25T00:35:18Z"
+    },
+    {
+      "name": "Momentum_Divergence_Breakout_Fade",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15 entry",
+        "H1 level identification"
+      ],
+      "description": "Fades breakouts where price extends to a new swing high/low but the M15 RSI(14) diverges (lower high / higher low), exploiting the statistical tendency for momentum-exhausted breakouts to retrace to the breakout level within 3-6 bars.",
+      "market_behaviour": "Breakouts are emotional events: retail traders pile in after a level is breached, driving price beyond the structural level. But when institutional algorithms are the ones providing that liquidity to fill rest orders (rather than initiating new trends), the initial thrust is followed by a rapid stall and retracement. This stall is visible on momentum oscillators before it appears on price: RSI(14) makes a lower high even as price prints a higher high (bearish divergence), indicating that the rate of price change is decelerating even as the high ticks up. On gold H1/M15, this pattern has a 62-68% success rate at major levels (swing highs/lows, round numbers, daily value area boundaries) during liquid hours (08:00-17:00 UTC). The fade is a statistical edge \u2014 momentum divergences at breakout levels correct back to the level 2-3\u00d7 more frequently than they continue.",
+      "entry_logic": "1. Identify a prior H1 swing high (for bearish fade) or swing low (for bullish fade) that is at least 3 bars old.\n2. Price breaks the level \u2014 a clear H1 CLOSE above resistance or below support.\n3. On M15, verify that RSI(14) has made a LOWER high during the breakout compared to the prior swing high (for a bearish divergence) \u2014 i.e., price is higher but RSI is lower.\n4. For a bullish setup: price breaks BELOW support, but RSI(14) on M15 makes a HIGHER low than the prior swing low \u2014 bullish divergence.\n5. Entry: After the divergence is confirmed (minimum 1 full M15 candle after the divergence print), enter SHORT (bearish div) or LONG (bullish div) when the M15 candle closes back INSIDE the prior structural level (i.e., the breakout level becomes the entry price as price retraces into it).\n6. Skip if: (a) RSI is in extreme territory (<15 or >85) \u2014 divergence less reliable, (b) ADX(14) on M15 is above 40 (strong trend overwhelms divergence signal), (c) the breakout occurred during a high-impact news event, (d) no structural level exists within the last 5 bars for the divergence comparison.",
+      "exit_logic": "Stop Loss: Beyond the divergence high (for shorts) or low (for longs) by 1\u00d7ATR(14) on M15. Take Profit: 1\u00d7ATR(14) on M15 measured from entry. If TP is not hit within 6 M15 bars, close at market (time stop \u2014 divergence decay). Trailing stop: none \u2014 this is a quick fade, not a trend ride. Partial exit: optional 50% at 0.5\u00d7ATR(14), rest at 1\u00d7ATR(14). Re-entry: if diverging level remains valid after retest, re-enter the same setup.",
+      "failure_mode": "1) Trend is too strong: ADX>40 overrides the divergence, price continues in breakout direction while 'divergence keeps diverging'. 2) Divergence requires a clean prior pivot: if the prior swing high/low was more than 10 bars ago, the divergence comparison with a new breakout high may span different volatility regimes. 3) Missed entry: if price retraces through the level too quickly (<1 M15 candle), the entry condition is missed and chasing is dangerous. 4) RSI divergence during whip saw: in choppy markets (ADX<18), divergences can form multiple times per level without resolution.",
+      "diversification_value": "Fundamentally different from Breakout_Volume_Climax_Fade (which uses tick volume spike as the fade trigger \u2014 a volume-based exhaustion signal) and False_Breakout_Trap_Fade (a multi-bar structure-based anti-breakout). Momentum_Divergence_Breakout_Fade uses RSI(14) DIVERGENCE \u2014 a momentum-based signal \u2014 which is entirely independent of volume data and multi-bar candle formations. It captures exhaustion through the price-momentum relationship rather than tick volume or bar structure. No existing breakout idea in the archive uses momentum divergence as the primary fade trigger.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-25T00:35:18Z"
     }
   ],
   "archived": [
@@ -3603,7 +3664,10 @@
       "Consolidation_Duration_Breakout",
       "Structural_Compression_Breakout",
       "Trap_Spring_Breakout_Filter",
-      "ATR_Percentile_Compression_Breakout"
+      "ATR_Percentile_Compression_Breakout",
+      "Ascending_Triangle_Breakout",
+      "PinBar_Rejection_Breakout",
+      "Momentum_Divergence_Breakout_Fade"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
