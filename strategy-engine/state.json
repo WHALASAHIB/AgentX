@@ -1,6 +1,6 @@
 {
-  "iteration": 576,
-  "last_run": "2026-07-25T05:54:03Z",
+  "iteration": 580,
+  "last_run": "2026-07-25T14:54:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,487 +13,55 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "XAUUSD H1 \u2014 Shorten EMA period from 5/13 to 3/8. EMA3/8 crossover generates more frequent signals than EMA5/13 on H1. Keep RSI(14)>50 filter and fixed-tick 1.5:1 TP/SL. No ADX filter. EMA5/13 produced only 7 trades with ADX removed \u2014 a 5-period fast EMA on H1 is still too slow on available data (~372 bars). EMA3/8 should increase trade count by ~2-3x.",
+  "current_hypothesis": "XAUUSD H1 — EMA2/5 long-only + RSI(14)>40 + 1:1 TP/SL. Iter 579 tightened TP/SL from 1.5:1 to 1:1, which improved WR from 32.8% to 57.9%, but sample dropped from 67 to 19 trades (data window truncated). 19 < 20 threshold. Use faster EMA2/5 crossover to generate more entry signals while keeping RSI(40) filter and 1:1 TP/SL. Target: ≥20 trades with WR > 40%.",
   "evolution_log": [
     {
-      "iteration": 546,
-      "hypothesis": "BTCUSDT 30m \u2014 Add RSI(14) filter to EMA3/8 ATR trail strategy.",
+      "iteration": 577,
+      "hypothesis": "XAUUSD H1 — Remove RSI(14)>50 filter. Keep bare EMA3/8 long-only crossover with fixed-tick 1.5:1 TP/SL.",
       "metrics": {
-        "pf": 0.50127644,
-        "sharpe": -6.38980746,
-        "wr": 23.62637363,
-        "dd": 23.44517288,
-        "trades": 364,
-        "net_profit": -2241.610925999981
-      },
-      "verdict": "rejected (PF=0.50 < 1.3, Sharpe=-6.39 < 0.5, DD=23.45% > 15%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-24T15:53:00Z"
-    },
-    {
-      "iteration": 547,
-      "hypothesis": "BTCUSDT 30m \u2014 Add ADX(14) > 25 filter to EMA3/8 + RSI50 + ATR trail strategy.",
-      "metrics": {
-        "pf": 0,
-        "sharpe": 0,
-        "wr": 0,
-        "dd": 0,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades) \u2014 triple filter too restrictive, 4273 bars zero trades",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T07:08:00Z"
-    },
-    {
-      "iteration": 548,
-      "hypothesis": "BTCUSDT 30m \u2014 Lower ADX threshold from 25 to 15.",
-      "metrics": {
-        "pf": 0,
-        "sharpe": 0,
-        "wr": 0,
-        "dd": 0,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades) \u2014 ADX(15) still too restrictive with triple filter",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T07:27:00Z"
-    },
-    {
-      "iteration": 549,
-      "hypothesis": "BTCUSDT 30m \u2014 Remove ADX filter. Return to EMA3/8 crossover + RSI(14)>50 + ATR trail (1.5x).",
-      "metrics": {
-        "pf": 0.66438941,
-        "sharpe": -4.18306555,
-        "wr": 23.33333333,
-        "dd": 27.57875922,
-        "trades": 390,
-        "net_profit": -2654.243144299969
-      },
-      "verdict": "rejected (cascade ratio 1.26 > 1.2; PF=0.66<1.3, Sharpe=-4.18<0.5, DD=27.58%>15%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T07:45:00Z"
-    },
-    {
-      "iteration": 550,
-      "hypothesis": "BTCUSDT 30m \u2014 Make strategy long-only to fix cascade ratio.",
-      "metrics": {
-        "pf": 0.65720257,
-        "sharpe": -2.93865695,
-        "wr": 35.55555556,
-        "dd": 18.44896237,
-        "trades": 135,
-        "net_profit": -1369.257301999938
-      },
-      "verdict": "rejected (PF=0.66 < 1.3, Sharpe=-2.94 < 0.5, DD=18.45% > 15%). Cascade ratio fixed at 1.0.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T07:53:00Z"
-    },
-    {
-      "iteration": 551,
-      "hypothesis": "BTCUSDT 30m \u2014 Replace RSI(14)>50 with ROC(14)>0 momentum filter.",
-      "metrics": {
-        "pf": 0.56614669,
-        "sharpe": -3.77157695,
-        "wr": 34.57943925,
-        "dd": 29.391798,
-        "trades": 107,
-        "net_profit": -1892.116103749988
-      },
-      "verdict": "rejected (PF=0.57 < 1.3, Sharpe=-3.77 < 0.5, DD=29.39%)",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T08:11:00Z"
-    },
-    {
-      "iteration": 552,
-      "hypothesis": "BTCUSDT 30m \u2014 Reduce position size from 100% to 50% equity.",
-      "metrics": {
-        "pf": 0.56614669,
-        "sharpe": -3.77157695,
-        "wr": 34.57943925,
-        "dd": 29.391798,
-        "trades": 107,
-        "net_profit": -1892.116103749988
-      },
-      "verdict": "rejected \u2014 MCP parity profile overrode sizing change. Identical to iter 551.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T08:26:00Z"
-    },
-    {
-      "iteration": 553,
-      "hypothesis": "XAUUSD H1 \u2014 Switch to Bollinger %B + RSI mean reversion. New indicator family on new pair.",
-      "metrics": {
-        "pf": 0.29217609,
-        "sharpe": -9.16178368,
-        "wr": 7.69230769,
-        "dd": 4.57670578,
-        "trades": 13,
-        "net_profit": -457.670577718283
-      },
-      "verdict": "invalid (13 trades < 20; cascade 1.86 > 1.2). Dual %B+RSI filter too restrictive.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T08:41:00Z"
-    },
-    {
-      "iteration": 554,
-      "hypothesis": "XAUUSD H1 \u2014 Remove RSI filter, widen %B thresholds to 0.3/0.7. %B-only to increase trades.",
-      "metrics": {
-        "pf": 0.4699431,
-        "sharpe": -6.36637329,
-        "wr": 13.63636364,
-        "dd": 7.46857605,
+        "pf": 0.37767858,
+        "sharpe": -8.15264362,
+        "wr": 31.81818182,
+        "dd": 2.50431435,
         "trades": 22,
-        "net_profit": -629.843378603735
+        "net_profit": -233.811693377629
       },
-      "verdict": "rejected (PF=0.47<1.3, Sharpe=-6.37<0.5, Cascade=1.57>1.2). Trades up to 22 but cascade worsened on shorts.",
+      "verdict": "rejected (PF=0.38 < 1.3, Sharpe=-8.15 < 0.5)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
-      "time": "2026-07-25T08:56:00Z"
+      "time": "2026-07-25T14:25:00Z"
     },
     {
-      "iteration": 555,
-      "hypothesis": "XAUUSD H1 \u2014 Make %B mean reversion long-only to fix cascade ratio.",
+      "iteration": 578,
+      "hypothesis": "XAUUSD H1 — Add RSI(14)>40 filter (lowered from 50) to EMA3/8 long-only + fixed-tick 1.5:1 TP/SL.",
       "metrics": {
-        "pf": 0.47661117,
-        "sharpe": -6.69402164,
-        "wr": 21.42857143,
-        "dd": 6.86877087,
-        "trades": 14,
-        "net_profit": -618.245978284414
+        "pf": 0.47604766,
+        "sharpe": -14.07701141,
+        "wr": 32.8358209,
+        "dd": 11.02958432,
+        "trades": 67,
+        "net_profit": -1091.345344562753
       },
-      "verdict": "invalid (14 trades < 20). Cascade ratio fixed at 1.0.",
+      "verdict": "rejected (PF=0.48 < 1.3, Sharpe=-14.08 < 0.5)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
-      "time": "2026-07-25T08:58:00Z"
+      "time": "2026-07-25T14:39:00Z"
     },
     {
-      "iteration": 556,
-      "hypothesis": "XAUUSD H1 \u2014 Increase %B oversold threshold from 0.3 to 0.4 to generate more signals.",
+      "iteration": 579,
+      "hypothesis": "XAUUSD H1 — EMA3/8 long-only + RSI(14)>40 + 1:1 TP/SL (tightened from 1.5:1). Goal: improve WR closer to 40-50% range.",
       "metrics": {
-        "pf": 0.47709089,
-        "sharpe": -6.92087785,
-        "wr": 21.42857143,
-        "dd": 6.47537962,
-        "trades": 14,
-        "net_profit": -617.062978062537
-      },
-      "verdict": "invalid (14 trades < 20). Increasing oversold from 0.3 to 0.4 had no effect.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T09:14:00Z"
-    },
-    {
-      "iteration": 557,
-      "hypothesis": "BTCUSDT 30m \u2014 Return to EMA3/8 crossover + ATR(14) trail at 3x. Clean restart of winning concept (iter 464) on BTCUSDT 30m.",
-      "metrics": {
-        "pf": 0.52753958,
-        "sharpe": -7.9382072,
-        "wr": 18.26086957,
-        "dd": 56.50521813,
-        "trades": 690,
-        "net_profit": -5586.798804699976
-      },
-      "verdict": "rejected (PF=0.53 < 1.3, Sharpe=-7.94 < 0.5, DD=56.51% > 30%, cascade 1.20 > 1.2).",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T09:23:00Z"
-    },
-    {
-      "iteration": 558,
-      "hypothesis": "BTCUSDT 30m \u2014 Tighten ATR trail from 3x to 1.5x to reduce 56.51% drawdown.",
-      "metrics": {
-        "pf": 0.52318042,
-        "sharpe": -7.99998985,
-        "wr": 18.80597015,
-        "dd": 56.95571234,
-        "trades": 670,
-        "net_profit": -5631.972789649965
-      },
-      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-8.00 < 0.5, DD=56.96% > 30%).",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-25T09:38:00Z"
-    },
-    {
-      "iteration": 559,
-      "hypothesis": "XAUUSD H1 \u2014 MACD crossover (12,26,9). Long MACD>Signal, short MACD<Signal. ATR TP/SL at 2:1.",
-      "metrics": {
-        "pf": 0.44785184,
-        "sharpe": -7.29933514,
-        "wr": 12.5,
-        "dd": 3.95625218,
-        "trades": 32,
-        "net_profit": -342.519057378155
-      },
-      "verdict": "rejected (PF=0.45<1.3, Sharpe=-7.30<0.5, Cascade=1.78>1.2).",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T01:54:29Z"
-    },
-    {
-      "iteration": 560,
-      "hypothesis": "XAUUSD H1 \u2014 MACD crossover long-only with tightened 1:1.5 TP/SL. Fix cascade.",
-      "metrics": {
-        "pf": 0.0083061,
-        "sharpe": -71.23692585,
-        "wr": 3.44827586,
-        "dd": 8.14105509,
-        "trades": 87,
-        "net_profit": -814.105509157855
-      },
-      "verdict": "rejected (PF=0.01<1.3, Sharpe=-71.24<0.5).",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T10:09:30Z"
-    },
-    {
-      "iteration": 561,
-      "hypothesis": "EURUSD 30m \u2014 EMA3/8 crossover + ATR(14) trail at 3x.",
-      "metrics": {
-        "pf": 0.15615364,
-        "sharpe": -19.7322694,
-        "wr": 11.00917431,
-        "dd": 6.74377964,
-        "trades": 109,
-        "net_profit": -669.722145962947
-      },
-      "verdict": "rejected (PF=0.16<1.3, Sharpe=-19.73<0.5, Cascade=1.54>1.2).",
-      "symbol": "EURUSD",
-      "timeframe": "30m",
-      "time": "2026-07-25T10:24:00Z"
-    },
-    {
-      "iteration": 562,
-      "hypothesis": "EURUSD 30m \u2014 Make EMA3/8 ATR trail long-only to fix cascade ratio of 1.54.",
-      "metrics": {
-        "pf": 0.13287484,
-        "sharpe": -10.95916074,
-        "wr": 26.31578947,
-        "dd": 2.55608147,
+        "pf": 0.42643184,
+        "sharpe": -7.6497252,
+        "wr": 57.89473684,
+        "dd": 2.0262452,
         "trades": 19,
-        "net_profit": -230.873753608221
+        "net_profit": -156.498477804609
       },
-      "verdict": "invalid (low sample, 19 trades < 20). Cascade 1.0.",
-      "symbol": "EURUSD",
-      "timeframe": "30m",
-      "time": "2026-07-25T13:12:00Z"
-    },
-    {
-      "iteration": 563,
-      "hypothesis": "EURUSD 30m \u2014 Use EMA2/5 crossover (shorter than 3/8) with ATR(14) trail at 3x, long-only.",
-      "metrics": {
-        "pf": 0.23532716,
-        "sharpe": -10.78840884,
-        "wr": 15.38461538,
-        "dd": 2.63102784,
-        "trades": 13,
-        "net_profit": -251.618000477854
-      },
-      "verdict": "invalid (low sample, 13 trades < 20).",
-      "symbol": "EURUSD",
-      "timeframe": "30m",
-      "time": "2026-07-25T13:53:00Z"
-    },
-    {
-      "iteration": 564,
-      "hypothesis": "EURUSD 30m \u2014 RSI(14) oversold/overbought mean reversion with 1:1.5 TP/SL.",
-      "metrics": {
-        "pf": 0.04128637,
-        "sharpe": -10.57139391,
-        "wr": 25.0,
-        "dd": 0.72090478,
-        "trades": 8,
-        "net_profit": -64.767364096067
-      },
-      "verdict": "invalid (low sample, 8 trades < 20).",
-      "symbol": "EURUSD",
-      "timeframe": "30m",
-      "time": "2026-07-25T13:56:00Z"
-    },
-    {
-      "iteration": 565,
-      "hypothesis": "XAUUSD H1 \u2014 Parabolic SAR (0.02/0.2 step, 0.2 max) with ATR(14) trail at 2x.",
-      "metrics": {
-        "pf": 0.73831665,
-        "sharpe": -3.87357931,
-        "wr": 17.64705882,
-        "dd": 6.49570739,
-        "trades": 119,
-        "net_profit": -430.658914602907
-      },
-      "verdict": "rejected (PF=0.74<1.3, Sharpe=-3.87<0.5, Cascade=1.86>1.2).",
+      "verdict": "invalid (low sample, 19 trades). WR improved to 57.9% but sample too small for statistical significance. Data window truncated to 372 bars.",
       "symbol": "XAUUSD",
       "timeframe": "1h",
-      "time": "2026-07-25T03:22:58Z"
-    },
-    {
-      "iteration": 566,
-      "hypothesis": "XAUUSD H1 \u2014 Make PSAR + ATR trail long-only to fix cascade ratio of 1.86.",
-      "metrics": {
-        "pf": 0.47695919,
-        "sharpe": -5.78793189,
-        "wr": 19.04761905,
-        "dd": 5.01913383,
-        "trades": 21,
-        "net_profit": -430.65591267486
-      },
-      "verdict": "rejected (PF=0.48<1.3, Sharpe=-5.79<0.5). Cascade fixed at 1.0.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T11:20:00Z"
-    },
-    {
-      "iteration": 567,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + RSI(14)>50 filter.",
-      "metrics": {
-        "pf": 0.35817466,
-        "sharpe": -8.89394778,
-        "wr": 18.18181818,
-        "dd": 4.98190895,
-        "trades": 22,
-        "net_profit": -480.857039125203
-      },
-      "verdict": "rejected (PF=0.36<1.3, Sharpe=-8.89<0.5). RSI filter made PF worse (0.48->0.36).",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T13:54:00Z"
-    },
-    {
-      "iteration": 568,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + 1:1.5 TP/SL (no RSI filter). Tighten TP/SL ratio from 2:1 to 1:1.5 to improve 18% win rate.",
-      "metrics": {
-        "pf": 0.62355912,
-        "sharpe": -6.23338789,
-        "wr": 35.13513514,
-        "dd": 5.31184684,
-        "trades": 37,
-        "net_profit": -407.616209182665
-      },
-      "verdict": "rejected (PF=0.62<1.3, Sharpe=-6.23<0.5). But WR improved from 19% to 35%, PF from 0.48 to 0.62, trades from 21 to 37. Cascade ratio 1.0 perfect. Directionally correct change \u2014 TP/SL tightening is working. Next: add ADX(14) > 25 filter.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T14:08:00Z"
-    },
-    {
-      "iteration": 569,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + ADX(14) > 25 filter + 1:1.5 TP/SL. ADX trending filter may improve PF by filtering out choppy markets where PSAR flips frequently.",
-      "metrics": {
-        "pf": 0.93105811,
-        "sharpe": -0.77731882,
-        "wr": 45.83333333,
-        "dd": 3.22541816,
-        "trades": 24,
-        "net_profit": -42.677064738724
-      },
-      "verdict": "rejected (PF=0.93<1.3, Sharpe=-0.78<0.5). ADX filter was directionally correct \u2014 PF improved 0.62\u21920.93, WR 35%\u219245.8%, DD 5.3%\u21923.2%. Cascade ratio 1.0 perfect. But avg W/L ratio only 1.10 vs configured 1.5 \u2014 ATR recalculates every bar causing drift. Next: replace ATR-recalculated exit with fixed tick-based TP/SL so W/L matches configured 1.5:1.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T14:30:00Z"
-    },
-    {
-      "iteration": 570,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + ADX(14)>25 + RSI(14)>50 filter + 1:1.5 ATR TP/SL. Add RSI(14)>50 to improve PF from 0.93 by filtering out bearish-momentum entries.",
-      "metrics": {
-        "pf": 0.6491766,
-        "sharpe": -3.614002,
-        "wr": 40.0,
-        "dd": 2.16539904,
-        "trades": 15,
-        "net_profit": -165.432029939962
-      },
-      "verdict": "invalid (low sample, 15 trades < 20). RSI(14)>50 was too restrictive \u2014 halved trades from 24 to 15, PF dropped from 0.93 to 0.65. Triple filter (PSAR+ADX+RSI) overfilters on XAUUSD H1.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T14:45:00Z"
-    },
-    {
-      "iteration": 571,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + EMA(20>50) trend filter (ADX substitute \u2014 ta.adx not supported in this Pine engine) + fixed-tick 1.5:1 TP/SL (100 SL / 150 TP ticks). Remove RSI(14)>50 filter. Use fixed tick-based exit to ensure actual W/L matches configured 1.5:1 ratio, avoiding the ATR-recalculate drift.",
-      "metrics": {
-        "pf": 0.47574926,
-        "sharpe": -6.6484456,
-        "wr": 44.0,
-        "dd": 2.2036425,
-        "trades": 25,
-        "net_profit": -209.118954772679
-      },
-      "verdict": "rejected (PF=0.48<1.3, Sharpe=-6.65<0.5). EMA filter was a poor ADX substitute \u2014 PF dropped from 0.93 (iter 569 ADX) to 0.48 (EMA). Fixed ticks produced exact 1.0 cascade ratio and WR 44% but avg W/L only 0.61 \u2014 PSAR enters too late in trends, so SL hits first despite favorable tick ratio. Next: implement DIY ADX manually using ta.tr, ta.rma Wilder smoothing.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:00:00Z"
-    },
-    {
-      "iteration": 572,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + DIY ADX(14)>25 (manual calculation using ta.tr and ta.rma Wilder smoothing since ta.adx is unsupported in this Pine engine) + fixed-tick 1.5:1 TP/SL. Implements ADX manually from TR, DM, DI, DX, then smoothed RMA. The EMA trend filter from iter 571 gave PF=0.48 while iter 569's ADX filter gave PF=0.93 \u2014 ADX is clearly the right trending filter. This iteration implements it properly via DIY Wilder's method.",
-      "metrics": {
-        "pf": 0.41063753,
-        "sharpe": -9.98889463,
-        "wr": 34.21052632,
-        "dd": 4.04796211,
-        "trades": 38,
-        "net_profit": -395.521938670325
-      },
-      "verdict": "rejected (PF=0.41<1.3, Sharpe=-9.99<0.5). DIY ADX only marginally different from EMA filter (0.41 vs 0.48). The ADX filter that worked in iter 569 gave PF=0.93 with ATR-based exits, but the fixed-tick exit exposes the core problem: PSAR enters too late in trends (ratio avg win/loss = 0.79), so SL hits before TP even at 1.5:1. Next: add RSI(14)>50 per protocol (weakest metric is PF<1.5).",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:15:00Z"
-    },
-    {
-      "iteration": 573,
-      "hypothesis": "XAUUSD H1 \u2014 PSAR long-only + DIY ADX(14)>25 + RSI(14)>50 filter + fixed-tick 1.5:1 TP/SL. PF=0.41 is the weakest metric (<1.5), so per protocol add RSI(14)>50 filter.",
-      "metrics": {
-        "pf": 0.65294797,
-        "sharpe": -3.44193611,
-        "wr": 55.0,
-        "dd": 1.65704782,
-        "trades": 20,
-        "net_profit": -115.635946178094
-      },
-      "verdict": "rejected (PF=0.65<1.3, Sharpe=-3.44<0.5). RSI filter helped \u2014 PF 0.41\u21920.65 (58% gain), WR 34%\u219255%. But avg win/loss = 0.53 \u2014 PSAR enters too late in trends, so SL hits before TP despite 1.5:1 tick ratio. Cascade 1.0 perfect. Triple filter now yields 20 trades (bare minimum).",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:30:00Z"
-    },
-    {
-      "iteration": 574,
-      "hypothesis": "XAUUSD H1 \u2014 Replace PSAR entry with EMA5/13 crossover (faster entry that captures more trend). Keep DIY ADX(14)>25 + RSI(14)>50 filters and fixed-tick 1.5:1 TP/SL. Iter 573 showed RSI filter helped PF improve 0.41\u21920.65 (58% gain) and WR jumped 34%\u219255%. But avg win/loss ratio = 0.53 \u2014 PSAR enters too late in trends, so SL hits before TP despite 1.5:1 tick ratio. EMA crossover should enter earlier and improve avg win size.",
-      "metrics": {
-        "pf": 0.21413759,
-        "sharpe": -5.57062969,
-        "wr": 33.33333333,
-        "dd": 0.54159392,
-        "trades": 3,
-        "net_profit": -38.279667671306
-      },
-      "verdict": "invalid (low sample, 3 trades < 20). EMA5/13 crossover with triple filter (ADX>25 + RSI>50) produced only 3 trades on XAUUSD H1 \u2014 way too restrictive. The EMA crossover itself may be fine, but ADX>25 on top of it kills all signals. Next iteration: remove ADX filter to increase trade count.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:45:00Z"
-    },
-    {
-      "iteration": 575,
-      "hypothesis": "XAUUSD H1 \u2014 Remove ADX filter. Keep EMA5/13 long-only crossover + RSI(14)>50 + fixed-tick 1.5:1 TP/SL.",
-      "metrics": {
-        "pf": 0.28249923,
-        "sharpe": -6.65798837,
-        "wr": 42.85714286,
-        "dd": 0.96860677,
-        "trades": 7,
-        "net_profit": -63.487355161133
-      },
-      "verdict": "invalid (low sample, 7 trades < 20). Removing ADX increased trades from 3 to 7 but still insufficient. Next: shorten EMAs to 3/8.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T05:54:03Z"
+      "time": "2026-07-25T14:54:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

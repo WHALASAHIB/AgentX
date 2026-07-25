@@ -1,0 +1,27 @@
+//@version=6
+strategy(title="iter_576_EMA3_8_RSI50_XAUUSD_H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFast = input.int(3, "EMA Fast", minval=2, maxval=20, group="EMAs")      // sweep: 2-10 step 1
+emaSlow = input.int(8, "EMA Slow", minval=5, maxval=50, group="EMAs")       // sweep: 5-20 step 2
+rsiLen  = input.int(14, "RSI Length", minval=7, maxval=21, group="RSI")     // sweep: 7-21 step 7
+rsiThresh = input.int(50, "RSI Min (Long)", minval=30, maxval=70, group="RSI") // sweep: 40-60 step 5
+slTicks = input.int(100, "Stop Loss (ticks)", minval=20, maxval=500, group="TP/SL")   // sweep: 50-300 step 25
+tpTicks = input.int(150, "Take Profit (ticks)", minval=20, maxval=1000, group="TP/SL") // sweep: 75-450 step 25
+useRsi  = input.bool(true, "Use RSI > Threshold Filter", group="Filters")
+
+//--- calculations
+emaF = ta.ema(close, emaFast)
+emaS = ta.ema(close, emaSlow)
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry logic: EMA3/8 crossover + RSI(14)>50 (long only)
+longCondition = ta.crossover(emaF, emaS)
+filterOk = not useRsi or rsiVal > rsiThresh
+
+if longCondition and filterOk
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: fixed-tick TP/SL at configured ratio
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
