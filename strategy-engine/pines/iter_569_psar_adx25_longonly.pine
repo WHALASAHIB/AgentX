@@ -1,0 +1,44 @@
+//@version=6
+strategy("PSAR ADX(14)>25 Long Only - XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+psar_start      = input.float(0.02, "PSAR Start", step=0.005)        // sweep: 0.01-0.05 step 0.005
+psar_increment  = input.float(0.02, "PSAR Increment", step=0.005)    // sweep: 0.01-0.05 step 0.005
+psar_max        = input.float(0.2, "PSAR Max", step=0.05)            // sweep: 0.1-0.5 step 0.05
+atr_length      = input.int(14, "ATR Length", minval=5, maxval=30)   // sweep: 5-30 step 5
+atr_mult_sl     = input.float(1.0, "ATR SL Multiplier", step=0.25)   // sweep: 0.5-3.0 step 0.25
+tp_sl_ratio     = input.float(1.5, "TP:SL Ratio", step=0.25)         // sweep: 0.5-3.0 step 0.25
+adx_len         = input.int(14, "ADX Length", minval=7, maxval=28)   // sweep: 7-28 step 1
+adx_threshold   = input.int(25, "ADX Threshold", minval=10, maxval=30) // sweep: 10-30 step 2
+
+//--- manual ADX calculation (ta.adx not available in runtime)
+up_1    = high - high[1]
+dn_1    = low[1] - low
+plus_dm = up_1 > dn_1 and up_1 > 0 ? up_1 : 0
+minus_dm = dn_1 > up_1 and dn_1 > 0 ? dn_1 : 0
+tr      = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr_val = ta.rma(tr, adx_len)
+plus_di = 100 * ta.rma(plus_dm, adx_len) / atr_val
+minus_di = 100 * ta.rma(minus_dm, adx_len) / atr_val
+dx      = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx, adx_len)
+
+//--- indicators
+psar_val = ta.sar(psar_start, psar_increment, psar_max)
+
+//--- entry logic: long only when PSAR below price (uptrend) AND ADX > threshold (trending market)
+in_uptrend    = close > psar_val
+is_trending   = adx_val > adx_threshold
+long_entry    = in_uptrend and is_trending
+
+//--- exit logic: rely ONLY on ATR-based TP/SL — no PSAR flip exit to avoid interference
+//--- (previous iter 569 showed avg w/l ratio 1.10 < target 1.5 due to psar_flip exit)
+
+//--- strategy execution
+if long_entry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    sl_distance = atr_val * atr_mult_sl
+    tp_distance = sl_distance * tp_sl_ratio
+    strategy.exit("XL", "Long", loss=syminfo.mintick == 0 ? na : sl_distance / syminfo.mintick, profit=syminfo.mintick == 0 ? na : tp_distance / syminfo.mintick)
