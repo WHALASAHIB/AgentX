@@ -1,0 +1,39 @@
+//@version=6
+strategy("PSAR + RSI Long Only - XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+psar_start  = input.float(0.02, "PSAR Start", step=0.005)
+psar_increment = input.float(0.02, "PSAR Increment", step=0.005)
+psar_max    = input.float(0.2, "PSAR Max", step=0.05)
+rsi_length  = input.int(14, "RSI Length", minval=2, maxval=50)
+rsi_threshold = input.int(50, "RSI Threshold", minval=30, maxval=70)
+atr_length  = input.int(14, "ATR Length", minval=5, maxval=30)
+atr_mult    = input.float(2.0, "ATR Multiplier", step=0.5)
+tp_sl_ratio = input.float(2.0, "TP:SL Ratio", step=0.5)
+
+//--- indicators
+psar_val = ta.sar(psar_start, psar_increment, psar_max)
+rsi_val = ta.rsi(close, rsi_length)
+atr_val = ta.atr(atr_length)
+
+// PSAR direction derived: when close > psar, trend is up
+in_uptrend = close > psar_val
+rsi_filter = rsi_val > rsi_threshold
+
+//--- entry logic
+long_entry = in_uptrend and rsi_filter
+
+//--- exit condition
+long_exit = not in_uptrend
+
+//--- strategy execution
+if long_entry and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    sl_distance = atr_val * 1.0
+    tp_distance = sl_distance * tp_sl_ratio
+    strategy.exit("XL", "Long", loss=sl_distance / syminfo.mintick, profit=tp_distance / syminfo.mintick)
+    
+    if long_exit
+        strategy.close("Long", comment="psar_flip")

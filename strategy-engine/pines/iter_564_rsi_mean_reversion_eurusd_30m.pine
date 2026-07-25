@@ -1,0 +1,42 @@
+//@version=6
+strategy(title="RSI Mean Reversion EURUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== inputs ===
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30)                    // sweep: 10-20 step 2
+oversold = input.int(25, "RSI Oversold Threshold", minval=10, maxval=40)       // sweep: 20-35 step 5
+overbought = input.int(75, "RSI Overbought Threshold", minval=60, maxval=90)   // sweep: 65-85 step 5
+atrLength = input.int(14, "ATR Length", minval=7, maxval=30)                   // sweep: 10-20 step 2
+tpMultiplier = input.float(1.5, "TP Multiplier (×ATR)", minval=0.5, maxval=4.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (×ATR)", minval=0.3, maxval=3.0, step=0.2)  // sweep: 0.5-2.0 step 0.3
+useLong = input.bool(true, "Enable LONG trades")
+useShort = input.bool(true, "Enable SHORT trades")
+
+//=== indicator calculations ===
+rsi = ta.rsi(close, rsiLength)
+atr = ta.atr(atrLength)
+
+//=== entry logic ===
+// RSI mean reversion: buy oversold, sell overbought
+longCondition = useLong and ta.crossunder(rsi, oversold)   // RSI crosses BELOW oversold = buy
+shortCondition = useShort and ta.crossover(rsi, overbought) // RSI crosses ABOVE overbought = sell
+
+//=== exits ===
+// Fixed TP/SL based on ATR, entered at close of signal bar
+longSl = close - (atr * slMultiplier)
+longTp = close + (atr * tpMultiplier)
+shortSl = close + (atr * slMultiplier)
+shortTp = close - (atr * tpMultiplier)
+
+//=== strategy execution ===
+if (longCondition)
+    strategy.entry("RL", strategy.long)
+    strategy.exit("RLX", "RL", stop=longSl, limit=longTp)
+
+if (shortCondition)
+    strategy.entry("RS", strategy.short)
+    strategy.exit("RSX", "RS", stop=shortSl, limit=shortTp)
+
+//=== plot for visual reference ===
+hline(oversold, "Oversold", color=color.green, linestyle=hline.style_dashed)
+hline(overbought, "Overbought", color=color.red, linestyle=hline.style_dashed)
+plot(rsi, "RSI", color=color.purple, linewidth=1)

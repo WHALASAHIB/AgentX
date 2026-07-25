@@ -1,0 +1,45 @@
+//@version=6
+strategy(title="PSAR + ATR Trail — Long Only (XAUUSD H1)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// Parabolic SAR settings
+psar_start  = input.float(0.02, "PSAR Start Step", step=0.005)   // sweep: 0.01-0.05 step 0.01
+psar_inc    = input.float(0.02, "PSAR Increment", step=0.005)    // sweep: 0.01-0.05 step 0.01
+psar_max    = input.float(0.2, "PSAR Max Step")                   // sweep: 0.1-0.5 step 0.1
+
+// ATR trail multiplier
+atr_period  = input.int(14, "ATR Period", minval=7, maxval=28)    // sweep: 7-28 step 7
+atr_mult    = input.float(2.0, "ATR Trail Multiplier", step=0.5)  // sweep: 1.0-4.0 step 0.5
+
+//--- indicators
+sar     = ta.sar(psar_start, psar_inc, psar_max)
+atr_val = ta.atr(atr_period)
+
+//--- long-only entry: PSAR below price = uptrend
+long_condition = sar < close
+
+//--- trail management
+var float trail_stop        = na
+var float highest_since_entry = na
+
+//--- entry
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("LONG", strategy.long)
+
+//--- exit management each bar
+if (strategy.position_size > 0)
+    // Track the highest price since entry
+    highest_since_entry := na(highest_since_entry) ? close : math.max(highest_since_entry, high)
+    // Compute ATR trail and ratchet it upward (never lower)
+    new_trail_price = highest_since_entry - atr_val * atr_mult
+    trail_stop := na(trail_stop) ? new_trail_price : math.max(trail_stop, new_trail_price)
+    // Place trailing exit order
+    strategy.exit("LONG_EXIT", from_entry="LONG", stop=trail_stop)
+else
+    // Reset on flat
+    trail_stop        := na
+    highest_since_entry := na
+
+//--- visual plot
+plot(sar, "SAR", color=color.purple, style=plot.style_cross)
+plot(trail_stop, "ATR Trail", color=color.red, style=plot.style_linebr)

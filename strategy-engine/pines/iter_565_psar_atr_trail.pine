@@ -1,0 +1,35 @@
+//@version=6
+strategy(title="XAUUSD H1 — PSAR + ATR Trail", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+psarStart = input.float(0.02, "PSAR Start Step", minval=0.001, maxval=0.1, step=0.005)  // sweep: 0.01-0.05 step 0.01
+psarIncrement = input.float(0.2, "PSAR Increment", minval=0.01, maxval=0.5, step=0.05)  // sweep: 0.1-0.4 step 0.05
+psarMax = input.float(0.2, "PSAR Max", minval=0.05, maxval=0.5, step=0.05)               // sweep: 0.1-0.4 step 0.1
+atrLength = input.int(14, "ATR Length", minval=5, maxval=30, step=1)                    // sweep: 7-21 step 7
+atrMultiplier = input.float(2.0, "ATR Trail Multiplier", minval=0.5, maxval=4.0, step=0.5) // sweep: 1.0-3.0 step 0.5
+
+//--- indicators
+psarVal = ta.sar(psarStart, psarIncrement, psarMax)
+atrVal = ta.atr(atrLength)
+trendUp = psarVal < close   // PSAR below price = uptrend
+trendDn = psarVal > close   // PSAR above price = downtrend
+
+//--- entry logic
+longCondition = trendUp and strategy.position_size <= 0
+shortCondition = trendDn and strategy.position_size >= 0
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management using ATR trail
+longStop = close - atrVal * atrMultiplier
+shortStop = close + atrVal * atrMultiplier
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", stop=longStop)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", stop=shortStop)
