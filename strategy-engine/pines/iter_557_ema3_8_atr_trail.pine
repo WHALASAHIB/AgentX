@@ -1,0 +1,54 @@
+//@version=6
+strategy(title="BTCUSDT 30m — EMA3/8 + ATR Trail (iter 557)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== Inputs ===
+// EMAs
+emaFastLen  = input.int(3,   "Fast EMA Length",  minval=1, maxval=50)   // sweep: 2-10 step 1
+emaSlowLen  = input.int(8,   "Slow EMA Length",  minval=1, maxval=100)  // sweep: 5-20 step 1
+
+// ATR
+atrLen      = input.int(14,  "ATR Length",       minval=1, maxval=100)  // sweep: 7-21 step 1
+atrMultiplier = input.float(3.0, "ATR Trail Multiplier", step=0.5)       // sweep: 1.5-5 step 0.5
+
+//=== Indicators ===
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+atrVal   = ta.atr(atrLen)
+
+//=== Entry Logic ===
+longCondition  = ta.crossover(emaFast, emaSlow)
+shortCondition = ta.crossunder(emaFast, emaSlow)
+
+//=== ATR Trailing Stop ===
+var float longStop  = na
+var float shortStop = na
+
+if (strategy.position_size > 0)
+    longStop := math.max(low - atrVal * atrMultiplier, nz(longStop[1], low - atrVal * atrMultiplier))
+else
+    longStop := na
+
+if (strategy.position_size < 0)
+    shortStop := math.min(high + atrVal * atrMultiplier, nz(shortStop[1], high + atrVal * atrMultiplier))
+else
+    shortStop := na
+
+//=== Entry Signals ===
+if (longCondition and strategy.position_size <= 0)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition and strategy.position_size >= 0)
+    strategy.entry("Short", strategy.short)
+
+//=== Exit Management (ATR Trail) ===
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", stop=longStop)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", stop=shortStop)
+
+//=== Plot ===
+plot(emaFast, "Fast EMA", color.blue, 1)
+plot(emaSlow, "Slow EMA", color.red, 1)
+plot(strategy.position_size > 0 ? longStop : na, "Long Trail", color.green, 1, style=plot.style_cross)
+plot(strategy.position_size < 0 ? shortStop : na, "Short Trail", color.maroon, 1, style=plot.style_cross)

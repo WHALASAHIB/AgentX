@@ -1,0 +1,45 @@
+//@version=6
+// --- strategy-engine iteration 559: MACD Crossover on XAUUSD H1 ---
+// Hypothesis: Trend-following MACD crossover. Long when MACD line crosses above Signal,
+// short when crosses below. ATR-based TP/SL at 2:1 ratio.
+strategy(title="iter_559_MACD_XAUUSD_H1", overlay=true, initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+     commission_type=strategy.commission.percent, commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input(12, "MACD Fast Length")      // sweep: 5-40 step 5
+slowLength = input(26, "MACD Slow Length")     // sweep: 15-60 step 10
+signalLength = input(9, "Signal Length")        // sweep: 5-20 step 3
+
+// ATR for TP/SL
+atrLength = input(14, "ATR Length")             // sweep: 7-28 step 7
+atrMultiplierSL = input(1.0, "SL ATR Multiplier")  // sweep: 0.5-3.0 step 0.5
+tpSlRatio = input(2.0, "TP:SL Ratio")           // sweep: 1.0-4.0 step 0.5
+
+//--- MACD calculation
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+
+//--- ATR for dynamic TP/SL
+atrValue = ta.atr(atrLength)
+
+//--- entry logic
+// Long: MACD line crosses above signal line
+longEntry = ta.crossover(macdLine, signalLine)
+// Short: MACD line crosses below signal line
+shortEntry = ta.crossunder(macdLine, signalLine)
+
+//--- exit management
+// Calculate ATR-based SL distance in ticks
+slTicks = math.round(atrValue * atrMultiplierSL / syminfo.mintick)
+tpTicks = math.round(slTicks * tpSlRatio)
+
+// Entry conditions — enter on crossover/crossunder
+if (longEntry)
+    strategy.entry("MACD_LONG", strategy.long)
+    strategy.exit("EXIT_LONG", "MACD_LONG", loss=slTicks, profit=tpTicks)
+
+if (shortEntry)
+    strategy.entry("MACD_SHORT", strategy.short)
+    strategy.exit("EXIT_SHORT", "MACD_SHORT", loss=slTicks, profit=tpTicks)
