@@ -1,0 +1,46 @@
+//@version=6
+strategy(title="EMA3/8 ATR Trail RSI30 Long Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=100)
+atr_len = input.int(14, "ATR Length", minval=1, maxval=50)            // sweep: 7-21 step 7
+atr_mult = input.float(2.5, "ATR Multiplier", minval=0.5, maxval=5.0) // sweep: 1.5-4.0 step 0.5
+rsi_len = input.int(14, "RSI Length", minval=1, maxval=50)
+rsi_threshold = input.int(30, "RSI Threshold (long >)", minval=1, maxval=99) // sweep: 20-50 step 10
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+atr_val = ta.atr(atr_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic: EMA3 crosses above EMA8 AND RSI > threshold
+long_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+
+//--- position management
+var bool in_position = false
+var float entry_price = 0.0
+var float trail_stop = 0.0
+
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    in_position := true
+    entry_price := close
+    trail_stop := close - (atr_val * atr_mult)
+
+//--- trailing stop: exit when price closes below ATR trail
+if (strategy.position_size > 0)
+    // Ratchet up the trail stop
+    new_trail = close - (atr_val * atr_mult)
+    if (new_trail > trail_stop)
+        trail_stop := new_trail
+    // Exit if price hits or crosses below trail
+    if (close < trail_stop)
+        strategy.close("Long")
+
+//--- plot EMAs and trail for visual reference
+plot(ema_fast, "EMA Fast", color.blue, 2)
+plot(ema_slow, "EMA Slow", color.red, 2)
+trail_line = plot(trail_stop, "ATR Trail", color.green, 1, style=plot.style_linebr)
+hline(rsi_threshold, "RSI Threshold", color.purple, hline.style_dashed)

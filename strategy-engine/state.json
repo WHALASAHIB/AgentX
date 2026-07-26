@@ -1,6 +1,6 @@
 {
-  "iteration": 609,
-  "last_run": "2026-07-26T14:53:00Z",
+  "iteration": 613,
+  "last_run": "2026-07-26T15:53:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,11 +13,11 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>30 filter. Iter 608's RSI(40) filter produced 9 trades (PF=1.03) — improved PF over RSI(50) at 12 trades (PF=0.67 in iter 606) but trade count fell from 12 to 9, not rose. Lowering RSI threshold to 30 should admit more borderline signals while still filtering deeply bearish conditions (RSI<30). Target: 15-20 trades with PF > 1.0.",
+  "current_hypothesis": "XAUUSD H1 — Price above EMA(5)=long, price below EMA(5)=short. Replace ATR trailing stop with fixed TP/SL ratio of 1:1.5 (stop at 1.5×ATR from entry, target at 2.25×ATR from entry = 1:1.5). Iter 612 added short entries which exploded trade count from 6 to 165 (27.5x!) — excellent result on sample size. But WR crashed to 13.3% with cascade ratio 1.81 (price constantly crossing EMA causes re-entry cascade). Fixed TP/SL gives each trade a defined exit (no trailing re-entry) which should both improve cascade to 1.0 and increase WR via 1:1.5 ratio target capture. Cascade fix also addresses the invalidator condition.",
   "evolution_log": [
     {
       "iteration": 601,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR). Exit on EMA2 crossing below EMA5 or ATR trail. Faster EMAs (2/5 instead of 3/8) to generate more signals — 15 trades in 366 bars insufficient. EMA2/5 should cross more frequently.",
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR). Exit on EMA2 crossing below EMA5 or ATR trail.",
       "metrics": {
         "pf": 0.52484866,
         "sharpe": -5.76713924,
@@ -26,14 +26,14 @@
         "trades": 21,
         "net_profit": -162.791350666392
       },
-      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-5.77 < 0.5). EMA2/5 generated 21 trades (+6 vs EMA3/8) with perfect cascade=1.0, but WR=23.8% and PF=0.52 are poor. Signal quality needs filtering.",
+      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-5.77 < 0.5)",
       "symbol": "GBPUSD",
       "timeframe": "1h",
       "time": "2026-07-26T05:08:15Z"
     },
     {
       "iteration": 602,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + RSI(14)>50 filter. RSI filter should filter out weak long signals during bearish momentum and improve PF.",
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + RSI(14)>50 filter",
       "metrics": {
         "pf": 0.57002635,
         "sharpe": -4.72403518,
@@ -42,14 +42,14 @@
         "trades": 13,
         "net_profit": -81.779245011619
       },
-      "verdict": "invalid (low sample, 13 trades). RSI(50) filter cut trades from 21 to 13. PF=0.57 barely improved from 0.52. Cascade=1.0 perfect. Next: try ADX(14)>25 to filter ranging markets.",
+      "verdict": "invalid (low sample, 13 trades)",
       "symbol": "GBPUSD",
       "timeframe": "1h",
       "time": "2026-07-26T12:25:00Z"
     },
     {
       "iteration": 603,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>25 filter. Exit on EMA2 crossing below EMA5 or ATR trail. Iter 602's RSI(50) filter reduced trades from 21 to 13 and barely improved PF (0.52→0.57). Adding ADX(14)>25 should filter out ranging-market false signals for better signal quality.",
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>25 filter",
       "metrics": {
         "pf": 0.75856351,
         "sharpe": -2.14428034,
@@ -58,14 +58,14 @@
         "trades": 13,
         "net_profit": -47.655504411399
       },
-      "verdict": "invalid (low sample, 13 trades). ADX(25) filter gave same trade count as RSI(50) but PF improved to 0.76 (vs 0.57) and WR to 30.8% (vs 23.1%). ADX outperforms RSI as a filter. Still needs more trades — lower ADX threshold to 14 next.",
+      "verdict": "invalid (low sample, 13 trades)",
       "symbol": "GBPUSD",
       "timeframe": "1h",
       "time": "2026-07-26T13:40:00Z"
     },
     {
       "iteration": 604,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>14 filter. Lowering ADX threshold from 25 to 14 to admit more trades while still filtering pure ranging noise.",
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>14 filter",
       "metrics": {
         "pf": 0,
         "sharpe": null,
@@ -74,14 +74,14 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades). ADX(14)>14 filter was too restrictive — 0 trades across 365 bars on GBPUSD H1. The pair was not trending enough even with the lowered ADX threshold. Switching pair to XAUUSD.",
+      "verdict": "invalid (no trades)",
       "symbol": "GBPUSD",
       "timeframe": "1h",
       "time": "2026-07-26T05:54:02Z"
     },
     {
       "iteration": 605,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR). No ADX or RSI filter. Iter 603 ADX(25)→13 trades (PF=0.76), iter 604 ADX(14)→0 trades. ADX filters over-restrict GBPUSD H1. Switching to XAUUSD H1 with bare EMA3/8+ATR trail — the BTCUSDT 30m best performer (iter 464) used this pattern. No filters to maximize trade count; ATR trail manages risk organically.",
+      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR)",
       "metrics": {
         "pf": 0.44481821,
         "sharpe": -5.84058483,
@@ -90,14 +90,14 @@
         "trades": 22,
         "net_profit": -404.181821082841
       },
-      "verdict": "rejected (PF=0.44 < 1.3, Sharpe=-5.84 < 0.5). EMA3/8 bare crossover on XAUUSD H1 generated 22 trades (barely sufficient) but PF=0.44 is poor — losses outweigh gains 2:1. WR=22.7% means 4 of 5 trades lose. The EMA3/8 crossover alone produces too many false signals. ATR trail (2.5×) didn't save the losing trades. Next: add RSI(14)>50 filter.",
+      "verdict": "rejected (PF=0.44 < 1.3, Sharpe=-5.84 < 0.5)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-26T06:08:40Z"
     },
     {
       "iteration": 606,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>50 filter. Iter 605 (no filter) had PF=0.44, WR=22.7%, 22 trades. RSI(50) filter should filter out weak long signals during bearish momentum and improve PF and WR.",
+      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>50 filter",
       "metrics": {
         "pf": 0.66624969,
         "sharpe": -2.33413341,
@@ -106,14 +106,14 @@
         "trades": 12,
         "net_profit": -147.555582899864
       },
-      "verdict": "invalid (low sample, 12 trades). RSI(14)>50 filter cut trades from 22 to 12 — too restrictive. PF improved from 0.44 to 0.67 (better but still negative). WR improved from 22.7% to 33.3%. Cascade=1.0 perfect. Signal quality trend is positive but the filter is too aggressive. Next: ADX(14)>20 + RSI(14)>40 to allow more trades while still filtering noise.",
+      "verdict": "invalid (low sample, 12 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-26T14:23:19Z"
     },
     {
       "iteration": 607,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + ADX(14)>20 filter + RSI(14)>40 filter. Iter 606's RSI(50) filter reduced trades from 22 to 12 — too restrictive for statistical significance. PF improved from 0.44 to 0.67 but still negative. Lowering RSI threshold to 40 and adding ADX(14)>20 filter to remove only the worst ranging noise while keeping more trades. Target: 15-20 trades with PF > 0.8.",
+      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + ADX(14)>20 + RSI(14)>40",
       "metrics": {
         "pf": 0.75504971,
         "sharpe": -1.6181115,
@@ -122,14 +122,14 @@
         "trades": 8,
         "net_profit": -130.207516889617
       },
-      "verdict": "invalid (low sample, 8 trades). ADX(14)>20 + RSI(14)>40 combined was too restrictive on XAUUSD H1 — only 8 trades (vs 22 bare, 12 with RSI>50 alone). The ADX filter eliminated the remaining marginal signals. PF improved further to 0.76 (best yet in this line) but trade count collapsed. Cascade=1.0 perfect. Next: remove ADX, keep RSI(40) only — should restore trade count to ~15-18.",
+      "verdict": "invalid (low sample, 8 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-26T14:38:00Z"
     },
     {
       "iteration": 608,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>40 filter. No ADX filter. Iter 607's ADX(14)>20 + RSI(14)>40 combined filter was too restrictive — only 8 trades (12 with RSI(50) alone in iter 606). Removing ADX and keeping RSI(40) should restore trade count while still filtering weak signals. Target: 15-18 trades with PF > 0.8.",
+      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>40 filter",
       "metrics": {
         "pf": 1.028608,
         "sharpe": 0.2365733,
@@ -138,10 +138,74 @@
         "trades": 9,
         "net_profit": 10.862886600866
       },
-      "verdict": "invalid (low sample, 9 trades). RSI(40) filter only produced 9 trades — barely more than the 8 with ADX(20)+RSI(40) in iter 607. PF improved to 1.03 (now positive!) but cascade=1.0 remains perfect. Trade count is the bottleneck — only 9 trades in 362 bars is insufficient for statistical significance. Next: lower RSI threshold to 30 to admit more borderline bullish signals.",
+      "verdict": "invalid (low sample, 9 trades)",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-26T14:53:00Z"
+    },
+    {
+      "iteration": 609,
+      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>30 filter",
+      "metrics": {
+        "pf": 0.85348299,
+        "sharpe": -1.43529931,
+        "wr": 42.85714286,
+        "dd": 3.39896459,
+        "trades": 7,
+        "net_profit": -67.540444157854
+      },
+      "verdict": "invalid (low sample, 7 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-26T15:08:00Z"
+    },
+    {
+      "iteration": 610,
+      "hypothesis": "XAUUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (2.5×ATR). NO RSI filter.",
+      "metrics": {
+        "pf": 0.41056232,
+        "sharpe": -4.75475289,
+        "wr": 16.66666667,
+        "dd": 7.12365281,
+        "trades": 6,
+        "net_profit": -444.617298088413
+      },
+      "verdict": "invalid (low sample, 6 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-26T15:23:00Z"
+    },
+    {
+      "iteration": 611,
+      "hypothesis": "XAUUSD H1 — Price closes above EMA(5) = long entry. ATR(14) trailing stop (2.5×ATR).",
+      "metrics": {
+        "pf": 0.39491972,
+        "sharpe": -4.80507207,
+        "wr": 16.66666667,
+        "dd": 7.30606718,
+        "trades": 6,
+        "net_profit": -475.092380990209
+      },
+      "verdict": "invalid (low sample, 6 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-26T15:38:00Z"
+    },
+    {
+      "iteration": 612,
+      "hypothesis": "XAUUSD H1 — Price closes above EMA(5) = long, price below EMA(5) = short. ATR(14) trailing stop (2.5×ATR). Both directions.",
+      "metrics": {
+        "pf": 0.73053487,
+        "sharpe": -4.6693584,
+        "wr": 13.33333333,
+        "dd": 9.73140566,
+        "trades": 165,
+        "net_profit": -513.618026852984
+      },
+      "verdict": "rejected (PF=0.73 < 1.3, cascade=1.81). Adding short entries exploded trade count from 6→165 (27.5x!) — huge win for sample size. But WR=13.3%, cascade=1.81 (price-EMA constant flips cause cascade re-entry). Cascade > 1.2 invalidates. Fixed TP/SL at 1:1.5 should fix both: defined exit per trade eliminates cascade, tighter ratio captures more profit targets to improve WR.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-26T15:53:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

@@ -1,0 +1,35 @@
+//@version=6
+strategy(title="iter_612_ema5_price_short", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA period — sweep: 2-20 step 1
+ema_len = input.int(5, "EMA Period")
+// ATR multiplier for trailing stop — sweep: 1.0-4.0 step 0.5
+atr_mult = input.float(2.5, "ATR Multiplier")
+// ATR period — sweep: 7-21 step 2
+atr_len = input.int(14, "ATR Period")
+
+//--- indicator calculations
+ema_val = ta.ema(close, ema_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+// Long: price closes above EMA
+long_condition = close > ema_val
+// Short: price closes below EMA
+short_condition = close < ema_val
+
+//--- exit management — ATR trailing stop
+// Long trail: stop at lowest low minus ATR × multiplier since entry
+long_stop_price = ta.lowest(low, 5) - atr_val * atr_mult
+// Short trail: stop at highest high plus ATR × multiplier since entry
+short_stop_price = ta.highest(high, 5) + atr_val * atr_mult
+
+//--- strategy execution
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=long_stop_price)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=short_stop_price)
