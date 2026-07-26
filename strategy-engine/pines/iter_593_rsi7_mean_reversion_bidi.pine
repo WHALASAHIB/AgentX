@@ -1,0 +1,37 @@
+//@version=6
+strategy(title="RSI(7) Mean Rev RSI14 Filter Bidi — XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+rsiLen = input.int(7, "RSI Period", minval=2, maxval=20)               // sweep: 5-14 step 1
+rsiTrendLen = input.int(14, "Trend RSI Period", minval=7, maxval=21)    // sweep: 10-20 step 2
+oversold = input.int(30, "Oversold Threshold", minval=20, maxval=40)    // sweep: 25-35 step 5
+overbought = input.int(70, "Overbought Threshold", minval=60, maxval=80) // sweep: 65-75 step 5
+tpPct = input.float(0.5, "Take Profit %", minval=0.1, maxval=2.0, step=0.1)  // sweep: 0.3-1.0 step 0.1
+slPct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1)    // sweep: 0.2-0.5 step 0.1
+
+//--- RSI calculations
+rsiFast = ta.rsi(close, rsiLen)
+rsiTrend = ta.rsi(close, rsiTrendLen)
+
+//--- detect cross conditions
+rsiCrossAboveOversold = ta.crossover(rsiFast, oversold)
+rsiCrossBelowOverbought = ta.crossunder(rsiFast, overbought)
+
+//--- entry logic with RSI(14) trend filter
+// Long only when RSI(14) > 50 (bullish bias) — oversold bounce in uptrend
+if (rsiCrossAboveOversold and rsiTrend > 50 and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+// Short only when RSI(14) < 50 (bearish bias) — overbought rejection in downtrend
+if (rsiCrossBelowOverbought and rsiTrend < 50 and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management via fixed TP/SL using close price
+tpPoints = close * tpPct / 100.0 / syminfo.mintick
+slPoints = close * slPct / 100.0 / syminfo.mintick
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=slPoints, profit=tpPoints)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", loss=slPoints, profit=tpPoints)

@@ -1,0 +1,35 @@
+//@version=6
+strategy(title="EMA3/8 Crossover 30m No Filter", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "Fast EMA", minval=2, maxval=10, step=1)      // sweep: 2-8 step 1
+emaSlowLen = input.int(8, "Slow EMA", minval=5, maxval=21, step=1)      // sweep: 5-21 step 2
+tpPercent = input.float(0.3, "Take Profit %", minval=0.1, maxval=2.0, step=0.1)  // sweep: 0.2-1.0 step 0.1
+slPercent = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1)    // sweep: 0.2-1.0 step 0.1
+
+//--- EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+//--- crossover signals (bidirectional)
+longSignal = ta.crossover(emaFast, emaSlow)
+shortSignal = ta.crossunder(emaFast, emaSlow)
+
+//--- TP/SL
+tpPriceLong  = close * (1 + tpPercent / 100)
+slPriceLong  = close * (1 - slPercent / 100)
+tpPriceShort = close * (1 - tpPercent / 100)
+slPriceShort = close * (1 + slPercent / 100)
+
+//--- entry/exit
+if (longSignal and strategy.position_size <= 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", limit=tpPriceLong, stop=slPriceLong)
+
+if (shortSignal and strategy.position_size >= 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", limit=tpPriceShort, stop=slPriceShort)
+
+//--- plots
+plot(emaFast, "Fast EMA", color=color.blue)
+plot(emaSlow, "Slow EMA", color=color.red)

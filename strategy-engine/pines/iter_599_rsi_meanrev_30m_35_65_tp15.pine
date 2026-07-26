@@ -1,0 +1,37 @@
+//@version=6
+strategy(title="RSI Mean Reversion 30m Tight 1to1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=21, step=1)            // sweep: 10-21 step 2
+oversoldThreshold = input.int(35, "Oversold (long trigger)", minval=25, maxval=45, step=5)  // sweep: 30-45 step 5
+overboughtThreshold = input.int(65, "Overbought (short trigger)", minval=55, maxval=75, step=5) // sweep: 55-75 step 5
+tpPercent = input.float(0.45, "Take Profit %", minval=0.2, maxval=2.0, step=0.05)  // sweep: 0.3-0.9 step 0.1
+slPercent = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1)      // sweep: 0.2-0.5 step 0.05
+
+//--- indicators
+rsi = ta.rsi(close, rsiLength)
+
+//--- RSI crossover detection (mean reversion, tighter thresholds than 40/60)
+longSignal = ta.crossover(rsi, oversoldThreshold)  // exiting oversold = buy
+shortSignal = ta.crossunder(rsi, overboughtThreshold)  // exiting overbought = sell
+
+//--- TP/SL (1:1.5 risk-reward ratio)
+tpPriceLong  = close * (1 + tpPercent / 100)
+slPriceLong  = close * (1 - slPercent / 100)
+tpPriceShort = close * (1 - tpPercent / 100)
+slPriceShort = close * (1 + slPercent / 100)
+
+//--- entry/exit with position check (prevents cascade)
+if (longSignal and strategy.position_size <= 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", limit=tpPriceLong, stop=slPriceLong)
+
+if (shortSignal and strategy.position_size >= 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", limit=tpPriceShort, stop=slPriceShort)
+
+//--- plots
+hline(oversoldThreshold, "Oversold", color=color.green, linestyle=hline.style_dotted)
+hline(overboughtThreshold, "Overbought", color=color.red, linestyle=hline.style_dotted)
+plot(rsi, "RSI", color=color.purple)
+hline(50, "Midline", color=color.gray, linestyle=hline.style_dotted)

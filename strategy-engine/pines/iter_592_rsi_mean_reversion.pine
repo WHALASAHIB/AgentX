@@ -1,0 +1,51 @@
+//@version=6
+strategy(title="RSI Mean Reversion — Overbought/Oversold", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+rsiLength     = input.int(14, "RSI Length", minval=5, maxval=30, tooltip="Period for RSI calculation")                                            // sweep: 7-21 step 2
+oversoldLevel = input.int(30, "Oversold Threshold (Long Entry)", minval=10, maxval=45)     // sweep: 20-40 step 5
+overboughtLevel = input.int(70, "Overbought Threshold (Short Entry)", minval=55, maxval=90) // sweep: 60-80 step 5
+exitLevel     = input.int(50, "Exit RSI Level", minval=40, maxval=70)                        // sweep: 45-60 step 5
+
+tpPercent     = input.float(0.5, "Take Profit %", minval=0.1, maxval=3.0, step=0.1)   // sweep: 0.3-1.5 step 0.2
+slPercent     = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.1)     // sweep: 0.2-0.5 step 0.1
+
+useLong       = input.bool(true, "Enable Long Trades")
+useShort      = input.bool(false, "Enable Short Trades")
+
+//--- indicator calculation
+
+rsi = ta.rsi(close, rsiLength)
+
+//--- entry logic
+
+// Oversold bounce: RSI crosses back above oversold level
+longEntry  = useLong and ta.crossover(rsi, oversoldLevel)
+
+// Overbought rejection: RSI crosses back below overbought level
+shortEntry = useShort and ta.crossunder(rsi, overboughtLevel)
+
+//--- TP/SL levels (percentage-based, in price units)
+
+longTp   = close * (1 + tpPercent / 100)
+longSl   = close * (1 - slPercent / 100)
+shortTp  = close * (1 - tpPercent / 100)
+shortSl  = close * (1 + slPercent / 100)
+
+//--- execution
+
+if longEntry
+    strategy.entry("Long", strategy.long, comment="OversoldBounce")
+    strategy.exit("XL", "Long", limit=longTp, stop=longSl, comment="LongExit")
+
+if shortEntry
+    strategy.entry("Short", strategy.short, comment="OverboughtReject")
+    strategy.exit("XS", "Short", limit=shortTp, stop=shortSl, comment="ShortExit")
+
+// Visual signals
+plotshape(longEntry, style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 50), size=size.small, text="OS")
+plotshape(shortEntry, style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 50), size=size.small, text="OB")
+hline(overboughtLevel, "Overbought", color=color.new(color.red, 60), linestyle=hline.style_dashed)
+hline(oversoldLevel, "Oversold", color=color.new(color.green, 60), linestyle=hline.style_dashed)
+hline(exitLevel, "Exit Level", color=color.new(color.gray, 60), linestyle=hline.style_dotted)
