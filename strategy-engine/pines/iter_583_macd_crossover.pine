@@ -1,0 +1,34 @@
+//@version=6
+strategy(title="MACD Crossover XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(12, "MACD Fast Length", minval=5, maxval=50)       // sweep: 8-20 step 2
+slow_len = input.int(26, "MACD Slow Length", minval=10, maxval=100)     // sweep: 20-40 step 4
+signal_len = input.int(9, "Signal Length", minval=3, maxval=30)         // sweep: 5-15 step 2
+tp_ratio = input.float(1.0, "TP/SL Ratio (TP=ratio*SL)", step=0.1)      // sweep: 0.5-2.0 step 0.25
+sl_pct = input.float(0.3, "Stop Loss %", step=0.05)                     // sweep: 0.15-0.5 step 0.05
+
+//--- MACD calculation
+[macd_line, signal_line, _] = ta.macd(close, fast_len, slow_len, signal_len)
+
+//--- entry logic
+long_condition = ta.crossover(macd_line, signal_line)
+short_condition = ta.crossunder(macd_line, signal_line)
+
+//--- exit management: fixed percentage-based TP/SL
+stop_points = (sl_pct / 100.0) * close
+take_points = stop_points * tp_ratio
+
+//--- entries with explicit loss/profit
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=stop_points/syminfo.mintick, profit=take_points/syminfo.mintick)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=stop_points/syminfo.mintick, profit=take_points/syminfo.mintick)
+
+//--- plot MACD for visual reference
+plot(macd_line, "MACD", color=color.blue)
+plot(signal_line, "Signal", color=color.orange)
+hline(0, "Zero", color=color.gray)

@@ -1,0 +1,46 @@
+//@version=6
+strategy(title="BB Mean Reversion XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length   = input.int(20,   "BB Length",   minval=5,  maxval=50,  step=1)    // sweep: 10-30 step 2
+bb_mult     = input.float(2.0, "BB StdDev",   minval=1.0, maxval=3.0, step=0.5) // sweep: 1.5-2.5 step 0.25
+stop_pct    = input.float(0.3, "Stop Loss %", minval=0.1, maxval=1.0, step=0.05) // sweep: 0.15-0.5 step 0.05
+tp_ratio    = input.float(1.0, "TP:SL Ratio", minval=0.5, maxval=3.0, step=0.5)  // sweep: 0.5-2.0 step 0.5
+min_signal  = input.int(1,    "Min Bars Since Cross", minval=0, maxval=5, step=1) // sweep: 0-3 step 1
+use_long    = input.bool(true,  "Trade Long")
+use_short   = input.bool(true,  "Trade Short")
+
+//--- Bollinger Bands
+basis = ta.sma(close, bb_length)
+dev   = ta.stdev(close, bb_length) * bb_mult
+upper = basis + dev
+lower = basis - dev
+
+// Plot bands
+plot(basis, "BB Basis", color=color.yellow, linewidth=1)
+plot(upper, "BB Upper", color=color.red,    linewidth=1)
+plot(lower, "BB Lower", color=color.green,  linewidth=1)
+
+//--- entry logic
+// Mean reversion: price was outside band, now crosses back inside
+crossed_below_lower = ta.cross(close, lower)  // close was < lower, now >= lower (oversold bounce)
+crossed_above_upper = ta.cross(close, upper)  // close was > upper, now <= upper (overbought pullback)
+
+// Wait for min_signal bars after cross to confirm
+bars_since_long_signal  = ta.barssince(crossed_below_lower)
+bars_since_short_signal = ta.barssince(crossed_above_upper)
+
+long_condition  = use_long  and crossed_below_lower and (bars_since_long_signal  >= min_signal)
+short_condition = use_short and crossed_above_upper and (bars_since_short_signal >= min_signal)
+
+//--- exit management (fixed percentage TP/SL)
+sl_points  = close * stop_pct / syminfo.mintick
+tp_points  = sl_points * tp_ratio
+
+if (long_condition)
+    strategy.entry("BB_Long", strategy.long)
+    strategy.exit("BB_Long_Exit", "BB_Long", loss=sl_points, profit=tp_points)
+
+if (short_condition)
+    strategy.entry("BB_Short", strategy.short)
+    strategy.exit("BB_Short_Exit", "BB_Short", loss=sl_points, profit=tp_points)
