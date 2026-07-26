@@ -1,0 +1,43 @@
+//@version=6
+strategy(title="XAUUSD H1 MACD(5,13,3) Bidirectional", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(5, "Fast MA Length", minval=1)        // sweep: 3-12 step 1
+slowLength = input.int(13, "Slow MA Length", minval=1)       // sweep: 8-26 step 1
+signalLength = input.int(3, "Signal Smoothing", minval=1)    // sweep: 2-9 step 1
+
+// TP/SL parameters
+tpPercent = input.float(0.2, "Take Profit %", step=0.05)     // sweep: 0.1-1.0 step 0.05
+slPercent = input.float(0.3, "Stop Loss %", step=0.05)       // sweep: 0.1-1.0 step 0.05
+
+//--- MACD calculation
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+
+//--- entry logic — BIDIRECTIONAL
+// Long entry: MACD line crosses above signal line
+longCondition = ta.crossover(macdLine, signalLine)
+
+// Short entry: MACD line crosses below signal line
+shortCondition = ta.crossunder(macdLine, signalLine)
+
+// Calculate TP/SL price levels
+longTpPrice = strategy.position_avg_price * (1 + tpPercent / 100)
+longSlPrice = strategy.position_avg_price * (1 - slPercent / 100)
+
+shortTpPrice = strategy.position_avg_price * (1 - tpPercent / 100)
+shortSlPrice = strategy.position_avg_price * (1 + slPercent / 100)
+
+//--- entry management
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", limit=longTpPrice, stop=longSlPrice)
+
+if strategy.position_size < 0
+    strategy.exit("Short Exit", "Short", limit=shortTpPrice, stop=shortSlPrice)

@@ -1,0 +1,33 @@
+//@version=6
+strategy(title="MACD(8,17,5) Long-Only XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(8, "MACD Fast Length", minval=2, maxval=50, step=1)      // sweep: 6-12 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=50, step=1)     // sweep: 14-26 step 2
+signalLength = input.int(5, "MACD Signal Length", minval=2, maxval=20, step=1)   // sweep: 3-9 step 1
+
+// Exit parameters
+stopLossPct = input.float(0.3, "Stop Loss (%)", minval=0.1, maxval=5.0, step=0.1)      // sweep: 0.2-2.0 step 0.1
+takeProfitPct = input.float(0.2, "Take Profit (%)", minval=0.1, maxval=5.0, step=0.1)   // sweep: 0.1-2.0 step 0.1
+
+//--- MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+macdCrossover = ta.crossover(macdLine, signalLine)
+macdCrossunder = ta.crossunder(macdLine, signalLine)
+
+//--- entry logic
+// Long entry: MACD line crosses above signal line (long-only — no short entries)
+longCondition = macdCrossover
+
+if (longCondition)
+    strategy.entry("LE", strategy.long)
+
+//--- exit management
+// Calculate TP and SL in ticks based on entry price
+entryPrice = strategy.position_avg_price
+slTicks = (entryPrice * stopLossPct / 100.0) / syminfo.mintick
+tpTicks = (entryPrice * takeProfitPct / 100.0) / syminfo.mintick
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "LE", loss=math.round(slTicks), profit=math.round(tpTicks))
