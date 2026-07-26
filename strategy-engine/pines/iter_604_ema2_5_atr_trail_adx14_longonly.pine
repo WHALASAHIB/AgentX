@@ -1,0 +1,49 @@
+//@version=6
+strategy(title="GBPUSD H1 — EMA2/5 ATR Trail ADX14 Long Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=10)     // sweep: 1-5 step 1
+slowLen = input.int(5, "Slow EMA Length", minval=3, maxval=20)     // sweep: 3-10 step 1
+
+// ATR trailing stop parameters
+atrLen = input.int(14, "ATR Length", minval=5, maxval=30)          // sweep: 10-20 step 2
+atrMult = input.float(3.0, "ATR Trail Multiplier", minval=1.0, maxval=5.0, step=0.5)  // sweep: 1.5-4.0 step 0.5
+
+// DMI/ADX filter parameters
+dmiLen = input.int(14, "DMI Length", minval=5, maxval=30)          // sweep: 10-20 step 2
+adxThresh = input.int(14, "ADX Threshold", minval=5, maxval=40)    // sweep: 10-25 step 5
+
+//--- indicators
+fastEMA = ta.ema(close, fastLen)
+slowEMA = ta.ema(close, slowLen)
+atrVal = ta.atr(atrLen)
+adxVal = ta.dmi(dmiLen)
+
+// ATR trailing stop — long only
+var float trailStop = na
+if (strategy.position_size > 0)
+    // Trail the stop up, never down
+    trailStop := math.max(close - atrVal * atrMult, trailStop[1])
+else
+    trailStop := na
+
+//--- entry logic — long only
+longCondition = ta.crossover(fastEMA, slowEMA) and adxVal > adxThresh
+
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// Exit via ATR trailing stop
+if (strategy.position_size > 0)
+    strategy.exit("Trail Exit", "Long", stop=trailStop)
+
+// Also exit if EMA crosses back down (momentum reversal)
+if (ta.crossunder(fastEMA, slowEMA) and strategy.position_size > 0)
+    strategy.close("Long", comment="EMAX")
+
+//--- plot
+plot(fastEMA, "Fast EMA", color.blue)
+plot(slowEMA, "Slow EMA", color.red)
+hline(adxThresh, "ADX Threshold", color=color.new(color.gray, 50))

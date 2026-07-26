@@ -1,0 +1,48 @@
+//@version=6
+strategy(title="EMA2/5 ATR Trail ADX25 — GBPUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMAs
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=50, tooltip="Fast EMA period")                // sweep: 1-5 step 1
+slowLen = input.int(5, "Slow EMA Length", minval=1, maxval=50, tooltip="Slow EMA period")                // sweep: 3-10 step 1
+
+// ATR trailing stop
+atrLen = input.int(14, "ATR Length", minval=5, maxval=50)                                                 // sweep: 7-21 step 2
+atrMult = input.float(3.0, "ATR Multiplier", minval=0.5, maxval=6.0, step=0.5)                           // sweep: 1.5-5.0 step 0.5
+
+// DMI/ADX filter
+dmiLen = input.int(14, "DMI Length", minval=5, maxval=30)                                                 // sweep: 7-21 step 2
+adxThresh = input.int(25, "ADX Threshold", minval=10, maxval=40)                                         // sweep: 15-35 step 5
+
+//--- indicator calculations
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+atrVal = ta.atr(atrLen)
+[dmiAdx, dmiPlus, dmiMinus] = ta.dmi(high, low, close, dmiLen)
+
+// ATR trailing stop — long only
+longStop = close - (atrVal * atrMult)
+
+//--- entry logic — long only
+longCondition = ta.crossover(emaFast, emaSlow) and dmiAdx > adxThresh
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+// Exit if EMA fast crosses below EMA slow
+if (ta.crossunder(emaFast, emaSlow))
+    strategy.close("Long", comment="EMAExit")
+
+// Trail stop — exit if price closes below ATR trail
+if (close < longStop)
+    strategy.close("Long", comment="ATRTrailExit")
+
+//--- plot
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+longStopPlot = plot(longStop, "ATR Trail", color=color.green, style=plot.style_linebr)
+hline(adxThresh, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed)
+
+// DMI/ADX background
+bgcolor(dmiAdx > adxThresh ? color.new(color.green, 90) : na, title="ADX Trend")

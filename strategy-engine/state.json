@@ -1,6 +1,6 @@
 {
-  "iteration": 601,
-  "last_run": "2026-07-26T04:54:18Z",
+  "iteration": 605,
+  "last_run": "2026-07-26T05:54:02Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,91 +13,59 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "GBPUSD H1 \u2014 EMA2/5 long-only crossover with ATR(14) trailing stop (3.0\u00d7ATR). Exit on EMA2 crossing below EMA5 or ATR trail. Faster EMAs (2/5 instead of 3/8) to generate more signals \u2014 15 trades in 366 bars insufficient. EMA2/5 should cross more frequently.",
+  "current_hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR). No ADX or RSI filter. Iter 603 ADX(25)→13 trades (PF=0.76), iter 604 ADX(14)→0 trades. ADX filters over-restrict GBPUSD H1. Switching to XAUUSD H1 with bare EMA3/8+ATR trail — the BTCUSDT 30m best performer (iter 464) used this pattern. No filters to maximize trade count; ATR trail manages risk organically.",
   "evolution_log": [
     {
-      "iteration": 577,
-      "hypothesis": "XAUUSD H1 \u2014 Remove RSI(14)>50 filter. Keep bare EMA3/8 long-only crossover with fixed-tick 1.5:1 TP/SL.",
+      "iteration": 601,
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR). Exit on EMA2 crossing below EMA5 or ATR trail. Faster EMAs (2/5 instead of 3/8) to generate more signals — 15 trades in 366 bars insufficient. EMA2/5 should cross more frequently.",
       "metrics": {
-        "pf": 0.37767858,
-        "sharpe": -8.15264362,
-        "wr": 31.81818182,
-        "dd": 2.50431435,
-        "trades": 22,
-        "net_profit": -233.811693377629
+        "pf": 0.52484866,
+        "sharpe": -5.76713924,
+        "wr": 23.80952381,
+        "dd": 2.46994602,
+        "trades": 21,
+        "net_profit": -162.791350666392
       },
-      "verdict": "rejected (PF=0.38 < 1.3, Sharpe=-8.15 < 0.5)",
-      "symbol": "XAUUSD",
+      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-5.77 < 0.5). EMA2/5 generated 21 trades (+6 vs EMA3/8) with perfect cascade=1.0, but WR=23.8% and PF=0.52 are poor. Signal quality needs filtering.",
+      "symbol": "GBPUSD",
       "timeframe": "1h",
-      "time": "2026-07-25T14:25:00Z"
+      "time": "2026-07-26T05:08:15Z"
     },
     {
-      "iteration": 578,
-      "hypothesis": "XAUUSD H1 \u2014 Add RSI(14)>40 filter (lowered from 50) to EMA3/8 long-only + fixed-tick 1.5:1 TP/SL.",
+      "iteration": 602,
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + RSI(14)>50 filter. RSI filter should filter out weak long signals during bearish momentum and improve PF.",
       "metrics": {
-        "pf": 0.47604766,
-        "sharpe": -14.07701141,
-        "wr": 32.8358209,
-        "dd": 11.02958432,
-        "trades": 67,
-        "net_profit": -1091.345344562753
+        "pf": 0.57002635,
+        "sharpe": -4.72403518,
+        "wr": 23.07692308,
+        "dd": 1.37713165,
+        "trades": 13,
+        "net_profit": -81.779245011619
       },
-      "verdict": "rejected (PF=0.48 < 1.3, Sharpe=-14.08 < 0.5)",
-      "symbol": "XAUUSD",
+      "verdict": "invalid (low sample, 13 trades). RSI(50) filter cut trades from 21 to 13. PF=0.57 barely improved from 0.52. Cascade=1.0 perfect. Next: try ADX(14)>25 to filter ranging markets.",
+      "symbol": "GBPUSD",
       "timeframe": "1h",
-      "time": "2026-07-25T14:39:00Z"
+      "time": "2026-07-26T12:25:00Z"
     },
     {
-      "iteration": 579,
-      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 long-only + RSI(14)>40 + 1:1 TP/SL (tightened from 1.5:1). Goal: improve WR closer to 40-50% range.",
+      "iteration": 603,
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>25 filter. Exit on EMA2 crossing below EMA5 or ATR trail. Iter 602's RSI(50) filter reduced trades from 21 to 13 and barely improved PF (0.52→0.57). Adding ADX(14)>25 should filter out ranging-market false signals for better signal quality.",
       "metrics": {
-        "pf": 0.42643184,
-        "sharpe": -7.6497252,
-        "wr": 57.89473684,
-        "dd": 2.0262452,
-        "trades": 19,
-        "net_profit": -156.498477804609
+        "pf": 0.75856351,
+        "sharpe": -2.14428034,
+        "wr": 30.76923077,
+        "dd": 1.83925542,
+        "trades": 13,
+        "net_profit": -47.655504411399
       },
-      "verdict": "invalid (low sample, 19 trades)",
-      "symbol": "XAUUSD",
+      "verdict": "invalid (low sample, 13 trades). ADX(25) filter gave same trade count as RSI(50) but PF improved to 0.76 (vs 0.57) and WR to 30.8% (vs 23.1%). ADX outperforms RSI as a filter. Still needs more trades — lower ADX threshold to 14 next.",
+      "symbol": "GBPUSD",
       "timeframe": "1h",
-      "time": "2026-07-25T14:54:00Z"
+      "time": "2026-07-26T13:40:00Z"
     },
     {
-      "iteration": 580,
-      "hypothesis": "XAUUSD H1 \u2014 EMA2/5 long-only + RSI(14)>40 + 1:1 TP/SL. Faster EMAs to generate more signals.",
-      "metrics": {
-        "pf": 0.0,
-        "sharpe": -24.01316238,
-        "wr": 0.0,
-        "dd": 3.36120382,
-        "trades": 30,
-        "net_profit": -336.120381986471
-      },
-      "verdict": "rejected (PF=0.00 < 1.3, Sharpe=-24.01 < 0.5, WR=0%)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:00:00Z"
-    },
-    {
-      "iteration": 581,
-      "hypothesis": "XAUUSD H1 \u2014 EMA2/5 long-only + RSI(14)>50 (raised from 40) + 1:1 TP/SL.",
-      "metrics": {
-        "pf": 0.0,
-        "sharpe": -2.05994519,
-        "wr": 0.0,
-        "dd": 5.27465826,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:23:00Z"
-    },
-    {
-      "iteration": 582,
-      "hypothesis": "XAUUSD H1 \u2014 Bollinger Bands(20,2) mean reversion. Long when close < lower band then crosses back inside, short when close > upper band then crosses back inside. Fixed 1:1 TP/SL with 0.3% stop. No RSI/EMA filters. Try completely different indicator family \u2014 mean reversion.",
+      "iteration": 604,
+      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>14 filter. Lowering ADX threshold from 25 to 14 to admit more trades while still filtering pure ranging noise.",
       "metrics": {
         "pf": 0,
         "sharpe": null,
@@ -106,305 +74,18 @@
         "trades": 0,
         "net_profit": 0
       },
-      "verdict": "invalid (no trades) \u2014 BB(20,2) bands too wide for Apr 26 - May 19 window (372 bars). No price touches occurred.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:38:00Z"
-    },
-    {
-      "iteration": 583,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(12,26,9) crossover. Long when MACD line crosses above signal line, short when MACD line crosses below signal line. Fixed 1:1 TP/SL with 0.3% stop.",
-      "metrics": {
-        "pf": 0.3183948,
-        "sharpe": -10.70421254,
-        "wr": 21.875,
-        "dd": 3.16785454,
-        "trades": 32,
-        "net_profit": -297.433549346541
-      },
-      "verdict": "rejected (PF=0.32 < 1.3, Sharpe=-10.70 < 0.5, Cascade=1.78 > 1.2)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-25T15:53:00Z"
-    },
-    {
-      "iteration": 584,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(12,26,9) crossover + RSI(14) filter. Long only when MACD line crosses above signal line AND RSI > 50. Short only when MACD line crosses below signal line AND RSI < 50. Fixed 1:1 TP/SL with 0.3% stop.",
-      "metrics": {
-        "pf": 0.05734729,
-        "sharpe": -12.84037584,
-        "wr": 5.26315789,
-        "dd": 2.32293388,
-        "trades": 19,
-        "net_profit": -232.29338750285
-      },
-      "verdict": "invalid (low sample, 19 trades, cascade ratio 1.9 > 1.2)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T02:48:00Z"
-    },
-    {
-      "iteration": 585,
-      "hypothesis": "XAUUSD H1 \u2014 Faster MACD(8,17,5) crossover + RSI(14)>40 filter. MACD(12,26,9) + RSI(14)>50 generated only 19 trades in 366 bars (iter 584, PF=0.06, 1W/18L, cascade=1.9). Speeding up MACD to 8/17/5 will produce more crossovers, and reducing RSI filter to 40 (from 50) allows more entries.",
-      "metrics": {
-        "pf": 2.05346811,
-        "sharpe": 5.68434564,
-        "wr": 19.04761905,
-        "dd": 2.89689399,
-        "trades": 42,
-        "net_profit": 550.970713488365
-      },
-      "verdict": "accepted (incremental) \u2014 PF=2.05, Sharpe=5.68 are strong, but WR=19% and cascade ratio=2.0 indicate exit management issues.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T10:48:00Z"
-    },
-    {
-      "iteration": 586,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(8,17,5) + RSI(14)>40 with tightened TP/SL ratio to 1:1.5 (TP=0.2%, SL=0.3%).",
-      "metrics": {
-        "pf": 2.05346811,
-        "sharpe": 5.68434564,
-        "wr": 19.04761905,
-        "dd": 2.89689399,
-        "trades": 42,
-        "net_profit": 550.970713488365
-      },
-      "verdict": "accepted (incremental) \u2014 TP tightening to 1:1.5 produced identical metrics.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T10:54:00Z"
-    },
-    {
-      "iteration": 587,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(8,17,5) + RSI(14)>40, LONG-ONLY only.",
-      "metrics": {
-        "pf": 0.0,
-        "sharpe": -0.53324656,
-        "wr": 0.0,
-        "dd": 5.27462502,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades) \u2014 MACD(8,17,5) crossover + RSI(14)>40 never triggered in 365 bars long-only.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T11:08:00Z"
-    },
-    {
-      "iteration": 588,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(8,17,5) long-only WITHOUT RSI filter.",
-      "metrics": {
-        "pf": 0.67895047,
-        "sharpe": -3.10823595,
-        "wr": 35.29411765,
-        "dd": 1.70456063,
-        "trades": 17,
-        "net_profit": -89.08876813865
-      },
-      "verdict": "invalid (low sample, 17 trades). 35.3% WR but insufficient sample.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T11:37:00Z"
-    },
-    {
-      "iteration": 589,
-      "hypothesis": "XAUUSD H1 \u2014 Faster MACD(5,13,3) long-only crossover, no RSI filter.",
-      "metrics": {
-        "pf": 0,
-        "sharpe": -0.77331362,
-        "wr": 0,
-        "dd": 5.27463162,
-        "trades": 0,
-        "net_profit": 0
-      },
-      "verdict": "invalid (no trades) \u2014 MACD(5,13,3) long-only produced 0 crossovers in 365 bars.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T11:52:00Z"
-    },
-    {
-      "iteration": 590,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(5,13,3) BIDIRECTIONAL (both long and short), no RSI filter, same 0.2%/0.3% TP/SL.",
-      "metrics": {
-        "pf": 0.80631494,
-        "sharpe": -2.88540459,
-        "wr": 18.8034188,
-        "dd": 8.64789352,
-        "trades": 117,
-        "net_profit": -318.372497518316
-      },
-      "verdict": "rejected (PF=0.81 < 1.3, Sharpe=-2.89 < 0.5, cascade ratio 1.86 > 1.2)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T12:07:00Z"
-    },
-    {
-      "iteration": 591,
-      "hypothesis": "XAUUSD H1 \u2014 MACD(5,13,3) bidirectional + RSI(14) filter. Long only if MACD line > signal line AND RSI > 50. Short only if MACD line < signal line AND RSI < 50.",
-      "metrics": {
-        "pf": 0.00807876,
-        "sharpe": -24.29196926,
-        "wr": 1.92307692,
-        "dd": 3.61955319,
-        "trades": 52,
-        "net_profit": -361.95531909174
-      },
-      "verdict": "rejected (PF=0.01 < 1.3, Sharpe=-24.29 < 0.5, WR=1.9%, cascade ratio 1.53 > 1.2). RSI(50) filter made MACD(5,13,3) dramatically worse \u2014 from 18.8% WR to 1.9%. Filter is killing good signals.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T12:09:00Z"
-    },
-    {
-      "iteration": 592,
-      "hypothesis": "XAUUSD H1 \u2014 RSI(14) mean reversion. Long when RSI crosses above 30 (exiting oversold). Short when RSI crosses below 70 (exiting overbought). 0.5%/0.3% TP/SL. Try completely different indicator family \u2014 mean reversion instead of trend-following.",
-      "metrics": {
-        "pf": 0.74683042,
-        "sharpe": -2.06900676,
-        "wr": 42.85714286,
-        "dd": 1.01958786,
-        "trades": 7,
-        "net_profit": -40.502223303703
-      },
-      "verdict": "invalid (low sample, 7 trades). WR=42.9% is promising but only 7 trades in 364 bars. Cascade ratio=1.0 (perfect). RSI mean reversion concept has merit if signal frequency can be increased.",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T12:10:00Z"
-    },
-    {
-      "iteration": 593,
-      "hypothesis": "XAUUSD H1 \u2014 RSI(7) mean reversion + RSI(14) trend filter. RSI(7) crossing above 30 = long IF RSI(14)>50 (bullish bias). RSI(7) crossing below 70 = short IF RSI(14)<50 (bearish bias). 0.5%/0.3% TP/SL. Shortening RSI from 14 to 7 and enabling short trades failed (PF=0.55, WR=21.2%, 52 trades). Adding RSI(14) trend filter should improve PF by only taking mean reversion signals in the direction of the medium-term trend.",
-      "metrics": {
-        "pf": 0.9951628,
-        "sharpe": 0.00525805,
-        "wr": 16.66666667,
-        "dd": 0.58651597,
-        "trades": 6,
-        "net_profit": -0.193432894741
-      },
-      "verdict": "invalid (low sample, 6 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T04:24:48Z"
-    },
-    {
-      "iteration": 594,
-      "hypothesis": "XAUUSD 30m \u2014 RSI(14) mean reversion with wider thresholds (40/60). Long when RSI crosses above 40 (from below), short when RSI crosses below 60 (from above). Fixed 1:1 TP/SL with 0.3% stop. 30m gives 2x bars vs H1 for more signals.",
-      "metrics": {
-        "pf": 0.5536753,
-        "sharpe": -9.75642795,
-        "wr": 32.3943662,
-        "dd": 4.97194942,
-        "trades": 71,
-        "net_profit": -356.514607979834
-      },
-      "verdict": "rejected (PF=0.55 < 1.3, Sharpe=-9.76 < 0.5, cascade 1.65 > 1.2). 30m got 71 trades but quality degraded from H1.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-26T04:38:30Z"
-    },
-    {
-      "iteration": 595,
-      "hypothesis": "XAUUSD 30m \u2014 RSI(14) mean reversion 40/60 + SMA50 trend filter. Long only if close > SMA50, short only if close < SMA50. 1:1 TP/SL. Add trending filter to improve signal quality.",
-      "metrics": {
-        "pf": 0.0,
-        "sharpe": -8.78305174,
-        "wr": 0.0,
-        "dd": 0.39993184,
-        "trades": 1,
-        "net_profit": -39.993183824074
-      },
-      "verdict": "invalid (low sample, 1 trade). SMA trend filter killed 70 of 71 signals \u2014 too restrictive on 30m.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-26T04:39:25Z"
-    },
-    {
-      "iteration": 596,
-      "hypothesis": "XAUUSD 30m \u2014 Bare EMA3/8 crossover bidirectional with 1:1 TP/SL. Cleanest possible trend-following \u2014 maximum signal frequency, no filters.",
-      "metrics": {
-        "pf": 0.54793774,
-        "sharpe": -11.28827326,
-        "wr": 26.35135135,
-        "dd": 6.48898302,
-        "trades": 148,
-        "net_profit": -624.175122419378
-      },
-      "verdict": "rejected (PF=0.55 < 1.3, Sharpe=-11.29 < 0.5, cascade 1.76 > 1.2). Great sample size (148 trades) but 26.4% WR and high cascade.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-26T04:39:47Z"
-    },
-    {
-      "iteration": 597,
-      "hypothesis": "EURUSD H1 \u2014 EMA3/8 crossover bidirectional with 1:1 TP/SL. Try a different forex pair \u2014 EURUSD may have different price action than XAUUSD.",
-      "metrics": {
-        "pf": 0.82539086,
-        "sharpe": -1.5472307,
-        "wr": 22.44897959,
-        "dd": 1.03218897,
-        "trades": 49,
-        "net_profit": -46.585561805574
-      },
-      "verdict": "rejected (PF=0.83 < 1.3, Sharpe=-1.55 < 0.5, cascade 1.58 > 1.2). EURUSD better than XAUUSD (smaller loss, lower DD) but still negative.",
-      "symbol": "EURUSD",
-      "timeframe": "1h",
-      "time": "2026-07-26T04:40:12Z"
-    },
-    {
-      "iteration": 598,
-      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover bidirectional with 1:1 TP/SL. BTCUSDT is the only pair that produced a winning best strategy (iter 464).",
-      "metrics": {
-        "pf": 0.4824059,
-        "sharpe": -15.81904342,
-        "wr": 41.0543131,
-        "dd": 43.4767387,
-        "trades": 626,
-        "net_profit": -4326.220672149981
-      },
-      "verdict": "rejected (PF=0.48 < 1.3, Sharpe=-15.82 < 0.5, DD=43.5% > 30%). WR=41% and cascade=1.09 (near-perfect) but catastrophic DD. Short bias in a bullish market killed it.",
-      "symbol": "BTCUSDT",
-      "timeframe": "30m",
-      "time": "2026-07-26T04:40:36Z"
-    },
-    {
-      "iteration": 599,
-      "hypothesis": "XAUUSD 30m \u2014 RSI(14) mean reversion tighter thresholds (35/65) with 1:1.5 TP/SL (0.45%/0.3%). Tighter thresholds for more signals + better risk-reward.",
-      "metrics": {
-        "pf": 0.68397641,
-        "sharpe": -5.60483419,
-        "wr": 23.72881356,
-        "dd": 3.52270403,
-        "trades": 59,
-        "net_profit": -224.81752199736
-      },
-      "verdict": "rejected (PF=0.68 < 1.3, Sharpe=-5.60 < 0.5, cascade 1.84 > 1.2). Avg win $34.76 vs avg loss $15.81 (2.2:1 ratio) but only 23.7% WR.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-26T04:41:08Z"
-    },
-    {
-      "iteration": 600,
-      "hypothesis": "GBPUSD H1 \u2014 EMA3/8 long-only crossover with ATR(14) trailing stop (3.0\u00d7ATR). Exit on EMA3 crossing below EMA8 or ATR trail. No fixed TP/SL to eliminate cascade-closing. GBPUSD may have cleaner trends than XAUUSD on Polygon data. Long-only only to avoid short-side cascade issues.",
-      "metrics": {
-        "pf": 0.67344267,
-        "sharpe": -2.81351822,
-        "wr": 20.0,
-        "dd": 1.78487685,
-        "trades": 15,
-        "net_profit": -72.816717764163
-      },
-      "verdict": "invalid (low sample, 15 trades). Cascade ratio=1.0 (perfect \u2014 ATR trail exit eliminates cascade). But only 15 signals in 366 bars is insufficient. Need faster EMAs for more signals.",
+      "verdict": "invalid (no trades). ADX(14)>14 filter was too restrictive — 0 trades across 365 bars on GBPUSD H1. The pair was not trending enough even with the lowered ADX threshold. Switching pair to XAUUSD.",
       "symbol": "GBPUSD",
       "timeframe": "1h",
-      "time": "2026-07-26T04:54:18Z"
+      "time": "2026-07-26T05:54:02Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
   "pairs_explored": [
     "XAUUSD",
     "BYBIT:BTCUSDT.P",
-    "EURUSD"
+    "EURUSD",
+    "GBPUSD"
   ],
   "timeframes_explored": [
     "1h",

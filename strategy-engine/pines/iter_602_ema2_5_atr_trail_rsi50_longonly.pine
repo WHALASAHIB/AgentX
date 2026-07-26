@@ -1,0 +1,45 @@
+//@version=6
+strategy(title="GBPUSD H1 — EMA2/5 ATR Trail + RSI50 Long-Only", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(2,   "EMA Fast Length",     minval=1, maxval=20, step=1)    // sweep: 1-10 step 1
+emaSlowLen   = input.int(5,   "EMA Slow Length",     minval=3, maxval=50, step=1)    // sweep: 3-20 step 1
+atrLen       = input.int(14,  "ATR Length",          minval=5, maxval=50, step=1)    // sweep: 7-25 step 2
+atrMult      = input.float(3.0, "ATR Trail Multiplier", minval=0.5, maxval=6.0, step=0.5) // sweep: 1.5-5.0 step 0.5
+rsiLen       = input.int(14,  "RSI Length",          minval=5, maxval=30, step=1)    // sweep: 7-21 step 2
+rsiThreshold = input.int(50,  "RSI Long Threshold",  minval=20, maxval=80, step=5)   // sweep: 30-70 step 5
+useTrail     = input.bool(true, "Use ATR Trailing Stop")
+
+//--- indicators
+emaFast      = ta.ema(close, emaFastLen)
+emaSlow      = ta.ema(close, emaSlowLen)
+atrVal       = ta.atr(atrLen)
+rsiVal       = ta.rsi(close, rsiLen)
+
+//--- entry logic
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold
+
+//--- ratchet trailing stop series
+var float trailStop = na
+
+if strategy.position_size == 0
+    trailStop := na
+
+if longCondition and strategy.position_size == 0
+    stopLevel = close - atrVal * atrMult
+    strategy.entry("Long", strategy.long)
+    trailStop := stopLevel
+
+// Ratchet trail upward while in position
+if strategy.position_size > 0
+    newStop = close - atrVal * atrMult
+    if na(trailStop) or newStop > trailStop
+        trailStop := newStop
+
+//--- exit management: EMA cross exit
+if ta.crossunder(emaFast, emaSlow) and strategy.position_size > 0
+    strategy.close("Long", comment="EMAX")
+
+//--- trailing stop exit via strategy.exit on every bar while in position
+if strategy.position_size > 0 and useTrail and not na(trailStop)
+    strategy.exit("Long Exit", from_entry="Long", stop=trailStop, comment="Trail")
