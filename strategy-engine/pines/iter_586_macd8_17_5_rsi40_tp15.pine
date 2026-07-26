@@ -1,0 +1,51 @@
+//@version=6
+strategy(title="MACD(8,17,5) + RSI(14)>40 + TP1:1.5 — XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(8, "MACD Fast Length", minval=2, maxval=50, step=1)     // sweep: 5-12 step 1
+slowLength = input.int(17, "MACD Slow Length", minval=5, maxval=50, step=1)     // sweep: 12-26 step 1
+signalLength = input.int(5, "MACD Signal Length", minval=2, maxval=15, step=1)  // sweep: 3-9 step 1
+
+// RSI filter
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=21, step=1)            // sweep: 7-21 step 2
+rsiThreshold = input.int(40, "RSI Threshold", minval=25, maxval=55, step=5)     // sweep: 30-50 step 5
+
+// Stop loss and take profit as percentages of entry price
+stopPct = input.float(0.3, "Stop Loss %", minval=0.1, maxval=2.0, step=0.05)    // sweep: 0.2-0.5 step 0.05
+// TP_SL_RATIO = 0.67 means TP = 0.67 * SL = 0.2% when SL=0.3% (1:1.5 TP:SL ratio)
+tpRatio = input.float(0.67, "TP/SL Ratio", minval=0.3, maxval=3.0, step=0.1)   // sweep: 0.5-2.0 step 0.1
+
+//--- indicator calculations
+[macdLine, signalLine, _] = ta.macd(close, fastLength, slowLength, signalLength)
+rsi = ta.rsi(close, rsiLength)
+
+//--- entry logic
+// Long: MACD crosses above signal AND RSI > threshold
+longCondition = ta.crossover(macdLine, signalLine) and rsi > rsiThreshold
+// Short: MACD crosses below signal AND RSI < (100 - threshold)
+shortCondition = ta.crossunder(macdLine, signalLine) and rsi < (100 - rsiThreshold)
+
+//--- entry management
+if (longCondition)
+    strategy.entry("L", strategy.long)
+
+if (shortCondition)
+    strategy.entry("S", strategy.short)
+
+//--- exit management (percentage-based stops)
+stopPriceLong = strategy.position_avg_price * (1 - stopPct / 100.0)
+targetPriceLong = strategy.position_avg_price * (1 + stopPct * tpRatio / 100.0)
+stopPriceShort = strategy.position_avg_price * (1 + stopPct / 100.0)
+targetPriceShort = strategy.position_avg_price * (1 - stopPct * tpRatio / 100.0)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "L", stop=stopPriceLong, limit=targetPriceLong)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "S", stop=stopPriceShort, limit=targetPriceShort)
+
+//--- plot signals for visual reference
+plot(macdLine, "MACD", color.blue, 2)
+plot(signalLine, "Signal", color.orange, 2)
+hline(0, "Zero", color.gray)

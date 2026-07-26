@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 192,
+    "total_ideas": 195,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1546,6 +1546,65 @@
       "diversification_value": "Fundamentally different from Breakout_Volume_Climax_Fade (which uses tick volume spike as the fade trigger \u2014 a volume-based exhaustion signal) and False_Breakout_Trap_Fade (a multi-bar structure-based anti-breakout). Momentum_Divergence_Breakout_Fade uses RSI(14) DIVERGENCE \u2014 a momentum-based signal \u2014 which is entirely independent of volume data and multi-bar candle formations. It captures exhaustion through the price-momentum relationship rather than tick volume or bar structure. No existing breakout idea in the archive uses momentum divergence as the primary fade trigger.",
       "self_grade": "A-",
       "generated_at": "2026-07-25T00:35:18Z"
+    },
+    {
+      "name": "PostEvent_VolRiskPremium_Collapse",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Harvests the volatility risk premium collapse window immediately after scheduled high-impact macro events (FOMC, NFP, CPI, rate decisions). Gold implied volatility is systematically overpriced before these events and collapses sharply within 30-90 minutes post-release, regardless of direction.",
+      "market_behaviour": "Gold implied volatility systematically prices in elevated uncertainty before known macro events. Regardless of the actual outcome (hawkish/dovish, above/below expectations), the resolution of uncertainty causes an asymmetric volatility collapse \u2014 implied vol drops sharply while realized vol rarely sustains the pre-event spike. This creates a repeatable risk premium harvesting window. The effect is strongest on XAUUSD because gold is uniquely sensitive to both USD direction and real-yield expectations, amplifying the pre-event vol overpricing. The collapse typically completes within 30-90 minutes of the release.",
+      "entry_logic": "1. Identify upcoming macro events (FOMC rate decision, NFP, CPI, Core PCE) with >24h notice.\n2. At T-15min before release, check GVZ (Gold VIX) or compute 15-min HV percentile over last 20 sessions. Pre-event vol must be >70th percentile (confirms premium is elevated).\n3. At T+5min post-release (allow initial spike to occur), measure the 1-min realized vol.\n4. If 1-min RV is below pre-event 15-min HV by at least 20%, enter a short vol position (sell strangle ~1.5 standard deviations OTM, or fade the initial spike in either direction).\n5. Skip if pre-event vol is below 50th percentile (no premium to harvest).\n6. Skip if the release is during illiquid holiday hours (major market closed).",
+      "exit_logic": "Stop loss: If realized vol EXPANDS above pre-event level after entry (i.e., uncertainty is not resolving but escalating), exit immediately at T+30min hard cutoff. Take profit: Linear scale-out at T+30min (50%), T+60min (30%), T+90min (20%). If the position reaches 2:1 R:R before any time stop, close entirely. No re-entry on same event.",
+      "failure_mode": "1. BLACK SWAN EVENT: The release triggers an escalating crisis (e.g., surprise rate hike during banking stress). Realized vol expands rather than contracts \u2014 the premium is repriced upward, not harvested. Exit at hard stop limits losses but the trade thesis is invalidated.\n2. LOW-PREMIUM REGIME: During periods of extremely low macro volatility (e.g., stable rate environment with no surprises), the pre-event premium is already compressed and there's nothing to harvest. The filter (pre-event vol >70th percentile) prevents this but may cause long dry spells.\n3. DIRECTIONAL AMBIGUITY: A neutral outcome (in-line data) produces a muted vol collapse with insufficient premium capture to cover bid-ask spread. M15 entry is critical to avoid this.",
+      "diversification_value": "All existing volatility ideas target either: (a) technical squeeze/compression (Volatility_Contraction_Breakout), (b) session-based vol carry (Asian_Session_Vol_Carry_Harvest), or (c) directional volatility events (Event_Volatility_Straddle_Reversal trades straddle entry PRE-event, not the collapse POST-event). Volatility_Risk_Premium_Decay trades the session-transition decay on a daily basis using a different window. This idea is unique in targeting the post-event COMPRESSION window specifically, using the resolution of uncertainty as the trigger rather than time or price. It is zero-beta to direction and to trend/breakout strategies.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-26T02:35:58Z"
+    },
+    {
+      "name": "VolOfVol_MeanReversion",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Mean-reverts gold's volatility-of-volatility (VOV) \u2014 when the day-over-day change in ATR itself becomes extreme, the volatility structure mean reverts within 3-5 sessions. Trades the stability of vol rather than its level.",
+      "market_behaviour": "Gold's volatility structure exhibits a robust property: when the day-over-day change in ATR itself becomes extreme (measured as the percentile rank of |ATR_D1_change|), the volatility regime tends to stabilize within 3-5 sessions. This 'vol-of-vol mean reversion' operates independently of the underlying trend direction. During periods of ATR instability (large swings in day-over-day ATR), the market is in a vol-discovery phase; when ATR day-over-day changes compress back toward normal, the vol regime has stabilized. This pattern is distinct from level-based vol mean reversion (vol always returns to mean) \u2014 it captures the RATE at which vol itself changes, which has stronger mean-reverting properties in XAUUSD.",
+      "entry_logic": "1. On D1 close, compute ATR(14) for XAUUSD.\n2. Compute day-over-day percentage change in ATR(14): vov_pct = abs((ATR_t - ATR_t-1) / ATR_t-1).\n3. Compute the 60-day percentile rank of vov_pct.\n4. If vov_pct percentile > 80th (extreme vol-of-vol expansion), prepare for entry.\n5. On H1, wait for a volatility compression candle (H1 range < 0.5 \u00d7 current H1 ATR) to confirm that vol is stabilizing.\n6. Enter a short vol position (sell H1 strangle ~1.5 standard deviations OTM, or enter a mean-reversion trade in the direction of D1 trend).\n7. Skip if vov_pct is below 60th percentile (no extreme to revert).\n8. Skip during NFP/FOMC weeks (artificial vol-of-vol spikes from known events, not structural instability).",
+      "exit_logic": "Stop loss: If vov_pct percentile RISES above 90th after entry (vol-of-vol continues expanding), exit immediately \u2014 the instability has entered a new phase. Take profit: Close 100% when vov_pct percentile falls below 50th (vol has stabilized) OR at 5-session hard time stop, whichever comes first. Profit target: 1.5\u00d7 ATR of entry volatility level. No trailing \u2014 discrete exit.",
+      "failure_mode": "1. REGIME SHIFT: A structural change in gold's volatility regime (e.g., transition from low-vol to structurally elevated vol like 2020 or 2022) causes vol-of-vol to remain elevated for 20+ sessions. The 5-session time stop limits losses but the idea produces multiple losses in a row during the transition.\n2. EVENT BACKLOADING: During NFP/FOMC/Central Bank weeks, vov_pct is systemically elevated, creating false signals. The event-week skip filter addresses this but may miss genuine opportunities.\n3. LOW-VOL REGIME: When gold is in an extremely low vol regime (ATR < 10th percentile historically), vov_pct is mechanically low and rarely triggers. The idea has long dry spells.",
+      "diversification_value": "Existing volatility ideas target: squeeze/breakout (level-based vol expansion), skew/term-structure (options-relative), vol momentum (riding vol trends), and event straddles (pre-event positioning). This idea is the ONLY one targeting vol-of-vol \u2014 the second-order derivative of volatility. It's non-directional, not event-triggered, and operates on a 3-5 session horizon that no other vol idea uses. It's orthogonal to all 21 existing volatility entries.",
+      "self_grade": "A",
+      "generated_at": "2026-07-26T02:35:58Z"
+    },
+    {
+      "name": "CrossAsset_Entropy_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "DXY",
+        "US10Y",
+        "SPX"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Adjusts total position sizing for all active bots based on cross-asset correlation entropy. When correlation entropy is high (assets are decorrelated), diversification works and sizing can be aggressive. When entropy is low (all assets move together in crisis mode), sizing must shrink to prevent correlated drawdowns.",
+      "market_behaviour": "During normal market conditions, gold, the dollar (DXY), US Treasuries (US10Y), and equities (SPX) display moderate correlations that fluctuate within a stable range. However, during crisis regimes (liquidity events, margin calls, systemic stress), these correlations converge toward \u00b11 \u2014 all risk assets sell off together, and traditional hedges (gold, bonds) may fail temporarily. The entropy of the 6-pair correlation matrix (Kullback-Leibler divergence from uniform distribution) provides a quantitative measure of this diversification environment. When entropy is high (correlations are dispersed across the full range), multi-bot position sizes can be larger because losses in one strategy are offset by gains in another. When entropy collapses (all correlations near 1 or -1), diversification provides no protection and total exposure should be reduced.",
+      "entry_logic": "THE OVERLAY RUNS ON D1 ONLY \u2014 It does not enter trades itself. It adjusts the risk multiplier for all active bots:\n1. At D1 close, pull close prices for XAUUSD, DXY, US10Y futures, SPX over the last 30 sessions.\n2. Compute the 30-session rolling Pearson correlation for all 6 unique pairs (XAUUSD-DXY, XAUUSD-US10Y, XAUUSD-SPX, DXY-US10Y, DXY-SPX, US10Y-SPX).\n3. Compute Shannon entropy: H = -sum(p_i * log(p_i)) where p_i = |corr_i| / sum(|corr_j|) for all 6 pairs.\n4. Normalize entropy to a 0-1 scale based on historical range (min observed / max observed).\n5. Risk multiplier = 0.4 + 0.6 \u00d7 normalized_entropy. Range: 0.4\u00d7 (lowest entropy = crisis) to 1.0\u00d7 (highest entropy = diversified).\n6. Apply multiplier to the base position size calculated by each bot's individual sizer (Kelly, VaR, volatility parity, etc.).\n7. Recalculate daily \u2014 no intraday changes unless triggered by circuit breaker (>2% account drawdown on a single day).",
+      "exit_logic": "This is a sizing overlay, not a trade \u2014 there is no exit logic in the traditional sense. Position sizes return to base (1.0\u00d7) when normalized entropy recovers above 0.6. If account drawdown exceeds 5% on any day, the multiplier is IMMEDIATELY halved (emergency reduction) and only recovers after 3 consecutive days of normalized entropy > 0.6.",
+      "failure_mode": "1. FALSE DIVERSIFICATION: During mild risk-off events, correlations may remain dispersed while individual assets are in fact all declining. Entropy captures correlation dispersion, not the sign of returns. A supplementary drawdown gate (as described) mitigates this.\n2. SLOW RESPONSE: The 30-session rolling window means the overlay adapts slowly to sudden regime changes. During flash crashes (e.g., 2020 COVID crash), the first 3-5 days of crisis are at full sizing before the entropy reading drops. A faster circuit breaker (intraday drawdown check) is the safety net.\n3. DATA LAG: Cross-asset data for DXY, US10Y, and SPX may arrive at different times in different time zones. A timer-stamped close buffer (aligning all to NY 16:00 EST closes) prevents stale-index issues.",
+      "diversification_value": "Existing risk_overlay ideas size based on: volatility parity (Volatility_Parity_Scale), slippage regimes (Slippage_Regime_Sizer), Kelly fraction (Optimal_F_Kelly_Sizer), drawdown protection (Max_Drawdown_Lock_Protector), correlation collapse (Correlation_Collapse_Protector), and risk-premium decay (Risk_Premium_Chase_Decay). None uses multi-asset correlation ENTROPY as a sizing signal. Correlation_Collapse_Protector checks whether gold's equity correlation is extreme and reduces sizing for a single bot. This idea aggregates the ENTIRE cross-asset correlation structure into a single scalar \u2014 it's an order-of-magnitude different approach. It also covers 4 assets (not 2) and operates as a global overlay across all bots, not per-bot. It's orthogonal to every existing risk_overlay idea.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-26T02:35:58Z"
     }
   ],
   "archived": [
@@ -3690,7 +3749,9 @@
       "Volatility_Compass_Expansion_System",
       "Volatility_Premium_Event_Contraction",
       "Volatility_Duration_Contraction_Expansion",
-      "Volatility_Session_Transition_Fade"
+      "Volatility_Session_Transition_Fade",
+      "PostEvent_VolRiskPremium_Collapse",
+      "VolOfVol_MeanReversion"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -3734,7 +3795,8 @@
       "Spread_Regime_Adaptive_Sizer",
       "Correlation_Breakdown_Contingency_Sizer",
       "Regime_Entropy_Adaptive_Sizer",
-      "Volatility_Skew_Adaptive_Sizer"
+      "Volatility_Skew_Adaptive_Sizer",
+      "CrossAsset_Entropy_Sizer"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
