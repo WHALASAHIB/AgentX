@@ -1,0 +1,73 @@
+//@version=6
+strategy(title="iter_607_ema3_8_atr_adx20_rsi40_longonly", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//=== Inputs ===
+// EMA parameters
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50)      // sweep: 1-10 step 1
+slowLen = input.int(8, "Slow EMA Length", minval=1, maxval=50)      // sweep: 5-21 step 2
+
+// ATR trailing stop parameters
+atrLen = input.int(14, "ATR Length", minval=1, maxval=50)           // sweep: 7-21 step 7
+atrMult = input.float(2.5, "ATR Multiplier", step=0.5, minval=0.5, maxval=5.0)  // sweep: 1.0-5.0 step 0.5
+
+// Filter parameters
+adxLen = input.int(14, "ADX Length", minval=1, maxval=50)           // sweep: 7-21 step 7
+adxThreshold = input.int(20, "ADX Threshold", minval=1, maxval=50)  // sweep: 14-30 step 2
+rsiLen = input.int(14, "RSI Length", minval=1, maxval=50)           // sweep: 7-21 step 7
+rsiThreshold = input.int(40, "RSI Threshold (long above)", minval=1, maxval=100) // sweep: 30-60 step 5
+
+// Trade management
+useTrailingStop = input.bool(true, "Use ATR Trailing Stop")
+
+//=== Indicator Calculations ===
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+
+// ATR for trailing stop
+atr = ta.atr(atrLen)
+
+// ADX/DMI
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+// RSI
+rsi = ta.rsi(close, rsiLen)
+
+//=== Entry Logic ===
+// Long condition: fast EMA crosses above slow EMA + ADX > threshold + RSI > threshold
+longCross = ta.crossover(fastMA, slowMA)
+longEntry = longCross and adx > adxThreshold and rsi > rsiThreshold
+
+//=== Exit Management ===
+// Trailing stop level: highest close since entry minus ATR multiplier
+var float trailStop = na
+var bool inLong = false
+
+if longEntry and not inLong
+    strategy.entry("Long", strategy.long)
+    trailStop := close - atr * atrMult
+    inLong := true
+
+// Update trailing stop when in a position (price moves up)
+if inLong
+    // Trail stop follows price up
+    trailStop := math.max(trailStop, close - atr * atrMult)
+
+// Exit conditions: price hits trailing stop
+if inLong and useTrailingStop
+    strategy.exit("Trail Exit", "Long", stop=trailStop)
+
+// Reset tracking when no longer in position
+if strategy.position_size == 0
+    inLong := false
+    trailStop := na
+
+//=== Visuals ===
+plot(fastMA, "Fast EMA", color=color.blue, linewidth=1)
+plot(slowMA, "Slow EMA", color=color.red, linewidth=1)
+plot(adx, "ADX", color=color.purple, linewidth=1, display=display.data_window)
+hline(adxThreshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed, display=display.data_window)
+hline(50, "RSI Mid", color=color.gray, linestyle=hline.style_dashed, display=display.data_window)
+plot(rsi, "RSI", color=color.orange, linewidth=1, display=display.data_window)

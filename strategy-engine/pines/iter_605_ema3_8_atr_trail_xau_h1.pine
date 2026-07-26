@@ -19,7 +19,7 @@ atrVal = ta.atr(atrLen)
 var float trailStop = na
 if (strategy.position_size > 0)
     // Trail the stop up, never down
-    trailStop := math.max(close - atrVal * atrMult, trailStop[1])
+    trailStop := math.max(close - atrVal * atrMult, nz(trailStop[1], close - atrVal * atrMult))
 else
     trailStop := na
 
@@ -40,5 +40,5 @@ if (ta.crossunder(fastEMA, slowEMA) and strategy.position_size > 0)
     strategy.close("Long", comment="EMAX")
 
 //--- plots
-plot(fastEMA, "Fast EMA", color.blue)
-plot(slowEMA, "Slow EMA", color.red)
+plot(fastEMA, "Fast EMA", color=color.blue)
+plot(slowEMA, "Slow EMA", color=color.red)

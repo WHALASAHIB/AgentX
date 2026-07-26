@@ -1,0 +1,41 @@
+//@version=6
+strategy(title="EMA3/8+RSI XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(3, "Fast EMA", minval=1, maxval=50)      // sweep: 2-10 step 1
+ema_slow = input.int(8, "Slow EMA", minval=2, maxval=100)      // sweep: 5-20 step 1
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)     // sweep: 7-21 step 1
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=20, maxval=80)  // sweep: 40-60 step 5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)     // sweep: 10-20 step 2
+atr_mult = input.float(2.5, "ATR Multiplier", step=0.5)        // sweep: 1.5-4.0 step 0.5
+use_trail_stop = input.bool(true, "Use ATR Trailing Stop")
+use_ema_exit = input.bool(true, "Exit on EMA Cross")
+
+//--- calculations
+fast_ema = ta.ema(close, ema_fast)
+slow_ema = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic: EMA3 crosses above EMA8 AND RSI > 50
+long_entry = ta.crossover(fast_ema, slow_ema) and rsi_val > rsi_threshold
+
+//--- exit logic
+// ATR trailing stop exit
+float trail_stop_level = na
+if use_trail_stop and strategy.position_size > 0
+    trail_stop_level := math.max(close - atr_val * atr_mult, nz(trail_stop_level[1], close - atr_val * atr_mult))
+
+// EMA cross exit
+ema_exit_signal = ta.crossunder(fast_ema, slow_ema) and use_ema_exit
+
+//--- entries
+if long_entry
+    strategy.entry("Long", strategy.long)
+
+//--- exits
+if use_trail_stop and strategy.position_size > 0
+    strategy.exit("TrailStop", "Long", stop=trail_stop_level)
+
+if ema_exit_signal and strategy.position_size > 0
+    strategy.close("Long", comment="EMA_Exit")
