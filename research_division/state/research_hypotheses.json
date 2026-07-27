@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 195,
+    "total_ideas": 198,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1605,6 +1605,64 @@
       "diversification_value": "Existing risk_overlay ideas size based on: volatility parity (Volatility_Parity_Scale), slippage regimes (Slippage_Regime_Sizer), Kelly fraction (Optimal_F_Kelly_Sizer), drawdown protection (Max_Drawdown_Lock_Protector), correlation collapse (Correlation_Collapse_Protector), and risk-premium decay (Risk_Premium_Chase_Decay). None uses multi-asset correlation ENTROPY as a sizing signal. Correlation_Collapse_Protector checks whether gold's equity correlation is extreme and reduces sizing for a single bot. This idea aggregates the ENTIRE cross-asset correlation structure into a single scalar \u2014 it's an order-of-magnitude different approach. It also covers 4 assets (not 2) and operates as a global overlay across all bots, not per-bot. It's orthogonal to every existing risk_overlay idea.",
       "self_grade": "A-",
       "generated_at": "2026-07-26T02:35:58Z"
+    },
+    {
+      "name": "COMEX_First_Notice_Day_Gold_Flow",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Captures the mechanical gold sell pressure from speculative COMEX longs rolling before First Notice Day (FND), followed by rebound after the flow clears. A futures-microstructure calendar effect entirely separate from portfolio rebalancing or fund mandates.",
+      "market_behaviour": "COMEX gold futures have First Notice Day (FND) approximately 7-10 business days before the end of each month preceding the contract month (January, March, May, July, September, November). On FND, holders of long futures contracts who do not intend to take physical delivery must roll to the next contract month, creating concentrated mechanical sell pressure. Approximately 60-80% of speculative open interest rolls in the 3-day window surrounding FND, producing a statistically significant negative drift on the day before and day of FND. After the mechanical roll flow clears (1-2 days post-FND), the artificial sell pressure dissipates and the front month often rebounds as the structural overhang is removed. This is a pure market-microstructure calendar effect, distinct from quarterly roll index effects or portfolio rebalancing, driven by the futures exchange delivery notice schedule.",
+      "entry_logic": "1. Identify the next COMEX gold (GC) First Notice Day, typically the 1st business day before the contract month (check CME calendar). 2. 3 trading days before FND: if open interest in the front-month contract exceeds its 3-month rolling average by more than 15% (indicating large speculative positioning needing to roll), prepare to enter short. 3. 2 trading days before FND: enter short at market open, targeting exit at the day after FND. 4. If open interest is below the 15% threshold, skip, the roll flow is too small to matter. 5. Filter: skip if VIX > 30 (crisis regime, physical delivery demand may spike making FND bullish) or if front-month-back-month contango < 2 USD/oz (insufficient roll incentive, speculators hold through FND).",
+      "exit_logic": "Stop loss: 2.5 x ATR(14) from entry, calculated daily. Take profit: mechanical exit at market close on the trading day AFTER First Notice Day, regardless of P and L. No trailing, no re-entry until the next FND cycle. Skip the December contract as physical holiday delivery demand distorts the pattern.",
+      "failure_mode": "1. Crisis regimes (VIX > 30) where physical delivery demand surges, FND becomes bullish as longs take delivery for safe-haven exposure, reversing the sell pressure pattern. 2. Low contango environments where basis differential is too small to motivate rolling, speculators hold through FND and the mechanical flow vanishes. 3. The December contract is unreliable because physical holiday demand (Central Bank year-end reserve restocking, Indian wedding season, COMEX delivery premium) overwhelms the roll dynamic. 4. Months with simultaneous large options expiry (monthly gold options expiry) can confound the pattern with gamma hedging flows.",
+      "diversification_value": "This targets COMEX futures microstructure, a mechanical calendar effect driven by exchange delivery-notice rules, which is fundamentally different from EndOfQuarter_Rebalance_Flow (portfolio settlement dates), Fiscal_Year_New_Mandate_Accumulation (January/April fund inflows), or Central_Bank_Gold_Reserve_Announcement_Window (central bank policy windows). The 3-day concentrated rolling window is precise and testable, unlike broader institutional flow concepts. It also differs from Quarterly_Roll_Effect by targeting the concentrated 3-day FND window rather than the multi-week roll period, and requires contango above threshold to fire, adding a filter Quarterly_Roll_Effect lacks.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-27T00:43:23Z"
+    },
+    {
+      "name": "Liquidity_Tier_Slippage_Curve_Sizer",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "M15"
+      ],
+      "description": "Dynamic position-sizing overlay that caps trade size before it enters the nonlinear region of the market-impact curve. Models expected slippage as a function of trade volume relative to minute-level average liquidity, reducing size when approaching the exponential-impact threshold.",
+      "market_behaviour": "Slippage in FX and XAUUSD is not linear with position size. At small sizes, market makers fill from inventory without needing to hedge, with slippage of about 0.1-0.3 pips. Above a liquidity tier threshold, typically 0.5-1 percent of average minute volume, market makers must hedge the fill, producing a step-function increase in slippage of 0.5-1.5 pips. Above a second threshold of about 2-3 percent, slippage becomes quadratic as market makers run out of natural offset and must push through multiple venues. This tiered slippage surface varies dynamically, tighter during London-NY overlap, wider during Asian session, tighter during low volatility, wider near news events. A static lot size that works during liquid hours becomes destructive during illiquid ones.",
+      "entry_logic": "1. Before each trade entry, calculate current liquidity tier. Pull last 5 minutes of tick volume from MT5 or bridge tick feed. Compute average 1-minute volume V_min over the last 20 minutes. Determine session (Asian/London/NY overlap/Post-US) and volatility regime from 20-period ATR percentile. 2. Define soft cap (tier 1) = 0.5% x V_min, hard cap (tier 2) = 1.5% x V_min. 3. If requested lot size in base currency units exceeds soft cap, scale down: imposed_size = requested_size x (soft_cap / requested_size). 4. If it exceeds hard cap, impose hard cap as absolute maximum. 5. Apply session multipliers: Asian x0.5, London-NY overlap x1.0, London-only x0.75, NY-only x0.7. 6. Never exceed trade size that puts more than 1% probability of >1 pip slippage (from historical slippage distribution by tier).",
+      "exit_logic": "Not a trade strategy, a sizing overlay. Applied before every trade entry, not modified during the trade. Override: if a bot uses volatility-based dynamic size, use the MINIMUM of the two sizing methods to prevent any single overlay overriding the other.",
+      "failure_mode": "1. During extreme liquidity events (NFP, FOMC, flash crashes), the 20-minute average V_min becomes stale as volume can drop to zero or spike 10x in seconds. The hard cap may over-constrain in a high-volume event where slippage is actually tight (high frequency market makers compete for flow). 2. If tick feed from bridge is delayed or inaccurate, V_min estimate is wrong and all caps become misaligned. 3. Very small accounts where soft cap position is below minimum lot size, the overlay has nothing to constrain. 4. Multi-leg strategies (grid, martingale) where total net exposure is the risk metric, not each leg lot size, the overlay may cap individual legs unnecessarily.",
+      "diversification_value": "Unlike Spread_Regime_Adaptive_Sizer (sizing based on bid-ask spread regimes) or Slippage_Regime_Sizer (contracting in historically slippage-prone conditions based on calendar patterns), this overlay models the position-size-vs-slippage CURVE directly. It calculates how large a position you can trade before hitting the exponential-impact region. It differs from Multi_TF_Vol_Convexity_Sizer (detecting vol convexity divergence as pre-breakout signal) by focusing on execution microstructure rather than volatility compression. No existing overlay in the archive explicitly models the nonlinear relationship between position size and market impact.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-27T00:43:23Z"
+    },
+    {
+      "name": "Signal_Convergence_Entropy_Gate",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "H1"
+      ],
+      "description": "Portfolio-level risk gate that measures entropy of directional agreement across active signal types (momentum, mean reversion, breakout), reducing total exposure when signals diverge (high entropy) and allowing full exposure when they converge (low entropy).",
+      "market_behaviour": "AGENTX operates multiple strategy types simultaneously: momentum signals on MACD/ADX, mean reversion signals on RSI/Bollinger, breakout signals on session ranges. When these signal types agree on direction, the probability of a sustained move is higher than when they conflict. The entropy of the signal vector, a measure of how uniformly-distributed the directional signals are, acts as a leading indicator of trade quality. When signal entropy is high (all signals scattered), the market lacks a clear microstructure driver and individual trade quality deteriorates. When entropy is low (all signals pointing the same way), there is a structural driver and concentration is warranted. This is distinct from cross-asset correlation entropy (measured by CrossAsset_Entropy_Sizer) because it measures SIGNAL disagreement within a single instrument, not across assets.",
+      "entry_logic": "1. Before each trading session (Asian/London/US open), poll active signal engines for each instrument. Collect current directional bias (BULLISH/BEARISH/NEUTRAL) from each strategy type. 2. Build signal vector: assign +1 for BULLISH, -1 for BEARISH, 0 for NEUTRAL per strategy type. 3. Compute signal convergence entropy E = sum(p_i x log(p_i)) where p_i is proportion of non-zero signals in each direction. 4. Normalize E to [0,1]. 5. Apply gate: if E_norm > 0.7 (high entropy), impose 0.5x multiplier on total position sizing. If E_norm < 0.3 (low entropy), allow full sizing (1.0x). Between 0.3-0.7, interpolate linearly. 6. Re-evaluate at start of each session (3x daily), do not react mid-session.",
+      "exit_logic": "Overlay only, does not directly manage trade exits. The multiplier feeds into portfolio-level position sizing engine as one input alongside other overlays (drawdown lock, VaR sizing, slippage cap). Gate resets to 1.0x at start of each session regardless of prior entropy.",
+      "failure_mode": "1. If all signal engines return NEUTRAL simultaneously (tight consolidation), entropy is artificially zero, gate would allow full size into directionless market. Mitigation: require at least 2 non-NEUTRAL signals to compute entropy; otherwise force E_norm = 1.0 (full reduction). 2. During trend transitions, momentum flips while mean reversion lingers at prior extreme, entropy spikes naturally. Gate correctly reduces exposure during this dangerous period but may miss early trend entry, an acceptable trade-off. 3. Backtest requires aligning timestamps from multiple signal engines, complex for historical validation. Grade dependent on architecture: easier with centralized signal bus, harder with ad-hoc independent bots.",
+      "diversification_value": "Fundamentally different from CrossAsset_Entropy_Sizer (A-), which measures correlation entropy ACROSS assets (DXY, SPX, bonds) to decide total portfolio size. This gate measures signal entropy WITHIN a single instrument, asking whether our own strategies agree or disagree. It differs from Conviction_Variance_Contractor (B), which contracts when a single signal type has high historical outcome variance, by measuring real-time directional disagreement across ALL active signal types (a cross-signal consensus measure). It differs from Correlation_Breakdown_Contingency_Sizer (A-) by measuring internal signal quality rather than cross-asset correlation decay. No existing overlay quantifies strategist agreement entropy as a risk input.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-27T00:43:23Z"
     }
   ],
   "archived": [
@@ -3796,7 +3854,9 @@
       "Correlation_Breakdown_Contingency_Sizer",
       "Regime_Entropy_Adaptive_Sizer",
       "Volatility_Skew_Adaptive_Sizer",
-      "CrossAsset_Entropy_Sizer"
+      "CrossAsset_Entropy_Sizer",
+      "Liquidity_Tier_Slippage_Curve_Sizer",
+      "Signal_Convergence_Entropy_Gate"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
@@ -3846,7 +3906,8 @@
       "CPI_Seasonal_Base_Effect_Gold",
       "Precious_Metals_Seasonal_Spread",
       "Cross_Commodity_Seasonal_Divergence_Capture",
-      "Yield_Curve_Commodity_Seasonal_Rotator"
+      "Yield_Curve_Commodity_Seasonal_Rotator",
+      "COMEX_First_Notice_Day_Gold_Flow"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",

@@ -1,0 +1,39 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 EMA50 TP2 BTCUSDT 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fastLen  = input.int(3, "Fast EMA Length", minval=1, maxval=50)          // sweep: 2-10 step 1
+slowLen  = input.int(8, "Slow EMA Length", minval=1, maxval=50)          // sweep: 5-21 step 2
+rsiLen   = input.int(14, "RSI Length", minval=2, maxval=50)              // sweep: 7-21 step 2
+rsiMin   = input.int(50, "RSI Minimum (Long)", minval=20, maxval=80)     // sweep: 30-60 step 5
+trendLen = input.int(50, "Trend EMA Length", minval=20, maxval=200)      // sweep: 20-200 step 10
+tpMult   = input.float(2.0, "Take Profit (×ATR)", step=0.25)             // sweep: 0.5-3.0 step 0.25  ← widened from 1.5→2.0
+slMult   = input.float(1.0, "Stop Loss (×ATR)", step=0.25)               // sweep: 0.5-3.0 step 0.25
+atrLen   = input.int(14, "ATR Length", minval=5, maxval=50)              // sweep: 7-21 step 2
+
+//--- calculations
+emaFast  = ta.ema(close, fastLen)
+emaSlow  = ta.ema(close, slowLen)
+emaTrend = ta.ema(close, trendLen)
+rsiVal   = ta.rsi(close, rsiLen)
+atrVal   = ta.atr(atrLen)
+
+//--- entry condition (EMA crossover + RSI filter + price above trend EMA)
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiMin and close > emaTrend
+
+//--- exit levels
+longTP = close + atrVal * tpMult
+longSL = close - atrVal * slMult
+
+//--- entry
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+//--- exit
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", limit=longTP, stop=longSL)
+
+//--- plots
+plot(emaFast, "Fast EMA", color=color.blue, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.red, linewidth=1)
+plot(emaTrend, "Trend EMA", color=color.purple, linewidth=2)
