@@ -1,0 +1,10 @@
+//@version=6
+strategy(title="iter_642 — simple_test_always_long", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+// Simplest possible: enter long on every single bar
+if (strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+// Exit after 2 bars
+if (strategy.position_size > 0 and strategy.opentrades == 1)
+    strategy.close("Long")

@@ -1,0 +1,88 @@
+//@version=6
+strategy(title="iter_651 — bidi EMA8/21 RSI50 manualADX ATR TP/SL", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04)
+
+//====================================================================
+// --- inputs
+//====================================================================
+
+fastLen = input.int(8, "Fast EMA", minval=2, maxval=50)       // sweep: 5-13 step 2
+slowLen = input.int(21, "Slow EMA", minval=5, maxval=100)     // sweep: 13-34 step 3
+rsiLen  = input.int(14, "RSI Length", minval=2, maxval=50)    // sweep: 10-20 step 2
+adxLen  = input.int(14, "ADX Length", minval=2, maxval=50)    // sweep: 10-25 step 3
+adxMin  = input.int(20, "ADX Minimum", minval=5, maxval=50)   // sweep: 14-25 step 3
+atrLen  = input.int(14, "ATR Length", minval=2, maxval=50)    // sweep: 7-21 step 7
+tpMult  = input.float(1.5, "TP Multiplier", minval=0.1, maxval=5.0, step=0.1)  // sweep: 1.0-3.0 step 0.5
+slMult  = input.float(1.0, "SL Multiplier", minval=0.1, maxval=5.0, step=0.1)  // sweep: 0.5-2.0 step 0.5
+
+//====================================================================
+// --- manual ADX calculation (ta.adx not supported by engine)
+//====================================================================
+
+// True Range
+hiLo = high - low
+hiCl = math.abs(high - close[1])
+loCl = math.abs(low - close[1])
+tr = math.max(hiLo, hiCl, loCl)
+atr = ta.rma(tr, atrLen)
+
+// Directional Movement
+dmPlus  = high - high[1] > low[1] - low ? math.max(high - high[1], 0) : 0
+dmMinus = low[1] - low > high - high[1] ? math.max(low[1] - low, 0) : 0
+
+// Smoothed DMs
+sDMplus  = ta.rma(dmPlus, adxLen)
+sDMminus = ta.rma(dmMinus, adxLen)
+
+// Directional Indicators
+diPlus  = 100 * sDMplus / atr
+diMinus = 100 * sDMminus / atr
+
+// DX and ADX — with div/0 protection
+sumDI = diPlus + diMinus
+dx = sumDI > 0 ? 100 * math.abs(diPlus - diMinus) / sumDI : 0
+adx = ta.rma(dx, adxLen)
+
+//====================================================================
+// --- entry signals
+//====================================================================
+
+fastEMA = ta.ema(close, fastLen)
+slowEMA = ta.ema(close, slowLen)
+rsi = ta.rsi(close, rsiLen)
+
+bullCross = ta.crossover(fastEMA, slowEMA)
+bearCross = ta.crossunder(fastEMA, slowEMA)
+
+// RSI filter: long only if RSI>50, short only if RSI<50
+rsiLongOK = rsi > 50
+rsiShortOK = rsi < 50
+
+// ADX filter — both sides
+trending = adx > adxMin
+
+longEntry = bullCross and rsiLongOK and trending
+shortEntry = bearCross and rsiShortOK and trending
+
+//--- TP/SL prices in points (not dollars)
+tpPriceLong = strategy.position_avg_price + (tpMult * atr)
+slPriceLong = strategy.position_avg_price - (slMult * atr)
+tpPriceShort = strategy.position_avg_price - (tpMult * atr)
+slPriceShort = strategy.position_avg_price + (slMult * atr)
+
+//====================================================================
+// --- entry logic (reversal)
+//====================================================================
+if (longEntry)
+    strategy.entry("Long", strategy.long)
+
+if (shortEntry)
+    strategy.entry("Short", strategy.short)
+
+//====================================================================
+// --- exit management
+//====================================================================
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", limit=tpPriceLong, stop=slPriceLong)
+
+if (strategy.position_size < 0)
+    strategy.exit("XS", "Short", limit=tpPriceShort, stop=slPriceShort)

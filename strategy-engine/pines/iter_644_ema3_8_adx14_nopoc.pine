@@ -1,0 +1,35 @@
+//@version=6
+strategy(title="iter_644 — EMA3/8 cross ADX14 no-poc", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04)
+
+// EMA periods
+fastLen = 3
+slowLen = 8
+
+// ADX
+adxLen = 14
+adxMin = 14
+
+// TP/SL based on ATR
+atrLen = 14
+tpMult = 1.5
+slMult = 1.0
+
+fastEMA = ta.ema(close, fastLen)
+slowEMA = ta.ema(close, slowLen)
+atr = ta.atr(atrLen)
+
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+bullishCross = ta.crossover(fastEMA, slowEMA)
+trending = adx > adxMin
+
+longEntry = bullishCross and trending
+
+tpPrice = strategy.position_avg_price + (tpMult * atr * syminfo.mintick)
+slPrice = strategy.position_avg_price - (slMult * atr * syminfo.mintick)
+
+if (longEntry and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", limit=tpPrice, stop=slPrice)

@@ -1,0 +1,28 @@
+//@version=6
+strategy(title="iter_648 — price above SMA20 + ADX14", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04)
+
+// Using price > SMA(20) + ADX > 14 for more entry signals than EMA crossovers
+
+len = 20
+adxLen = 14
+adxMin = 14
+atrLen = 14
+tpMult = 1.5
+slMult = 1.0
+
+sma20 = ta.sma(close, len)
+atr = ta.atr(atrLen)
+
+// ADX — using the standard built-in
+adx = ta.adx(high, low, close, adxLen)
+
+longEntry = ta.crossover(close, sma20) and adx > adxMin
+
+tpPrice = strategy.position_avg_price + (tpMult * atr * syminfo.mintick)
+slPrice = strategy.position_avg_price - (slMult * atr * syminfo.mintick)
+
+if (longEntry and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", limit=tpPrice, stop=slPrice)

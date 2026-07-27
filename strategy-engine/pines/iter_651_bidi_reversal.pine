@@ -1,0 +1,18 @@
+//@version=6
+strategy(title="iter_651 — bidi EMA8/21 reversal", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04)
+
+fastLen = 8
+slowLen = 21
+
+fastEMA = ta.ema(close, fastLen)
+slowEMA = ta.ema(close, slowLen)
+
+bullCross = ta.crossover(fastEMA, slowEMA)
+bearCross = ta.crossunder(fastEMA, slowEMA)
+
+// Full reversal: close existing and open opposite
+if (bullCross)
+    strategy.entry("Long", strategy.long)
+
+if (bearCross)
+    strategy.entry("Short", strategy.short)

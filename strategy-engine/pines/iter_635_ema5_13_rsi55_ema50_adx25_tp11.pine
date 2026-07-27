@@ -1,0 +1,71 @@
+//@version=6
+strategy(
+  title="BTCUSDT 30m — EMA5/13 RSI55 EMA50 ADX25 TP11",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- inputs
+// EMA periods
+fastLen = input.int(5, "Fast EMA Length", minval=2, maxval=20, step=1)         // sweep: 2-10 step 1
+slowLen = input.int(13, "Slow EMA Length", minval=5, maxval=50, step=1)        // sweep: 8-21 step 2
+
+// RSI filter
+rsiLen  = input.int(14, "RSI Length", minval=5, maxval=21, step=1)             // sweep: 7-21 step 2
+rsiMin  = input.int(55, "RSI Minimum (long)", minval=30, maxval=70, step=5)    // sweep: 40-65 step 5
+
+// ADX filter
+adxLen  = input.int(14, "ADX Length", minval=7, maxval=21, step=1)             // sweep: 7-21 step 2
+adxMin  = input.int(25, "ADX Minimum", minval=10, maxval=40, step=5)           // sweep: 10-40 step 5
+
+// EMA trend filter
+emaTrendLen = input.int(50, "Trend EMA Length", minval=20, maxval=200, step=10) // sweep: 20-200 step 10
+
+// TP/SL using ATR
+atrLen  = input.int(14, "ATR Length", minval=7, maxval=21, step=1)            // sweep: 7-21 step 2
+tpMult  = input.float(1.1, "TP Multiple (×ATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.1
+slMult  = input.float(1.0, "SL Multiple (×ATR)", minval=0.3, maxval=3.0, step=0.1) // sweep: 0.3-2.0 step 0.1
+
+//--- indicator calculations
+fastEma  = ta.ema(close, fastLen)
+slowEma  = ta.ema(close, slowLen)
+rsiVal   = ta.rsi(close, rsiLen)
+
+// Manual ADX calculation
+tr     = ta.tr(true)
+atrVal = ta.sma(tr, atrLen)
+// DMI components
+upMove   = high - high[1]
+downMove = low[1] - low
+plusDM   = ta.sma(upMove > downMove and upMove > 0 ? upMove : 0, adxLen)
+minusDM  = ta.sma(downMove > upMove and downMove > 0 ? downMove : 0, adxLen)
+diPlus  = 100 * plusDM / (atrVal > 0 ? atrVal : 1)
+diMinus = 100 * minusDM / (atrVal > 0 ? atrVal : 1)
+dx      = 100 * math.abs(diPlus - diMinus) / ((diPlus + diMinus) > 0 ? (diPlus + diMinus) : 1)
+adxVal  = ta.sma(dx, adxLen)
+
+// Trend EMA
+trendEma = ta.ema(close, emaTrendLen)
+
+//--- entry logic
+longCondition = false
+if ta.crossover(fastEma, slowEma)
+    if rsiVal > rsiMin
+        if close > trendEma
+            if adxVal > adxMin
+                longCondition := true
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//--- exit management
+if strategy.position_size > 0
+    entryPrice = strategy.position_avg_price
+    stopPrice  = entryPrice - (slMult * atrVal)
+    takePrice  = entryPrice + (tpMult * atrVal)
+    strategy.exit("X Long", "Long", limit=takePrice, stop=stopPrice)
