@@ -1,0 +1,58 @@
+//@version=6
+strategy(title="iter_634 — EMA3/8 RSI55 ADX25 TP1.1 BTC30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fast_len = input.int(3, "Fast EMA", minval=1, maxval=50, step=1)       // sweep: 1-10 step 1
+slow_len = input.int(8, "Slow EMA", minval=5, maxval=50, step=1)        // sweep: 5-20 step 2
+rsi_len  = input.int(14, "RSI Length", minval=7, maxval=21, step=1)     // sweep: 7-21 step 2
+rsi_threshold = input.int(55, "RSI Min Threshold", minval=40, maxval=70, step=1) // sweep: 50-60 step 2
+adx_len  = input.int(14, "ADX Length", minval=7, maxval=21, step=1)     // sweep: 7-21 step 2
+adx_threshold = input.int(25, "ADX Min Threshold", minval=10, maxval=40, step=2) // sweep: 10-40 step 2
+ema50_len = input.int(50, "Trend EMA Length", minval=20, maxval=200, step=5) // sweep: 20-200 step 5
+tp_factor = input.float(1.1, "TP Factor (xATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.1
+sl_factor = input.float(1.0, "SL Factor (xATR)", minval=0.5, maxval=5.0, step=0.1) // sweep: 0.5-3.0 step 0.1
+atr_len   = input.int(14, "ATR Length", minval=7, maxval=21, step=1)    // sweep: 7-21 step 2
+use_trend_filter = input.bool(true, "Use EMA(50) Trend Filter")
+
+//--- calculations
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+trend_ema = ta.ema(close, ema50_len)
+rsi_val  = ta.rsi(close, rsi_len)
+atr_val  = ta.atr(atr_len)
+
+//--- ADX calculation (manual since some engines lack ta.adx)
+hi_val = high
+lo_val = low
+cl_val = close
+tr_ = math.max(hi_val - lo_val, math.abs(hi_val - cl_val[1]), math.abs(lo_val - cl_val[1]))
+up_move = hi_val - hi_val[1]
+down_move = lo_val[1] - lo_val
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+atr_smooth = ta.rma(tr_, adx_len)
+plus_di = 100 * ta.rma(plus_dm, adx_len) / atr_smooth
+minus_di = 100 * ta.rma(minus_dm, adx_len) / atr_smooth
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx = ta.rma(dx, adx_len)
+
+//--- entry conditions
+long_entry = ta.crossover(fast_ema, slow_ema)
+trend_ok = not use_trend_filter or close > trend_ema
+rsi_ok = rsi_val > rsi_threshold
+adx_ok = adx > adx_threshold
+
+//--- exit prices
+tp_price = close + (tp_factor * atr_val)
+sl_price = close - (sl_factor * atr_val)
+
+//--- entry logic
+if (long_entry and trend_ok and rsi_ok and adx_ok)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", limit=tp_price, stop=sl_price)
+
+//--- plot
+plot(fast_ema, "Fast EMA", color.blue, 1)
+plot(slow_ema, "Slow EMA", color.red, 1)
+plot(use_trend_filter ? trend_ema : na, "Trend EMA", color.purple, 1)
+hline(adx_threshold, "ADX Threshold", color.gray)

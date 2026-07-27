@@ -1,6 +1,6 @@
 {
-  "iteration": 631,
-  "last_run": "2026-07-27T10:55:00Z",
+  "iteration": 635,
+  "last_run": "2026-07-27T11:53:28Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,11 +13,11 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BTCUSDT 30m — EMA3/8 long-only with RSI(14)>58 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1×ATR, SL=1.0×ATR). Iter 630 tightened RSI from 55→60 which was too aggressive — trade count dropped from 37 to 19 (below 20-trade minimum). Next: try RSI(14)>58 as a midpoint between 55 and 60 to find the sweet spot between momentum filtering and adequate sample size.",
+  "current_hypothesis": "BTCUSDT 30m \u2014 EMA5/13 long-only crossover with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1\u00d7ATR, SL=1.0\u00d7ATR). Switching from EMA3/8 to EMA5/13 to filter noise and improve PF from 0.66 toward 1.5.",
   "evolution_log": [
     {
       "iteration": 601,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR). Exit on EMA2 crossing below EMA5 or ATR trail.",
+      "hypothesis": "GBPUSD H1 \u2014 EMA2/5 long-only crossover with ATR(14) trailing stop (3.0\u00d7ATR). Exit on EMA2 crossing below EMA5 or ATR trail.",
       "metrics": {
         "pf": 0.52484866,
         "sharpe": -5.76713924,
@@ -33,7 +33,7 @@
     },
     {
       "iteration": 602,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + RSI(14)>50 filter",
+      "hypothesis": "GBPUSD H1 \u2014 EMA2/5 long-only crossover with ATR(14) trailing stop (3.0\u00d7ATR) + RSI(14)>50 filter",
       "metrics": {
         "pf": 0.57002635,
         "sharpe": -4.72403518,
@@ -49,7 +49,7 @@
     },
     {
       "iteration": 603,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>25 filter",
+      "hypothesis": "GBPUSD H1 \u2014 EMA2/5 long-only crossover with ATR(14) trailing stop (3.0\u00d7ATR) + DMI/ADX(14)>25 filter",
       "metrics": {
         "pf": 0.75856351,
         "sharpe": -2.14428034,
@@ -65,7 +65,7 @@
     },
     {
       "iteration": 604,
-      "hypothesis": "GBPUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (3.0×ATR) + DMI/ADX(14)>14 filter",
+      "hypothesis": "GBPUSD H1 \u2014 EMA2/5 long-only crossover with ATR(14) trailing stop (3.0\u00d7ATR) + DMI/ADX(14)>14 filter",
       "metrics": {
         "pf": 0,
         "sharpe": null,
@@ -81,7 +81,7 @@
     },
     {
       "iteration": 605,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR)",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 long-only crossover with ATR(14) trailing stop (2.5\u00d7ATR)",
       "metrics": {
         "pf": 0.44481821,
         "sharpe": -5.84058483,
@@ -97,7 +97,7 @@
     },
     {
       "iteration": 606,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>50 filter",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 long-only crossover with ATR(14) trailing stop (2.5\u00d7ATR) + RSI(14)>50 filter",
       "metrics": {
         "pf": 0.66624969,
         "sharpe": -2.33413341,
@@ -113,7 +113,7 @@
     },
     {
       "iteration": 607,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + ADX(14)>20 + RSI(14)>40",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 long-only crossover with ATR(14) trailing stop (2.5\u00d7ATR) + ADX(14)>20 + RSI(14)>40",
       "metrics": {
         "pf": 0.75504971,
         "sharpe": -1.6181115,
@@ -129,7 +129,7 @@
     },
     {
       "iteration": 608,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>40 filter",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 long-only crossover with ATR(14) trailing stop (2.5\u00d7ATR) + RSI(14)>40 filter",
       "metrics": {
         "pf": 1.028608,
         "sharpe": 0.2365733,
@@ -145,7 +145,7 @@
     },
     {
       "iteration": 609,
-      "hypothesis": "XAUUSD H1 — EMA3/8 long-only crossover with ATR(14) trailing stop (2.5×ATR) + RSI(14)>30 filter",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 long-only crossover with ATR(14) trailing stop (2.5\u00d7ATR) + RSI(14)>30 filter",
       "metrics": {
         "pf": 0.85348299,
         "sharpe": -1.43529931,
@@ -161,7 +161,7 @@
     },
     {
       "iteration": 610,
-      "hypothesis": "XAUUSD H1 — EMA2/5 long-only crossover with ATR(14) trailing stop (2.5×ATR). NO RSI filter.",
+      "hypothesis": "XAUUSD H1 \u2014 EMA2/5 long-only crossover with ATR(14) trailing stop (2.5\u00d7ATR). NO RSI filter.",
       "metrics": {
         "pf": 0.41056232,
         "sharpe": -4.75475289,
@@ -177,7 +177,7 @@
     },
     {
       "iteration": 611,
-      "hypothesis": "XAUUSD H1 — Price closes above EMA(5) = long entry. ATR(14) trailing stop (2.5×ATR).",
+      "hypothesis": "XAUUSD H1 \u2014 Price closes above EMA(5) = long entry. ATR(14) trailing stop (2.5\u00d7ATR).",
       "metrics": {
         "pf": 0.39491972,
         "sharpe": -4.80507207,
@@ -193,7 +193,7 @@
     },
     {
       "iteration": 612,
-      "hypothesis": "XAUUSD H1 — Price closes above EMA(5) = long, price below EMA(5) = short. ATR(14) trailing stop (2.5×ATR). Both directions.",
+      "hypothesis": "XAUUSD H1 \u2014 Price closes above EMA(5) = long, price below EMA(5) = short. ATR(14) trailing stop (2.5\u00d7ATR). Both directions.",
       "metrics": {
         "pf": 0.73053487,
         "sharpe": -4.6693584,
@@ -202,14 +202,14 @@
         "trades": 165,
         "net_profit": -513.618026852984
       },
-      "verdict": "rejected (PF=0.73 < 1.3, cascade=1.81). Adding short entries exploded trade count from 6→165 (27.5x!) but WR=13.3%, cascade=1.81.",
+      "verdict": "rejected (PF=0.73 < 1.3, cascade=1.81). Adding short entries exploded trade count from 6\u2192165 (27.5x!) but WR=13.3%, cascade=1.81.",
       "symbol": "XAUUSD",
       "timeframe": "1h",
       "time": "2026-07-26T15:53:00Z"
     },
     {
       "iteration": 613,
-      "hypothesis": "XAUUSD H1 — Close above/below EMA(5), bidirectional, fixed TP/SL ratio 1:1.5.",
+      "hypothesis": "XAUUSD H1 \u2014 Close above/below EMA(5), bidirectional, fixed TP/SL ratio 1:1.5.",
       "metrics": {
         "pf": 0.73234631,
         "sharpe": -6.7243021,
@@ -225,7 +225,7 @@
     },
     {
       "iteration": 614,
-      "hypothesis": "XAUUSD H1 — EMA(5) crossover/crossunder bidirectional, fixed TP/SL 1:1.5",
+      "hypothesis": "XAUUSD H1 \u2014 EMA(5) crossover/crossunder bidirectional, fixed TP/SL 1:1.5",
       "metrics": {
         "pf": 0.60603159,
         "sharpe": -8.98684042,
@@ -241,7 +241,7 @@
     },
     {
       "iteration": 615,
-      "hypothesis": "XAUUSD H1 — EMA3/8 crossover long-only with fixed TP/SL 1:1.5",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 crossover long-only with fixed TP/SL 1:1.5",
       "metrics": {
         "pf": 0.81348453,
         "sharpe": -1.71543982,
@@ -257,7 +257,7 @@
     },
     {
       "iteration": 616,
-      "hypothesis": "XAUUSD H1 — EMA3/8 crossover/crossunder bidirectional, fixed TP/SL 1:1.5",
+      "hypothesis": "XAUUSD H1 \u2014 EMA3/8 crossover/crossunder bidirectional, fixed TP/SL 1:1.5",
       "metrics": {
         "pf": 0.79910591,
         "sharpe": -3.01734515,
@@ -273,7 +273,7 @@
     },
     {
       "iteration": 617,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with fixed TP/SL 1:1.5",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with fixed TP/SL 1:1.5",
       "metrics": {
         "pf": 0.61678265,
         "sharpe": -5.40925625,
@@ -289,7 +289,7 @@
     },
     {
       "iteration": 618,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with ATR(14) trailing stop (3.0×ATR)",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with ATR(14) trailing stop (3.0\u00d7ATR)",
       "metrics": {
         "pf": 0.42331444,
         "sharpe": -5.58223283,
@@ -305,7 +305,7 @@
     },
     {
       "iteration": 619,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + fixed TP/SL 1:1.5",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + fixed TP/SL 1:1.5",
       "metrics": {
         "pf": 0.8228757,
         "sharpe": -1.74574995,
@@ -314,14 +314,14 @@
         "trades": 121,
         "net_profit": -784.361938775441
       },
-      "verdict": "accepted (best BTCUSDT result — WR=46.3%, trades=121, cascade=1.0)",
+      "verdict": "accepted (best BTCUSDT result \u2014 WR=46.3%, trades=121, cascade=1.0)",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-26T23:27:22Z"
     },
     {
       "iteration": 620,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + ADX(14)>25 + fixed TP/SL 1:1.5",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + ADX(14)>25 + fixed TP/SL 1:1.5",
       "metrics": {
         "pf": 0.68776559,
         "sharpe": -1.86641569,
@@ -337,7 +337,7 @@
     },
     {
       "iteration": 621,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + fixed TP/SL 1.5:1 (×ATR). ADX unavailable on new tv_jul26_mc7 engine (ta.adx unimplemented). Replaced with EMA(50) trend filter to address DD>15%.",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + fixed TP/SL 1.5:1 (\u00d7ATR). ADX unavailable on new tv_jul26_mc7 engine (ta.adx unimplemented). Replaced with EMA(50) trend filter to address DD>15%.",
       "metrics": {
         "pf": 0.75005123,
         "sharpe": -2.02657998,
@@ -346,14 +346,14 @@
         "trades": 112,
         "net_profit": -704.455449099954
       },
-      "verdict": "accepted (incremental) — PF=0.75, DD=13.7% (<15% target met!), net loss halved from -$1,301 to -$704, avgWinLoss ratio 1.08.",
+      "verdict": "accepted (incremental) \u2014 PF=0.75, DD=13.7% (<15% target met!), net loss halved from -$1,301 to -$704, avgWinLoss ratio 1.08.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-26T23:56:15Z"
     },
     {
       "iteration": 622,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + wider TP/SL 2:1 (TP=2.0×ATR, SL=1.0×ATR). Iter 621 showed EMA50 filter halved losses and brought DD under 15%. Next: widen TP ratio to 2:1 for better PF.",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + wider TP/SL 2:1 (TP=2.0\u00d7ATR, SL=1.0\u00d7ATR). Iter 621 showed EMA50 filter halved losses and brought DD under 15%. Next: widen TP ratio to 2:1 for better PF.",
       "metrics": {
         "pf": 0.82836951,
         "sharpe": -1.2855218,
@@ -362,14 +362,14 @@
         "trades": 110,
         "net_profit": -497.066624049956
       },
-      "verdict": "rejected (PF=0.83 < 1.3, WR=38.18% < 40%). Widening TP to 2:1 improved PF from 0.75→0.83 but dropped WR below 40% threshold.",
+      "verdict": "rejected (PF=0.83 < 1.3, WR=38.18% < 40%). Widening TP to 2:1 improved PF from 0.75\u21920.83 but dropped WR below 40% threshold.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-27T07:55:00Z"
     },
     {
       "iteration": 623,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + tighter TP/SL 1:1 (TP=1.0×ATR, SL=1.0×ATR). Iter 622 widened TP to 2:1 which dropped WR below 40% (38.18%). Tightening back to 1:1 to restore WR above 40%.",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + tighter TP/SL 1:1 (TP=1.0\u00d7ATR, SL=1.0\u00d7ATR). Iter 622 widened TP to 2:1 which dropped WR below 40% (38.18%). Tightening back to 1:1 to restore WR above 40%.",
       "metrics": {
         "pf": 0.7645507,
         "sharpe": -1.99357781,
@@ -378,14 +378,14 @@
         "trades": 126,
         "net_profit": -603.607828749951
       },
-      "verdict": "rejected (PF=0.76 < 1.3, Sharpe=-1.99 < 0.5). WR fixed from 38.18%→50.79% (>40% ✓). Next: add ADX filter for PF improvement.",
+      "verdict": "rejected (PF=0.76 < 1.3, Sharpe=-1.99 < 0.5). WR fixed from 38.18%\u219250.79% (>40% \u2713). Next: add ADX filter for PF improvement.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-27T08:33:00Z"
     },
     {
       "iteration": 624,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + ADX(14)>25 filter + 1:1 TP/SL (TP=1.0×ATR, SL=1.0×ATR). Manual ADX calculation (ta.adx unimplemented on tv_jul26_mc7 engine).",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + ADX(14)>25 filter + 1:1 TP/SL (TP=1.0\u00d7ATR, SL=1.0\u00d7ATR). Manual ADX calculation (ta.adx unimplemented on tv_jul26_mc7 engine).",
       "metrics": {
         "pf": 1.08110007,
         "sharpe": 0.37462551,
@@ -394,14 +394,14 @@
         "trades": 40,
         "net_profit": 64.501402450014
       },
-      "verdict": "rejected (PF=1.08 < 1.3, Sharpe=0.37 < 0.5). Best BTCUSDT run yet — PF>1.0 first time, WR=55%, DD=3.6%, positive net profit +$64.50 on 40 trades cascade=1.0. ADX>25 filter working — trades dropped 3.15× but quality improved dramatically.",
+      "verdict": "rejected (PF=1.08 < 1.3, Sharpe=0.37 < 0.5). Best BTCUSDT run yet \u2014 PF>1.0 first time, WR=55%, DD=3.6%, positive net profit +$64.50 on 40 trades cascade=1.0. ADX>25 filter working \u2014 trades dropped 3.15\u00d7 but quality improved dramatically.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-27T08:49:00Z"
     },
     {
       "iteration": 625,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + ADX(14)>25 filter + wider TP/SL 1.5:1 (TP=1.5×ATR, SL=1.0×ATR).",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>50 + price > EMA(50) trend filter + ADX(14)>25 filter + wider TP/SL 1.5:1 (TP=1.5\u00d7ATR, SL=1.0\u00d7ATR).",
       "metrics": {
         "pf": 0.89428445,
         "sharpe": -0.42388965,
@@ -417,7 +417,7 @@
     },
     {
       "iteration": 626,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 crossover long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + 1:1 TP/SL (TP=1.0×ATR, SL=1.0×ATR).",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 crossover long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + 1:1 TP/SL (TP=1.0\u00d7ATR, SL=1.0\u00d7ATR).",
       "metrics": {
         "pf": 1.18735771,
         "sharpe": 0.74519851,
@@ -433,7 +433,7 @@
     },
     {
       "iteration": 627,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.2:1 (TP=1.2×ATR, SL=1.0×ATR).",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.2:1 (TP=1.2\u00d7ATR, SL=1.0\u00d7ATR).",
       "metrics": {
         "pf": 1.22412412,
         "sharpe": 0.79085103,
@@ -449,7 +449,7 @@
     },
     {
       "iteration": 628,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.3:1 (TP=1.3×ATR, SL=1.0×ATR).",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.3:1 (TP=1.3\u00d7ATR, SL=1.0\u00d7ATR).",
       "metrics": {
         "pf": 1.09714902,
         "sharpe": 0.37355532,
@@ -465,7 +465,7 @@
     },
     {
       "iteration": 629,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1×ATR, SL=1.0×ATR). Midpoint between 1.0:1 and 1.2:1 to find the optimal TP ratio.",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1\u00d7ATR, SL=1.0\u00d7ATR). Midpoint between 1.0:1 and 1.2:1 to find the optimal TP ratio.",
       "metrics": {
         "pf": 1.39621803,
         "sharpe": 1.44974135,
@@ -474,14 +474,14 @@
         "trades": 37,
         "net_profit": 276.002991300011
       },
-      "verdict": "accepted (incremental) — PF=1.40 (best in TP optimization series), Sharpe=1.45 (broke above 1.0!), WR=56.76%, DD=3.05%, profit +$276 on 37 trades, cascade=1.0. TP 1.1:1 confirmed as the sweet spot in this BTCUSDT 30m configuration.",
+      "verdict": "accepted (incremental) \u2014 PF=1.40 (best in TP optimization series), Sharpe=1.45 (broke above 1.0!), WR=56.76%, DD=3.05%, profit +$276 on 37 trades, cascade=1.0. TP 1.1:1 confirmed as the sweet spot in this BTCUSDT 30m configuration.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-27T10:24:00Z"
     },
     {
       "iteration": 630,
-      "hypothesis": "BTCUSDT 30m — EMA3/8 long-only with RSI(14)>60 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1×ATR, SL=1.0×ATR). Tightening RSI threshold from 55→60 to require even stronger momentum for entries, targeting PF improvement toward 1.5.",
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 long-only with RSI(14)>60 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1\u00d7ATR, SL=1.0\u00d7ATR). Tightening RSI threshold from 55\u219260 to require even stronger momentum for entries, targeting PF improvement toward 1.5.",
       "metrics": {
         "pf": 1.10556133,
         "sharpe": 0.35126529,
@@ -490,10 +490,42 @@
         "trades": 19,
         "net_profit": 47.393810800004
       },
-      "verdict": "invalid (low sample, 19 trades). Tightening RSI from 55→60 was too aggressive — trade count dropped from 37→19, below the 20-trade minimum. RSI>58 may balance momentum filter with adequate sample size.",
+      "verdict": "invalid (low sample, 19 trades). Tightening RSI from 55\u219260 was too aggressive \u2014 trade count dropped from 37\u219219, below the 20-trade minimum. RSI>58 may balance momentum filter with adequate sample size.",
       "symbol": "BTCUSDT",
       "timeframe": "30m",
       "time": "2026-07-27T10:55:00Z"
+    },
+    {
+      "iteration": 633,
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 long-only with RSI(14)>58 + price > EMA(50) trend filter + ADX(14)>22 filter + TP/SL 1.1:1",
+      "metrics": {
+        "pf": 0.97932105,
+        "sharpe": -0.0469719,
+        "wr": 53.33333333,
+        "dd": 3.59769596,
+        "trades": 30,
+        "net_profit": -13.614196099992
+      },
+      "verdict": "rejected (PF=0.98 < 1.3, Sharpe=-0.05 < 0.5). Lowering ADX from 25->22 let in 5 more trades than iter 631 but all were low-quality. ADX>25 confirmed as correct minimum trend threshold.",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-27T12:00:00Z"
+    },
+    {
+      "iteration": 634,
+      "hypothesis": "BTCUSDT 30m \u2014 EMA3/8 long-only with RSI(14)>55 + price > EMA(50) trend filter + ADX(14)>25 filter + TP/SL 1.1:1 (TP=1.1\u00d7ATR, SL=1.0\u00d7ATR). Going back to ADX>25 and RSI>55 to replicate iter 629 config with latest data.",
+      "metrics": {
+        "pf": 0.65802973,
+        "sharpe": -2.22356669,
+        "wr": 54.28571429,
+        "dd": 4.13245071,
+        "trades": 35,
+        "net_profit": -291.740398549991
+      },
+      "verdict": "rejected (PF=0.66 < 1.3, Sharpe=-2.22 < 0.5). Same config as iter 629 (which got PF=1.40) now yields PF=0.66 \u2014 market regime has shifted. Cascade=1.0, DD=4.1% healthy. WR=54.3% > 40% \u2713. PF is the weakest metric.",
+      "symbol": "BTCUSDT",
+      "timeframe": "30m",
+      "time": "2026-07-27T11:53:28Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
