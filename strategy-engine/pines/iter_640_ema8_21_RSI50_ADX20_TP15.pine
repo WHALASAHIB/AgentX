@@ -1,0 +1,76 @@
+//@version=6
+strategy(
+  title="BTC EMA8/21 RSI50 ADX20 Long-Only TP15 (iter 640)",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- Inputs: EMAs
+emaFastLen = input.int(8, "Fast EMA Length", minval=2, maxval=50, step=1)       // sweep: 5-20 step 1
+emaSlowLen = input.int(21, "Slow EMA Length", minval=10, maxval=100, step=1)     // sweep: 15-50 step 5
+
+//--- Inputs: Filters
+rsiLen   = input.int(14, "RSI Length", minval=7, maxval=21, step=1)              // sweep: 7-21 step 1
+rsiThresh = input.int(50, "RSI Threshold (long above)", minval=30, maxval=70, step=5) // sweep: 30-70 step 5
+adxLen   = input.int(14, "ADX Length", minval=7, maxval=21, step=1)              // sweep: 7-21 step 1
+adxThresh = input.int(20, "ADX Threshold (enter above)", minval=10, maxval=40, step=5) // sweep: 10-40 step 5
+
+//--- Inputs: ATR-based TP/SL
+atrLen   = input.int(14, "ATR Length", minval=7, maxval=28, step=1)              // sweep: 7-28 step 1
+tpMult   = input.float(1.5, "TP Multiplier (×ATR)", minval=0.5, maxval=5.0, step=0.25) // sweep: 0.5-4.0 step 0.25
+slMult   = input.float(1.0, "SL Multiplier (×ATR)", minval=0.5, maxval=5.0, step=0.25) // sweep: 0.5-4.0 step 0.25
+
+//--- Persistent exit levels
+var float stopLevel = na
+var float targetLevel = na
+
+//--- Calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atr     = ta.atr(atrLen)
+
+// Manual ADX calculation (compatible with v6 runtime)
+trVal  = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+dmPlus  = high - high[1]
+dmMinus = low[1] - low
+dmPlus  := dmPlus > dmMinus and dmPlus > 0 ? dmPlus : 0
+dmMinus := dmMinus > dmPlus and dmMinus > 0 ? dmMinus : 0
+trSmooth  = ta.rma(trVal, adxLen)
+dmPlusSmooth  = ta.rma(dmPlus, adxLen)
+dmMinusSmooth = ta.rma(dmMinus, adxLen)
+diPlus  = 100 * dmPlusSmooth / trSmooth
+diMinus = 100 * dmMinusSmooth / trSmooth
+dxVal   = 100 * math.abs(diPlus - diMinus) / (diPlus + diMinus)
+adxVal  = ta.rma(dxVal, adxLen)
+
+//--- Entry Logic
+bullishCrossover = ta.crossover(emaFast, emaSlow)
+rsiOk  = rsiVal > rsiThresh
+adxOk  = adxVal > adxThresh
+
+longCondition = bullishCrossover and rsiOk and adxOk
+
+//--- Entry + Set TP/SL levels
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    stopLevel := close - slMult * atr
+    targetLevel := close + tpMult * atr
+
+//--- Price-based TP/SL exits
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long",
+         stop = stopLevel,
+         limit = targetLevel)
+
+//--- Plotting
+plot(emaFast, "Fast EMA", color.blue, 1)
+plot(emaSlow, "Slow EMA", color.red, 1)
+plot(adxVal, "ADX", color.purple, 1)
+hline(adxThresh, "ADX Threshold", color.purple, hline.style_dashed)
+hline(rsiThresh, "RSI Threshold", color.green, hline.style_dashed)

@@ -1,0 +1,61 @@
+//@version=6
+strategy(title="BTCUSDT 30m MACD Crossover — iter_642", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=5, maxval=30, step=1)       // sweep: 8-20 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=15, maxval=50, step=1)       // sweep: 20-40 step 5
+signalLength = input.int(9, "Signal Length", minval=5, maxval=20, step=1)          // sweep: 7-15 step 2
+
+// Filters
+rsiLength = input.int(14, "RSI Length", minval=7, maxval=21, step=1)              // sweep: 10-20 step 2
+rsiThreshold = input.int(50, "RSI Entry Threshold (long > this)", minval=40, maxval=60, step=5)  // sweep: 45-55 step 5
+adxPeriod = input.int(14, "ADX Period", minval=7, maxval=21, step=1)              // sweep: 10-20 step 2
+adxThreshold = input.int(20, "ADX Minimum (trending only)", minval=15, maxval=30, step=5)  // sweep: 15-30 step 5
+
+// Risk management
+atrLength = input.int(14, "ATR Length for TP/SL", minval=7, maxval=21, step=1)    // sweep: 10-20 step 2
+tpMultiplier = input.float(1.5, "TP Multiplier (xATR)", minval=0.5, maxval=4.0, step=0.5)   // sweep: 1.0-3.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (xATR)", minval=0.5, maxval=3.0, step=0.5)   // sweep: 0.5-2.0 step 0.5
+
+//--- indicator calculations
+// MACD
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+
+// RSI
+rsi = ta.rsi(close, rsiLength)
+
+// Manual ADX calculation (ta.adx not available in this runtime)
+float tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+float up = high - high[1]
+float down = low[1] - low
+float dmPlus = up > down and up > 0 ? up : 0
+float dmMinus = down > up and down > 0 ? down : 0
+float trSmoothed = ta.rma(tr, adxPeriod)
+float dmPlusSmoothed = ta.rma(dmPlus, adxPeriod)
+float dmMinusSmoothed = ta.rma(dmMinus, adxPeriod)
+float diPlus = 100 * dmPlusSmoothed / trSmoothed
+float diMinus = 100 * dmMinusSmoothed / trSmoothed
+float dx = 100 * math.abs(diPlus - diMinus) / (diPlus + diMinus)
+float adx = ta.rma(dx, adxPeriod)
+
+// ATR
+atr = ta.atr(atrLength)
+
+//--- entry logic — long only MACD crossover with RSI + ADX filters
+isLongEntry = ta.crossover(macdLine, signalLine)   // MACD line crosses above signal line
+isLongFilter = rsi > rsiThreshold and adx > adxThreshold   // bullish momentum + trending market
+enterLong = isLongEntry and isLongFilter
+
+//--- exit management — ATR-based TP/SL
+if enterLong and strategy.position_size == 0
+    float sl = close - (atr * slMultiplier)
+    float tp = close + (atr * tpMultiplier)
+    strategy.entry("MACD_L", strategy.long)
+    strategy.exit("MACD_X", "MACD_L", stop=sl, limit=tp)
+
+// Plot MACD for visual reference
+hline(0, "Zero Line", color=color.gray)
+plot(macdLine, "MACD", color=color.blue)
+plot(signalLine, "Signal", color=color.orange)
+plot(histLine, "Histogram", style=plot.style_histogram, color=color.new(color.gray, 50))

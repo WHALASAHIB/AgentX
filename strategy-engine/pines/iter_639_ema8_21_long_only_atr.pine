@@ -1,0 +1,47 @@
+//@version=6
+strategy(title="iter_639_ema8_21_long_only_atr", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(8, "EMA Fast Length", minval=1, step=1)       // sweep: 5-15 step 2
+ema_slow_len = input.int(21, "EMA Slow Length", minval=1, step=1)      // sweep: 15-30 step 3
+rsi_len = input.int(14, "RSI Length", minval=1, step=1)                // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=1, step=1)  // sweep: 40-60 step 5
+adx_len = input.int(14, "ADX Length", minval=1, step=1)                // sweep: 10-20 step 2
+adx_threshold = input.int(20, "ADX Threshold", minval=1, step=1)       // sweep: 15-30 step 5
+atr_len = input.int(14, "ATR Length", minval=1, step=1)                // sweep: 10-20 step 2
+tp_atr_mult = input.float(1.0, "TP ATR Multiplier", minval=0.1, step=0.1)   // sweep: 0.5-3.0 step 0.5
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", minval=0.1, step=0.1)   // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+// Manual ADX calculation (since ta.adx() is not available on this engine)
+up = high - high[1]
+down = low[1] - low
+tr_ = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+atr_val = ta.rma(tr_, atr_len)
+
+plus_dm = up > down and up > 0 ? up : 0
+minus_dm = down > up and down > 0 ? down : 0
+plus_di = 100 * ta.rma(plus_dm, adx_len) / atr_val
+minus_di = 100 * ta.rma(minus_dm, adx_len) / atr_val
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+adx_val = ta.rma(dx, adx_len)
+
+//--- entry logic: LONG ONLY
+// Long condition: EMA fast > EMA slow (bullish crossover) AND RSI > threshold AND ADX > threshold (trending)
+bullish_cross = ta.crossover(ema_fast, ema_slow)
+long_condition = bullish_cross and rsi_val > rsi_threshold and adx_val > adx_threshold
+
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management: ATR-based fixed TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("XL", "Long", loss=math.round(atr_val / syminfo.mintick * sl_atr_mult), profit=math.round(atr_val / syminfo.mintick * tp_atr_mult))
+
+//--- visual indicators
+plot(ema_fast, "EMA Fast", color=color.blue, linewidth=2)
+plot(ema_slow, "EMA Slow", color=color.red, linewidth=2)
