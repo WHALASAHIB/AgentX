@@ -1,0 +1,65 @@
+//@version=6
+strategy(title="BTCUSDT 30m — EMA3/8 Long-Only RSI55+EMA50+ADX25 TP1.2:1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA parameters
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)       // sweep: 5-20 step 1
+ema_trend_len = input.int(50, "Trend EMA Length", minval=20, maxval=200)  // sweep: 20-200 step 10
+
+// RSI parameters
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)                // sweep: 7-21 step 2
+rsi_threshold = input.int(55, "RSI Minimum (longs)", minval=20, maxval=80) // sweep: 40-70 step 5
+
+// ADX parameters (manual calc — ta.adx not supported)
+adx_len = input.int(14, "ADX Length", minval=5, maxval=30)                // sweep: 7-21 step 2
+adx_threshold = input.int(25, "ADX Minimum", minval=10, maxval=50)        // sweep: 10-40 step 5
+
+// ATR-based TP/SL parameters
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                // sweep: 7-21 step 2
+sl_atr_mult = input.float(1.0, "SL ATR Multiplier", step=0.1, minval=0.5, maxval=5.0)   // sweep: 0.5-3.0 step 0.5
+tp_atr_mult = input.float(1.2, "TP ATR Multiplier", step=0.1, minval=0.5, maxval=5.0)   // sweep: 0.5-3.0 step 0.5
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+ema_trend = ta.ema(close, ema_trend_len)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- manual ADX calculation (ta.adx not supported by TV engine variant)
+float up   = high - high[1]
+float down = low[1] - low
+trueRange   = math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))
+plusDM     = up > down and up > 0 ? up : 0
+minusDM    = down > up and down > 0 ? down : 0
+smoothedPD = ta.rma(plusDM, adx_len)
+smoothedMD = ta.rma(minusDM, adx_len)
+smoothedTR = ta.rma(trueRange, adx_len)
+plusDI     = 100 * smoothedPD / (smoothedTR + 1e-10)
+minusDI    = 100 * smoothedMD / (smoothedTR + 1e-10)
+dx         = 100 * math.abs(plusDI - minusDI) / (plusDI + minusDI + 1e-10)
+adx_val    = ta.rma(dx, adx_len)
+
+//--- entry logic
+// Long entry: EMA3 crosses above EMA8 + RSI > 55 + price > EMA50 + ADX > 25 (trending)
+long_entry_condition = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold and close > ema_trend and adx_val > adx_threshold
+
+//--- ATR-based TP/SL levels
+long_tp_price = close + atr_val * tp_atr_mult
+long_sl_price = close - atr_val * sl_atr_mult
+
+//--- entry (only when flat)
+if (long_entry_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+//--- exit with ATR-based fixed TP/SL
+if (strategy.position_size > 0)
+    strategy.exit("Long Exit", "Long", limit=long_tp_price, stop=long_sl_price)
+
+//--- plots
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)
+plot(ema_trend, "Trend EMA", color=color.purple, linewidth=2)
+plot(adx_val, "ADX", color=color.orange, linewidth=1, display=display.data_window)
+hline(adx_threshold, "ADX Threshold", color=color.gray, linestyle=hline.style_dashed, display=display.data_window)
