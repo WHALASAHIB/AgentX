@@ -1,0 +1,28 @@
+//@version=6
+strategy(title="EMA5 Bidirectional Fixed TP/SL 1:1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaLen = input.int(5, "EMA Length", minval=2, maxval=50, step=1)       // sweep: 3-20 step 1
+atrMultSL = input.float(1.5, "ATR Multiplier for SL", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.2
+atrLen = input.int(14, "ATR Length", minval=7, maxval=30, step=1)      // sweep: 7-21 step 2
+tpRatio = input.float(1.0, "TP/SL Ratio (TP = ratio × SL)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.25
+
+//--- indicators
+emaVal = ta.ema(close, emaLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic
+longCondition = close > emaVal
+shortCondition = close < emaVal
+
+if (longCondition)
+    stopLoss = atrVal * atrMultSL
+    takeProfit = stopLoss * tpRatio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=stopLoss / syminfo.mintick, profit=takeProfit / syminfo.mintick)
+
+if (shortCondition)
+    stopLoss = atrVal * atrMultSL
+    takeProfit = stopLoss * tpRatio
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=stopLoss / syminfo.mintick, profit=takeProfit / syminfo.mintick)

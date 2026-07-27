@@ -1,0 +1,64 @@
+//@version=6
+strategy(title="iter_620_ema3_8_rsi_adx", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)        // sweep: 2-10 step 1
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=50)        // sweep: 5-20 step 2
+rsi_len      = input.int(14, "RSI Length", minval=5, maxval=30)            // sweep: 5-21 step 2
+rsi_thresh   = input.int(50, "RSI Threshold (long above)", minval=30, maxval=70) // sweep: 30-65 step 5
+adx_len      = input.int(14, "ADX Length", minval=7, maxval=30)            // sweep: 7-21 step 2
+adx_thresh   = input.int(25, "ADX Threshold (trending above)", minval=15, maxval=40) // sweep: 15-35 step 5
+tp_sl_ratio  = input.float(1.5, "TP/SL Ratio", step=0.1)                   // sweep: 1.0-3.0 step 0.25
+sl_atr_mult  = input.float(2.0, "SL ATR Multiplier", step=0.25)            // sweep: 1.0-4.0 step 0.5
+use_adx      = input.bool(true, "Enable ADX Filter")
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+
+// Manual ADX calculation (ta.adx not supported by engine)
+float up = high - high[1]
+float down = low[1] - low
+true_range = math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))
+plus_dm = up > down and up > 0 ? up : 0
+minus_dm = down > up and down > 0 ? down : 0
+smoothed_plus_dm = ta.rma(plus_dm, adx_len)
+smoothed_minus_dm = ta.rma(minus_dm, adx_len)
+smoothed_tr = ta.rma(true_range, adx_len)
+plus_di = 100 * smoothed_plus_dm / (smoothed_tr + 1e-10)
+minus_di = 100 * smoothed_minus_dm / (smoothed_tr + 1e-10)
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di + 1e-10)
+adx_val = ta.rma(dx, adx_len)
+
+atr_val = ta.rma(true_range, 14)
+
+//--- entry logic
+long_condition = false
+
+// EMA3/8 crossover triggers entry
+ema_cross_over  = ta.crossover(ema_fast, ema_slow)
+
+// RSI filter: long only if RSI > threshold
+rsi_ok_long = rsi_val > rsi_thresh
+
+// ADX filter: enter only if ADX > threshold (trending market)
+adx_ok = adx_val > adx_thresh
+
+// Combined: crossover + RSI > 50 + ADX > 25
+if (ema_cross_over and rsi_ok_long)
+    if (use_adx)
+        if (adx_ok)
+            long_condition := true
+    else
+        long_condition := true
+
+//--- entry
+if (long_condition and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+
+//--- exit with fixed TP/SL using ATR-based distance
+if (strategy.position_size > 0)
+    sl_dist = math.round(atr_val * sl_atr_mult / syminfo.mintick)
+    tp_dist = math.round(sl_dist * tp_sl_ratio)
+    strategy.exit("XL", "Long", loss=sl_dist, profit=tp_dist)

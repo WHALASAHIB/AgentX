@@ -1,0 +1,31 @@
+//@version=6
+strategy(title="EMA3/8 Crossover Bidirectional Fixed TP/SL 1:1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fastLen = input.int(3, "Fast EMA Length", minval=2, maxval=20, step=1)   // sweep: 2-10 step 1
+slowLen = input.int(8, "Slow EMA Length", minval=5, maxval=30, step=1)   // sweep: 5-21 step 2
+atrMultSL = input.float(1.5, "ATR Multiplier for SL", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.2
+atrLen = input.int(14, "ATR Length", minval=7, maxval=30, step=1)      // sweep: 7-21 step 2
+tpRatio = input.float(1.5, "TP/SL Ratio (TP = ratio × SL)", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.25
+
+//--- indicators
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+atrVal = ta.atr(atrLen)
+
+//--- entry logic: crossover = long, crossunder = short
+//    Crossover/crossunder fires ONCE per crossing, so cascade stays at 1.0
+longCondition = ta.crossover(emaFast, emaSlow)
+shortCondition = ta.crossunder(emaFast, emaSlow)
+
+if (longCondition)
+    stopLoss = atrVal * atrMultSL
+    takeProfit = stopLoss * tpRatio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=stopLoss / syminfo.mintick, profit=takeProfit / syminfo.mintick)
+
+if (shortCondition)
+    stopLoss = atrVal * atrMultSL
+    takeProfit = stopLoss * tpRatio
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=stopLoss / syminfo.mintick, profit=takeProfit / syminfo.mintick)
