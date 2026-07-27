@@ -1,0 +1,56 @@
+//@version=6
+strategy(title="XAUUSD H1 MACD RSI SMA200 ATR - Iter 643", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+
+// MACD inputs
+macdFast = input.int(12, "MACD Fast Length")     // sweep: 8-20 step 2
+macdSlow = input.int(26, "MACD Slow Length")      // sweep: 20-40 step 5
+macdSignal = input.int(9, "MACD Signal Smoothing") // sweep: 5-15 step 2
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length")             // sweep: 10-20 step 2
+rsiObThreshold = input.int(70, "RSI Overbought")  // for info only
+rsiOsThreshold = input.int(30, "RSI Oversold")    // for info only
+
+// Trend filter: SMA slope (price above/below 200-period SMA, and SMA slope positive)
+trendSmaLen = input.int(200, "Trend SMA Length")  // sweep: 100-300 step 50
+trendSma = ta.sma(close, trendSmaLen)
+priceAboveSma = close > trendSma
+smaSlopePositive = trendSma > trendSma[5]  // SMA rising over 5 bars
+
+// ATR exit management
+atrLen = input.int(14, "ATR Length")             // sweep: 10-20 step 2
+tpMultiplier = input.float(2.0, "TP Multiplier (xATR)") // sweep: 1.0-4.0 step 0.5
+slMultiplier = input.float(1.0, "SL Multiplier (xATR)") // sweep: 0.5-2.0 step 0.25
+
+//--- indicator calculations
+
+// MACD
+[macdLine, signalLine, histLine] = ta.macd(close, macdFast, macdSlow, macdSignal)
+macdCrossover = ta.crossover(macdLine, signalLine)
+
+// RSI
+rsiValue = ta.rsi(close, rsiLen)
+
+// ATR for dynamic exit prices
+atrValue = ta.atr(atrLen)
+
+//--- entry logic
+
+// Entry condition: MACD crossover + RSI > 50 (bullish momentum) + price above 200 SMA + SMA rising (trend filter)
+longCondition = macdCrossover and rsiValue > 50 and priceAboveSma and smaSlopePositive
+
+// Plot signals for debugging
+plotshape(longCondition, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, title="Long Signal")
+
+if (longCondition)
+    // Calculate ATR-based SL and TP distances in price
+    slDistance = slMultiplier * atrValue
+    tpDistance = tpMultiplier * atrValue
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit Long", "Long", loss=slDistance, profit=tpDistance, comment="Exit")
+
+//--- Plot lines for reference
+plot(priceAboveSma ? trendSma : na, "200 SMA", color=color.orange, linewidth=2)
+hline(50, "RSI 50", color=color.gray, linestyle=hline.style_dashed, display=display.data_window)

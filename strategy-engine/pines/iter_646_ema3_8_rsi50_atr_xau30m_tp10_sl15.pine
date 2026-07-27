@@ -1,0 +1,42 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ATR TP1.0 SL1.5 XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50, step=1)           // sweep: 1-10 step 1
+slowLen = input.int(8, "Slow EMA Length", minval=1, maxval=50, step=1)            // sweep: 5-21 step 1
+
+// RSI filter
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, step=1)                // sweep: 7-21 step 1
+rsiThreshold = input.int(50, "RSI Entry Threshold (long above)", minval=1, maxval=100, step=1) // sweep: 30-70 step 5
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length", minval=5, maxval=50, step=1)                 // sweep: 7-21 step 1
+tpMultiplier = input.float(1.0, "TP Multiplier (×ATR)", minval=0.1, maxval=10.0, step=0.1)   // sweep: 0.5-3.0 step 0.5
+slMultiplier = input.float(1.5, "SL Multiplier (×ATR)", minval=0.1, maxval=10.0, step=0.1)   // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+//--- entry logic
+// Long condition: fast EMA crosses above slow EMA AND RSI above threshold
+longEntry = ta.crossover(fastMA, slowMA) and rsi > rsiThreshold
+
+// Exit condition: fast EMA crosses below slow EMA (trend reversal)
+longExit = ta.crossunder(fastMA, slowMA)
+
+//--- position management
+if (longEntry and strategy.position_size <= 0)
+    // Calculate ATR-based stop-loss and take-profit distances in ticks
+    slTicks = math.round((slMultiplier * atr) / syminfo.mintick)
+    tpTicks = math.round((tpMultiplier * atr) / syminfo.mintick)
+    
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+// If we're in a position and the trend reverses, exit manually
+if (longExit and strategy.position_size > 0)
+    strategy.close("Long", comment="trend_reversal")
