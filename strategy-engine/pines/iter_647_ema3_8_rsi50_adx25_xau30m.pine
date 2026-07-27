@@ -1,0 +1,34 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ADX25 XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast     = input.int(3,   "Fast EMA",      minval=1,  maxval=50)  // sweep: 2-10 step 1
+ema_slow     = input.int(8,   "Slow EMA",      minval=5,  maxval=50)  // sweep: 6-21 step 1
+rsi_len      = input.int(14,  "RSI Length",    minval=2,  maxval=30)  // sweep: 7-21 step 1
+rsi_thresh   = input.int(50,  "RSI Min (long)",minval=20, maxval=80)  // sweep: 30-60 step 5
+adx_len      = input.int(14,  "ADX Length",    minval=5,  maxval=30)  // sweep: 7-25 step 2
+adx_thresh   = input.int(25,  "ADX Min",       minval=10, maxval=50)  // sweep: 15-30 step 5
+atr_len      = input.int(14,  "ATR Length",    minval=5,  maxval=30)  // sweep: 10-20 step 2
+tp_atr_mult  = input.float(1.0, "TP × ATR",    minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-3.0 step 0.5
+sl_atr_mult  = input.float(1.5, "SL × ATR",    minval=0.5, maxval=5.0, step=0.5) // sweep: 0.5-2.0 step 0.5
+
+//--- indicator calculations
+ema_fast_val  = ta.ema(close, ema_fast)
+ema_slow_val  = ta.ema(close, ema_slow)
+rsi_val       = ta.rsi(close, rsi_len)
+[di_plus, di_minus, adx_val] = ta.dmi(adx_len, adx_len)
+atr_val       = ta.atr(atr_len)
+
+//--- entry logic: EMA3 crosses above EMA8, RSI > 50, ADX > 25
+long_condition = ta.crossover(ema_fast_val, ema_slow_val) and rsi_val > rsi_thresh and adx_val > adx_thresh
+
+//--- exit management: ATR-based TP and SL
+tp_price = strategy.position_avg_price + (atr_val * tp_atr_mult)
+sl_price = strategy.position_avg_price - (atr_val * sl_atr_mult)
+
+//--- execute
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("TP/SL", "Long", limit=tp_price, stop=sl_price)

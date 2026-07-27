@@ -1,0 +1,46 @@
+//@version=6
+strategy(title="iter_649 XAUUSD EMA3/8 + RSI NoADX", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)        // sweep: 1-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)        // sweep: 5-20 step 1
+rsi_len      = input.int(14, "RSI Length", minval=2, maxval=50)            // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80) // sweep: 40-60 step 5
+atr_len      = input.int(14, "ATR Length", minval=5, maxval=50)           // sweep: 10-20 step 2
+tp_atr_mult  = input.float(1.0, "TP as ATR multiple", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.5
+sl_atr_mult  = input.float(1.5, "SL as ATR multiple", minval=0.5, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.5
+use_long     = input.bool(true, "Enable Long Trades")                      // sweep: true/false
+use_short    = input.bool(false, "Enable Short Trades")                    // sweep: true/false
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val  = ta.rsi(close, rsi_len)
+atr_val  = ta.atr(atr_len)
+
+//--- entry logic
+long_condition = use_long and ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_threshold
+short_condition = use_short and ta.crossunder(ema_fast, ema_slow) and rsi_val < (100 - rsi_threshold)
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if short_condition
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+sl_ticks_long  = math.floor((sl_atr_mult * atr_val) / syminfo.mintick)
+tp_ticks_long  = math.floor((tp_atr_mult * atr_val) / syminfo.mintick)
+sl_ticks_short = sl_ticks_long
+tp_ticks_short = tp_ticks_long
+
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", loss=sl_ticks_long, profit=tp_ticks_long)
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", loss=sl_ticks_short, profit=tp_ticks_short)
+
+//--- plot
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)

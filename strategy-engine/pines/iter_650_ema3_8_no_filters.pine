@@ -1,0 +1,35 @@
+//@version=6
+strategy(title="Iter 650 - EMA3/8 No Filters XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)          // sweep: 1-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=2, maxval=50)           // sweep: 5-20 step 1
+tp_atr_mult = input.float(1.0, "TP (ATR multiple)", minval=0.5, maxval=5.0)   // sweep: 0.5-3.0 step 0.5
+sl_atr_mult = input.float(1.5, "SL (ATR multiple)", minval=0.5, maxval=5.0)   // sweep: 0.5-3.0 step 0.5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)                    // sweep: 7-21 step 7
+trade_start_hour = input.int(8, "Trade Start Hour (UTC)", minval=0, maxval=23)
+trade_end_hour = input.int(16, "Trade End Hour (UTC)", minval=0, maxval=23)
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast, ema_slow)      // EMA3 crosses above EMA8 = buy signal
+short_condition = ta.crossunder(ema_fast, ema_slow)     // EMA3 crosses below EMA8 = exit signal (close long)
+
+in_trade_hours = (hour >= trade_start_hour and hour < trade_end_hour)
+
+if (long_condition and in_trade_hours)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management (ATR-based TP/SL)
+if (strategy.position_size > 0)
+    tp_distance = int(tp_atr_mult * atr_val / syminfo.mintick)
+    sl_distance = int(sl_atr_mult * atr_val / syminfo.mintick)
+    strategy.exit("Long Exit", "Long", loss=sl_distance, profit=tp_distance)
+
+//--- visual overlays
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=2)
