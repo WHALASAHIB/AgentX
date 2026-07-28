@@ -1,0 +1,47 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ADX18 TP500/SL750 XAU30m nocascade", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+fastLen = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-10 step 1
+slowLen = input.int(8, "Slow EMA Length", minval=1, maxval=50)       // sweep: 5-21 step 1
+rsiLen  = input.int(14, "RSI Length", minval=2, maxval=50)           // sweep: 7-21 step 2
+rsiThreshold = input.int(50, "RSI Threshold (long >)", minval=20, maxval=80)  // sweep: 30-70 step 5
+adxLen  = input.int(14, "ADX Length", minval=5, maxval=50)           // sweep: 7-21 step 2
+adxThreshold = input.int(18, "ADX Threshold (> = trending)", minval=5, maxval=50)      // sweep: 14-30 step 2
+tpTicks = input.int(500, "Take Profit (ticks)", minval=50, maxval=5000)  // sweep: 200-1000 step 50
+slTicks = input.int(750, "Stop Loss (ticks)", minval=50, maxval=5000)   // sweep: 300-1500 step 50
+useLong   = input.bool(true, "Allow Long Entries")
+useShort  = input.bool(true, "Allow Short Entries")
+
+//--- manual ADX calculation (ta.adx not available in this engine)
+hi = high
+lo = low
+cl = close
+tr = math.max(hi - lo, math.abs(hi - cl[1]), math.abs(lo - cl[1]))
+atr = ta.rma(tr, adxLen)
+upMove = hi - hi[1]
+downMove = lo[1] - lo
+plusDM = upMove > downMove and upMove > 0 ? upMove : 0
+minusDM = downMove > upMove and downMove > 0 ? downMove : 0
+plusDi = 100 * ta.rma(plusDM, adxLen) / atr
+minusDi = 100 * ta.rma(minusDM, adxLen) / atr
+dx = 100 * math.abs(plusDi - minusDi) / (plusDi + minusDi)
+adxVal = ta.rma(dx, adxLen)
+
+//--- indicators
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+//--- entry conditions (only when flat — no cascade)
+longCondition  = strategy.position_size == 0 and ta.crossover(fastMA, slowMA) and rsiVal > rsiThreshold and adxVal > adxThreshold and useLong
+shortCondition = strategy.position_size == 0 and ta.crossunder(fastMA, slowMA) and rsiVal < (100 - rsiThreshold) and adxVal > adxThreshold and useShort
+
+//--- entry + exit in one step (no persistent state — strategy.position_size is the source of truth)
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)

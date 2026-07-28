@@ -1,0 +1,45 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 1.5:1 TP/SL All Hours XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, pyramiding=0)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)       // sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=50)       // sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80)  // sweep: 30-60 step 10
+take_profit_pct = input.float(1.5, "Take Profit %", minval=0.1, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.5
+stop_loss_pct = input.float(1.0, "Stop Loss %", minval=0.1, maxval=5.0, step=0.1)     // sweep: 0.5-2.0 step 0.5
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- crossover detection
+cross_above = ta.crossover(ema_fast, ema_slow)
+cross_below = ta.crossunder(ema_fast, ema_slow)
+
+//--- entry logic (NO session filter — all hours)
+long_condition = cross_above and rsi_val > rsi_threshold
+short_condition = cross_below and rsi_val < (100 - rsi_threshold)
+
+//--- position guard: no reverse entries while in a position
+in_long = strategy.position_size > 0
+in_short = strategy.position_size < 0
+
+if (long_condition and not in_long and not in_short)
+    strategy.entry("EL", strategy.long)
+    
+if (short_condition and not in_short and not in_long)
+    strategy.entry("ES", strategy.short)
+
+//--- exit management: fixed percentage TP/SL
+if (in_long)
+    strategy.exit("XL", "EL", loss=close * stop_loss_pct / 100 / syminfo.mintick, profit=close * take_profit_pct / 100 / syminfo.mintick)
+
+if (in_short)
+    strategy.exit("XS", "ES", loss=close * stop_loss_pct / 100 / syminfo.mintick, profit=close * take_profit_pct / 100 / syminfo.mintick)
+
+//--- plot
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)

@@ -1,6 +1,6 @@
 {
-  "iteration": 685,
-  "last_run": "2026-07-28T15:52:50Z",
+  "iteration": 694,
+  "last_run": "2026-07-28T16:45:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,87 +13,151 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "Remove session filter (8-16 UTC). EMA3/8 crossover with RSI(50) filter generated 0 trades — the session window + RSI filter combination is too restrictive even for fast EMAs. Trade all hours to increase trade count above 20.",
+  "current_hypothesis": "Restore strategy.exit() TP/SL with onceexit guard (iter 688 approach) instead of manual strategy.close() — iter 688 achieved PF=1.41 on XAUUSD 30m with ADX25. Manual exits (iter 693) produced cascade=1.64 and PF=1.03. strategy.exit with onceexit solved cascade at iter 688 (PF=1.41, no cascade). Go back to that proven pattern: ADX25 + strategy.exit(loss=750*tick, profit=500*tick) + exitPlaced guard.",
   "evolution_log": [
     {
-      "iteration": 680,
-      "hypothesis": "Add RSI(14) filter to Donchian(20) breakout.",
+      "iteration": 685,
+      "hypothesis": "Remove session filter (8-16 UTC). EMA3/8 crossover with RSI(50) filter generated 0 trades — trade all hours.",
       "metrics": {
-        "pf": 0.73255512,
-        "sharpe": -4.24137457,
-        "wr": 17.94871795,
-        "dd": 5.66012221,
-        "trades": 39,
-        "net_profit": -254.295378584327
+        "pf": 0.23878168,
+        "sharpe": -5.76893646,
+        "wr": 4.76190476,
+        "dd": 6.24407228,
+        "trades": 21,
+        "net_profit": -408.715463704084
       },
-      "verdict": "rejected (PF=0.73 < 1.3, Sharpe=-4.24 < 0.5, cascade_ratio=1.77 > 1.2)",
+      "verdict": "rejected (PF=0.24 < 1.3, Sharpe=-5.77 < 0.5, cascade=3.0 > 1.2)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T14:53:00Z"
+      "time": "2026-07-28T16:05:00Z"
     },
     {
-      "iteration": 681,
-      "hypothesis": "Add ADX(14)>25 trending filter + pyramiding=0 to Donchian(20)+RSI(14) breakout.",
-      "metrics": {
-        "pf": 1.2717032,
-        "sharpe": 1.61109815,
-        "wr": 50.0,
-        "dd": 3.24666502,
-        "trades": 6,
-        "net_profit": 92.011909544324
-      },
-      "verdict": "invalid (low sample, 6 trades)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T15:09:00Z"
-    },
-    {
-      "iteration": 682,
-      "hypothesis": "EMA8/21 crossover + RSI(50) filter + 3x ATR stop + 2:1 TP/SL on XAUUSD 30m.",
-      "metrics": {
-        "pf": 0.70769512,
-        "sharpe": -4.21041877,
-        "wr": 10.14492754,
-        "dd": 5.42997596,
-        "trades": 69,
-        "net_profit": -335.007683592914
-      },
-      "verdict": "rejected (PF=0.71 < 1.3, Sharpe=-4.21 < 0.5, cascade=2.03 > 1.2 MCP artifact). BUT PF +30%, Sharpe +43% improvement. Avg win/loss 6.27:1 is excellent. WR 10% is the bottleneck.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T15:25:00Z"
-    },
-    {
-      "iteration": 683,
-      "hypothesis": "EMA8/21 crossover + RSI(50) filter + 3x ATR stop + 1.5:1 TP/SL on XAUUSD 30m. Tightening TP/SL from 2:1 to 1.5:1 to increase WR from 10% bottleneck.",
-      "metrics": {
-        "pf": 1.71224159,
-        "sharpe": 3.31615279,
-        "wr": 27.77777778,
-        "dd": 2.34704835,
-        "trades": 18,
-        "net_profit": 222.517610389943
-      },
-      "verdict": "invalid (low sample, 18 trades; cascade=2.25 > 1.2)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T15:50:00Z"
-    },
-    {
-      "iteration": 684,
-      "hypothesis": "EMA3/8 crossover + RSI(50) filter + 1.5:1 TP/SL + pyramiding=0 on XAUUSD 30m. Reduce entry threshold from EMA8/21 to EMA3/8 for more frequent crossovers. Pyramiding=0 eliminates cascade-close pattern.",
+      "iteration": 686,
+      "hypothesis": "Tighten TP/SL ratio to 1:1.5 (TP=1.0%, SL=1.5%) to increase WR from 4.76% bottleneck.",
       "metrics": {
         "pf": 0.0,
-        "sharpe": null,
+        "sharpe": -0.0983678,
         "wr": 0.0,
-        "dd": 0.0,
-        "trades": 0,
-        "net_profit": 0.0
+        "dd": 5.26125013,
+        "trades": 10,
+        "net_profit": -26.472168590633
       },
-      "verdict": "invalid (no trades)",
+      "verdict": "invalid (severe cascade ratio 10.0 — unreliable result)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T15:52:50Z"
+      "time": "2026-07-28T16:06:00Z"
+    },
+    {
+      "iteration": 687,
+      "hypothesis": "Fix cascade with exitPlaced guard. Keep TP=1.0%, SL=1.5% (1:1.5 ratio). Use fixed tick-based TP/SL.",
+      "metrics": {
+        "pf": 0.5058951,
+        "sharpe": -7.98388341,
+        "wr": 32.94117647,
+        "dd": 3.21417066,
+        "trades": 85,
+        "net_profit": -230.412425594666
+      },
+      "verdict": "rejected (PF=0.51 < 1.3, Sharpe=-7.98 < 0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:07:00Z"
+    },
+    {
+      "iteration": 688,
+      "hypothesis": "Add ADX(14)>25 trending filter to EMA3/8 RSI50 + 1:1.5 exit-once-guard.",
+      "metrics": {
+        "pf": 1.4144311,
+        "sharpe": 2.00884768,
+        "wr": 37.5,
+        "dd": 0.62625255,
+        "trades": 32,
+        "net_profit": 37.026250542021
+      },
+      "verdict": "accepted (incremental) — first profitable XAUUSD strategy!",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:14:00Z"
+    },
+    {
+      "iteration": 689,
+      "hypothesis": "Fix cascade with manual exit (strategy.close + once-per-entry guard) instead of strategy.exit.",
+      "metrics": {
+        "pf": 1.37048528,
+        "sharpe": 2.31162205,
+        "wr": 29.62962963,
+        "dd": 0.4605899,
+        "trades": 27,
+        "net_profit": 37.704851269487
+      },
+      "verdict": "accepted (incremental) — no cascade warnings, lower cascade ratio",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:24:00Z"
+    },
+    {
+      "iteration": 690,
+      "hypothesis": "Tighten TP/SL further to 1:2 ratio (TP=400, SL=800 ticks) to push WR above 40%.",
+      "metrics": {
+        "pf": 1.25911892,
+        "sharpe": 1.38680969,
+        "wr": 21.875,
+        "dd": 0.66916988,
+        "trades": 32,
+        "net_profit": 25.333257669277
+      },
+      "verdict": "rejected (PF=1.26 < 1.3)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:28:00Z"
+    },
+    {
+      "iteration": 691,
+      "hypothesis": "Reduce ADX threshold from 25 to 18 on EMA3/8 RSI50 TP500/SL750 XAU30m to capture more trades.",
+      "metrics": {
+        "pf": 0.85059746,
+        "sharpe": -0.70853251,
+        "wr": 21.73913043,
+        "dd": 3.33506483,
+        "trades": 46,
+        "net_profit": -45.555192865155
+      },
+      "verdict": "rejected (PF=0.85 < 1.3, cascade=2.56 > 1.2) — reducing ADX let in weak trends",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:34:00Z"
+    },
+    {
+      "iteration": 692,
+      "hypothesis": "Fix cascade: replace strategy.exit() with manual price-based TP/SL (strategy.close) to eliminate OCO cascade fills.",
+      "metrics": {
+        "pf": 1.15231126,
+        "sharpe": 1.41858837,
+        "wr": 31.57894737,
+        "dd": 0.76671633,
+        "trades": 38,
+        "net_profit": 27.189599771757
+      },
+      "verdict": "rejected (PF=1.15 < 1.3, cascade=1.58 > 1.2) — best XAUUSD since iter 688, profitable +$27",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:40:00Z"
+    },
+    {
+      "iteration": 693,
+      "hypothesis": "Restore ADX threshold to 25 (from 18) with manual price-based exits.",
+      "metrics": {
+        "pf": 1.02809978,
+        "sharpe": 0.23269856,
+        "wr": 26.08695652,
+        "dd": 0.58269797,
+        "trades": 23,
+        "net_profit": 3.340590172298
+      },
+      "verdict": "rejected (PF=1.03 < 1.3, Sharpe=0.23 < 0.5, cascade=1.64 > 1.2) — ADX25 with manual exit still cascades",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T16:45:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
