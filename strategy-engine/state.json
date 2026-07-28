@@ -1,6 +1,6 @@
 {
-  "iteration": 662,
-  "last_run": "2026-07-28T12:45:00Z",
+  "iteration": 666,
+  "last_run": "2026-07-28T14:17:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,145 +13,146 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter, ATR-based TP=2.0xATR, SL=0.5xATR. Iteration 661 (RSI>50, TP=1.25, SL=1.0) gave 22 trades, PF=0.43, WR=40.9%. Avg loss ($39.64) is still 1.6x avg win ($24.65) despite TP being 1.25x ATR and SL being 1.0x ATR. Flipping to a wider TP (2.0x) and tighter SL (0.5x) creates a 4:1 reward ratio — with WR at 41%, EV = 0.41×4 - 0.59×1 = 1.05 (positive). A single win now covers 4 losses, directly reversing the negative expectancy.",
+  "current_hypothesis": "XAUUSD H1 shorter EMAs (EMA2/5 crossover) to generate more entry signals. ATR trailing stop at 2.0xATR (tighter trail) to capture smaller swings. Only 9 trades from EMA3/8 on H1 over 318 bars — need more crossovers for statistical relevance.",
   "evolution_log": [
     {
-      "iteration": 647,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 + ADX(14)>25 filter.",
-      "metrics": { "pf": 0.0, "sharpe": -1.67, "wr": 0.0, "dd": 5.52, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades). ADX(14)>25 filter too restrictive.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-27T19:05:00Z"
-    },
-    {
-      "iteration": 648,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>50 + ADX(14)>14 filter.",
-      "metrics": { "pf": 0.0, "sharpe": -0.72, "wr": 0.0, "dd": 5.52, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades). ADX(14)>14 still too restrictive.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-27T19:20:00Z"
-    },
-    {
-      "iteration": 649,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>50 filter, no ADX.",
-      "metrics": { "pf": 0.52108033, "sharpe": -5.53250753, "wr": 61.11111111, "dd": 2.86145131, "trades": 18, "net_profit": -175.441705869851 },
-      "verdict": "invalid (low sample, 18 trades). WR 61% promising but insufficient.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-27T07:38:06Z"
-    },
-    {
-      "iteration": 650,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover, no RSI, no ADX, session filter 8-16 UTC.",
-      "metrics": { "pf": 0.0, "sharpe": null, "wr": 0.0, "dd": 0.0, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades). Pure EMA3/8 + session filter = 0 crossovers.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-27T07:53:00Z"
-    },
-    {
-      "iteration": 651,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 + RSI(14)>50, all hours.",
-      "metrics": { "pf": 0.52108033, "sharpe": -5.66334827, "wr": 61.11111111, "dd": 2.86145131, "trades": 18, "net_profit": -175.441705869851 },
-      "verdict": "invalid (low sample, 18 trades). Same 18 trades — session filter had no effect.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T10:10:00Z"
-    },
-    {
-      "iteration": 652,
-      "hypothesis": "XAUUSD 30m Long-only EMA2/5 + RSI(14)>50, all hours. Shorter EMAs for more crossovers.",
-      "metrics": { "pf": 0.0, "sharpe": -0.562, "wr": 0.0, "dd": 5.524, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades). EMA2/5 + RSI>50 = 0 trades vs 18 with EMA3/8.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T10:25:00Z"
-    },
-    {
-      "iteration": 653,
-      "hypothesis": "XAUUSD 30m Long-only EMA2/5 crossover with ATR-based TP=1.0xATR, SL=1.5xATR. No RSI filter.",
-      "metrics": { "pf": 0.0, "sharpe": -0.7265, "wr": 0.0, "dd": 5.524, "trades": 0, "net_profit": 0 },
-      "verdict": "invalid (no trades). Pure EMA2/5 also produces 0 crossovers on XAUUSD 30m.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T10:50:00Z"
-    },
-    {
-      "iteration": 654,
-      "hypothesis": "XAUUSD H1 Long-only EMA3/8 crossover with RSI(14)>50 filter + ATR-based TP=1.0xATR, SL=1.5xATR.",
-      "metrics": { "pf": 0.79290338, "sharpe": -1.96102988, "wr": 58.33333333, "dd": 2.00100408, "trades": 12, "net_profit": -65.63613426 },
-      "verdict": "invalid (low sample, 12 trades).",
+      "iteration": 665,
+      "hypothesis": "XAUUSD H1 Long-only EMA3/8 crossover with ATR trailing stop (3.0xATR trail). Switch back to H1 timeframe which previously showed PF=1.05 (iter 655, albeit with low sample). ATR trailing stop dynamically follows price instead of fixed TP/SL which gets the direction wrong on XAUUSD choppy 30m.",
+      "metrics": {
+        "pf": 0.7834207,
+        "sharpe": -1.34650467,
+        "wr": 33.33333333,
+        "dd": 4.88545633,
+        "trades": 9,
+        "net_profit": -103.629375781227
+      },
+      "verdict": "invalid (low sample, 9 trades). Only 9 EMA3/8 crossovers on H1 over 318 bars on POLYGON data. PF=0.78, Sharpe=-1.35. Not enough trades for statistical significance.",
       "symbol": "XAUUSD",
       "timeframe": "1h",
-      "time": "2026-07-28T11:05:00Z"
+      "time": "2026-07-28T14:17:00Z"
     },
     {
-      "iteration": 655,
-      "hypothesis": "XAUUSD H1 Long-only EMA3/8 crossover without RSI filter, ATR-based TP=1.0xATR, SL=1.5xATR.",
-      "metrics": { "pf": 1.04860118, "sharpe": 0.51863332, "wr": 66.66666667, "dd": 2.34262214, "trades": 15, "net_profit": 16.10368909 },
-      "verdict": "invalid (low sample, 15 trades).",
-      "symbol": "XAUUSD",
-      "timeframe": "1h",
-      "time": "2026-07-28T11:25:00Z"
-    },
-    {
-      "iteration": 656,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover without RSI filter, ATR-based TP=1.0xATR, SL=1.5xATR.",
-      "metrics": { "pf": 0.37725813, "sharpe": -12.27995225, "wr": 53.33333333, "dd": 5.14033967, "trades": 30, "net_profit": -474.301762309531 },
-      "verdict": "rejected (PF=0.38 < 1.3, Sharpe=-12.28 < 0.5). 30 trades achieved, WR 53% but avg loss ($54) is 3x avg win ($18).",
+      "iteration": 664,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter only (no ADX). Keep TP=1.5xATR, SL=1.0xATR.",
+      "metrics": {
+        "pf": 0.0136903,
+        "sharpe": -35.9011013,
+        "wr": 4.0,
+        "dd": 2.32793124,
+        "trades": 25,
+        "net_profit": -232.793123957068
+      },
+      "verdict": "rejected (PF=0.01 < 1.3, Sharpe=-35.9 < 0.5). RSI>50 filter decimated WR from 33% to 4% — TP=1.5xATR rarely reached before SL=1.0xATR. Only 1 win out of 25 trades.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T11:45:00Z"
+      "time": "2026-07-28T14:15:00Z"
     },
     {
-      "iteration": 657,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter, ATR-based TP=1.0xATR, SL=1.5xATR.",
-      "metrics": { "pf": 0.54267995, "sharpe": -5.44334975, "wr": 63.15789474, "dd": 2.38572543, "trades": 19, "net_profit": -169.609706233734 },
-      "verdict": "invalid (low sample, 19 trades). RSI filter improved WR from 53% to 63% but reduced trade count from 30 to 19 (below 20 threshold). Avg loss ($53) still 3x avg win ($17).",
+      "iteration": 663,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with NO filters. ATR-based TP=1.5xATR, SL=1.0xATR.",
+      "metrics": {
+        "pf": 0.42219084,
+        "sharpe": -11.82426538,
+        "wr": 33.33333333,
+        "dd": 5.23931617,
+        "trades": 30,
+        "net_profit": -464.407238537673
+      },
+      "verdict": "rejected (PF=0.42 < 1.3, Sharpe=-11.82 < 0.5).",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T11:53:00Z"
+      "time": "2026-07-28T13:08:00Z"
     },
     {
-      "iteration": 658,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter, ATR-based TP=1.5xATR, SL=1.0xATR. Flipping TP/SL ratio from 1:1.5 to 1.5:1.",
-      "metrics": { "pf": 0.4076386, "sharpe": -9.91575684, "wr": 33.33333333, "dd": 3.78861715, "trades": 21, "net_profit": -329.364573882442 },
-      "verdict": "rejected (PF=0.41 < 1.3, Sharpe=-9.92 < 0.5). Flipping ratio gave 2 more trades (21 vs 19) but WR crashed from 63% to 33%. Wider TP target reached less often than tighter SL.",
+      "iteration": 662,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>50 + DMI ADX>18 filter.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": null,
+        "wr": 0.0,
+        "dd": 0.0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades). DMI ADX>18 + RSI>50 blocks all crossovers.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T12:00:00Z"
+      "time": "2026-07-28T12:53:00Z"
     },
     {
-      "iteration": 659,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>40 filter (looser), ATR-based TP=1.0xATR, SL=1.5xATR. Going BACK to 1:1.5 TP/SL ratio which gave the best WR (63%) but loosen RSI threshold from 50 to 40 to push trade count above 20.",
-      "metrics": { "pf": 0.42970476, "sharpe": -10.50710555, "wr": 56.66666667, "dd": 4.48374256, "trades": 30, "net_profit": -409.150504710284 },
-      "verdict": "rejected (PF=0.43 < 1.3, Sharpe=-10.51 < 0.5). RSI>40 increased trade count to 30 but WR dropped from 63% to 57%. Avg loss ($55) still 3x avg win ($18) — 1:1.5 TP/SL ratio is the root problem.",
+      "iteration": 661,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>50 (tightened from >40), ATR TP=1.25xATR, SL=1.0xATR.",
+      "metrics": {
+        "pf": 0.43043398,
+        "sharpe": -9.8440852,
+        "wr": 40.90909091,
+        "dd": 3.72755709,
+        "trades": 22,
+        "net_profit": -293.523521607407
+      },
+      "verdict": "rejected (PF=0.43 < 1.3, Sharpe=-9.84 < 0.5).",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T12:15:00Z"
+      "time": "2026-07-28T12:45:00Z"
     },
     {
       "iteration": 660,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>40 filter, ATR-based TP=1.25xATR, SL=1.0xATR. Flipping TP/SL ratio to favor wins over losses (1.25:1 instead of 1:1.5).",
-      "metrics": { "pf": 0.45761028, "sharpe": -11.62361296, "wr": 41.17647059, "dd": 5.00009246, "trades": 34, "net_profit": -436.497836606286 },
-      "verdict": "rejected (PF=0.46 < 1.3, Sharpe=-11.62 < 0.5). TP/SL flip (1.25:1) improved avg loss from $55 to $40 and avg win from $18 to $26, but WR dropped from 57% to 41%. More trades (34 vs 30) but lower quality.",
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>40, TP=1.25xATR, SL=1.0xATR.",
+      "metrics": {
+        "pf": 0.45761028,
+        "sharpe": -11.62361296,
+        "wr": 41.17647059,
+        "dd": 5.00009246,
+        "trades": 34,
+        "net_profit": -436.497836606286
+      },
+      "verdict": "rejected (PF=0.46 < 1.3, Sharpe=-11.62 < 0.5).",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T12:30:00Z"
     },
     {
-      "iteration": 661,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter (tightened from >40), ATR-based TP=1.25xATR, SL=1.0xATR.",
-      "metrics": { "pf": 0.43043398, "sharpe": -9.8440852, "wr": 40.90909091, "dd": 3.72755709, "trades": 22, "net_profit": -293.523521607407 },
-      "verdict": "rejected (PF=0.43 < 1.3, Sharpe=-9.84 < 0.5). RSI>50 tightened WR from 41% to 40.9% (flat) and reduced trades from 34 to 22. Avg loss ($39.64) still 1.6x avg win ($24.65) — the TP/SL ratio is the structural problem.",
+      "iteration": 659,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>40, TP=1.0xATR, SL=1.5xATR.",
+      "metrics": {
+        "pf": 0.42970476,
+        "sharpe": -10.50710555,
+        "wr": 56.66666667,
+        "dd": 4.48374256,
+        "trades": 30,
+        "net_profit": -409.150504710284
+      },
+      "verdict": "rejected (PF=0.43 < 1.3, Sharpe=-10.51 < 0.5).",
       "symbol": "XAUUSD",
       "timeframe": "30m",
-      "time": "2026-07-28T12:45:00Z"
+      "time": "2026-07-28T12:15:00Z"
+    },
+    {
+      "iteration": 658,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 with RSI(14)>50, TP=1.5xATR, SL=1.0xATR.",
+      "metrics": {
+        "pf": 0.4076386,
+        "sharpe": -9.91575684,
+        "wr": 33.33333333,
+        "dd": 3.78861715,
+        "trades": 21,
+        "net_profit": -329.364573882442
+      },
+      "verdict": "rejected (PF=0.41 < 1.3, Sharpe=-9.92 < 0.5).",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T12:00:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": ["XAUUSD", "BYBIT:BTCUSDT.P", "EURUSD", "GBPUSD"],
-  "timeframes_explored": ["1h", "30m"]
+  "pairs_explored": [
+    "XAUUSD",
+    "BYBIT:BTCUSDT.P",
+    "EURUSD",
+    "GBPUSD"
+  ],
+  "timeframes_explored": [
+    "1h",
+    "30m"
+  ]
 }

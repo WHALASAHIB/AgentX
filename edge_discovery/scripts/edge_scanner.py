@@ -285,8 +285,10 @@ def run_scan(pair: str, timeframe: str, min_trades: int = 30,
     """
     logger.info("Scanning %s %s...", pair, timeframe)
 
-    # Forward bars depends on timeframe
-    forward_map = {"M5": 10, "M15": 8, "H1": 5, "H4": 3, "D1": 2}
+    # Forward bars depends on timeframe and target RR
+    # 1:2 RR means price must move 2x the stop distance
+    # We look at forward return matching ~2 ATR or fixed pips
+    forward_map = {"M5": 12, "M15": 8, "H1": 5, "H4": 3, "D1": 2}
     forward_bars = forward_map.get(timeframe, 5)
 
     # Get data

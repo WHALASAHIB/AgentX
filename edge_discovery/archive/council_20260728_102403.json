@@ -1,0 +1,52 @@
+{
+  "run_timestamp": 1785205443.7199314,
+  "datetime_utc": "2026-07-28 02:24:03 UTC",
+  "pair": "XAUUSD",
+  "candidates_reviewed": 1,
+  "accepted": 0,
+  "rejected": 1,
+  "edges": [
+    {
+      "run_timestamp": 1785205435.128345,
+      "pair": "XAUUSD",
+      "timeframe": "H1",
+      "indicator": "Price_vs_MA",
+      "parameters": {
+        "period": 50,
+        "threshold": 0.03
+      },
+      "trades": 456,
+      "win_rate": 0.5877,
+      "profit_factor": 1.5181,
+      "sharpe": 2.3134,
+      "avg_win": 1.1935,
+      "avg_loss": 1.1208,
+      "max_drawdown_pct": 58.3755,
+      "max_cons_losses": 16,
+      "total_return_pct": 109.1582,
+      "walk_forward_pass": true,
+      "oos_win_rate": 0.569,
+      "oos_profit_factor": 1.1129,
+      "p_value": 0.0001991275565706261,
+      "council_quant": 55.0,
+      "council_microstructure": 70,
+      "council_behavioral": 65,
+      "council_risk": 5,
+      "council_strategy": 85,
+      "council_final": 57.8,
+      "economic_rationale": "Retail overreaction to news/momentum creates temporary price extremes; algorithms and market makers fade these; Statistical arbitrage: extreme deviations attract mean-reverting flow from prop desks and HFTs; Gold is sentiment/hedging driven \u2014 crowd psychology at extremes (fear/greed) creates reversals; Regression bias \u2014 traders treat distance from MA as 'cheap' or 'expensive' emotionally",
+      "who_loses": "Retail overreaction to news/momentum creates temporary price extremes; algorithms and market makers fade these; Statistical arbitrage: extreme deviations attract mean-reverting flow from prop desks and HFTs; Gold is sentiment/hedging driven \u2014 crowd psychology at extremes (fear/greed) creates reversals",
+      "status": "candidate",
+      "discovered": "2026-07-28 02:23:55 UTC",
+      "session_bias": "",
+      "council_decision": "REJECT",
+      "council_reasons": {
+        "quant": "Strong sample (456 trades); Strongly significant (p=0.0002); Good risk-adjusted returns (Sharpe=2.31); OOS consistent (drop=1.9pp); High max drawdown (58.4%)",
+        "microstructure": "Retail overreaction to news/momentum creates temporary price extremes; algorithms and market makers fade these; Statistical arbitrage: extreme deviations attract mean-reverting flow from prop desks and HFTs; Gold is sentiment/hedging driven \u2014 crowd psychology at extremes (fear/greed) creates reversals",
+        "behavioral": "Regression bias \u2014 traders treat distance from MA as 'cheap' or 'expensive' emotionally",
+        "risk": "Max drawdown 58.4% is severe \u2014 edge can destroy account before recovering; 16 consecutive losses \u2014 psychological breaking point; Vulnerable to: strong trending markets (can't catch falling knife); Vulnerable to: volatility regime shifts (bands expand/contract)",
+        "strategy": "Standard indicator \u2014 straightforward MT5 implementation; H1 aligns with existing Propfirm Pass bot \u2014 can piggyback; High WR \u00d7 PF combination \u2014 excellent for position sizing; Positive expected value per trade ($0.24)"
+      }
+    }
+  ]
+}

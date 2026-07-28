@@ -1,0 +1,55 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ADX18 TP2 SL05 XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// EMA periods
+fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 1-10 step 1
+slow_len = input.int(8, "Slow EMA Length", minval=2, maxval=50)       // sweep: 5-20 step 1
+
+// RSI filter
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)            // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80) // sweep: 30-60 step 5
+
+// ADX filter
+adx_len = input.int(14, "ADX Length", minval=5, maxval=30)           // sweep: 10-20 step 2
+adx_threshold = input.int(18, "ADX Threshold", minval=5, maxval=40)  // sweep: 14-25 step 2
+
+// ATR-based TP/SL
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)           // sweep: 7-21 step 2
+tp_mult = input.float(2.0, "Take Profit (×ATR)", minval=0.5, maxval=5.0, step=0.25) // sweep: 1.0-3.0 step 0.25
+sl_mult = input.float(0.5, "Stop Loss (×ATR)", minval=0.2, maxval=3.0, step=0.1)   // sweep: 0.3-1.5 step 0.1
+
+//--- calculations
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+adx_val = ta.adx(high, low, close, adx_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+long_condition = false
+if ta.crossover(fast_ema, slow_ema)
+    if rsi_val > rsi_threshold
+        if adx_val > adx_threshold
+            long_condition := true
+
+// Exit conditions — use strategy.exit with ATR-based levels
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+// Exit: fixed ATR-based TP/SL using close price
+// TP = entry_price + tp_mult * atr, SL = entry_price - sl_mult * atr
+// Using strategy.exit with loss and profit in ticks
+// syminfo.mintick gives minimum tick size
+// SL in ticks = (sl_mult * atr) / syminfo.mintick
+// TP in ticks = (tp_mult * atr) / syminfo.mintick
+// Since ATR varies per bar, approximate at entry time
+sl_ticks = math.round((sl_mult * atr_val) / syminfo.mintick)
+tp_ticks = math.round((tp_mult * atr_val) / syminfo.mintick)
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=sl_ticks, profit=tp_ticks)
+
+//--- visual
+plot(fast_ema, "Fast EMA", color.blue, 1)
+plot(slow_ema, "Slow EMA", color.red, 1)
+hline(rsi_threshold, "RSI Threshold", color.gray, hline.style_dashed)

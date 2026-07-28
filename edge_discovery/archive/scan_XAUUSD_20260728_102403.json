@@ -1,0 +1,53 @@
+{
+  "run_timestamp": 1785205443.5610683,
+  "datetime_utc": "2026-07-28 02:24:03 UTC",
+  "pair": "XAUUSD",
+  "timeframes_scanned": [
+    "M5",
+    "M15",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "total_combos": 75,
+  "scan_duration_seconds": 21.2,
+  "candidates_found": 2,
+  "edges": [
+    {
+      "run_timestamp": 1785205435.128345,
+      "pair": "XAUUSD",
+      "timeframe": "H1",
+      "indicator": "Price_vs_MA",
+      "parameters": {
+        "period": 50,
+        "threshold": 0.03
+      },
+      "trades": 456,
+      "win_rate": 0.5877,
+      "profit_factor": 1.5181,
+      "sharpe": 2.3134,
+      "avg_win": 1.1935,
+      "avg_loss": 1.1208,
+      "max_drawdown_pct": 58.3755,
+      "max_cons_losses": 16,
+      "total_return_pct": 109.1582,
+      "walk_forward_pass": true,
+      "oos_win_rate": 0.569,
+      "oos_profit_factor": 1.1129,
+      "p_value": 0.0001991275565706261,
+      "council_quant": 0.0,
+      "council_microstructure": 0.0,
+      "council_behavioral": 0.0,
+      "council_risk": 0.0,
+      "council_strategy": 0.0,
+      "council_final": 0.0,
+      "economic_rationale": "",
+      "who_loses": "",
+      "status": "candidate",
+      "discovered": "2026-07-28 02:23:55 UTC",
+      "session_bias": ""
+    }
+  ],
+  "data_summary": {},
+  "council_verdicts": []
+}

@@ -1,0 +1,27 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ATR XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen      = input.int(3,   "EMA Fast Length",      tooltip="Fast EMA length",      inline="ema")
+emaSlowLen      = input.int(8,   "EMA Slow Length",      tooltip="Slow EMA length",      inline="ema")
+rsiLen          = input.int(14,  "RSI Length",           tooltip="RSI period",           inline="rsi")
+rsiThreshold    = input.int(50,  "RSI Threshold (>this)", tooltip="RSI > threshold = long", inline="rsi")
+atrLen          = input.int(14,  "ATR Length",           tooltip="ATR period",            inline="atr")
+tpMultiplier    = input.float(1.5, "TP (×ATR)",          tooltip="Take profit as ATR multiple", inline="tp")
+slMultiplier    = input.float(1.0, "SL (×ATR)",          tooltip="Stop loss as ATR multiple", inline="sl")
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atrVal  = ta.atr(atrLen)
+
+//--- entry logic: EMA3/8 crossover + RSI(14) > 50
+longCondition = ta.crossover(emaFast, emaSlow) and rsiVal > rsiThreshold
+
+//--- exit management: fixed ATR-based TP/SL
+if (longCondition)
+    stopLoss   = close - slMultiplier * atrVal
+    takeProfit = close + tpMultiplier * atrVal
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=close - stopLoss, profit=takeProfit - close, comment="TP/SL")
