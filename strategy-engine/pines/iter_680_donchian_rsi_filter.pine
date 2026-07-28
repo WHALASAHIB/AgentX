@@ -1,0 +1,43 @@
+//@version=6
+strategy(title="XAUUSD_30m_Donchian_RSI_Filter", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+donchian_len = input.int(20, "Donchian Length", minval=5, maxval=100, step=1)  // sweep: 10-40 step 5
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=28, step=1)  // sweep: 7-28 step 7
+rsi_oversold = input.int(50, "RSI Oversold Threshold", minval=20, maxval=70, step=5)  // sweep: 30-70 step 10
+rsi_overbought = input.int(50, "RSI Overbought Threshold", minval=30, maxval=80, step=5)  // sweep: 30-80 step 10
+sma_trend_len = input.int(50, "SMA Trend Length", minval=20, maxval=200, step=10)  // sweep: 20-200 step 20
+atr_mult_sl = input.float(2.0, "ATR Stop Loss Multiplier", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-4.0 step 0.5
+atr_mult_tp = input.float(4.0, "ATR Take Profit Multiplier", minval=1.0, maxval=8.0, step=0.5)  // sweep: 2.0-6.0 step 1.0
+
+//--- Donchian channel
+highest_high = ta.highest(high, donchian_len)
+lowest_low = ta.lowest(low, donchian_len)
+donchian_mid = (highest_high + lowest_low) / 2
+
+//--- RSI
+rsi = ta.rsi(close, rsi_len)
+
+//--- SMA trend filter
+sma_trend = ta.sma(close, sma_trend_len)
+
+//--- ATR for stops
+atr = ta.atr(14)
+
+//--- entry conditions
+long_condition = close > highest_high[1] and rsi > rsi_oversold and close > sma_trend
+short_condition = close < lowest_low[1] and rsi < rsi_overbought and close < sma_trend
+
+//--- entry logic
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Use float-based stops with atrMultiplier
+sl_ticks = atr * atr_mult_sl / syminfo.mintick
+tp_ticks = atr * atr_mult_tp / syminfo.mintick
+strategy.exit("XL", "Long", loss=math.round(sl_ticks), profit=math.round(tp_ticks))
+strategy.exit("XS", "Short", loss=math.round(sl_ticks), profit=math.round(tp_ticks))

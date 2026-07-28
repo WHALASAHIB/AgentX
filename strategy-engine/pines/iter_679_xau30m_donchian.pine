@@ -1,0 +1,39 @@
+//@version=6
+strategy(title="XAU30m Donchian", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== INPUTS ===
+dc_len    = input.int(20, "Donchian Length", minval=10, maxval=50)
+sma_len   = input.int(50, "Trend SMA", minval=20, maxval=200)
+atr_len   = input.int(14, "ATR Length", minval=7, maxval=21)
+
+//=== CALCULATIONS ===
+dc_high = ta.highest(high, dc_len)
+dc_low  = ta.lowest(low, dc_len)
+sma_val = ta.sma(close, sma_len)
+atr_val = ta.atr(atr_len)
+
+//--- Entry signals
+buy_sig  = ta.cross(close, dc_high[1]) and close > dc_high[1] and close > sma_val
+sell_sig = ta.cross(close, dc_low[1]) and close < dc_low[1] and close < sma_val
+
+//--- Entries
+if buy_sig and strategy.position_size <= 0
+    strategy.entry("L", strategy.long)
+
+if sell_sig and strategy.position_size >= 0
+    strategy.entry("S", strategy.short)
+
+//--- ATR trailing exit (calls once per bar, trailing stop moves with price)
+if strategy.position_size > 0
+    stop_level = close - atr_val * 2.0
+    strategy.exit("XL", "L", stop=stop_level)
+
+if strategy.position_size < 0
+    stop_level = close + atr_val * 2.0
+    strategy.exit("XS", "S", stop=stop_level)
+
+//--- Visuals
+plot(dc_high, "DC High", color.green)
+plot((dc_high+dc_low)/2, "DC Mid", color.gray, style=plot.style_dashes)
+plot(dc_low, "DC Low", color.red)
+plot(sma_val, "SMA", color.blue)
