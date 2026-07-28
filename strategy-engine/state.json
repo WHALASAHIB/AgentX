@@ -1,6 +1,6 @@
 {
-  "iteration": 681,
-  "last_run": "2026-07-28T14:53:00Z",
+  "iteration": 685,
+  "last_run": "2026-07-28T15:52:50Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,27 +13,11 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "XAUUSD 30m Donchian(20) + ADX(14)>25 trending filter + pyramiding=0. RSI filter improved PF 0.58->0.73 (26%) and trades 29->39, but Sharpe=-4.24 is still weakest metric. Add ADX(14)>25 filter: only enter when trend strength > 25. This should eliminate counter-trend entries in ranging markets. Also set pyramiding=0 to fix cascade ratio 1.77 > 1.2 (invalidator).",
+  "current_hypothesis": "Remove session filter (8-16 UTC). EMA3/8 crossover with RSI(50) filter generated 0 trades — the session window + RSI filter combination is too restrictive even for fast EMAs. Trade all hours to increase trade count above 20.",
   "evolution_log": [
     {
-      "iteration": 679,
-      "hypothesis": "Donchian(20) Channel breakout on XAUUSD 30m. Different indicator family. SMA crossover strategies produce 0-15 trades. Donchian breakout generates more signals. Enter long when close > highest(20), short when close < lowest(20), with SMA(50) trend filter. ATR trailing stop at 2x.",
-      "metrics": {
-        "pf": 0.58121793,
-        "sharpe": -4.86914493,
-        "wr": 17.24137931,
-        "dd": 6.33274554,
-        "trades": 29,
-        "net_profit": -313.13903334048
-      },
-      "verdict": "rejected (PF=0.58 < 1.3, Sharpe=-4.87 < 0.5). BUT 29 trades is above minimum (20). Avg win/loss ratio 2.79:1 is promising. Commission $147 consumed 47% of loss. Next: add RSI(14) filter to improve signal quality.",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-28T12:41:00Z"
-    },
-    {
       "iteration": 680,
-      "hypothesis": "Add RSI(14) filter to Donchian(20) breakout. Long only if RSI>50, short only if RSI<50. This should filter out false breakouts in ranging markets and improve PF toward 1.0+.",
+      "hypothesis": "Add RSI(14) filter to Donchian(20) breakout.",
       "metrics": {
         "pf": 0.73255512,
         "sharpe": -4.24137457,
@@ -42,21 +26,77 @@
         "trades": 39,
         "net_profit": -254.295378584327
       },
-      "verdict": "rejected (PF=0.73 < 1.3, Sharpe=-4.24 < 0.5, cascade_ratio=1.77 > 1.2 invalidator). RSI filter improved PF 0.58->0.73 (26%) and added 10 more trades. Short side +36.54, long side -290.83. Cascade ratio 1.77 indicates pyramiding. Next: ADX filter + pyramiding=0.",
+      "verdict": "rejected (PF=0.73 < 1.3, Sharpe=-4.24 < 0.5, cascade_ratio=1.77 > 1.2)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T14:53:00Z"
+    },
+    {
+      "iteration": 681,
+      "hypothesis": "Add ADX(14)>25 trending filter + pyramiding=0 to Donchian(20)+RSI(14) breakout.",
+      "metrics": {
+        "pf": 1.2717032,
+        "sharpe": 1.61109815,
+        "wr": 50.0,
+        "dd": 3.24666502,
+        "trades": 6,
+        "net_profit": 92.011909544324
+      },
+      "verdict": "invalid (low sample, 6 trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T15:09:00Z"
+    },
+    {
+      "iteration": 682,
+      "hypothesis": "EMA8/21 crossover + RSI(50) filter + 3x ATR stop + 2:1 TP/SL on XAUUSD 30m.",
+      "metrics": {
+        "pf": 0.70769512,
+        "sharpe": -4.21041877,
+        "wr": 10.14492754,
+        "dd": 5.42997596,
+        "trades": 69,
+        "net_profit": -335.007683592914
+      },
+      "verdict": "rejected (PF=0.71 < 1.3, Sharpe=-4.21 < 0.5, cascade=2.03 > 1.2 MCP artifact). BUT PF +30%, Sharpe +43% improvement. Avg win/loss 6.27:1 is excellent. WR 10% is the bottleneck.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T15:25:00Z"
+    },
+    {
+      "iteration": 683,
+      "hypothesis": "EMA8/21 crossover + RSI(50) filter + 3x ATR stop + 1.5:1 TP/SL on XAUUSD 30m. Tightening TP/SL from 2:1 to 1.5:1 to increase WR from 10% bottleneck.",
+      "metrics": {
+        "pf": 1.71224159,
+        "sharpe": 3.31615279,
+        "wr": 27.77777778,
+        "dd": 2.34704835,
+        "trades": 18,
+        "net_profit": 222.517610389943
+      },
+      "verdict": "invalid (low sample, 18 trades; cascade=2.25 > 1.2)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T15:50:00Z"
+    },
+    {
+      "iteration": 684,
+      "hypothesis": "EMA3/8 crossover + RSI(50) filter + 1.5:1 TP/SL + pyramiding=0 on XAUUSD 30m. Reduce entry threshold from EMA8/21 to EMA3/8 for more frequent crossovers. Pyramiding=0 eliminates cascade-close pattern.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": null,
+        "wr": 0.0,
+        "dd": 0.0,
+        "trades": 0,
+        "net_profit": 0.0
+      },
+      "verdict": "invalid (no trades)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T15:52:50Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": [
-    "XAUUSD",
-    "BYBIT:BTCUSDT.P",
-    "EURUSD",
-    "GBPUSD"
-  ],
-  "timeframes_explored": [
-    "1h",
-    "30m"
-  ]
+  "pairs_explored": ["XAUUSD", "BYBIT:BTCUSDT.P", "EURUSD", "GBPUSD"],
+  "timeframes_explored": ["1h", "30m"]
 }

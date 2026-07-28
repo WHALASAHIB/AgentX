@@ -1,0 +1,47 @@
+//@version=6
+strategy(title="EMA8/21 + RSI Trend XAUUSD 30m", overlay=true, initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         commission_type=strategy.commission.percent, commission_value=0.04)
+
+//--- inputs
+ema_fast = input.int(8, "Fast EMA", minval=3, maxval=20, step=1)
+ema_slow = input.int(21, "Slow EMA", minval=10, maxval=50, step=1)
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=2)
+rsi_long_min = input.int(50, "RSI Min (Long)", minval=30, maxval=60, step=5)
+rsi_short_max = input.int(50, "RSI Max (Short)", minval=40, maxval=70, step=5)
+tp_ratio = input.float(2.0, "TP:SL Ratio", minval=1.0, maxval=3.0, step=0.5)
+sl_atr = input.float(3.0, "SL: ATR mult", minval=1.0, maxval=5.0, step=0.5)
+
+//--- indicators
+fast_ema = ta.ema(close, ema_fast)
+slow_ema = ta.ema(close, ema_slow)
+rsi = ta.rsi(close, rsi_len)
+atr = ta.atr(14)
+
+//--- entry triggers
+long_signal = ta.crossover(fast_ema, slow_ema)
+short_signal = ta.crossunder(fast_ema, slow_ema)
+
+//--- no repeat entry if already in a position
+in_long = strategy.position_size > 0
+in_short = strategy.position_size < 0
+
+//--- entries
+if (long_signal and not in_long and rsi >= rsi_long_min)
+    sl_price = close - atr * sl_atr
+    tp_price = close + atr * sl_atr * tp_ratio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", stop=sl_price, limit=tp_price)
+
+if (short_signal and not in_short and rsi <= rsi_short_max)
+    sl_price = close + atr * sl_atr
+    tp_price = close - atr * sl_atr * tp_ratio
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", stop=sl_price, limit=tp_price)
+
+//--- exit on opposite signal (trend reversal)
+if (short_signal and in_long)
+    strategy.close("Long")
+
+if (long_signal and in_short)
+    strategy.close("Short")

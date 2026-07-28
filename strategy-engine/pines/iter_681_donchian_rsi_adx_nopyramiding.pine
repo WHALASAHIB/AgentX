@@ -1,0 +1,56 @@
+//@version=6
+strategy(title="Donchian(20) RSI ADX NoPyra XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=0)
+
+//--- inputs
+donchian_len = input.int(20, "Donchian Length", minval=5, maxval=100, step=1)       // sweep: 10-30 step 5
+rsi_len      = input.int(14, "RSI Length", minval=5, maxval=30, step=1)             // sweep: 7-21 step 7
+rsi_upper    = input.int(50, "RSI Upper (long only above)", minval=40, maxval=70, step=5)  // sweep: 45-65 step 5
+rsi_lower    = input.int(50, "RSI Lower (short only below)", minval=30, maxval=60, step=5) // sweep: 35-55 step 5
+adx_len      = input.int(14, "ADX Length", minval=7, maxval=30, step=1)             // sweep: 10-20 step 5
+adx_thresh   = input.int(25, "ADX Threshold (min trend strength)", minval=15, maxval=40, step=5) // sweep: 20-30 step 5
+use_adx      = input.bool(true, "Use ADX Trending Filter")
+tp_pct       = input.float(1.5, "Take Profit %", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+sl_pct       = input.float(1.0, "Stop Loss %", minval=0.3, maxval=3.0, step=0.2)   // sweep: 0.5-2.0 step 0.5
+
+//--- indicators
+hi = ta.highest(high, donchian_len)
+lo = ta.lowest(low, donchian_len)
+r = ta.rsi(close, rsi_len)
+[adx_line, plus_di, minus_di] = ta.dmi(adx_len, adx_len)
+
+//--- entry conditions
+// Long: close breaks above Donchian high + RSI > upper threshold + (optional) ADX > threshold
+long_breakout = ta.crossover(close, hi[1])
+long_rsi_ok   = r > rsi_upper
+long_adx_ok   = (not use_adx) or (adx_line > adx_thresh)
+long_cond     = long_breakout and long_rsi_ok and long_adx_ok
+
+// Short: close breaks below Donchian low + RSI < lower threshold + (optional) ADX > threshold
+short_breakout = ta.crossunder(close, lo[1])
+short_rsi_ok   = r < rsi_lower
+short_adx_ok   = (not use_adx) or (adx_line > adx_thresh)
+short_cond     = short_breakout and short_rsi_ok and short_adx_ok
+
+//--- exit management (fixed percentage TP/SL from entry price)
+tp_ticks = math.round((close * tp_pct / 100) / syminfo.mintick)
+sl_ticks = math.round((close * sl_pct / 100) / syminfo.mintick)
+
+if (long_cond)
+    strategy.entry("LONG", strategy.long)
+
+if (short_cond)
+    strategy.entry("SHORT", strategy.short)
+
+// Exit existing positions if a new breakout fires in opposite direction
+// (pyramiding=0 already prevents stacking, but strategy.exit with profit/loss handles individual exits)
+if (strategy.position_size > 0)
+    strategy.exit("LX", "LONG", loss=sl_ticks, profit=tp_ticks)
+
+if (strategy.position_size < 0)
+    strategy.exit("SX", "SHORT", loss=sl_ticks, profit=tp_ticks)
+
+//--- plot
+plot(hi, "Donchian High", color=color.green, linewidth=1)
+plot(lo, "Donchian Low", color=color.red, linewidth=1)
+mid = (hi + lo) / 2
+plot(mid, "Donchian Mid", color=color.gray, linewidth=1)
