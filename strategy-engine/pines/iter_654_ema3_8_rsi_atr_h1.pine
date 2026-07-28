@@ -1,0 +1,37 @@
+//@version=6
+strategy(title="EMA3/8 RSI ATR XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 2-8 step 1
+ema_slow = input.int(8, "Slow EMA Length", minval=2, maxval=100)      // sweep: 6-20 step 2
+rsi_len = input.int(14, "RSI Length", minval=5, maxval=30)            // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Long Threshold", minval=30, maxval=70)  // sweep: 40-60 step 5
+atr_len = input.int(14, "ATR Length", minval=5, maxval=50)            // sweep: 10-20 step 2
+tp_atr_mult = input.float(1.0, "TP ATR Multiplier", minval=0.5, maxval=5.0, step=0.25)  // sweep: 0.5-3.0 step 0.5
+sl_atr_mult = input.float(1.5, "SL ATR Multiplier", minval=0.5, maxval=5.0, step=0.25)  // sweep: 1.0-3.0 step 0.5
+
+//--- indicator calculations
+ema_fast_val = ta.ema(close, ema_fast)
+ema_slow_val = ta.ema(close, ema_slow)
+rsi_val = ta.rsi(close, rsi_len)
+atr_val = ta.atr(atr_len)
+
+//--- entry logic
+long_condition = ta.crossover(ema_fast_val, ema_slow_val) and rsi_val > rsi_threshold
+
+//--- exit management
+sl_distance = sl_atr_mult * atr_val
+tp_distance = tp_atr_mult * atr_val
+sl_ticks = math.round(sl_distance / syminfo.mintick)
+tp_ticks = math.round(tp_distance / syminfo.mintick)
+
+if long_condition
+    strategy.entry("Long", strategy.long)
+
+if strategy.position_size > 0
+    strategy.exit("Long Exit", "Long", loss=sl_ticks, profit=tp_ticks)
+
+//--- visual cues
+plot(ema_fast_val, "Fast EMA", color=color.blue, linewidth=2)
+plot(ema_slow_val, "Slow EMA", color=color.red, linewidth=2)
+hline(rsi_threshold, "RSI Threshold", color=color.gray)

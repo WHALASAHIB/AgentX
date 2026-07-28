@@ -1,0 +1,43 @@
+//@version=6
+strategy(title="iter_653_ema2_5_longonly_atr", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//==============================================================================
+//--- inputs
+//==============================================================================
+
+// EMA periods
+fastLen = input.int(2, "Fast EMA Length", minval=1, maxval=50, step=1)       // sweep: 1-5 step 1
+slowLen = input.int(5, "Slow EMA Length", minval=2, maxval=100, step=1)      // sweep: 3-10 step 1
+
+// ATR-based TP/SL
+atrLen = input.int(14, "ATR Length", minval=5, maxval=50, step=1)            // sweep: 7-21 step 2
+tpMultiplier = input.float(1.0, "TP Multiplier (xATR)", minval=0.1, maxval=5.0, step=0.1)   // sweep: 0.5-2.0 step 0.1
+slMultiplier = input.float(1.5, "SL Multiplier (xATR)", minval=0.1, maxval=5.0, step=0.1)   // sweep: 1.0-2.5 step 0.1
+
+//==============================================================================
+//--- indicator calculations
+//==============================================================================
+
+fastMA = ta.ema(close, fastLen)
+slowMA = ta.ema(close, slowLen)
+atr = ta.atr(atrLen)
+
+//==============================================================================
+//--- entry logic (long-only, no filter)
+//==============================================================================
+
+// Pure EMA2/5 crossover — no RSI, no ADX, no session filter
+longCondition = ta.crossover(fastMA, slowMA)
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+//==============================================================================
+//--- exit management: ATR-based price targets
+//==============================================================================
+
+if strategy.position_size > 0
+    entryPrice = strategy.position_avg_price
+    slPrice = entryPrice - (atr * slMultiplier)
+    tpPrice = entryPrice + (atr * tpMultiplier)
+    strategy.exit("XL", "Long", limit=tpPrice, stop=slPrice)

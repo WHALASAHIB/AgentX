@@ -1,1487 +1,5 @@
 [
   {
-    "timestamp": "2026-06-25T16:15:51.155253Z",
-    "reports": {
-      "overall": {
-        "pair": "OVERALL",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "OVERALL",
-          "total_trades": 62,
-          "wins": 21,
-          "losses": 41,
-          "win_rate": 0.3387,
-          "gross_profit": 10197.87,
-          "gross_loss": 518.14,
-          "net_profit": 9679.73,
-          "profit_factor": 19.6817,
-          "avg_win": 485.61,
-          "avg_loss": 12.64,
-          "max_consecutive_wins": 8,
-          "max_consecutive_losses": 17,
-          "max_drawdown_pct": 3.6753,
-          "sharpe_ratio": 1.9662,
-          "expectancy": 12.354,
-          "expectancy_ratio": 19.6817,
-          "avg_bars_held": 1.62,
-          "avg_duration_minutes": 97.09,
-          "r_multiple_avg": 12.354,
-          "profit_per_day": -63.92,
-          "best_trade": {
-            "position_id": 0,
-            "symbol": "",
-            "type": "SELL",
-            "volume": 0.0,
-            "entry_price": 0.0,
-            "exit_price": null,
-            "open_time": "2026-06-22 03:47",
-            "close_time": "OPEN",
-            "profit": 10000.0,
-            "swap": 0.0,
-            "commission": 0.0,
-            "net_profit": 10000.0,
-            "duration": "",
-            "magic": 0,
-            "comment": "Initial account balance"
-          },
-          "worst_trade": {
-            "position_id": 481418051,
-            "symbol": "USDJPY",
-            "type": "BUY",
-            "volume": 0.69,
-            "entry_price": 161.718,
-            "exit_price": 161.602,
-            "open_time": "2026-06-25 07:28",
-            "close_time": "2026-06-25 17:05",
-            "profit": -49.53,
-            "swap": 0.0,
-            "commission": -3.46,
-            "net_profit": -52.99,
-            "duration": "9h 36m",
-            "magic": 200200,
-            "comment": "Macd_USDJPY"
-          },
-          "win_rate_by_session": {
-            "asian": 0.1429,
-            "london": 0.7143,
-            "us": 0.2353
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 55,
-              "wins": 19,
-              "net": -319.58
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "0": {
-              "trades": 3,
-              "wins": 1,
-              "net_profit": -11.07,
-              "win_rate": 0.3333
-            },
-            "1": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -103.59,
-              "win_rate": 0.0
-            },
-            "2": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -50.76,
-              "win_rate": 0.0
-            },
-            "4": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -10.54,
-              "win_rate": 0.0
-            },
-            "12": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -2.3,
-              "win_rate": 0.0
-            },
-            "13": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 0.57,
-              "win_rate": 1.0
-            },
-            "14": {
-              "trades": 5,
-              "wins": 3,
-              "net_profit": 40.07,
-              "win_rate": 0.6
-            },
-            "15": {
-              "trades": 6,
-              "wins": 6,
-              "net_profit": 4.81,
-              "win_rate": 1.0
-            },
-            "18": {
-              "trades": 9,
-              "wins": 1,
-              "net_profit": -87.27,
-              "win_rate": 0.1111
-            },
-            "19": {
-              "trades": 7,
-              "wins": 3,
-              "net_profit": -13.55,
-              "win_rate": 0.4286
-            },
-            "20": {
-              "trades": 7,
-              "wins": 1,
-              "net_profit": -38.08,
-              "win_rate": 0.1429
-            },
-            "21": {
-              "trades": 8,
-              "wins": 2,
-              "net_profit": 2.0,
-              "win_rate": 0.25
-            },
-            "22": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -4.27,
-              "win_rate": 0.5
-            },
-            "23": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -45.6,
-              "win_rate": 0.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 11,
-              "wins": 5,
-              "net_profit": 15.23,
-              "win_rate": 0.4545
-            },
-            "Tue": {
-              "trades": 11,
-              "wins": 4,
-              "net_profit": 2.11,
-              "win_rate": 0.3636
-            },
-            "Wed": {
-              "trades": 16,
-              "wins": 1,
-              "net_profit": -90.85,
-              "win_rate": 0.0625
-            },
-            "Thu": {
-              "trades": 14,
-              "wins": 9,
-              "net_profit": -91.72,
-              "win_rate": 0.6429
-            },
-            "Fri": {
-              "trades": 3,
-              "wins": 0,
-              "net_profit": -154.35,
-              "win_rate": 0.0
-            }
-          },
-          "by_session": {
-            "asian": {
-              "trades": 7,
-              "wins": 1,
-              "net_profit": -175.96,
-              "win_rate": 0.1429
-            },
-            "london": {
-              "trades": 14,
-              "wins": 10,
-              "net_profit": 43.15,
-              "win_rate": 0.7143
-            },
-            "us": {
-              "trades": 34,
-              "wins": 8,
-              "net_profit": -186.77,
-              "win_rate": 0.2353
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 4,
-        "position_detail": [
-          {
-            "ticket": 481417155,
-            "symbol": "USDCHF",
-            "type": "SELL",
-            "volume": 0.02,
-            "open_price": 0.81077,
-            "current_price": 0.80956,
-            "sl": 0.0,
-            "tp": 0.0,
-            "swap": 0.0,
-            "profit": 3.09,
-            "open_time": "2026-06-25 07:24",
-            "duration": "8h 51m",
-            "magic": 200200,
-            "comment": "Macd_USDCHF",
-            "stale": false
-          },
-          {
-            "ticket": 481417429,
-            "symbol": "USDCAD",
-            "type": "SELL",
-            "volume": 0.02,
-            "open_price": 1.42282,
-            "current_price": 1.41856,
-            "sl": 0.0,
-            "tp": 0.0,
-            "swap": 0.0,
-            "profit": 6.15,
-            "open_time": "2026-06-25 07:25",
-            "duration": "8h 50m",
-            "magic": 200200,
-            "comment": "Macd_USDCAD",
-            "stale": false
-          },
-          {
-            "ticket": 481418027,
-            "symbol": "NZDUSD",
-            "type": "SELL",
-            "volume": 0.29,
-            "open_price": 0.56461,
-            "current_price": 0.56589,
-            "sl": 0.5663,
-            "tp": 0.55783,
-            "swap": 0.0,
-            "profit": -38.57,
-            "open_time": "2026-06-25 07:28",
-            "duration": "8h 47m",
-            "magic": 200100,
-            "comment": "Bollinger_NZDUSD",
-            "stale": false
-          },
-          {
-            "ticket": 481439428,
-            "symbol": "AUDUSD",
-            "type": "BUY",
-            "volume": 0.3,
-            "open_price": 0.68997,
-            "current_price": 0.69235,
-            "sl": 0.68832,
-            "tp": 0.69658,
-            "swap": 0.0,
-            "profit": 72.3,
-            "open_time": "2026-06-25 08:15",
-            "duration": "8h 0m",
-            "magic": 200200,
-            "comment": "Macd_AUDUSD",
-            "stale": false
-          }
-        ],
-        "total_trade_count": 62
-      },
-      "AUDUSD": {
-        "pair": "AUDUSD",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "AUDUSD",
-          "total_trades": 9,
-          "wins": 1,
-          "losses": 8,
-          "win_rate": 0.1111,
-          "gross_profit": 1.54,
-          "gross_loss": 149.39,
-          "net_profit": -147.85,
-          "profit_factor": 0.0103,
-          "avg_win": 1.54,
-          "avg_loss": 18.67,
-          "max_consecutive_wins": 1,
-          "max_consecutive_losses": 6,
-          "max_drawdown_pct": 1.3066,
-          "sharpe_ratio": -18.705,
-          "expectancy": -0.8797,
-          "expectancy_ratio": 0.0103,
-          "avg_bars_held": 2.25,
-          "avg_duration_minutes": 135.0,
-          "r_multiple_avg": -0.8797,
-          "profit_per_day": -29.42,
-          "best_trade": {
-            "position_id": 481346671,
-            "symbol": "AUDUSD",
-            "type": "BUY",
-            "volume": 0.02,
-            "entry_price": 0.68926,
-            "exit_price": 0.69008,
-            "open_time": "2026-06-25 05:10",
-            "close_time": "2026-06-25 07:24",
-            "profit": 1.64,
-            "swap": 0.0,
-            "commission": -0.1,
-            "net_profit": 1.54,
-            "duration": "2h 14m",
-            "magic": 200200,
-            "comment": "Macd_AUDUSD"
-          },
-          "worst_trade": {
-            "position_id": 481417995,
-            "symbol": "AUDUSD",
-            "type": "SELL",
-            "volume": 0.29,
-            "entry_price": 0.69019,
-            "exit_price": 0.69189,
-            "open_time": "2026-06-25 07:28",
-            "close_time": "2026-06-25 18:24",
-            "profit": -49.3,
-            "swap": 0.0,
-            "commission": -1.46,
-            "net_profit": -50.76,
-            "duration": "10h 56m",
-            "magic": 200100,
-            "comment": "Bollinger_AUDUSD"
-          },
-          "win_rate_by_session": {
-            "asian": 0.0,
-            "london": 1.0,
-            "us": 0.0
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 8,
-              "wins": 1,
-              "net": -147.1
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "0": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -15.6,
-              "win_rate": 0.0
-            },
-            "2": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -50.76,
-              "win_rate": 0.0
-            },
-            "15": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.54,
-              "win_rate": 1.0
-            },
-            "18": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -17.42,
-              "win_rate": 0.0
-            },
-            "19": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -16.01,
-              "win_rate": 0.0
-            },
-            "20": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -32.34,
-              "win_rate": 0.0
-            },
-            "22": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -16.51,
-              "win_rate": 0.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -17.42,
-              "win_rate": 0.0
-            },
-            "Tue": {
-              "trades": 3,
-              "wins": 0,
-              "net_profit": -48.11,
-              "win_rate": 0.0
-            },
-            "Wed": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -32.35,
-              "win_rate": 0.0
-            },
-            "Thu": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.54,
-              "win_rate": 1.0
-            },
-            "Fri": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -50.76,
-              "win_rate": 0.0
-            }
-          },
-          "by_session": {
-            "asian": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -66.36,
-              "win_rate": 0.0
-            },
-            "london": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.54,
-              "win_rate": 1.0
-            },
-            "us": {
-              "trades": 5,
-              "wins": 0,
-              "net_profit": -82.28,
-              "win_rate": 0.0
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 1,
-        "position_detail": [
-          {
-            "ticket": 481439428,
-            "symbol": "AUDUSD",
-            "type": "BUY",
-            "volume": 0.3,
-            "open_price": 0.68997,
-            "current_price": 0.69235,
-            "sl": 0.68832,
-            "tp": 0.69658,
-            "swap": 0.0,
-            "profit": 72.3,
-            "open_time": "2026-06-25 08:15",
-            "duration": "8h 0m",
-            "magic": 200200,
-            "comment": "Macd_AUDUSD",
-            "stale": false
-          }
-        ],
-        "total_trade_count": 9
-      },
-      "GBPUSD": {
-        "pair": "GBPUSD",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "GBPUSD",
-          "total_trades": 6,
-          "wins": 3,
-          "losses": 3,
-          "win_rate": 0.5,
-          "gross_profit": 57.09,
-          "gross_loss": 83.4,
-          "net_profit": -26.31,
-          "profit_factor": 0.6845,
-          "avg_win": 19.03,
-          "avg_loss": 27.8,
-          "max_consecutive_wins": 2,
-          "max_consecutive_losses": 1,
-          "max_drawdown_pct": 0.5255,
-          "sharpe_ratio": -2.4015,
-          "expectancy": -0.1577,
-          "expectancy_ratio": 0.6845,
-          "avg_bars_held": 2.51,
-          "avg_duration_minutes": 150.5,
-          "r_multiple_avg": -0.1577,
-          "profit_per_day": -6.58,
-          "best_trade": {
-            "position_id": 478198816,
-            "symbol": "GBPUSD",
-            "type": "BUY",
-            "volume": 0.11,
-            "entry_price": 1.32005,
-            "exit_price": 1.32407,
-            "open_time": "2026-06-22 11:25",
-            "close_time": "2026-06-22 13:09",
-            "profit": 44.22,
-            "swap": 0.0,
-            "commission": -0.56,
-            "net_profit": 43.66,
-            "duration": "1h 43m",
-            "magic": 780003,
-            "comment": "MSB_MACD"
-          },
-          "worst_trade": {
-            "position_id": 481503549,
-            "symbol": "GBPUSD",
-            "type": "SELL",
-            "volume": 0.2,
-            "entry_price": 1.31776,
-            "exit_price": 1.32024,
-            "open_time": "2026-06-25 10:04",
-            "close_time": "2026-06-25 17:03",
-            "profit": -49.6,
-            "swap": 0.0,
-            "commission": -1.0,
-            "net_profit": -50.6,
-            "duration": "6h 59m",
-            "magic": 200200,
-            "comment": "Macd_GBPUSD"
-          },
-          "win_rate_by_session": {
-            "asian": 0.0,
-            "london": 1.0,
-            "us": 0.5
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 6,
-              "wins": 3,
-              "net": -26.31
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "1": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -50.6,
-              "win_rate": 0.0
-            },
-            "15": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.22,
-              "win_rate": 1.0
-            },
-            "18": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -32.8,
-              "win_rate": 0.0
-            },
-            "21": {
-              "trades": 2,
-              "wins": 2,
-              "net_profit": 55.87,
-              "win_rate": 1.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": 26.38,
-              "win_rate": 0.5
-            },
-            "Tue": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -3.31,
-              "win_rate": 0.5
-            },
-            "Thu": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.22,
-              "win_rate": 1.0
-            },
-            "Fri": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -50.6,
-              "win_rate": 0.0
-            }
-          },
-          "by_session": {
-            "asian": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -50.6,
-              "win_rate": 0.0
-            },
-            "london": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.22,
-              "win_rate": 1.0
-            },
-            "us": {
-              "trades": 4,
-              "wins": 2,
-              "net_profit": 23.07,
-              "win_rate": 0.5
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 0,
-        "position_detail": [],
-        "total_trade_count": 6
-      },
-      "NZDUSD": {
-        "pair": "NZDUSD",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "NZDUSD",
-          "total_trades": 9,
-          "wins": 3,
-          "losses": 6,
-          "win_rate": 0.3333,
-          "gross_profit": 26.6,
-          "gross_loss": 107.09,
-          "net_profit": -80.49,
-          "profit_factor": 0.2484,
-          "avg_win": 8.87,
-          "avg_loss": 17.85,
-          "max_consecutive_wins": 2,
-          "max_consecutive_losses": 4,
-          "max_drawdown_pct": 1.0576,
-          "sharpe_ratio": -8.29,
-          "expectancy": -0.5011,
-          "expectancy_ratio": 0.2484,
-          "avg_bars_held": 1.87,
-          "avg_duration_minutes": 112.25,
-          "r_multiple_avg": -0.5011,
-          "profit_per_day": -19.94,
-          "best_trade": {
-            "position_id": 478148861,
-            "symbol": "NZDUSD",
-            "type": "SELL",
-            "volume": 0.31,
-            "entry_price": 0.57276,
-            "exit_price": 0.57229,
-            "open_time": "2026-06-22 10:21",
-            "close_time": "2026-06-22 11:21",
-            "profit": 14.57,
-            "swap": 0.0,
-            "commission": -1.56,
-            "net_profit": 13.01,
-            "duration": "1h 0m",
-            "magic": 780008,
-            "comment": "MSB_MACD"
-          },
-          "worst_trade": {
-            "position_id": 481438833,
-            "symbol": "NZDUSD",
-            "type": "BUY",
-            "volume": 0.3,
-            "entry_price": 0.56474,
-            "exit_price": 0.56327,
-            "open_time": "2026-06-25 08:13",
-            "close_time": "2026-06-25 15:30",
-            "profit": -44.1,
-            "swap": 0.0,
-            "commission": -1.5,
-            "net_profit": -45.6,
-            "duration": "7h 16m",
-            "magic": 200200,
-            "comment": "Macd_NZDUSD"
-          },
-          "win_rate_by_session": {
-            "asian": 0.0,
-            "london": 1.0,
-            "us": 0.3333
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 8,
-              "wins": 3,
-              "net": -79.76
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "4": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -10.54,
-              "win_rate": 0.0
-            },
-            "15": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.06,
-              "win_rate": 1.0
-            },
-            "18": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -33.74,
-              "win_rate": 0.0
-            },
-            "19": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 13.01,
-              "win_rate": 1.0
-            },
-            "20": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -3.95,
-              "win_rate": 0.5
-            },
-            "23": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -45.6,
-              "win_rate": 0.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 2,
-              "wins": 2,
-              "net_profit": 25.54,
-              "win_rate": 1.0
-            },
-            "Tue": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -16.52,
-              "win_rate": 0.0
-            },
-            "Wed": {
-              "trades": 3,
-              "wins": 0,
-              "net_profit": -44.24,
-              "win_rate": 0.0
-            },
-            "Thu": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -44.54,
-              "win_rate": 0.5
-            }
-          },
-          "by_session": {
-            "asian": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -10.54,
-              "win_rate": 0.0
-            },
-            "london": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 1.06,
-              "win_rate": 1.0
-            },
-            "us": {
-              "trades": 6,
-              "wins": 2,
-              "net_profit": -70.28,
-              "win_rate": 0.3333
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 1,
-        "position_detail": [
-          {
-            "ticket": 481418027,
-            "symbol": "NZDUSD",
-            "type": "SELL",
-            "volume": 0.29,
-            "open_price": 0.56461,
-            "current_price": 0.56589,
-            "sl": 0.5663,
-            "tp": 0.55783,
-            "swap": 0.0,
-            "profit": -38.57,
-            "open_time": "2026-06-25 07:28",
-            "duration": "8h 47m",
-            "magic": 200100,
-            "comment": "Bollinger_NZDUSD",
-            "stale": false
-          }
-        ],
-        "total_trade_count": 9
-      },
-      "USDCAD": {
-        "pair": "USDCAD",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "USDCAD",
-          "total_trades": 5,
-          "wins": 2,
-          "losses": 3,
-          "win_rate": 0.4,
-          "gross_profit": 10.43,
-          "gross_loss": 23.78,
-          "net_profit": -13.35,
-          "profit_factor": 0.4386,
-          "avg_win": 5.22,
-          "avg_loss": 7.93,
-          "max_consecutive_wins": 1,
-          "max_consecutive_losses": 1,
-          "max_drawdown_pct": 0.1203,
-          "sharpe_ratio": -5.1108,
-          "expectancy": -0.3368,
-          "expectancy_ratio": 0.4386,
-          "avg_bars_held": 0.78,
-          "avg_duration_minutes": 46.75,
-          "r_multiple_avg": -0.3368,
-          "profit_per_day": -3.32,
-          "best_trade": {
-            "position_id": 479215355,
-            "symbol": "USDCAD",
-            "type": "SELL",
-            "volume": 0.27,
-            "entry_price": 1.41791,
-            "exit_price": 1.41732,
-            "open_time": "2026-06-23 10:00",
-            "close_time": "2026-06-23 10:31",
-            "profit": 11.24,
-            "swap": 0.0,
-            "commission": -1.36,
-            "net_profit": 9.88,
-            "duration": "0h 31m",
-            "magic": 780006,
-            "comment": "MSB_MACD"
-          },
-          "worst_trade": {
-            "position_id": 480348329,
-            "symbol": "USDCAD",
-            "type": "SELL",
-            "volume": 0.28,
-            "entry_price": 1.42216,
-            "exit_price": 1.4227,
-            "open_time": "2026-06-24 10:20",
-            "close_time": "2026-06-24 10:40",
-            "profit": -10.63,
-            "swap": 0.0,
-            "commission": -1.4,
-            "net_profit": -12.03,
-            "duration": "0h 20m",
-            "magic": 780006,
-            "comment": "MSB_MACD"
-          },
-          "win_rate_by_session": {
-            "asian": 0.0,
-            "london": 1.0,
-            "us": 0.3333
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 4,
-              "wins": 2,
-              "net": -13.3
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "15": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 0.55,
-              "win_rate": 1.0
-            },
-            "18": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -2.15,
-              "win_rate": 0.5
-            },
-            "19": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -11.7,
-              "win_rate": 0.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -11.7,
-              "win_rate": 0.0
-            },
-            "Tue": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 9.88,
-              "win_rate": 1.0
-            },
-            "Wed": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -12.03,
-              "win_rate": 0.0
-            },
-            "Thu": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 0.55,
-              "win_rate": 1.0
-            }
-          },
-          "by_session": {
-            "london": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 0.55,
-              "win_rate": 1.0
-            },
-            "us": {
-              "trades": 3,
-              "wins": 1,
-              "net_profit": -13.85,
-              "win_rate": 0.3333
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 1,
-        "position_detail": [
-          {
-            "ticket": 481417429,
-            "symbol": "USDCAD",
-            "type": "SELL",
-            "volume": 0.02,
-            "open_price": 1.42282,
-            "current_price": 1.41856,
-            "sl": 0.0,
-            "tp": 0.0,
-            "swap": 0.0,
-            "profit": 6.15,
-            "open_time": "2026-06-25 07:25",
-            "duration": "8h 50m",
-            "magic": 200200,
-            "comment": "Macd_USDCAD",
-            "stale": false
-          }
-        ],
-        "total_trade_count": 5
-      },
-      "USDCHF": {
-        "pair": "USDCHF",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "USDCHF",
-          "total_trades": 9,
-          "wins": 4,
-          "losses": 5,
-          "win_rate": 0.4444,
-          "gross_profit": 59.61,
-          "gross_loss": 89.63,
-          "net_profit": -30.02,
-          "profit_factor": 0.6651,
-          "avg_win": 14.9,
-          "avg_loss": 17.93,
-          "max_consecutive_wins": 3,
-          "max_consecutive_losses": 3,
-          "max_drawdown_pct": 0.6977,
-          "sharpe_ratio": -2.3966,
-          "expectancy": -0.1861,
-          "expectancy_ratio": 0.6651,
-          "avg_bars_held": 2.11,
-          "avg_duration_minutes": 126.5,
-          "r_multiple_avg": -0.1861,
-          "profit_per_day": -7.71,
-          "best_trade": {
-            "position_id": 479368313,
-            "symbol": "USDCHF",
-            "type": "SELL",
-            "volume": 0.33,
-            "entry_price": 0.81007,
-            "exit_price": 0.80942,
-            "open_time": "2026-06-23 12:35",
-            "close_time": "2026-06-23 16:13",
-            "profit": 26.5,
-            "swap": 0.0,
-            "commission": -1.66,
-            "net_profit": 24.84,
-            "duration": "3h 38m",
-            "magic": 780005,
-            "comment": "MSB_MACD"
-          },
-          "worst_trade": {
-            "position_id": 481436111,
-            "symbol": "USDCHF",
-            "type": "SELL",
-            "volume": 0.24,
-            "entry_price": 0.8111,
-            "exit_price": 0.81274,
-            "open_time": "2026-06-25 08:07",
-            "close_time": "2026-06-25 13:57",
-            "profit": -48.43,
-            "swap": 0.0,
-            "commission": -1.2,
-            "net_profit": -49.63,
-            "duration": "5h 49m",
-            "magic": 200100,
-            "comment": "Bollinger_USDCHF"
-          },
-          "win_rate_by_session": {
-            "asian": 0.5,
-            "london": 0.0,
-            "us": 0.5
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 6,
-              "wins": 3,
-              "net": -30.86
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "0": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": 4.53,
-              "win_rate": 0.5
-            },
-            "19": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": 2.0,
-              "win_rate": 0.5
-            },
-            "21": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -49.63,
-              "win_rate": 0.0
-            },
-            "22": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 12.24,
-              "win_rate": 1.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -7.35,
-              "win_rate": 0.5
-            },
-            "Tue": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 21.59,
-              "win_rate": 1.0
-            },
-            "Wed": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": 4.53,
-              "win_rate": 0.5
-            },
-            "Thu": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -49.63,
-              "win_rate": 0.0
-            }
-          },
-          "by_session": {
-            "asian": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": 4.53,
-              "win_rate": 0.5
-            },
-            "us": {
-              "trades": 4,
-              "wins": 2,
-              "net_profit": -35.39,
-              "win_rate": 0.5
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 1,
-        "position_detail": [
-          {
-            "ticket": 481417155,
-            "symbol": "USDCHF",
-            "type": "SELL",
-            "volume": 0.02,
-            "open_price": 0.81077,
-            "current_price": 0.80956,
-            "sl": 0.0,
-            "tp": 0.0,
-            "swap": 0.0,
-            "profit": 3.09,
-            "open_time": "2026-06-25 07:24",
-            "duration": "8h 51m",
-            "magic": 200200,
-            "comment": "Macd_USDCHF",
-            "stale": false
-          }
-        ],
-        "total_trade_count": 9
-      },
-      "USDJPY": {
-        "pair": "USDJPY",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "USDJPY",
-          "total_trades": 7,
-          "wins": 3,
-          "losses": 4,
-          "win_rate": 0.4286,
-          "gross_profit": 0.74,
-          "gross_loss": 54.57,
-          "net_profit": -53.83,
-          "profit_factor": 0.0136,
-          "avg_win": 0.25,
-          "avg_loss": 13.64,
-          "max_consecutive_wins": 2,
-          "max_consecutive_losses": 3,
-          "max_drawdown_pct": 0.5413,
-          "sharpe_ratio": -6.5996,
-          "expectancy": -0.5637,
-          "expectancy_ratio": 0.0136,
-          "avg_bars_held": 2.03,
-          "avg_duration_minutes": 121.71,
-          "r_multiple_avg": -0.5637,
-          "profit_per_day": -13.46,
-          "best_trade": {
-            "position_id": 478135063,
-            "symbol": "USDJPY",
-            "type": "BUY",
-            "volume": 0.01,
-            "entry_price": 161.681,
-            "exit_price": 161.739,
-            "open_time": "2026-06-22 10:00",
-            "close_time": "2026-06-22 11:21",
-            "profit": 0.36,
-            "swap": 0.0,
-            "commission": -0.06,
-            "net_profit": 0.3,
-            "duration": "1h 21m",
-            "magic": 780004,
-            "comment": "MSB_SMA"
-          },
-          "worst_trade": {
-            "position_id": 481418051,
-            "symbol": "USDJPY",
-            "type": "BUY",
-            "volume": 0.69,
-            "entry_price": 161.718,
-            "exit_price": 161.602,
-            "open_time": "2026-06-25 07:28",
-            "close_time": "2026-06-25 17:05",
-            "profit": -49.53,
-            "swap": 0.0,
-            "commission": -3.46,
-            "net_profit": -52.99,
-            "duration": "9h 36m",
-            "magic": 200200,
-            "comment": "Macd_USDJPY"
-          },
-          "win_rate_by_session": {
-            "asian": 0.0,
-            "london": 1.0,
-            "us": 0.25
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 7,
-              "wins": 3,
-              "net": -53.83
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "1": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -52.99,
-              "win_rate": 0.0
-            },
-            "15": {
-              "trades": 2,
-              "wins": 2,
-              "net_profit": 0.44,
-              "win_rate": 1.0
-            },
-            "18": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -1.16,
-              "win_rate": 0.0
-            },
-            "19": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 0.3,
-              "win_rate": 1.0
-            },
-            "20": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -0.42,
-              "win_rate": 0.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 2,
-              "wins": 1,
-              "net_profit": -0.12,
-              "win_rate": 0.5
-            },
-            "Tue": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -1.16,
-              "win_rate": 0.0
-            },
-            "Thu": {
-              "trades": 2,
-              "wins": 2,
-              "net_profit": 0.44,
-              "win_rate": 1.0
-            },
-            "Fri": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -52.99,
-              "win_rate": 0.0
-            }
-          },
-          "by_session": {
-            "asian": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -52.99,
-              "win_rate": 0.0
-            },
-            "london": {
-              "trades": 2,
-              "wins": 2,
-              "net_profit": 0.44,
-              "win_rate": 1.0
-            },
-            "us": {
-              "trades": 4,
-              "wins": 1,
-              "net_profit": -1.28,
-              "win_rate": 0.25
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 0,
-        "position_detail": [],
-        "total_trade_count": 7
-      },
-      "XAUUSD": {
-        "pair": "XAUUSD",
-        "timestamp": "2026-06-25T16:15:51.155253Z",
-        "kpis": {
-          "pair": "XAUUSD",
-          "total_trades": 16,
-          "wins": 4,
-          "losses": 12,
-          "win_rate": 0.25,
-          "gross_profit": 41.86,
-          "gross_loss": 10.28,
-          "net_profit": 31.58,
-          "profit_factor": 4.072,
-          "avg_win": 10.46,
-          "avg_loss": 0.86,
-          "max_consecutive_wins": 1,
-          "max_consecutive_losses": 9,
-          "max_drawdown_pct": 0.0915,
-          "sharpe_ratio": 3.2024,
-          "expectancy": 2.304,
-          "expectancy_ratio": 4.072,
-          "avg_bars_held": 0.69,
-          "avg_duration_minutes": 41.31,
-          "r_multiple_avg": 2.304,
-          "profit_per_day": 7.9,
-          "best_trade": {
-            "position_id": 478712632,
-            "symbol": "XAUUSD",
-            "type": "SELL",
-            "volume": 0.01,
-            "entry_price": 4184.5,
-            "exit_price": 4144.54,
-            "open_time": "2026-06-22 19:00",
-            "close_time": "2026-06-23 06:01",
-            "profit": 39.96,
-            "swap": -0.16,
-            "commission": -0.06,
-            "net_profit": 39.74,
-            "duration": "11h 1m",
-            "magic": 777888,
-            "comment": "PHOENIX_H1"
-          },
-          "worst_trade": {
-            "position_id": 481310140,
-            "symbol": "XAUUSD",
-            "type": "BUY",
-            "volume": 0.01,
-            "entry_price": 3986.14,
-            "exit_price": 3984.0,
-            "open_time": "2026-06-25 04:10",
-            "close_time": "2026-06-25 04:11",
-            "profit": -2.14,
-            "swap": 0.0,
-            "commission": -0.06,
-            "net_profit": -2.2,
-            "duration": "0h 0m",
-            "magic": 999001,
-            "comment": "TEST_BOT"
-          },
-          "win_rate_by_session": {
-            "asian": 0.0,
-            "london": 0.5,
-            "us": 0.0
-          },
-          "monthly_breakdown": {
-            "2026-06": {
-              "trades": 16,
-              "wins": 4,
-              "net": 31.58
-            }
-          }
-        },
-        "time_analysis": {
-          "by_hour": {
-            "12": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -2.3,
-              "win_rate": 0.0
-            },
-            "13": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 0.57,
-              "win_rate": 1.0
-            },
-            "14": {
-              "trades": 5,
-              "wins": 3,
-              "net_profit": 40.07,
-              "win_rate": 0.6
-            },
-            "19": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -1.15,
-              "win_rate": 0.0
-            },
-            "20": {
-              "trades": 2,
-              "wins": 0,
-              "net_profit": -1.37,
-              "win_rate": 0.0
-            },
-            "21": {
-              "trades": 5,
-              "wins": 0,
-              "net_profit": -4.24,
-              "win_rate": 0.0
-            }
-          },
-          "by_day": {
-            "Mon": {
-              "trades": 1,
-              "wins": 0,
-              "net_profit": -0.1,
-              "win_rate": 0.0
-            },
-            "Tue": {
-              "trades": 1,
-              "wins": 1,
-              "net_profit": 39.74,
-              "win_rate": 1.0
-            },
-            "Wed": {
-              "trades": 8,
-              "wins": 0,
-              "net_profit": -6.76,
-              "win_rate": 0.0
-            },
-            "Thu": {
-              "trades": 6,
-              "wins": 3,
-              "net_profit": -1.3,
-              "win_rate": 0.5
-            }
-          },
-          "by_session": {
-            "london": {
-              "trades": 8,
-              "wins": 4,
-              "net_profit": 38.34,
-              "win_rate": 0.5
-            },
-            "us": {
-              "trades": 8,
-              "wins": 0,
-              "net_profit": -6.76,
-              "win_rate": 0.0
-            }
-          }
-        },
-        "market_regime": {
-          "overall_volatility": 0.0,
-          "regimes": {},
-          "regime_transitions": 0
-        },
-        "open_positions": 0,
-        "position_detail": [],
-        "total_trade_count": 16
-      }
-    }
-  },
-  {
     "timestamp": "2026-06-25T23:13:07.127257Z",
     "reports": {
       "overall": {
@@ -37334,6 +35852,393 @@
       "EURUSD": {
         "pair": "EURUSD",
         "timestamp": "2026-07-26T23:21:26.507493Z",
+        "kpis": {
+          "pair": "EURUSD",
+          "total_trades": 11,
+          "wins": 2,
+          "losses": 9,
+          "win_rate": 0.1818,
+          "gross_profit": 435.88,
+          "gross_loss": 7327.76,
+          "net_profit": -6891.88,
+          "profit_factor": 0.0595,
+          "avg_win": 217.94,
+          "avg_loss": 814.2,
+          "max_consecutive_wins": 2,
+          "max_consecutive_losses": 6,
+          "max_drawdown_pct": 5.8726,
+          "sharpe_ratio": -17.5299,
+          "expectancy": -0.7695,
+          "expectancy_ratio": 0.0595,
+          "avg_bars_held": 3.44,
+          "avg_duration_minutes": 206.55,
+          "r_multiple_avg": -0.7695,
+          "profit_per_day": -984.55,
+          "best_trade": {
+            "position_id": 498122833,
+            "symbol": "EURUSD",
+            "type": "SELL",
+            "volume": 8.07,
+            "entry_price": 1.14477,
+            "exit_price": 1.14418,
+            "open_time": "2026-07-17 10:53",
+            "close_time": "2026-07-17 18:31",
+            "profit": 476.13,
+            "swap": 0.0,
+            "commission": -40.36,
+            "net_profit": 435.77,
+            "duration": "7h 38m",
+            "magic": 780012,
+            "comment": "PropfirmPass"
+          },
+          "worst_trade": {
+            "position_id": 496195889,
+            "symbol": "EURUSD",
+            "type": "BUY",
+            "volume": 8.33,
+            "entry_price": 1.14241,
+            "exit_price": 1.14116,
+            "open_time": "2026-07-15 12:26",
+            "close_time": "2026-07-15 13:34",
+            "profit": -1041.25,
+            "swap": 0.0,
+            "commission": -41.66,
+            "net_profit": -1082.91,
+            "duration": "1h 8m",
+            "magic": 780012,
+            "comment": "PropfirmPass"
+          },
+          "win_rate_by_session": {
+            "asian": 0.25,
+            "london": 0.5,
+            "us": 0.0
+          },
+          "monthly_breakdown": {
+            "2026-07": {
+              "trades": 11,
+              "wins": 2,
+              "net": -6891.88
+            }
+          }
+        },
+        "time_analysis": {
+          "by_hour": {
+            "1": {
+              "trades": 2,
+              "wins": 0,
+              "net_profit": -2105.78,
+              "win_rate": 0.0
+            },
+            "2": {
+              "trades": 1,
+              "wins": 1,
+              "net_profit": 435.77,
+              "win_rate": 1.0
+            },
+            "3": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1051.36,
+              "win_rate": 0.0
+            },
+            "12": {
+              "trades": 1,
+              "wins": 1,
+              "net_profit": 0.11,
+              "win_rate": 1.0
+            },
+            "13": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1028.53,
+              "win_rate": 0.0
+            },
+            "19": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1036.21,
+              "win_rate": 0.0
+            },
+            "21": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1082.91,
+              "win_rate": 0.0
+            },
+            "23": {
+              "trades": 3,
+              "wins": 0,
+              "net_profit": -1022.97,
+              "win_rate": 0.0
+            }
+          },
+          "by_day": {
+            "Mon": {
+              "trades": 4,
+              "wins": 1,
+              "net_profit": -1022.86,
+              "win_rate": 0.25
+            },
+            "Tue": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1034.58,
+              "win_rate": 0.0
+            },
+            "Wed": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1082.91,
+              "win_rate": 0.0
+            },
+            "Thu": {
+              "trades": 3,
+              "wins": 0,
+              "net_profit": -3135.94,
+              "win_rate": 0.0
+            },
+            "Fri": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1051.36,
+              "win_rate": 0.0
+            },
+            "Sat": {
+              "trades": 1,
+              "wins": 1,
+              "net_profit": 435.77,
+              "win_rate": 1.0
+            }
+          },
+          "by_session": {
+            "asian": {
+              "trades": 4,
+              "wins": 1,
+              "net_profit": -2721.37,
+              "win_rate": 0.25
+            },
+            "london": {
+              "trades": 2,
+              "wins": 1,
+              "net_profit": -1028.42,
+              "win_rate": 0.5
+            },
+            "us": {
+              "trades": 5,
+              "wins": 0,
+              "net_profit": -3142.09,
+              "win_rate": 0.0
+            }
+          }
+        },
+        "market_regime": {
+          "overall_volatility": 0.0,
+          "regimes": {},
+          "regime_transitions": 0
+        },
+        "open_positions": 0,
+        "position_detail": [],
+        "total_trade_count": 11
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-27T23:16:05.299665Z",
+    "reports": {
+      "overall": {
+        "pair": "OVERALL",
+        "timestamp": "2026-07-27T23:16:05.268105Z",
+        "kpis": {
+          "pair": "OVERALL",
+          "total_trades": 12,
+          "wins": 3,
+          "losses": 9,
+          "win_rate": 0.25,
+          "gross_profit": 100435.88,
+          "gross_loss": 7327.76,
+          "net_profit": 93108.12,
+          "profit_factor": 13.7062,
+          "avg_win": 33478.63,
+          "avg_loss": 814.2,
+          "max_consecutive_wins": 2,
+          "max_consecutive_losses": 6,
+          "max_drawdown_pct": 5.8726,
+          "sharpe_ratio": 4.4279,
+          "expectancy": 9.5297,
+          "expectancy_ratio": 13.7062,
+          "avg_bars_held": 3.44,
+          "avg_duration_minutes": 206.55,
+          "r_multiple_avg": 9.5297,
+          "profit_per_day": -984.55,
+          "best_trade": {
+            "position_id": 0,
+            "symbol": "",
+            "type": "SELL",
+            "volume": 0.0,
+            "entry_price": 0.0,
+            "exit_price": null,
+            "open_time": "2026-07-15 03:21",
+            "close_time": "OPEN",
+            "profit": 100000.0,
+            "swap": 0.0,
+            "commission": 0.0,
+            "net_profit": 100000.0,
+            "duration": "",
+            "magic": 0,
+            "comment": "Initial account balance"
+          },
+          "worst_trade": {
+            "position_id": 496195889,
+            "symbol": "EURUSD",
+            "type": "BUY",
+            "volume": 8.33,
+            "entry_price": 1.14241,
+            "exit_price": 1.14116,
+            "open_time": "2026-07-15 12:26",
+            "close_time": "2026-07-15 13:34",
+            "profit": -1041.25,
+            "swap": 0.0,
+            "commission": -41.66,
+            "net_profit": -1082.91,
+            "duration": "1h 8m",
+            "magic": 780012,
+            "comment": "PropfirmPass"
+          },
+          "win_rate_by_session": {
+            "asian": 0.25,
+            "london": 0.5,
+            "us": 0.0
+          },
+          "monthly_breakdown": {
+            "2026-07": {
+              "trades": 11,
+              "wins": 2,
+              "net": -6891.88
+            }
+          }
+        },
+        "time_analysis": {
+          "by_hour": {
+            "1": {
+              "trades": 2,
+              "wins": 0,
+              "net_profit": -2105.78,
+              "win_rate": 0.0
+            },
+            "2": {
+              "trades": 1,
+              "wins": 1,
+              "net_profit": 435.77,
+              "win_rate": 1.0
+            },
+            "3": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1051.36,
+              "win_rate": 0.0
+            },
+            "12": {
+              "trades": 1,
+              "wins": 1,
+              "net_profit": 0.11,
+              "win_rate": 1.0
+            },
+            "13": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1028.53,
+              "win_rate": 0.0
+            },
+            "19": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1036.21,
+              "win_rate": 0.0
+            },
+            "21": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1082.91,
+              "win_rate": 0.0
+            },
+            "23": {
+              "trades": 3,
+              "wins": 0,
+              "net_profit": -1022.97,
+              "win_rate": 0.0
+            }
+          },
+          "by_day": {
+            "Mon": {
+              "trades": 4,
+              "wins": 1,
+              "net_profit": -1022.86,
+              "win_rate": 0.25
+            },
+            "Tue": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1034.58,
+              "win_rate": 0.0
+            },
+            "Wed": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1082.91,
+              "win_rate": 0.0
+            },
+            "Thu": {
+              "trades": 3,
+              "wins": 0,
+              "net_profit": -3135.94,
+              "win_rate": 0.0
+            },
+            "Fri": {
+              "trades": 1,
+              "wins": 0,
+              "net_profit": -1051.36,
+              "win_rate": 0.0
+            },
+            "Sat": {
+              "trades": 1,
+              "wins": 1,
+              "net_profit": 435.77,
+              "win_rate": 1.0
+            }
+          },
+          "by_session": {
+            "asian": {
+              "trades": 4,
+              "wins": 1,
+              "net_profit": -2721.37,
+              "win_rate": 0.25
+            },
+            "london": {
+              "trades": 2,
+              "wins": 1,
+              "net_profit": -1028.42,
+              "win_rate": 0.5
+            },
+            "us": {
+              "trades": 5,
+              "wins": 0,
+              "net_profit": -3142.09,
+              "win_rate": 0.0
+            }
+          }
+        },
+        "market_regime": {
+          "overall_volatility": 0.0,
+          "regimes": {},
+          "regime_transitions": 0
+        },
+        "open_positions": 0,
+        "position_detail": [],
+        "total_trade_count": 12
+      },
+      "EURUSD": {
+        "pair": "EURUSD",
+        "timestamp": "2026-07-27T23:16:05.268105Z",
         "kpis": {
           "pair": "EURUSD",
           "total_trades": 11,
