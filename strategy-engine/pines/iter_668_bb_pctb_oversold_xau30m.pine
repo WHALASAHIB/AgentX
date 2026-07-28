@@ -1,0 +1,49 @@
+//@version=6
+strategy(title="BB %B Oversold Squeeze XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(20, "BB Length", minval=5, maxval=50, step=1)           // sweep: 10-30 step 5
+bb_mult   = input.float(2.0, "BB StdDev", minval=1.0, maxval=3.0, step=0.5)   // sweep: 1.5-3.0 step 0.5
+pctb_threshold = input.float(0.2, "%B Entry Threshold", minval=0.05, maxval=0.5, step=0.05)  // sweep: 0.1-0.4 step 0.05
+trail_atr_mult = input.float(2.0, "Trail ATR Mult", minval=1.0, maxval=4.0, step=0.5)       // sweep: 1.5-3.5 step 0.5
+trail_atr_len  = input.int(14, "Trail ATR Length", minval=7, maxval=28, step=7)             // sweep: 7-21 step 7
+use_ema_trend  = input.bool(true, "Use EMA50 Trend Filter")                                // sweep: true/false
+ema_trend_len  = input.int(50, "Trend EMA Length", minval=20, maxval=100, step=10)         // sweep: 30-70 step 10
+
+//--- indicator calculations
+bb = ta.bb(close, bb_length, bb_mult)
+basis = bb[0]
+upper = bb[2]
+lower = bb[1]
+pctB = (close - lower) / (upper - lower)
+
+atr_val = ta.atr(trail_atr_len)
+ema_trend = ta.ema(close, ema_trend_len)
+
+//--- trend filter
+trend_ok = use_ema_trend ? close > ema_trend : true
+
+//--- entry logic: %B oversold (< threshold) with uptrend
+long_condition = pctB < pctb_threshold and trend_ok
+
+//--- build trailing stop price
+var float trail_stop = na
+var int bar_entry = na
+
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    trail_stop := close - (atr_val * trail_atr_mult)
+    bar_entry := bar_index
+
+//--- trail management
+if strategy.position_size > 0
+    // Trail up: move stop higher if price rises
+    trail_stop := math.max(trail_stop, close - (atr_val * trail_atr_mult))
+    strategy.exit("XL", "Long", stop=trail_stop)
+
+//--- plot
+plot(basis, "BB Middle", color=color.blue)
+plot(upper, "BB Upper", color=color.gray)
+plot(lower, "BB Lower", color=color.gray)
+hline(0.2, "%B=0.2", color=color.green, linestyle=hline.style_dashed)
+hline(0.8, "%B=0.8", color=color.red, linestyle=hline.style_dashed)

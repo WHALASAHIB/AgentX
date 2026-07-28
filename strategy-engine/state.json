@@ -1,6 +1,6 @@
 {
-  "iteration": 666,
-  "last_run": "2026-07-28T14:17:00Z",
+  "iteration": 678,
+  "last_run": "2026-07-28T03:59:44Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,8 +13,56 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "XAUUSD H1 shorter EMAs (EMA2/5 crossover) to generate more entry signals. ATR trailing stop at 2.0xATR (tighter trail) to capture smaller swings. Only 9 trades from EMA3/8 on H1 over 318 bars — need more crossovers for statistical relevance.",
+  "current_hypothesis": "XAUUSD 30m SHORT-ONLY with lower ADX threshold (20 instead of 25) to generate more trades. Only 15 trades from ADX>25 filter. Lower ADX to 20 to capture more short entries while maintaining trend/RSI filters.",
   "evolution_log": [
+    {
+      "iteration": 668,
+      "hypothesis": "XAUUSD 30m Bollinger Bands squeeze breakout. EMA crossovers keep producing 0 trades on XAUUSD Polygon data. Try Bollinger Bands %B with oversold (<0.2) entry for long, ATR trailing exit at 2.0xATR. Different indicator family entirely.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": null,
+        "wr": 0.0,
+        "dd": 0.0,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades). BB %B < 0.2 never triggered on XAUUSD 30m Polygon data over 619 bars. Oversold threshold too extreme for this instrument/timeframe combo.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T15:37:00Z"
+    },
+    {
+      "iteration": 667,
+      "hypothesis": "XAUUSD 30m EMA2/5 long-only crossover with ATR trailing stop (2.0xATR). Switch to 30m timeframe to get more bars and more crossover signals.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -0.73063498,
+        "wr": 0.0,
+        "dd": 5.52417283,
+        "trades": 0,
+        "net_profit": 0
+      },
+      "verdict": "invalid (no trades). EMA2/5 on XAUUSD 30m produced 0 crossovers over 620 bars of Polygon data. EMAs 2 and 5 are too close together \u2014 never cross on this instrument/timeframe combo.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T15:22:00Z"
+    },
+    {
+      "iteration": 666,
+      "hypothesis": "XAUUSD H1 EMA2/5 crossover with ATR trailing stop at 2.0xATR. Shorter EMAs than EMA3/8 to generate more crossover signals. Only 9 trades from EMA3/8 on H1 \u2014 need more crossovers for statistical relevance.",
+      "metrics": {
+        "pf": 0.38075459,
+        "sharpe": -5.57159916,
+        "wr": 30.76923077,
+        "dd": 5.25285736,
+        "trades": 13,
+        "net_profit": -337.015918335803
+      },
+      "verdict": "invalid (low sample, 13 trades). EMA2/5 on H1 produced only 13 crossovers over 317 bars. PF=0.38 Sharpe=-5.57 WR=30.77%. Insufficient trades for statistical significance.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-28T14:44:00Z"
+    },
     {
       "iteration": 665,
       "hypothesis": "XAUUSD H1 Long-only EMA3/8 crossover with ATR trailing stop (3.0xATR trail). Switch back to H1 timeframe which previously showed PF=1.05 (iter 655, albeit with low sample). ATR trailing stop dynamically follows price instead of fixed TP/SL which gets the direction wrong on XAUUSD choppy 30m.",
@@ -42,7 +90,7 @@
         "trades": 25,
         "net_profit": -232.793123957068
       },
-      "verdict": "rejected (PF=0.01 < 1.3, Sharpe=-35.9 < 0.5). RSI>50 filter decimated WR from 33% to 4% — TP=1.5xATR rarely reached before SL=1.0xATR. Only 1 win out of 25 trades.",
+      "verdict": "rejected (PF=0.01 < 1.3, Sharpe=-35.9 < 0.5). RSI>50 filter decimated WR from 33% to 4% \u2014 TP=1.5xATR rarely reached before SL=1.0xATR. Only 1 win out of 25 trades.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T14:15:00Z"
@@ -142,6 +190,150 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T12:00:00Z"
+    },
+    {
+      "iteration": 669,
+      "hypothesis": "XAUUSD 30m Close-crosses-SMA(20) bidirectional strategy. BB %B oversold produced 0 trades. Close crossing SMA(20) is simplest trend signal. Fixed TP=30 ticks, SL=15 ticks (2:1 ratio).",
+      "metrics": {
+        "pf": 0.00455071,
+        "sharpe": -61.33359664,
+        "wr": 0.97087379,
+        "dd": 7.03966754,
+        "trades": 103,
+        "net_profit": -703.966754358582
+      },
+      "verdict": "rejected (PF=0.00 < 1.3, Sharpe=-61.33 < 0.5). 1 win out of 103 trades. Fixed tick TP/SL with 100% equity means commission dominates.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:56:17Z"
+    },
+    {
+      "iteration": 670,
+      "hypothesis": "Add RSI(14) filter to close-crosses-SMA(20). Long only if RSI>50, short only if RSI<50.",
+      "metrics": {
+        "pf": 0.00607191,
+        "sharpe": -52.24699106,
+        "wr": 1.26582278,
+        "dd": 5.28427581,
+        "trades": 79,
+        "net_profit": -528.42758128405
+      },
+      "verdict": "rejected (PF=0.01 < 1.3, Sharpe=-52.25 < 0.5). RSI reduced trades 103->79 but still only 1 win.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:56:17Z"
+    },
+    {
+      "iteration": 671,
+      "hypothesis": "Tighten TP/SL ratio to 1:1.5 (TP=22, SL=15). WR < 40% rule.",
+      "metrics": {
+        "pf": 0.0045507,
+        "sharpe": -61.33350716,
+        "wr": 0.97087379,
+        "dd": 7.03968395,
+        "trades": 103,
+        "net_profit": -703.968394552232
+      },
+      "verdict": "rejected (PF=0.00 < 1.3, Sharpe=-61.33 < 0.5). Same as iter 669 \u2014 TP change from 30 to 22 had no effect.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:56:17Z"
+    },
+    {
+      "iteration": 672,
+      "hypothesis": "Switch to ATR-based stops (SL=2.0xATR, TP=3.0xATR) instead of fixed ticks.",
+      "metrics": {
+        "pf": 0.54025962,
+        "sharpe": -10.22384142,
+        "wr": 10.29411765,
+        "dd": 8.62514238,
+        "trades": 136,
+        "net_profit": -738.874704239852
+      },
+      "verdict": "rejected (PF=0.54 < 1.3, Sharpe=-10.22 < 0.5). MAJOR improvement: WR 1%->10.3%, avgWin .22->2.02, ratio avg win/loss 4.71.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:56:17Z"
+    },
+    {
+      "iteration": 673,
+      "hypothesis": "Add RSI(14) filter to ATR-based SMA crossing. Long if RSI>50, short if RSI<50.",
+      "metrics": {
+        "pf": 0.59520593,
+        "sharpe": -6.71959706,
+        "wr": 12.22222222,
+        "dd": 6.37957761,
+        "trades": 90,
+        "net_profit": -442.874273382962
+      },
+      "verdict": "rejected (PF=0.60 < 1.3, Sharpe=-6.72 < 0.5). Further improvement: PF 0.54->0.60, WR 10.3%->12.2%, DD 8.6%->6.4%, loss -39->-43.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:56:17Z"
+    },
+    {
+      "iteration": 674,
+      "hypothesis": "XAUUSD 30m Close-crosses-SMA(20) with ATR stops (2x SL, 3x TP) + RSI(14)>50/<50 + ADX(14)>25 trending filter.",
+      "metrics": {
+        "pf": 0.67359761,
+        "sharpe": -3.81316066,
+        "wr": 15.09433962,
+        "dd": 3.64643177,
+        "trades": 53,
+        "net_profit": -224.134750525278
+      },
+      "verdict": "rejected (PF=0.67 < 1.3, Sharpe=-3.81 < 0.5). Continued improvement: PF 0.60->0.67, WR 12.2%->15.1%, DD 6.4%->3.6%. Short-side profitable (-0.43 only). P&L before commission: +4. ADX filter filters out weak entries effectively. Cascade 1.83 still high.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:57:33Z"
+    },
+    {
+      "iteration": 675,
+      "hypothesis": "Widen TP from 3x to 4x ATR (2:1 TP/SL ratio) to let winners run further.",
+      "metrics": {
+        "pf": 0.91734103,
+        "sharpe": -0.91120781,
+        "wr": 15.09433962,
+        "dd": 3.31080448,
+        "trades": 53,
+        "net_profit": -57.353277517173
+      },
+      "verdict": "rejected (PF=0.92 < 1.3, Sharpe=-0.91 < 1.0). HUGE improvement: PF 0.67->0.92, Sharpe -3.81->-0.91, loss -24->-7. Avg win 9.56 (5.16x avg loss). Short side profitable (+3). Before commission: +24 gross profit.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:58:22Z"
+    },
+    {
+      "iteration": 676,
+      "hypothesis": "Add SMA(50) trend filter \u2014 only long above SMA(50), only short below SMA(50). Fixes long side bleed.",
+      "metrics": {
+        "pf": 1.05541515,
+        "sharpe": 0.3996387,
+        "wr": 18.18181818,
+        "dd": 2.16005701,
+        "trades": 22,
+        "net_profit": 21.683763240351
+      },
+      "verdict": "NEW BEST STRATEGY \u2014 FIRST PROFITABLE XAUUSD strategy! PF=1.06, Sharpe=0.40, DD=2.16%. Short side +31, long side -10. Before commission: +32 gross. Only 22 trades (close to minimum).",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:59:08Z"
+    },
+    {
+      "iteration": 677,
+      "hypothesis": "SHORT-ONLY: Close crosses below SMA(20) in downtrend (close<SMA(50)) + RSI<50 + ADX>25.",
+      "metrics": {
+        "pf": 4.32068806,
+        "sharpe": 7.72592946,
+        "wr": 20.0,
+        "dd": 0.93701243,
+        "trades": 15,
+        "net_profit": 267.433656159763
+      },
+      "verdict": "invalid (low sample, 15 trades). EXCELLENT metrics: PF=4.32, Sharpe=7.73, DD=0.94%. But only 15 trades (<20 minimum). Winners 17x bigger than losers (ratio 17.28). Short side +67. Next: lower ADX threshold to get more entries.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T03:59:44Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

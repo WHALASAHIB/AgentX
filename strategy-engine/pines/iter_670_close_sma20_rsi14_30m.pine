@@ -1,0 +1,26 @@
+//@version=6
+strategy(title="Close-SMA20 RSI14 30m Bidirectional", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+sma_len = input.int(20, "SMA Length", minval=5, maxval=50, step=1)        // sweep: 10-30 step 5
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=1)        // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+tp_ticks = input.int(30, "Take Profit (ticks)", minval=5, maxval=100, step=5)  // sweep: 15-60 step 5
+sl_ticks = input.int(15, "Stop Loss (ticks)", minval=5, maxval=50, step=5)    // sweep: 10-30 step 5
+
+//--- indicators
+sma_val = ta.sma(close, sma_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- entry logic: close crossing SMA(20) + RSI(14) filter
+long_condition = ta.crossover(close, sma_val) and rsi_val > rsi_threshold
+short_condition = ta.crossunder(close, sma_val) and rsi_val < (100 - rsi_threshold)
+
+//--- entry / exit management
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_ticks * syminfo.mintick, profit=tp_ticks * syminfo.mintick)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_ticks * syminfo.mintick, profit=tp_ticks * syminfo.mintick)

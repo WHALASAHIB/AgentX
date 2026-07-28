@@ -1,0 +1,51 @@
+//@version=6
+strategy(title="Close-SMA20 ATR RSI ADX25 30m Bidirectional", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+sma_len = input.int(20, "SMA Length", minval=5, maxval=50, step=1)        // sweep: 10-30 step 5
+atr_len = input.int(14, "ATR Length", minval=7, maxval=21, step=2)        // sweep: 7-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=7, maxval=21, step=2)        // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold", minval=30, maxval=70, step=5) // sweep: 40-60 step 5
+adx_len = input.int(14, "ADX Length", minval=7, maxval=21, step=2)        // sweep: 7-21 step 2
+adx_threshold = input.int(25, "ADX Threshold", minval=15, maxval=40, step=2) // sweep: 15-30 step 2
+sl_atr_mult = input.float(2.0, "SL ATR Multiple", minval=0.5, maxval=5.0, step=0.5)  // sweep: 1.0-4.0 step 0.5
+tp_atr_mult = input.float(3.0, "TP ATR Multiple", minval=0.5, maxval=8.0, step=0.5)  // sweep: 1.5-6.0 step 0.5
+
+//--- indicators
+sma_val = ta.sma(close, sma_len)
+atr_val = ta.atr(atr_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+// --- Manual ADX calculation (ta.adx not supported by engine) ---
+// True Range
+tr = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+// +DM and -DM
+up = high - high[1]
+down = low[1] - low
+plus_dm = up > down and up > 0 ? up : 0.0
+minus_dm = down > up and down > 0 ? down : 0.0
+// Smoothed ATR, +DI, -DI
+smoothed_tr = ta.sma(tr, adx_len)
+smoothed_plus = ta.sma(plus_dm, adx_len)
+smoothed_minus = ta.sma(minus_dm, adx_len)
+plus_di = 100.0 * smoothed_plus / (smoothed_tr > 0 ? smoothed_tr : 1.0)
+minus_di = 100.0 * smoothed_minus / (smoothed_tr > 0 ? smoothed_tr : 1.0)
+// DX and ADX
+dx = 100.0 * math.abs(plus_di - minus_di) / ((plus_di + minus_di) > 0 ? (plus_di + minus_di) : 1.0)
+adx_val = ta.sma(dx, adx_len)
+
+// ATR in tick units for strategy.exit
+atr_ticks = atr_val / syminfo.mintick
+
+//--- entry logic: close crossing SMA(20) + RSI(14) + ADX(14)>25
+long_condition = ta.crossover(close, sma_val) and rsi_val > rsi_threshold and adx_val > adx_threshold
+short_condition = ta.crossunder(close, sma_val) and rsi_val < (100 - rsi_threshold) and adx_val > adx_threshold
+
+//--- entry / exit management
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("XL", "Long", loss=sl_atr_mult * atr_ticks, profit=tp_atr_mult * atr_ticks)
+
+if (short_condition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("XS", "Short", loss=sl_atr_mult * atr_ticks, profit=tp_atr_mult * atr_ticks)
