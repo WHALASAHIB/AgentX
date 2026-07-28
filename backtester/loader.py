@@ -22,6 +22,8 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 
+from custom_strategies.propfirm_pass import PropfirmPassStrategy
+
 logger = logging.getLogger(__name__)
 
 # ── Paths ───────────────────────────────────────────────────────────────────
@@ -684,6 +686,7 @@ BUILTIN_STRATEGIES: dict[str, type] = {
     "bollinger_bands": BollingerBandsStrategy,
     "volatility_breakout": VolatilityBreakoutStrategy,
     "gold_phoenix": GoldPhoenixStrategy,
+    "propfirm_pass": PropfirmPassStrategy,
 }
 
 

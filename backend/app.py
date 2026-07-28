@@ -1831,8 +1831,28 @@ def _list_pine_strategies() -> list[dict]:
 
 @app.get("/api/backtest/strategies")
 async def list_backtest_strategies(auth=Depends(require_auth)):
-    """List all available Pine Script strategies from strategy-engine/pines/."""
-    return _list_pine_strategies()
+    """List all available strategies: Pine Script + Python built-in."""
+    import sys as _sys
+    from pathlib import Path as _Path
+    bt_root = str(_Path(__file__).resolve().parent.parent / "backtester")
+    _sys.path.insert(0, bt_root)
+    for _mod in list(_sys.modules.keys()):
+        if _mod.startswith("loader") or _mod.startswith("custom_strategies"):
+            del _sys.modules[_mod]
+    from loader import list_strategies
+
+    pine_strategies = _list_pine_strategies()
+    python_strategies = list_strategies()
+
+    result = list(pine_strategies)
+    for key, cls in python_strategies.items():
+        if not any(s["name"] == key for s in result):
+            result.append({
+                "name": key,
+                "type": "python",
+                "description": cls.__doc__.split("\n")[0] if cls.__doc__ else "",
+            })
+    return result
 
 class RunBacktestRequest(PydanticBaseModel):
     symbol: str

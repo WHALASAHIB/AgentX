@@ -1,0 +1,61 @@
+//@version=6
+strategy(title="iter_660_ema3_8_rsi40_atr_tp125_sl100", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== inputs ===
+// EMA parameters
+emaFastLen  = input.int(3,   "EMA Fast Length")    // sweep: 2-8 step 1
+emaSlowLen  = input.int(8,   "EMA Slow Length")    // sweep: 5-21 step 1
+
+// Filter parameters
+rsiLen      = input.int(14,  "RSI Length")          // sweep: 7-21 step 2
+rsiMin      = input.int(40,  "RSI Min (long only)") // sweep: 30-60 step 5
+
+// ATR-based TP/SL
+atrLen      = input.int(14,  "ATR Length")          // sweep: 10-20 step 2
+tpMultiplier = input.float(1.25, "TP Multiplier (×ATR)") // sweep: 1.0-2.0 step 0.25
+slMultiplier = input.float(1.0,  "SL Multiplier (×ATR)") // sweep: 0.5-2.0 step 0.25
+
+// Trade direction (long-only is the focus for XAUUSD)
+useLong     = input.bool(true, "Allow Long Entries")
+useShort    = input.bool(false, "Allow Short Entries")
+
+//=== indicator calculations ===
+emaFast     = ta.ema(close, emaFastLen)
+emaSlow     = ta.ema(close, emaSlowLen)
+rsiVal      = ta.rsi(close, rsiLen)
+atrVal      = ta.atr(atrLen)
+
+// Crossover detection (entry signal)
+crossOver      = ta.crossover(emaFast, emaSlow)
+crossUnder     = ta.crossunder(emaFast, emaSlow)
+
+//=== entry logic ===
+// Long: EMA fast crosses above slow AND RSI > minimum threshold
+longCondition  = crossOver and rsiVal > rsiMin and useLong
+// Short: EMA fast crosses below slow (short side disabled in this config)
+shortCondition = crossUnder and useShort
+
+// Calculate TP and SL distances based on ATR (in ticks for precision)
+// Use math.round for integer conversion — 'int()' not in TV runtime
+tpDistanceTicks = math.round(tpMultiplier * atrVal / syminfo.mintick)
+slDistanceTicks = math.round(slMultiplier * atrVal / syminfo.mintick)
+
+//=== trade management ===
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long",
+         loss=slDistanceTicks,
+         profit=tpDistanceTicks)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short",
+         loss=slDistanceTicks,
+         profit=tpDistanceTicks)
+
+//=== visual indicators ===
+plot(emaFast, "EMA Fast", color.blue, 1)
+plot(emaSlow, "EMA Slow", color.red, 1)
+hline(50, "RSI Mid", color.gray, hline.style_dashed)
+plotchar(longCondition, "Long Entry", "▲", location=location.belowbar, color=color.green, size=size.small)
+plotchar(shortCondition, "Short Entry", "▼", location=location.abovebar, color=color.red, size=size.small)

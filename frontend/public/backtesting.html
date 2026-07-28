@@ -154,8 +154,8 @@
     <div class="backtest-form fade-in">
       <div class="form-row">
         <div class="form-group">
-          <label>Strategy (80 available)</label>
-          <select id="strategySelect"><option value="">Loading 80 strategies...</option></select>
+          <label>Strategy</label>
+          <select id="strategySelect"><option value="">Select a strategy...</option></select>
         </div>
         <div class="form-group">
           <label>Symbol</label>
@@ -263,7 +263,7 @@
           sel.appendChild(opt);
         });
         // Add built-in strategies if not in list
-        const builtins = ['sma_crossover','macd_crossover','bollinger_bands','volatility_breakout','gold_phoenix'];
+        const builtins = ['sma_crossover','macd_crossover','bollinger_bands','volatility_breakout','gold_phoenix','propfirm_pass'];
         const existingNames = new Set(strategies.map(s=>s.name));
         builtins.forEach(b => {
           if(!existingNames.has(b)) {

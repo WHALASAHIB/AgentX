@@ -1,0 +1,6 @@
+2026-07-28 09:50:01,082 | WARNING | No M1 data returned for EURUSD (error: (-10004, 'No IPC connection'))
+2026-07-28 09:50:01,082 | ERROR | Insufficient M1 data for EURUSD to resample H1
+2026-07-28 09:50:01,082 | WARNING | Insufficient data for EURUSD H1
+2026-07-28 09:50:23,126 | WARNING | No M1 data returned for EURUSD (error: (-2, 'Terminal: Invalid params'))
+2026-07-28 09:50:23,126 | ERROR | Insufficient M1 data for EURUSD to resample H1
+2026-07-28 09:50:23,126 | WARNING | Insufficient data for EURUSD H1

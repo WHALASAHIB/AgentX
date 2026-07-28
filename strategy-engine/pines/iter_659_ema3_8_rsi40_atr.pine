@@ -1,0 +1,79 @@
+//@version=6
+strategy(title="iter_659 EMA3/8 + RSI40 + ATR TP/SL XAUUSD 30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//============================================================================
+//--- inputs
+//============================================================================
+
+// EMA parameters
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)
+emaSlowLen = input.int(8, "EMA Slow Length", minval=1, maxval=50)
+
+// RSI filter — loosened from 50 to 40 to increase trade count above 20
+rsiLen       = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(40, "RSI Threshold (long above)", minval=20, maxval=80)
+
+// ATR-based exit management — back to 1:1.5 TP/SL ratio (iter 657 structure)
+atrLen       = input.int(14, "ATR Length", minval=5, maxval=50)
+tpMultiplier = input.float(1.0, "TP Multiplier (xATR)", step=0.1)   // sweep: 0.5-3.0 step 0.5
+slMultiplier = input.float(1.5, "SL Multiplier (xATR)", step=0.1)   // sweep: 0.5-2.0 step 0.5
+
+// Trade direction — long only
+tradeLong  = input.bool(true, "Enable Long Entries")
+tradeShort = input.bool(false, "Enable Short Entries")
+
+//============================================================================
+//--- calculations
+//============================================================================
+
+// EMAs
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+
+// RSI
+rsiVal = ta.rsi(close, rsiLen)
+
+// ATR for dynamic stops
+atrVal = ta.atr(atrLen)
+
+// Crossover detection
+emaCrossOver  = ta.crossover(emaFast, emaSlow)
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+
+// TP/SL in ticks — use math.round for integer conversion
+tpDistance = math.round((tpMultiplier * atrVal) / syminfo.mintick)
+slDistance = math.round((slMultiplier * atrVal) / syminfo.mintick)
+
+//============================================================================
+//--- entry logic
+//============================================================================
+
+// Long entry: EMA3 crosses above EMA8 AND RSI > 40 (looser than 50 for more trades)
+longCondition = emaCrossOver and rsiVal > rsiThreshold and tradeLong
+
+// Short entry: EMA3 crosses below EMA8 AND RSI < 60 (100-40)
+shortCondition = emaCrossUnder and rsiVal < (100 - rsiThreshold) and tradeShort
+
+//============================================================================
+//--- exit management — ATR-based fixed TP/SL (1:1.5 ratio = TP tighter than SL)
+//============================================================================
+
+// On long entry, set exit with ATR-based TP and SL
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long",
+         loss = slDistance,
+         profit = tpDistance)
+
+// On short entry
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short",
+         loss = slDistance,
+         profit = tpDistance)
+
+//============================================================================
+//--- Plotting
+//============================================================================
+plot(emaFast, "EMA Fast", color=color.blue, linewidth=2)
+plot(emaSlow, "EMA Slow", color=color.red, linewidth=2)

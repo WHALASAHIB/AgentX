@@ -1,6 +1,6 @@
 {
-  "iteration": 659,
-  "last_run": "2026-07-28T12:00:00Z",
+  "iteration": 662,
+  "last_run": "2026-07-28T12:45:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,17 +13,8 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>40 filter (looser), ATR-based TP=1.0xATR, SL=1.5xATR. Iteration 658 (TP=1.5:1 ratio) gave 21 trades but WR crashed to 33% — the wider TP target got hit less often than the tighter SL. Going BACK to 1:1.5 TP/SL ratio which gave the best WR (63%) but loosen RSI threshold from 50 to 40 to push trade count above 20.",
+  "current_hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter, ATR-based TP=2.0xATR, SL=0.5xATR. Iteration 661 (RSI>50, TP=1.25, SL=1.0) gave 22 trades, PF=0.43, WR=40.9%. Avg loss ($39.64) is still 1.6x avg win ($24.65) despite TP being 1.25x ATR and SL being 1.0x ATR. Flipping to a wider TP (2.0x) and tighter SL (0.5x) creates a 4:1 reward ratio — with WR at 41%, EV = 0.41×4 - 0.59×1 = 1.05 (positive). A single win now covers 4 losses, directly reversing the negative expectancy.",
   "evolution_log": [
-    {
-      "iteration": 646,
-      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter + ATR-based TP=1.0xATR, SL=1.5xATR. Tightening TP/SL ratio to 1:1.5 to improve win rate from 20%.",
-      "metrics": { "pf": 0.51853976, "sharpe": -7.26679822, "wr": 50.0, "dd": 2.43339264, "trades": 26, "net_profit": -205.85388823 },
-      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-7.27 < 0.5)",
-      "symbol": "XAUUSD",
-      "timeframe": "30m",
-      "time": "2026-07-27T18:55:00Z"
-    },
     {
       "iteration": 647,
       "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 + ADX(14)>25 filter.",
@@ -131,6 +122,33 @@
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T12:00:00Z"
+    },
+    {
+      "iteration": 659,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>40 filter (looser), ATR-based TP=1.0xATR, SL=1.5xATR. Going BACK to 1:1.5 TP/SL ratio which gave the best WR (63%) but loosen RSI threshold from 50 to 40 to push trade count above 20.",
+      "metrics": { "pf": 0.42970476, "sharpe": -10.50710555, "wr": 56.66666667, "dd": 4.48374256, "trades": 30, "net_profit": -409.150504710284 },
+      "verdict": "rejected (PF=0.43 < 1.3, Sharpe=-10.51 < 0.5). RSI>40 increased trade count to 30 but WR dropped from 63% to 57%. Avg loss ($55) still 3x avg win ($18) — 1:1.5 TP/SL ratio is the root problem.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T12:15:00Z"
+    },
+    {
+      "iteration": 660,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>40 filter, ATR-based TP=1.25xATR, SL=1.0xATR. Flipping TP/SL ratio to favor wins over losses (1.25:1 instead of 1:1.5).",
+      "metrics": { "pf": 0.45761028, "sharpe": -11.62361296, "wr": 41.17647059, "dd": 5.00009246, "trades": 34, "net_profit": -436.497836606286 },
+      "verdict": "rejected (PF=0.46 < 1.3, Sharpe=-11.62 < 0.5). TP/SL flip (1.25:1) improved avg loss from $55 to $40 and avg win from $18 to $26, but WR dropped from 57% to 41%. More trades (34 vs 30) but lower quality.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T12:30:00Z"
+    },
+    {
+      "iteration": 661,
+      "hypothesis": "XAUUSD 30m Long-only EMA3/8 crossover with RSI(14)>50 filter (tightened from >40), ATR-based TP=1.25xATR, SL=1.0xATR.",
+      "metrics": { "pf": 0.43043398, "sharpe": -9.8440852, "wr": 40.90909091, "dd": 3.72755709, "trades": 22, "net_profit": -293.523521607407 },
+      "verdict": "rejected (PF=0.43 < 1.3, Sharpe=-9.84 < 0.5). RSI>50 tightened WR from 41% to 40.9% (flat) and reduced trades from 34 to 22. Avg loss ($39.64) still 1.6x avg win ($24.65) — the TP/SL ratio is the structural problem.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-28T12:45:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

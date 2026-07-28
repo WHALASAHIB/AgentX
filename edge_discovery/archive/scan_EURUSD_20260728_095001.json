@@ -1,0 +1,14 @@
+{
+  "run_timestamp": 1785203401.0828054,
+  "datetime_utc": "2026-07-28 01:50:01 UTC",
+  "pair": "EURUSD",
+  "timeframes_scanned": [
+    "H1"
+  ],
+  "total_combos": 75,
+  "scan_duration_seconds": 0.0,
+  "candidates_found": 0,
+  "edges": [],
+  "data_summary": {},
+  "council_verdicts": []
+}
