@@ -1,0 +1,28 @@
+//@version=6
+strategy(title="iter_656_XAUUSD_30m_EMA3_8_ATR", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//=== inputs ===
+ema_fast_len = input.int(3, "Fast EMA Length", minval=1, maxval=50)       // sweep: 1-10 step 1
+ema_slow_len = input.int(8, "Slow EMA Length", minval=1, maxval=50)       // sweep: 5-20 step 1
+atr_len      = input.int(14, "ATR Length", minval=1, maxval=50)           // sweep: 7-21 step 7
+tp_atr_mult  = input.float(1.0, "TP Multiplier (ATR)", minval=0.1, maxval=5.0, step=0.1)  // sweep: 0.5-3.0 step 0.5
+sl_atr_mult  = input.float(1.5, "SL Multiplier (ATR)", minval=0.1, maxval=5.0, step=0.1)  // sweep: 1.0-3.0 step 0.5
+
+//=== calculations ===
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+atr_val  = ta.atr(atr_len)
+
+// Crossover conditions
+long_enter = ta.crossover(ema_fast, ema_slow)
+long_exit  = ta.crossunder(ema_fast, ema_slow)
+
+//=== entry logic ===
+if long_enter
+    strategy.entry("Long", strategy.long)
+
+//=== exit management ===
+if strategy.position_size > 0
+    strategy.exit("XL", "Long",
+     loss = math.round(sl_atr_mult * atr_val / syminfo.mintick),
+     profit = math.round(tp_atr_mult * atr_val / syminfo.mintick))

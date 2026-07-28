@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 198,
+    "total_ideas": 201,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1663,6 +1663,65 @@
       "diversification_value": "Fundamentally different from CrossAsset_Entropy_Sizer (A-), which measures correlation entropy ACROSS assets (DXY, SPX, bonds) to decide total portfolio size. This gate measures signal entropy WITHIN a single instrument, asking whether our own strategies agree or disagree. It differs from Conviction_Variance_Contractor (B), which contracts when a single signal type has high historical outcome variance, by measuring real-time directional disagreement across ALL active signal types (a cross-signal consensus measure). It differs from Correlation_Breakdown_Contingency_Sizer (A-) by measuring internal signal quality rather than cross-asset correlation decay. No existing overlay quantifies strategist agreement entropy as a risk input.",
       "self_grade": "A-",
       "generated_at": "2026-07-27T00:43:23Z"
+    },
+    {
+      "name": "Quarter_End_Gold_Allocation_Accumulation",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Captures institutional multi-asset portfolio gold rebalancing at quarter-ends \u2014 institutions mechanically buy gold when it has underperformed equities during the quarter, creating a 3-5 day window of directional buying pressure.",
+      "market_behaviour": "Institutional multi-asset portfolios (pension funds, endowments, insurance companies) systematically rebalance their gold allocation at quarter-ends. Gold has been a standard 3-15% allocation in institutional portfolios since 2020. When gold underperforms equities during a quarter, institutions mechanically BUY gold to restore their target allocation. This creates a predictable 3-5 day rebalancing window at each quarter-end (March, June, September, December close). The pattern is most pronounced in December (fiscal year-end for many funds) and September (fiscal year-end for Japanese institutions). The buying pressure is distinct from month-end index rebalancing because it is specifically tied to multi-asset portfolio rebalancing rather than benchmark tracking. The effect is amplified when equity markets have rallied strongly during the quarter, creating a larger allocation gap that gold must fill.",
+      "entry_logic": "1. Check calendar date: enter between 5 trading days before and 1 trading day before quarter-end (March 25, June 24, Sept 24, Dec 24 approx).\n2. Confirm gold has underperformed the S&P 500 by at least 3% over the current quarter (gold return minus SPY return = negative).\n3. Gold must be trading above its 50-day SMA (confirms no structural downtrend).\n4. Enter long XAUUSD at market open, position size = 0.5% risk per trade.\n5. Skip if gold has outperformed equities this quarter (no rebalancing needed).\n6. Skip if quarter-end coincides with FOMC decision day (event risk overrides rebalancing).",
+      "exit_logic": "Stop loss: 1.5 x ATR(14) below entry, placed after 2 days if position hasn't moved in favour.\nTake profit: Exit at close of 3rd trading day after quarter-end (captures full rebalancing execution window).\nTime stop: Exit regardless at end of 5th trading day after entry if target not reached.\nNo re-entry until next quarter-end.",
+      "failure_mode": "1. Strong macro catalyst during quarter-end (FOMC, NFP, war) overrides mechanical rebalancing flows \u2014 institutional traders postpone rebalancing.\n2. Gold in a structural downtrend (below 200-day SMA) \u2014 funds may reduce allocation permanently, not rebalance.\n3. End-of-quarter window coincides with gold options expiry \u2014 gamma hedging dominates rebalancing flows.\n4. Institutional shift to passive/ETF-only gold exposure reduces active rebalancing need.",
+      "diversification_value": "This is distinct from EndOfQuarter_Rebalance_Flow (which targets only the last trading day and assumes gold buying regardless of price action) \u2014 this idea requires gold underperformance vs equities as a trigger and uses a 3-5 day window. It differs from Turn_Of_Month_Gold (monthly turn regardless of allocation drift) and Fiscal_Year_New_Mandate_Accumulation (January-only mandate cycle). The equity-relative underperformance trigger is unique among seasonal-family ideas.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-28T00:39:53Z"
+    },
+    {
+      "name": "Gold_Copper_Seasonal_Divergence_Trader",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD",
+        "COPPER"
+      ],
+      "timeframes": [
+        "D1",
+        "W1"
+      ],
+      "description": "Trades the gold/copper ratio during opposing seasonal windows \u2014 gold strong in Q1/Q4 (monetary/jewelry demand) while copper weak (Chinese New Year/construction freeze), and vice versa in Q2/Q3.",
+      "market_behaviour": "Gold and copper enter opposing seasonal demand windows at predictable calendar points. Copper's seasonal peak (Chinese infrastructure spending, Q2-Q3 construction season) typically sees gold in its weaker seasonal window (June-August consolidation period). Conversely, copper's seasonal trough (Chinese New Year slowdown, Jan-Feb) coincides with gold's strongest demand window (Indian wedding season + Chinese New Year + institutional January accumulation). This natural divergence creates high-probability entry points for the gold/copper ratio. The relationship is structurally stronger than gold/silver or gold/platinum because copper's demand is purely industrial (no monetary premium) while gold's demand has both monetary and jewelry components \u2014 their seasonal drivers are genuinely orthogonal. The ratio is liquid and traded via gold futures (GC) and copper futures (HG), both on COMEX.",
+      "entry_logic": "1. Check quarter boundary: March 1 (Q1-Q2), June 1 (Q2-Q3), Sept 1 (Q3-Q4), Dec 1 (Q4-Q1).\n2. Q1 entry (Q1-Q2 transition, Feb-Mar): LONGS gold vs copper. Gold entering strong seasonal, copper weakening from Chinese New Year construction freeze.\n3. Q2/Q3 entry (May-Aug): SHORTS gold vs copper. Copper entering industrial demand peak, gold in summer consolidation.\n4. Q4 entry (Oct-Nov): LONGS gold vs copper. Gold entering Q4 rally, copper cooling from construction season end.\n5. Confirmation: Entering leg of the trade must be within 2% of its 20-day SMA (not extended).\n6. Skip if daily ATR on either leg exceeds 2x its 20-day average (volatility too high for ratio trade).\n7. Skip if either commodity has had a >5% daily move in the past 5 trading days (shock regime, not seasonal).\n8. Position size: Equal notional on both legs (1% risk total).",
+      "exit_logic": "Stop loss: 2.5x ATR(20) of the ratio spread (not individual legs).\nTake profit: Exit at next seasonal inflection point (first trading day of next quarter).\nTime stop: Exit 10 trading days after entry if ratio hasn't moved in expected direction.\nPartial take: Take 50% off at 50% of target, move SL to breakeven on remainder.\nRe-entry allowed only at next calendar entry window.",
+      "failure_mode": "1. Structural decoupling \u2014 if gold's monetary premium renders seasonal patterns irrelevant during a sustained financial crisis or war.\n2. Chinese economic shock \u2014 copper's seasonal pattern collapses if Chinese infrastructure spending is structurally disrupted (property crisis, policy shift, deflation).\n3. Gold supply shock \u2014 major mine supply disruption artificially lifts gold out of seasonal norms.\n4. Copper supply crisis (mine closure, political disruption in Chile/Peru) overwhelms seasonal demand. .\n5. Ratio trade slippage \u2014 both legs must be traded simultaneously; execution delay erodes edge.",
+      "diversification_value": "This is the only seasonal-family idea trading the gold/copper ratio. Cross_Commodity_Seasonal_Rotation rotates silver/platinum/palladium month patterns \u2014 not copper. Precious_Metals_Seasonal_Spread (gold/silver ratio) and Gold_Silver_Ratio_Seasonal_Reverser (GSR extremes) both target precious metals, not industrial base metals. Yield_Curve_Commodity_Seasonal_Rotator overlays yield curve on commodity seasons rather than trading a specific ratio. This idea opens an entirely new sub-niche within Cross-Commodity Seasonal: industrial vs monetary seasonality.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-28T00:39:53Z"
+    },
+    {
+      "name": "Gold_Palladium_Seasonal_Industrial_Divergence",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD",
+        "PALLADIUM"
+      ],
+      "timeframes": [
+        "D1",
+        "W1"
+      ],
+      "description": "Trades the divergence between gold (monetary/jewelry) and palladium (industrial/auto production) during opposing seasonal windows \u2014 palladium rallies Q3 on new model year production while gold consolidates, then mean reverts as palladium fades and gold enters Q4 rally.",
+      "market_behaviour": "Palladium's demand is approximately 80% industrial (catalytic converters for gasoline engines, which dominate global auto production). This makes palladium's seasonal pattern primarily driven by auto production cycles \u2014 strongest in Q3 (ahead of new model year production ramp in September-October) and weakest in Q1 (after holiday plant shutdowns and during January destocking). Gold has no such industrial driver and follows its own monetary/jewelry cycle \u2014 strongest in Q1 (Indian/Chinese demand) and Q4 (institutional year-end + geopolitical hedging), weakest in Q2-Q3. When palladium enters its Q3 production demand peak (July-September) while gold enters its summer consolidation (June-August), the two naturally diverge: palladium rallies on auto sector demand while gold trades sideways. After September, as palladium demand fades and gold enters its Q4 rally cycle, the divergence reverses. The full divergence-convergence cycle spans 3-4 months, providing a measurable, low-frequency trade with clear seasonal entry and exit triggers.",
+      "entry_logic": "1. Monitor calendar widely: Mid-June to early July for divergence entry, late September to early October for convergence entry.\n2. DIVERGENCE entry (late June): SHORT gold vs palladium (long palladium, light gold). Palladium entering Q3 auto demand peak, gold entering summer lull.\n3. Entry condition: Gold must be within 2% of its 100-day SMA (shows it's in a neutral range, not surging on crisis demand). Palladium must be above its 50-day SMA (confirming industrial demand trend is intact).\n4. CONVERGENCE entry (late September): BUY gold vs palladium (long gold, short palladium). Gold entering Q4 rally cycle, palladium exhausting post-new-model-year demand.\n5. Entry condition for convergence: Gold must show first weekly close above its 20-week SMA. Palladium must be below its 50-day SMA or showing negative weekly momentum.\n6. Position size: Equal notional, 0.5% risk total per divergence or convergence leg.\n7. Skip if either market has daily ATR > 3x its 20-day average (extreme volatility regime).\n8. Skip if palladium open interest has dropped >20% from 3-month average (liquidity too thin).",
+      "exit_logic": "Stop loss: 2x ATR(14) of the spread (position-weighted average, not individual legs).\nTake profit (divergence leg): Exit by September 20 or when gold crosses above its 20-day SMA, whichever comes first.\nTake profit (convergence leg): Exit by November 30 or when palladium crosses above its 20-day SMA, whichever comes first.\nTime stop: Exit both legs by December 15 regardless of position.\nIf either leg moves >5% against you within 5 days, exit entire position immediately (correlation broken).\nNo re-entry in same calendar year.",
+      "failure_mode": "1. Palladium market shrinkage \u2014 EV transition fears have reduced palladium liquidity ~30% from 2021 peaks. Slippage on the palladium leg could exceed expected edge.\n2. Auto production disruption \u2014 chip shortage, tariff war, or strike halts the seasonal Q3 production ramp.\n3. EV transition acceleration \u2014 permanent structural reduction in palladium demand overwhelms any seasonal pattern.\n4. Gold crisis spike \u2014 sudden geopolitical event in Q3 lifts gold out of its summer consolidation, breaking the divergence pattern.\n5. Russian supply disruption \u2014 Russia supplies ~40% of palladium. Sanctions or export restrictions would create a supply shock independent of seasonality.\n6. COMEX palladium futures have lower volume than gold \u2014 position sizing must account for wider bid-ask spreads.",
+      "diversification_value": "This is the only seasonal-family idea targeting palladium. Precious_Metals_Seasonal_Spread trades gold/silver ratio. Gold_Silver_Ratio_Seasonal_Reverser trades GSR at extremes. Cross_Commodity_Seasonal_Rotation covers silver/platinum/palladium month patterns but not the gold-palladium ratio. The industrial-vs-monetary driver analysis (palladium's auto production cycle vs gold's monetary/jewelry cycle) is a genuinely new sub-niche within Cross-Commodity Seasonal, differentiated by focusing on the unique palladium demand structure rather than generic precious metals seasonality.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-28T00:39:53Z"
     }
   ],
   "archived": [
@@ -3907,7 +3966,10 @@
       "Precious_Metals_Seasonal_Spread",
       "Cross_Commodity_Seasonal_Divergence_Capture",
       "Yield_Curve_Commodity_Seasonal_Rotator",
-      "COMEX_First_Notice_Day_Gold_Flow"
+      "COMEX_First_Notice_Day_Gold_Flow",
+      "Quarter_End_Gold_Allocation_Accumulation",
+      "Gold_Copper_Seasonal_Divergence_Trader",
+      "Gold_Palladium_Seasonal_Industrial_Divergence"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
