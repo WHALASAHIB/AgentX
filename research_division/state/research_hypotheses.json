@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 201,
+    "total_ideas": 203,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1722,6 +1722,43 @@
       "diversification_value": "This is the only seasonal-family idea targeting palladium. Precious_Metals_Seasonal_Spread trades gold/silver ratio. Gold_Silver_Ratio_Seasonal_Reverser trades GSR at extremes. Cross_Commodity_Seasonal_Rotation covers silver/platinum/palladium month patterns but not the gold-palladium ratio. The industrial-vs-monetary driver analysis (palladium's auto production cycle vs gold's monetary/jewelry cycle) is a genuinely new sub-niche within Cross-Commodity Seasonal, differentiated by focusing on the unique palladium demand structure rather than generic precious metals seasonality.",
       "self_grade": "A-",
       "generated_at": "2026-07-28T00:39:53Z"
+    },
+    {
+      "name": "Tick_Imbalance_Delta_Momentum",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5",
+        "M15",
+        "H1"
+      ],
+      "description": "Captures early momentum via tick-level bid/ask volume delta divergence \u2014 detects institutional accumulation/distribution before price breaks out.",
+      "market_behaviour": "In gold futures, aggressive institutional buying/selling leaves a measurable footprint in tick-level bid/ask volume imbalance (cumulative delta). When aggressive volume ticks (market orders hitting the bid/ask) systematically outpace passive ticks for sustained windows, it reveals directional accumulation or distribution before visible price movement. Retail traders see the breakout late; tick delta divergence reveals the institutional hand early. This edge exists because tick data is the most granular, least-filtered signal of actual flow \u2014 exchanges record every trade, and the delta between buyer-initiated and seller-initiated volume at tick level is the closest real-time proxy for order flow imbalance available without direct access to the CME depth feed.",
+      "entry_logic": "1. Calculate cumulative tick delta over a rolling 100-tick window: delta = sum(buy_volume) - sum(sell_volume) where buy_volume = ticks at ask, sell_volume = ticks at bid.\n2. Compute a 2-hour rolling mean and standard deviation of the 100-tick delta.\n3. LONG when: (a) cumulative delta > +2.0 standard deviations above its 2-hour mean, AND (b) price is above the 50-period EMA on M15, AND (c) the last 3 consecutive 100-tick windows all show positive delta divergence.\n4. SHORT when: (a) cumulative delta < -2.0 standard deviations below its 2-hour mean, AND (b) price is below the 50-period EMA on M15, AND (c) the last 3 consecutive 100-tick windows all show negative delta divergence.\n5. SKIP if spread > 3x average spread for the hour (low liquidity = noise).\n6. H1 ADX must be > 20 to filter out range-bound conditions.",
+      "exit_logic": "Stop loss: Below the lowest low of the last 20 candles on M15 (longs) / above the highest high (shorts). Take profit: 1.5x ATR(14) from entry. Trailing: Move SL to entry price after 1x ATR(14) is reached. Time stop: Exit if delta returns within 1 standard deviation of mean for more than 30 minutes without reaching TP. No re-entry within 2 hours of a stopped-out trade.",
+      "failure_mode": "1. Low-liquidity windows (Asian session, holidays, between major sessions) where sparse tick data makes delta signals noisy and unreliable \u2014 a single block trade can spike the delta reading and trigger a false entry. 2. News events (NFP, FOMC, CPI) where the delta spike reflects a single directional shock rather than sustained institutional flow \u2014 the initial surge reverses within minutes as algos fade the move. 3. Tick data quality issues \u2014 if the broker's tick feed has gaps or aggregation quirks, the cumulative delta calculation produces inconsistent readings across different brokers.",
+      "diversification_value": "Differs from Momentum_Volume_Convergence (B+) which requires price momentum AND rising volume to converge \u2014 a reactive signal that confirms the move is already underway. Tick_Imbalance_Delta_Momentum leads price by detecting the order flow imbalance BEFORE price breaks out, making it a predictive rather than confirmatory entry. Also distinct from Tick_Volume_Impulse_Momentum_Entry (A-) which uses raw tick count surges as a momentum confirmation filter \u2014 this idea uses bid/ask delta (direction-sensitive), not raw tick count (direction-agnostic). No existing momentum idea in the archive uses cumulative tick delta as a leading predictor of price movement.",
+      "self_grade": "A-"
+    },
+    {
+      "name": "Max_Pain_Momentum_Gravity",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Captures momentum from gold's monthly gravitational pull toward the options Max Pain strike \u2014 where options sellers maximise premium decay.",
+      "market_behaviour": "Monthly options expiration creates a well-documented gravitational pull in gold futures toward the strike price where the maximum number of options contracts expire worthless (Max Pain). Options market makers and institutional sellers have a strong incentive to pin price at or near this level going into expiry. As expiry approaches (last 5-7 days of the monthly cycle), delta-hedging flows from dealers who are short options create directional momentum toward Max Pain. If price is below Max Pain, dealer buying to hedge short puts pulls price up. If price is above Max Pain, dealer selling to hedge short calls pushes price down. This creates a predictable monthly momentum pattern that is independent of fundamental direction \u2014 a mechanical, calendar-driven edge rooted in options market microstructure.",
+      "entry_logic": "1. On the 7th calendar day before monthly options expiry (typically Friday before expiry week), load the Max Pain level for COMEX gold options.\n2. LONG when: (a) price is 0.5%-2.0% below the Max Pain strike, (b) D1 RSI < 60 (not overbought), AND (c) H1 ADX > 20 (non-trivial directional activity).\n3. SHORT when: (a) price is 0.5%-2.0% above the Max Pain strike, (b) D1 RSI > 40 (not oversold), AND (c) H1 ADX > 20.\n4. Enter at the open of the London session (08:00 UTC) for best liquidity.\n5. SKIP if Max Pain is within 0.3% of current price (too close \u2014 pin risk makes direction ambiguous).\n6. SKIP if VIX > 30 (cross-asset volatility overwhelms the Max Pain pinning effect).",
+      "exit_logic": "Stop loss: 1x ATR(14) on H1 beyond entry side. Take profit: At the Max Pain strike itself (full exit at strike), or 1.5x ATR(14) whichever is closer. Time stop: Exit all positions 24 hours before monthly options expiry \u2014 the pinning effect weakens as dealers unwind hedges post-expiry. No re-entry after time stop. Partial exit: 50% at 0.5x ATR, 50% at Max Pain strike.",
+      "failure_mode": "1. Months where a major news event (FOMC, NFP) coincides with expiry week \u2014 the fundamental shock overwhelms the Max Pain mechanical effect as dealers abandon pinning strategies during uncertainty. 2. Months where gold is in a strong trend with high momentum \u2014 the Max Pain pinning is only a gravitational pull, not a guarantee, and a strong trend can blow through it. 3. Data dependency \u2014 Max Pain calculation requires COMEX options OI by strike, which may not be available in real-time from all data sources. A stale or incorrect Max Pain level produces the wrong entry direction.",
+      "diversification_value": "Differs from Vanna_Flow_Momentum_Capture (B+) which uses proxy indicators for dealer gamma/vanna hedging in a reactive, short-term timeframe. Max_Pain_Momentum_Gravity operates on a multi-day calendar window driven by monthly options expiry mechanics \u2014 a fundamentally different time horizon and signal source. Also distinct from Gamma_Strike_Momentum_Gravitation (A-) which targets high-Gamma strikes in real-time based on current OI concentration \u2014 this idea specifically targets the Max Pain level on a fixed monthly calendar schedule, making it a forward-looking, time-bound strategy rather than a reactive positioning trade. No existing momentum idea uses Max Pain as an entry target.",
+      "self_grade": "A-"
     }
   ],
   "archived": [
@@ -3796,7 +3833,9 @@
       "Volume_Profile_POC_Momentum_Capture",
       "Gamma_Strike_Momentum_Gravitation",
       "Tick_Volume_Impulse_Momentum_Entry",
-      "Momentum_Implied_Vol_Alpha_Capture"
+      "Momentum_Implied_Vol_Alpha_Capture",
+      "Tick_Imbalance_Delta_Momentum",
+      "Max_Pain_Momentum_Gravity"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",

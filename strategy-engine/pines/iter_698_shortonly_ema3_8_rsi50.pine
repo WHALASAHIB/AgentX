@@ -1,0 +1,62 @@
+//@version=6
+strategy(title="iter 698 — Short-Only EMA3/8 crossunder + RSI50", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=0)
+
+//--- INPUTS
+// EMA periods
+emaFastLen  = input.int(3,   "EMA Fast Length")   // sweep: 2-5 step 1
+emaSlowLen  = input.int(8,   "EMA Slow Length")   // sweep: 6-12 step 2
+
+// RSI filter
+rsiLen      = input.int(14,  "RSI Length")         // sweep: 10-20 step 2
+
+// TP/SL in ticks (1 tick = syminfo.mintick)
+tpTicks     = input.int(500, "Take Profit (ticks)")  // sweep: 300-800 step 100
+slTicks     = input.int(750, "Stop Loss (ticks)")    // sweep: 500-1000 step 50
+
+// Cooldown bars after exit (break cascade)
+cooldownBars = input.int(3,  "Cooldown Bars")       // sweep: 0-6 step 1
+
+//--- INDICATORS
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+rsiVal   = ta.rsi(close, rsiLen)
+
+//--- ENTRY CONDITIONS
+// Short only: EMA3 crossunder EMA8 + RSI < 50
+shortCondition = ta.crossunder(emaFast, emaSlow) and rsiVal < 50
+
+//--- STATE MANAGEMENT
+var int  barsSinceExit  = 999
+var bool exitPlaced     = false
+var int  entryBar       = -1
+
+// Track bars since last exit
+if (strategy.position_size == 0 and strategy.position_size[1] != 0)
+    barsSinceExit := 0
+else if (strategy.position_size == 0)
+    barsSinceExit := barsSinceExit + 1
+else
+    barsSinceExit := 999  // in position
+
+// Reset exitPlaced when flat
+if (strategy.position_size == 0)
+    exitPlaced := false
+    entryBar   := -1
+
+//--- ENTRY LOGIC
+if (shortCondition and strategy.position_size == 0 and barsSinceExit >= cooldownBars)
+    strategy.entry("ES", strategy.short)
+    entryBar := bar_index
+
+//--- EXIT MANAGEMENT
+if (strategy.position_size < 0 and not exitPlaced and entryBar > 0)
+    entryPrice = strategy.position_avg_price
+    tpPrice    = entryPrice - tpTicks * syminfo.mintick
+    slPrice    = entryPrice + slTicks * syminfo.mintick
+    strategy.exit("XS", "ES", limit=tpPrice, stop=slPrice)
+    exitPlaced := true
+
+//--- PLOT
+plot(emaFast, "EMA Fast", color.blue, 1)
+plot(emaSlow, "EMA Slow", color.red, 1)
+hline(50, "RSI 50", color.gray, hline.style_dashed)
