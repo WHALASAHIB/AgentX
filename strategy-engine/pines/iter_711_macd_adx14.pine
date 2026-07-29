@@ -1,0 +1,66 @@
+//@version=6
+strategy(title="MACD ADX14 XAUUSD 1h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast", minval=5, maxval=30)       // sweep: 8-20 step 2
+slowLen = input.int(26, "MACD Slow", minval=15, maxval=50)      // sweep: 20-40 step 5
+signalLen = input.int(9, "MACD Signal", minval=5, maxval=20)    // sweep: 7-14 step 2
+
+// ADX trend filter — REDUCED from 20 to 14 for more trades
+adxLen = input.int(14, "ADX Length", minval=7, maxval=30)       // sweep: 10-20 step 2
+adxThreshold = input.int(14, "ADX Threshold", minval=8, maxval=30)  // sweep: 10-20 step 2
+
+// TP/SL (fixed ticks for 1h timeframe)
+tpTicks = input.int(2000, "TP (ticks)", minval=500, maxval=5000)     // sweep: 1000-3000 step 500
+slTicks = input.int(1500, "SL (ticks)", minval=500, maxval=5000)     // sweep: 1000-2000 step 250
+
+// Cooldown bars after exit
+cooldownBars = input.int(3, "Cooldown bars", minval=1, maxval=10)    // sweep: 2-5 step 1
+
+//--- indicator calculations
+[macdLine, signalLine, macdHist] = ta.macd(close, fastLen, slowLen, signalLen)
+[adxVal, plusDi, minusDi] = ta.dmi(high, low, close, adxLen)
+
+//--- state tracking
+var int barsSinceExit = 999
+var bool inPosition = false
+var bool exitPlaced = false
+
+//--- entry logic — only when trending (ADX > threshold)
+if inPosition == false and exitPlaced == false
+    // Long: MACD crosses above signal AND ADX > threshold (trending)
+    if ta.crossover(macdLine, signalLine) and adxVal > adxThreshold and barsSinceExit >= cooldownBars
+        strategy.entry("Long", strategy.long)
+        inPosition := true
+
+    // Short: MACD crosses below signal AND ADX > threshold (trending)
+    if ta.crossunder(macdLine, signalLine) and adxVal > adxThreshold and barsSinceExit >= cooldownBars
+        strategy.entry("Short", strategy.short)
+        inPosition := true
+
+//--- exit with TP/SL — only place once per position
+if strategy.position_size > 0 and exitPlaced == false
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks)
+    exitPlaced := true
+
+if strategy.position_size < 0 and exitPlaced == false
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks)
+    exitPlaced := true
+
+//--- update state
+if strategy.position_size == 0 and inPosition
+    inPosition := false
+    exitPlaced := false
+    barsSinceExit := 0
+
+if barsSinceExit < 999
+    barsSinceExit := barsSinceExit + 1
+
+//--- plot indicators
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dotted)
+plot(macdLine, "MACD Line", color=color.blue)
+plot(signalLine, "Signal Line", color=color.orange)
+plot(macdHist, "Histogram", color=color.purple, style=plot.style_histogram)
+plot(adxVal, "ADX", color=color.red)
+hline(adxThreshold, "ADX Threshold", color=color.green, linestyle=hline.style_dashed)

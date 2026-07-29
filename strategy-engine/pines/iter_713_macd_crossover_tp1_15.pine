@@ -1,0 +1,45 @@
+//@version=6
+strategy(title="MACD Crossover XAUUSD H1 TP1:1.5", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLength = input.int(12, "MACD Fast Length", minval=1, maxval=50)      // sweep: 8-20 step 2
+slowLength = input.int(26, "MACD Slow Length", minval=1, maxval=100)     // sweep: 18-34 step 4
+signalLength = input.int(9, "Signal Length", minval=1, maxval=30)        // sweep: 5-15 step 2
+
+// TP/SL in ticks — tightened to 1:1.5 ratio
+tpTicks = input.int(1000, "Take Profit (ticks)", minval=100, maxval=5000)  // sweep: 500-3000 step 250
+slTicks = input.int(1500, "Stop Loss (ticks)", minval=100, maxval=5000)   // sweep: 500-3000 step 250
+
+// Cooldown bars after exit before re-entry
+cooldownBars = input.int(3, "Cooldown Bars", minval=1, maxval=20)         // sweep: 1-10 step 1
+
+//--- MACD calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+
+//--- entry logic
+// MACD crossover conditions
+longCondition = ta.crossover(macdLine, signalLine)
+shortCondition = ta.crossunder(macdLine, signalLine)
+
+// Cooldown — bars since last exit
+barsSinceExit = ta.barssince(strategy.position_size == 0 and strategy.position_size[1] != 0)
+cooldownMet = na(barsSinceExit) or barsSinceExit >= cooldownBars
+
+// No existing position check
+noPosition = strategy.position_size == 0
+
+//--- entry execution
+if longCondition and noPosition and cooldownMet
+    strategy.entry("Long", strategy.long)
+
+if shortCondition and noPosition and cooldownMet
+    strategy.entry("Short", strategy.short)
+
+//--- exit management
+// Set TP/SL after entry is filled (use loss/profit in ticks * syminfo.mintick)
+if strategy.position_size > 0
+    strategy.exit("XL", "Long", profit=tpTicks, loss=slTicks, comment="XL")
+
+if strategy.position_size < 0
+    strategy.exit("XS", "Short", profit=tpTicks, loss=slTicks, comment="XS")
