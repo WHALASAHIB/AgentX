@@ -1,0 +1,92 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ADX25 1:1.5 TP/SL OnceExit XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, pyramiding=0)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)       // sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=50)       // sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80)  // sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(25, "ADX Threshold", minval=10, maxval=50)   // sweep: 15-35 step 5
+take_profit_tick = input.int(500, "Take Profit (ticks)", minval=50, maxval=5000, step=50)     // 1:1.5 ratio, sweep: 100-2000 step 100
+stop_loss_tick = input.int(750, "Stop Loss (ticks)", minval=50, maxval=5000, step=50)         // 1:1.5 ratio, sweep: 100-2000 step 100
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+
+//--- manual ADX calculation (Wilder's smoothing)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    // Initial SMA values
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    // Wilder's smoothing
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- cascade guard: fire exit orders exactly once per entry
+var bool exitPlaced = false
+
+//--- crossover detection
+cross_above = ta.crossover(ema_fast, ema_slow)
+cross_below = ta.crossunder(ema_fast, ema_slow)
+
+//--- entry logic (all hours, ADX > threshold = trending only)
+long_condition = cross_above and rsi_val > rsi_threshold and adx_val > adx_threshold
+short_condition = cross_below and rsi_val < (100 - rsi_threshold) and adx_val > adx_threshold
+
+//--- position guard: no reverse entries while in a position
+in_long = strategy.position_size > 0
+in_short = strategy.position_size < 0
+
+//--- entry
+if (long_condition and not in_long and not in_short)
+    strategy.entry("EL", strategy.long)
+
+if (short_condition and not in_short and not in_long)
+    strategy.entry("ES", strategy.short)
+
+//--- once-per-entry exit management
+if (strategy.position_size == 0)
+    exitPlaced := false
+
+if (in_long and not exitPlaced)
+    strategy.exit("XL", "EL", loss=stop_loss_tick, profit=take_profit_tick)
+    exitPlaced := true
+
+if (in_short and not exitPlaced)
+    strategy.exit("XS", "ES", loss=stop_loss_tick, profit=take_profit_tick)
+    exitPlaced := true
+
+//--- plot
+plot(ema_fast, "Fast EMA", color=color.blue, linewidth=1)
+plot(ema_slow, "Slow EMA", color=color.red, linewidth=1)
+hline(rsi_threshold, "RSI Threshold", color=color.gray, linestyle=hline.style_dashed)
+plot(adx_val, "ADX", color=color.purple, linewidth=1)
+hline(adx_threshold, "ADX Threshold", color=color.purple, linestyle=hline.style_dashed)

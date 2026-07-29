@@ -1,0 +1,45 @@
+//@version=6
+strategy(title="iter_697 EMA3/8 Short-Only ADX25 RSI50 XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=0)
+
+//--- inputs
+emaFastLen   = input.int(3,   "EMA Fast Length",  minval=1, maxval=50)     // sweep: 2-10 step 1
+emaSlowLen   = input.int(8,   "EMA Slow Length",  minval=1, maxval=50)     // sweep: 5-21 step 2
+rsiLen       = input.int(14,  "RSI Length",       minval=2, maxval=50)     // sweep: 7-21 step 2
+rsiThreshold = input.int(50,  "RSI Threshold (below = short)", minval=20, maxval=80) // sweep: 30-70 step 5
+adxLen       = input.int(14,  "ADX Length",       minval=5, maxval=30)     // sweep: 7-21 step 2
+adxThreshold = input.int(25,  "ADX Threshold",    minval=5, maxval=50)     // sweep: 14-30 step 2
+tpTicks      = input.int(500, "Take Profit (ticks)", minval=50, maxval=2000) // sweep: 200-1000 step 100
+slTicks      = input.int(750, "Stop Loss (ticks)",   minval=50, maxval=2000) // sweep: 400-1200 step 100
+
+//--- indicator calculations
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal  = ta.rsi(close, rsiLen)
+// Use ta.dmi() instead of ta.adx() — returns [plusDI, minusDI, adx]
+[diPlus, diMinus, adxVal] = ta.dmi(high, low, close, adxLen)
+
+//--- entry logic: short-only
+// EMA3/8 crossunder = short signal
+shortSignal = ta.crossunder(emaFast, emaSlow)
+
+// Filters: RSI < threshold AND ADX > threshold (strong downtrend)
+validShort = shortSignal and rsiVal < rsiThreshold and adxVal > adxThreshold
+
+// Onceexit guard — prevent re-entry after exit on same bar
+var bool exitPlaced = false
+if (strategy.position_size == 0)
+    exitPlaced := false
+
+if (validShort and strategy.position_size == 0 and not exitPlaced)
+    strategy.entry("SE", strategy.short)
+    exitPlaced := false  // reset on new entry
+
+//--- exit management
+if (strategy.position_size < 0 and not exitPlaced)
+    strategy.exit("SE_X", "SE", loss=slTicks, profit=tpTicks)
+    exitPlaced := true
+
+//--- visual plots
+plot(emaFast, "EMA Fast", color.blue, 1)
+plot(emaSlow, "EMA Slow", color.red, 1)
+hline(rsiThreshold, "RSI Threshold", color.gray, hline.style_dashed)
