@@ -1,6 +1,6 @@
 {
-  "iteration": 702,
-  "last_run": "2026-07-29T01:53:33Z",
+  "iteration": 706,
+  "last_run": "2026-07-29T10:55:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BB mean reversion XAU30m without RSI got PF=0.47 (improved from 0.20 with RSI) but WR=20% with 8/40 wins. Cascade ratio 1.6 still  present — BB re-entry during same touch zone causes multiple entries. Try: tighten TP/SL to 1:1.5 ratio (TP=500, SL=750 ticks) so profits are captured faster, increasing WR. Also strengthen exit guard to prevent re-entry until after a full bar closes above lower band (long) or below upper band (short).",
+  "current_hypothesis": "BB mean reversion XAU30m with ATR exits improved PF to 6.92 but only 2 entries (10 trades cascade) in 574 bars — too restrictive. Remove RSI(14) filter to get more BB touch signals. Keep BB(20,2) with ATR TP=1.0x, SL=1.5x. Fix cascade by using fixed offset ticks from entry_price at entry time (not recalculating per bar), so tp_price/sl_price are frozen and don't shift with ATR changes.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -245,7 +245,7 @@
     },
     {
       "iteration": 699,
-      "hypothesis": "Restore both-direction EMA3/8 crossover with RSI(50) filter and ADX(25). First attempt had 0 trades (RSI50 + no ADX too restrictive). Bare EMA3/8 cross got 97 trades but PF=0.17 (commission $523). ADX25+RSI50 restored: 81 trades, PF=0.37, WR=16% — improved from bare cross but still rejected. Choppy market window (577 bars) kills trend following.",
+      "hypothesis": "Restore both-direction EMA3/8 crossover with RSI(50) filter and ADX(25).",
       "metrics": {
         "pf": 0.36810661,
         "sharpe": -12.77445307,
@@ -277,7 +277,7 @@
     },
     {
       "iteration": 701,
-      "hypothesis": "BB mean reversion on XAUUSD 30m. Remove RSI filter (pure BB touch entries). Widen TP/SL to 1000/500 (2:1 ratio) so winners can run longer. Add 3-bar bars-since-exit cooldown to prevent cascade.",
+      "hypothesis": "BB mean reversion on XAUUSD 30m. Remove RSI filter (pure BB touch entries). Widen TP/SL to 1000/500 (2:1 ratio). Add 3-bar cooldown.",
       "metrics": {
         "pf": 0.46813885,
         "sharpe": -8.55044715,
@@ -287,21 +287,82 @@
         "net_profit": -247.318230862844,
         "cascade": 1.6
       },
-      "verdict": "rejected (PF=0.47 < 1.3, Sharpe=-8.55 < 0.5) — removing RSI improved PF from 0.20 to 0.47 but still losing. Cascade at 1.6 still problematic.",
+      "verdict": "rejected (PF=0.47 < 1.3, Sharpe=-8.55 < 0.5) — removing RSI improved PF from 0.20 to 0.47",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-29T01:53:33Z"
+    },
+    {
+      "iteration": 702,
+      "hypothesis": "BB mean reversion XAU30m without RSI. Tighten TP/SL to 1:1.5 (TP=500, SL=750 ticks). Strengthen exit guard: wait for close to close back inside bands before re-entry.",
+      "metrics": {
+        "pf": 0.56481259,
+        "sharpe": -6.22453021,
+        "wr": 32.5,
+        "dd": 2.04798327,
+        "trades": 40,
+        "net_profit": -172.373614606262,
+        "cascade": 1.6
+      },
+      "verdict": "rejected (PF=0.56 < 1.3, Sharpe=-6.22 < 0.5) — WR improved 20%->32.5%",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T02:13:00Z"
+    },
+    {
+      "iteration": 703,
+      "hypothesis": "BB mean reversion XAU30m with RSI(14) filter. Buy when close touches lower band AND RSI(14)<50. Sell when close touches upper band AND RSI(14)>50. Keep 1:1.5 TP/SL (500/750 ticks) and 3-bar cooldown.",
+      "metrics": {
+        "pf": 0.07348686,
+        "sharpe": -15.97034354,
+        "wr": 48.71794872,
+        "dd": 2.03353143,
+        "trades": 39,
+        "net_profit": -192.246687102874
+      },
+      "verdict": "rejected (PF=0.07 < 1.3, Sharpe=-15.97 < 0.5) — RSI filter boosted WR to 48.7% but fixed 500/750 tick TP/SL too wide for 30m BB moves; avg win $0.80 vs TP=500",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T10:23:30Z"
+    },
+    {
+      "iteration": 704,
+      "hypothesis": "BB mean reversion XAU30m with RSI(14) filter and ATR-based exits: TP=0.8xATR(14), SL=1.5xATR(14). ATR exits adapt to actual BB move size instead of fixed ticks.",
+      "metrics": {
+        "pf": 0.68352481,
+        "sharpe": -4.3666144,
+        "wr": 27.90697674,
+        "dd": 2.75922405,
+        "trades": 43,
+        "net_profit": -182.616080898424,
+        "cascade": 1.59259259
+      },
+      "verdict": "rejected (PF=0.68 < 1.3, Sharpe=-4.37 < 0.5) — ATR exits improved PF from 0.07 to 0.68 (10x improvement!) but WR dropped from 48.7% to 27.9%. avgWin $32.87 vs avgLoss $18.61 (1.77 ratio), commission $267 eating P&L.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T10:39:00Z"
+    },
+    {
+      "iteration": 705,
+      "hypothesis": "BB mean reversion XAU30m with RSI(14) filter and ATR-based exits. Tighten TP/SL ratio from 1:1.875 (0.8/1.5) to 1:1.5 (TP=1.0xATR, SL=1.5xATR) to let winners run longer. Change: TP from 0.8xATR to 1.0xATR.",
+      "metrics": {
+        "pf": 6.91638361,
+        "sharpe": 3.66604149,
+        "wr": 10.0,
+        "dd": 5.28752407,
+        "trades": 10,
+        "net_profit": 57.34,
+        "symbol": "XAUUSD",
+        "timeframe": "30m",
+        "iteration": 705
+      },
+      "verdict": "invalid (low sample, 10 trades) — only 2 unique entries (cascade 5.0). BB+RSI+ATR combo too restrictive on XAU30m. One long trade won $67 but short entry cascaded into 9 partial fills for -$9.69. PF=6.92 impressive but unreliable with 10 trades.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T10:55:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": [
-    "XAUUSD",
-    "BYBIT:BTCUSDT.P",
-    "EURUSD",
-    "GBPUSD"
-  ],
-  "timeframes_explored": [
-    "1h",
-    "30m"
-  ]
+  "pairs_explored": ["XAUUSD", "BYBIT:BTCUSDT.P", "EURUSD", "GBPUSD"],
+  "timeframes_explored": ["1h", "30m"]
 }

@@ -1,0 +1,53 @@
+//@version=6
+strategy(title="BB Mean Reversion XAU30m RSI14", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(20, "BB Length", minval=10, maxval=50)         // sweep: 10-50 step 5
+bb_mult = input.float(2.0, "BB StdDev", minval=1.0, maxval=3.5, step=0.5)  // sweep: 1.0-3.5 step 0.5
+rsi_length = input.int(14, "RSI Length", minval=7, maxval=21)         // sweep: 7-21 step 2
+rsi_threshold = input.int(50, "RSI Threshold", minval=30, maxval=70)   // sweep: 30-70 step 10
+tp_ticks = input.int(500, "Take Profit (ticks)", minval=200, maxval=2000)  // sweep: 200-2000 step 200
+sl_ticks = input.int(750, "Stop Loss (ticks)", minval=200, maxval=2000)   // sweep: 200-2000 step 200
+cooldown_bars = input.int(3, "Cooldown Bars", minval=1, maxval=10)       // sweep: 1-10 step 1
+
+//--- indicators
+[bb_mid, bb_upper, bb_lower] = ta.bb(close, bb_length, bb_mult)
+rsi_val = ta.rsi(close, rsi_length)
+
+//--- entry logic
+var int bars_since_exit = 0
+var bool in_position = false
+var float entry_bar_index = na
+
+// Count bars since last exit
+if not in_position
+    bars_since_exit := bars_since_exit + 1
+
+// Detect BB touches
+bool touch_lower = close <= bb_lower and close[1] > bb_lower[1]
+bool touch_upper = close >= bb_upper and close[1] < bb_upper[1]
+
+// Entry conditions with RSI filter
+bool long_entry = touch_lower and rsi_val < rsi_threshold and bars_since_exit >= cooldown_bars and not in_position
+bool short_entry = touch_upper and rsi_val > rsi_threshold and bars_since_exit >= cooldown_bars and not in_position
+
+if long_entry
+    strategy.entry("BBL", strategy.long)
+    in_position := true
+    entry_bar_index := bar_index
+    bars_since_exit := 0
+
+if short_entry
+    strategy.entry("BBS", strategy.short)
+    in_position := true
+    entry_bar_index := bar_index
+    bars_since_exit := 0
+
+//--- exit management
+if in_position
+    strategy.exit("BBLX", "BBL", loss=sl_ticks, profit=tp_ticks)
+    strategy.exit("BBSX", "BBS", loss=sl_ticks, profit=tp_ticks)
+
+// Track position status
+if strategy.position_size == 0
+    in_position := false
