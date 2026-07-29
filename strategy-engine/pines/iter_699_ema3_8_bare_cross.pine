@@ -1,0 +1,39 @@
+//@version=6
+strategy(title="EMA3/8 Bare Cross", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(3,   "EMA Fast",   minval=1, maxval=50)   // sweep: 1-10 step 1
+emaSlowLen   = input.int(8,   "EMA Slow",   minval=2, maxval=100)  // sweep: 5-30 step 1
+tpTicks      = input.int(500, "TP ticks",   minval=50, maxval=5000) // sweep: 200-1000 step 100
+slTicks      = input.int(750, "SL ticks",   minval=50, maxval=5000) // sweep: 200-1000 step 100
+
+//--- indicators
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+tickSize = syminfo.mintick
+
+//--- entry logic — bare crossover, no filters
+crossOver  = ta.crossover(emaFast, emaSlow)
+crossUnder = ta.crossunder(emaFast, emaSlow)
+
+// Reset trackedEntry when flat
+var bool trackedEntry = false
+if (strategy.position_size == 0)
+    trackedEntry := false
+
+//--- long entry
+if (crossOver and strategy.position_size == 0 and not trackedEntry)
+    strategy.entry("EL", strategy.long)
+    trackedEntry := true
+
+//--- short entry
+if (crossUnder and strategy.position_size == 0 and not trackedEntry)
+    strategy.entry("ES", strategy.short)
+    trackedEntry := true
+
+//--- exit via strategy.exit()
+if (strategy.position_size > 0 and trackedEntry)
+    strategy.exit("XEL", "EL", loss=slTicks * tickSize, profit=tpTicks * tickSize)
+
+if (strategy.position_size < 0 and trackedEntry)
+    strategy.exit("XES", "ES", loss=slTicks * tickSize, profit=tpTicks * tickSize)

@@ -1,0 +1,55 @@
+//@version=6
+strategy(
+  title="BB Mean Reversion XAU30m",
+  overlay=true,
+  initial_capital=10000,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100,
+  commission_type=strategy.commission.percent,
+  commission_value=0.04,
+  process_orders_on_close=true
+)
+
+//--- inputs
+bbLength = input.int(20, "BB Length", minval=5, maxval=50, step=1)    // sweep: 10-30 step 5
+bbStdDev = input.float(2.0, "BB StdDev", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.5-3.0 step 0.5
+tpTicks = input.int(750, "TP (ticks)", minval=100, maxval=3000, step=50)    // sweep: 500-1500 step 250
+slTicks = input.int(500, "SL (ticks)", minval=100, maxval=3000, step=50)    // sweep: 300-1000 step 100
+//--- Bollinger Bands
+[bbMiddle, bbUpper, bbLower] = ta.bb(close, bbLength, bbStdDev)
+
+//--- Additional indicators (mean reversion context)
+rsi = ta.rsi(close, 7)  // short RSI for overbought/oversold confirmation
+
+//--- Entry signals
+// Mean reversion: touch lower band = oversold = long
+//                 touch upper band = overbought = short
+touchLower = ta.crossunder(close, bbLower) or ta.crossunder(low, bbLower)
+touchUpper = ta.crossover(close, bbUpper) or ta.crossover(high, bbUpper)
+
+// RSI confirmation: long only if RSI < 40 (oversold zone), short only if RSI > 60 (overbought zone)
+longCondition = touchLower and rsi < 40
+shortCondition = touchUpper and rsi > 60
+
+//--- Exit guard — prevent cascade (only one exit per entry)
+var int exitPlaced = 0
+
+//--- Entry logic
+if (longCondition and strategy.position_size == 0 and exitPlaced == 0)
+    strategy.entry("BB_L", strategy.long)
+    strategy.exit("BB_L_X", "BB_L", loss=slTicks, profit=tpTicks)
+    exitPlaced := 1
+
+if (shortCondition and strategy.position_size == 0 and exitPlaced == 0)
+    strategy.entry("BB_S", strategy.short)
+    strategy.exit("BB_S_X", "BB_S", loss=slTicks, profit=tpTicks)
+    exitPlaced := 1
+
+//--- Reset exit guard when flat
+if (strategy.position_size == 0)
+    exitPlaced := 0
+
+//--- Visuals
+plot(bbMiddle, "BB Middle", color=color.blue)
+plot(bbUpper, "BB Upper", color=color.gray)
+plot(bbLower, "BB Lower", color=color.gray)

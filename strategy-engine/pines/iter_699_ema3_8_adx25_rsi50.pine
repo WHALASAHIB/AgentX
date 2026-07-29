@@ -1,0 +1,52 @@
+//@version=6
+strategy(title="EMA3/8 ADX25 RSI50", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(3,   "EMA Fast",   minval=1, maxval=50)   // sweep: 1-10 step 1
+emaSlowLen   = input.int(8,   "EMA Slow",   minval=2, maxval=100)  // sweep: 5-30 step 1
+rsiLen       = input.int(14,  "RSI Length", minval=2, maxval=50)   // sweep: 7-21 step 2
+adxLen       = input.int(14,  "ADX Length", minval=5, maxval=50)   // sweep: 10-30 step 2
+adxThresh    = input.int(25,  "ADX Min",     minval=10, maxval=50) // sweep: 20-35 step 5
+tpTicks      = input.int(500, "TP ticks",   minval=50, maxval=5000) // sweep: 200-1000 step 100
+slTicks      = input.int(750, "SL ticks",   minval=50, maxval=5000) // sweep: 200-1000 step 100
+
+//--- indicators
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+rsi      = ta.rsi(close, rsiLen)
+adx      = ta.sma(ta.tr(true) > 0 ? math.abs(close - close[1]) / ta.tr(true) * 100 : 0, adxLen)
+tickSize = syminfo.mintick
+
+//--- state
+var bool exitPending = false
+
+//--- entry logic
+crossOver     = ta.crossover(emaFast, emaSlow)
+crossUnder    = ta.crossunder(emaFast, emaSlow)
+rsiBull       = rsi > 50
+rsiBear       = rsi < 50
+trending      = adx > adxThresh
+
+buyCondition  = crossOver  and rsiBull and trending
+sellCondition = crossUnder and rsiBear and trending
+
+// Reset exitPending when flat
+if (strategy.position_size == 0)
+    exitPending := false
+
+//--- long entry
+if (buyCondition and strategy.position_size == 0 and not exitPending)
+    strategy.entry("EL", strategy.long)
+    exitPending := true
+
+//--- short entry
+if (sellCondition and strategy.position_size == 0 and not exitPending)
+    strategy.entry("ES", strategy.short)
+    exitPending := true
+
+//--- exit via strategy.exit()
+if (strategy.position_size > 0 and exitPending)
+    strategy.exit("XEL", "EL", loss=slTicks * tickSize, profit=tpTicks * tickSize)
+
+if (strategy.position_size < 0 and exitPending)
+    strategy.exit("XES", "ES", loss=slTicks * tickSize, profit=tpTicks * tickSize)

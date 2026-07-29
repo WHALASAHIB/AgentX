@@ -1,442 +1,470 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
-Post-Trade Critic Agent — Cron Run for Propfirm Pass Strategy v8 (magic 780012).
-Connects to MT5, fetches closed trades in last 2h for EURUSD, analyzes them,
-produces critique report and updates mistakes_ledger if losing trades found.
+Post-Trade Critic — Propfirm Pass v8 (magic 780012, EURUSD)
+Runs as cron, checks last 2h for closed trades.
+[POST-TRADE-CRITIC-AGENT v1.19.0]
 """
-import json
-import sys
-import os
-from datetime import datetime, timedelta
-from collections import defaultdict
+import os, sys, json, time, datetime
+from datetime import datetime as dt, timedelta, timezone
 
-import MetaTrader5 as mt5
-
-# ── Config ──────────────────────────────────────────────────────────────────
+# ─── Config ──────────────────────────────────────────────────────────
 MAGIC = 780012
 SYMBOL = "EURUSD"
 LOOKBACK_HOURS = 2
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, ".."))
-CONFIG_PATH = os.path.join(PROJECT_DIR, "mt5_config.json")
-LEDGER_PATH = os.path.join(PROJECT_DIR, "strategy_council", "mistakes_ledger.json")
-CRITIQUE_DIR = os.path.join(SCRIPT_DIR, "analytics")
+HERMESS_ROOT = r"C:\Hermess"
+TRADING_ROOT = r"C:\Trading"
+MISTAKES_LEDGER = os.path.join(TRADING_ROOT, "strategy_council", "mistakes_ledger.json")
+CRITIQUE_DIR = os.path.join(TRADING_ROOT, "bots", "analytics")
+BOT_CONFIG = os.path.join(HERMESS_ROOT, "mt5_config.json")
 
 os.makedirs(CRITIQUE_DIR, exist_ok=True)
 
-with open(CONFIG_PATH) as f:
-    config = json.load(f)
+# ─── MT5 Connection ────────────────────────────────────────────────
+# Load config for expected account
+with open(BOT_CONFIG) as f:
+    cfg = json.load(f)
+EXPECTED_LOGIN = int(cfg.get("login", 0))
+EXPECTED_SERVER = cfg.get("server", "")
 
-account = config["accounts"][0]  # ftmo-demo
-login = account["login"]
-password = account["password"]
-server = account["server"]
+def connect():
+    """Connect to already-running MT5 terminal. Do NOT kill terminal64.exe (Rule 1)."""
+    if mt5.initialize(timeout=5000):
+        info = mt5.account_info()
+        if info and info.login == EXPECTED_LOGIN and info.server == EXPECTED_SERVER:
+            return True
+    # Already initialized or on wrong account — shutdown and try credential
+    mt5.shutdown()
+    ok = mt5.initialize(login=EXPECTED_LOGIN, password=cfg.get("password",""),
+                        server=EXPECTED_SERVER, timeout=5000)
+    if ok:
+        info = mt5.account_info()
+        return info is not None
+    return False
 
+# ─── Query history deals ───────────────────────────────────────────
+import MetaTrader5 as mt5
 
-def evaluate_trade(trade):
-    """Score a closed trade 1-10 and return critique + recommendations."""
-    score = 5  # start neutral
-    positives = []
-    negatives = []
-    root_cause = None
-    fix = None
-    prevention_rule = None
+def query_trades():
+    """Fetch closed deals for magic 780012 in last N hours."""
+    local_now = dt.now()
+    from_time = local_now - timedelta(hours=LOOKBACK_HOURS)
+    
+    deals = mt5.history_deals_get(from_time, local_now)
+    if deals is None:
+        err = mt5.last_error()
+        # MT5 returns (1, 'Success') when no deals exist — not an error
+        if err and err[0] == 1:
+            return []
+        # Real error
+        print(f"ERROR: history_deals_get returned None: {err}")
+        return None
+    
+    # Filter by magic and symbol
+    my_deals = [d for d in deals if d.magic == MAGIC and d.symbol == SYMBOL]
+    return my_deals
 
-    pnl = trade["pnl"]
-    net_pnl = pnl
+# ─── Deal pairing (entry/exit per position) ────────────────────────
+from collections import defaultdict
 
-    price_entry = trade["price_open"]
-    price_close = trade["price_close"]
-    volume = trade["volume"]
+def get_trade_direction(entry_deals, close_deals):
+    """Determine trade direction from available deals for a position."""
+    if entry_deals:
+        return "BUY" if entry_deals[0].type == 0 else "SELL"
+    elif close_deals:
+        # Close-only deal: type is OPPOSITE of direction
+        return "SELL" if close_deals[0].type == 0 else "BUY"
+    return "UNKNOWN"
+
+def pair_trades(deals):
+    """Group deals by position_id and return complete trades."""
+    if not deals:
+        return []
+    
+    # Group by position_id
+    by_pos = defaultdict(list)
+    for d in deals:
+        by_pos[d.position_id].append(d)
+    
+    trades = []
+    for pos_id, pos_deals in by_pos.items():
+        entry_deals = [d for d in pos_deals if d.entry == 0]  # DEAL_ENTRY_IN
+        close_deals = [d for d in pos_deals if d.entry == 1]  # DEAL_ENTRY_OUT
+        
+        if not close_deals:
+            continue  # position still open
+        
+        # Compute PnL from all deals
+        total_pnl = sum(d.profit for d in pos_deals)
+        if total_pnl == 0:
+            continue  # no completed trade
+        
+        direction = get_trade_direction(entry_deals, close_deals)
+        
+        entry_price = entry_deals[0].price if entry_deals else close_deals[0].price
+        exit_price = close_deals[0].price if close_deals else entry_deals[0].price
+        entry_time = dt.fromtimestamp(entry_deals[0].time) if entry_deals else None
+        exit_time = dt.fromtimestamp(close_deals[0].time) if close_deals else None
+        volume = sum(abs(d.volume) for d in entry_deals) if entry_deals else abs(close_deals[0].volume)
+        
+        # Determine exit reason from comment
+        exit_reason = "close"
+        for d in close_deals:
+            if "[sl" in d.comment.lower():
+                exit_reason = "SL"
+            elif "[tp" in d.comment.lower():
+                exit_reason = "TP"
+        
+        # Compute R:R if we have entry and exit prices
+        rr = None
+        if entry_price and exit_price and entry_price != 0:
+            if direction == "BUY":
+                rr = (exit_price - entry_price) / (entry_price - exit_price) if exit_price < entry_price else None
+            else:  # SELL
+                rr = (entry_price - exit_price) / (exit_price - entry_price) if exit_price > entry_price else None
+        
+        holding_minutes = None
+        if entry_time and exit_time:
+            holding_minutes = (exit_time - entry_time).total_seconds() / 60
+        
+        # Score
+        score = score_trade(total_pnl, rr, holding_minutes, volume)
+        
+        quality = "good" if score >= 8 else ("acceptable" if score >= 5 else ("poor" if score >= 3 else "error"))
+        
+        trade = {
+            "position_id": pos_id,
+            "symbol": SYMBOL,
+            "direction": direction,
+            "entry_price": round(entry_price, 5),
+            "exit_price": round(exit_price, 5),
+            "volume": volume,
+            "pnl": round(total_pnl, 2),
+            "score": score,
+            "quality": quality,
+            "outcome": "win" if total_pnl > 0 else "loss",
+            "exit_reason": exit_reason,
+            "entry_time": entry_time.strftime("%Y-%m-%d %H:%M:%S") if entry_time else "unknown",
+            "exit_time": exit_time.strftime("%Y-%m-%d %H:%M:%S") if exit_time else "unknown",
+            "holding_minutes": round(holding_minutes, 1) if holding_minutes else None,
+            "comment": close_deals[0].comment if close_deals else ""
+        }
+        trades.append(trade)
+    
+    return trades
+
+def score_trade(pnl, rr, holding_minutes, volume):
+    """Score a trade 1-10."""
+    s = 5  # base
+    
+    # P&L outcome
+    if pnl > 0:
+        s += 2
+        if pnl > 50:
+            s += 1
+    else:
+        s -= 1
+        if pnl < -50:
+            s -= 1
+    
+    # R:R quality (only if available)
+    if rr is not None:
+        if rr >= 2:
+            s += 2
+        elif rr >= 1:
+            s += 1
+        elif rr < 0.5:
+            s -= 1
+    
+    # Holding time
+    if holding_minutes is not None:
+        if 10 <= holding_minutes <= 180:
+            s += 1  # reasonable hold
+        elif holding_minutes > 360:
+            s -= 1  # held too long
+        elif holding_minutes < 5:
+            s -= 1  # quick scalp
+    
+    # Volume (appropriate)
+    if volume == 0.1:
+        s += 1
+    elif volume > 0.5:
+        s -= 1
+    
+    return max(1, min(10, s))
+
+# ─── Mistakes Ledger ───────────────────────────────────────────────
+def load_ledger():
+    if not os.path.exists(MISTAKES_LEDGER):
+        default = {"strategy": "Propfirm Pass v8", "mistakes": [], "lessons_learned": []}
+        with open(MISTAKES_LEDGER, "w") as f:
+            json.dump(default, f, indent=2)
+        return default
+    with open(MISTAKES_LEDGER) as f:
+        content = f.read().strip()
+        if not content:
+            return {"strategy": "Propfirm Pass v8", "mistakes": [], "lessons_learned": []}
+        return json.loads(content)
+
+def append_mistake(trade):
+    """Append a losing trade to the mistakes ledger with dedup."""
+    ledger = load_ledger()
+    
+    # Dedup key
+    dup_key = f"{dt.now().strftime('%Y-%m-%d')}_{trade['direction']}_{trade['pnl']}"
+    existing = set()
+    for m in ledger.get("mistakes", []):
+        existing.add(f"{m.get('date','')}_{m.get('direction','')}_{m.get('pnl',0)}")
+    
+    if dup_key in existing:
+        print(f"SKIP: Duplicate mistake entry {dup_key}")
+        return False
+    
+    # Get entry/exit prices from the trade
+    entry = trade["entry_price"]
+    exit_p = trade["exit_price"]
     direction = trade["direction"]
-
-    time_open = trade["time_open"]
-    time_close = trade["time_close"]
-    holding_seconds = (time_close - time_open).total_seconds()
-    holding_hours = holding_seconds / 3600
-
-    sl = trade.get("sl", 0)
-    tp = trade.get("tp", 0)
-
-    # ── P&L score ──
-    if net_pnl > 0:
-        positives.append(f"Winning trade: +${net_pnl:.2f}")
-        score += 2
-        if net_pnl > 15:
-            score += 1
+    pnl = trade["pnl"]
+    exit_reason = trade.get("exit_reason", "close")
+    
+    # Determine root cause
+    if exit_reason == "SL":
+        root_cause = f"Stop-loss hit at {exit_p} — price reversed {abs(exit_p - entry):.5f} pips against entry"
+        fix = "Check VWAP deviation before entry — ensure trend is established, not fading"
+        prevention_rule = "Verify price is beyond 2σ VWAP band AND has rejection candle before entry"
+    elif trade["holding_minutes"] and trade["holding_minutes"] < 5:
+        root_cause = f"Quick exit at {exit_p} — entered but price immediately reversed"
+        fix = "Wait for candle close confirmation before entry"
+        prevention_rule = "Do not enter on live candle — wait for close to confirm rejection"
     else:
-        negatives.append(f"Losing trade: ${net_pnl:.2f}")
-        score -= 2
-        if net_pnl < -15:
-            score -= 1
-
-    # ── Holding time ──
-    if holding_hours < 1:
-        positives.append(f"Quick trade ({holding_hours:.1f}h)")
-        score += 1
-    elif holding_hours > 6:
-        negatives.append(f"Extended holding ({holding_hours:.1f}h)")
-        score -= 1
-
-    # ── Volume analysis ──
-    if volume > 0.3:
-        negatives.append(f"Large volume ({volume} lots)")
-        score -= 1
-    elif volume <= 0.1 and volume > 0:
-        positives.append(f"Conservative sizing ({volume} lots)")
-        score += 1
-
-    # ── R:R estimate ──
-    if sl and tp and price_entry:
-        if direction == "BUY":
-            risk = price_entry - sl
-            reward = tp - price_entry
-        else:
-            risk = sl - price_entry
-            reward = price_entry - tp
-        if risk > 0 and reward > 0:
-            rr = reward / risk
-            if rr >= 1.5:
-                positives.append(f"Good R:R ({rr:.2f})")
-                score += 1
-            elif rr < 1.0:
-                negatives.append(f"Poor R:R ({rr:.2f})")
-                score -= 1
-
-    # ── Determine outcome type ──
-    if net_pnl > 0:
-        outcome = "win"
-    else:
-        outcome = "loss"
-        if holding_hours < 1:
-            root_cause = "Early stop-out — price reversed sharply after entry"
-            fix = "Widen SL or check for news catalyst before entry"
-            prevention_rule = "Check high-impact news calendar before every US session trade"
-        elif holding_hours > 4:
-            root_cause = "Extended drawdown — trade held too long against position"
-            fix = "Set tighter time-based exit (max 4h hold or trailing SL)"
-            prevention_rule = "Maximum 4-hour holding time for EURUSD US session trades"
-        else:
-            root_cause = "Trend reversal during trade — VWAP deviation signal faded"
-            fix = "Require stronger confirmation: 2nd rejection candle or higher timeframe trend alignment"
-            prevention_rule = "Only enter when H1 trend matches VWAP deviation direction"
-
-    # Clamp score
-    score = max(1, min(10, score))
-
-    if score >= 8:
-        quality = "good"
-    elif score >= 5:
-        quality = "acceptable"
-    elif score >= 3:
-        quality = "poor"
-    else:
-        quality = "error"
-
-    return {
-        "ticket": trade["ticket"],
-        "symbol": SYMBOL,
+        root_cause = f"Price moved from {entry} to {exit_p} — trend continued against entry direction"
+        fix = "Check higher timeframe trend before entry"
+        prevention_rule = "Align entries with 15-min EMA trend direction"
+    
+    mistake = {
+        "date": dt.now().strftime("%Y-%m-%d"),
         "direction": direction,
-        "entry_price": round(price_entry, 5),
-        "exit_price": round(price_close, 5),
-        "volume": volume,
-        "pnl": round(net_pnl, 2),
-        "open_time": time_open.isoformat(),
-        "close_time": time_close.isoformat(),
-        "holding_hours": round(holding_hours, 2),
-        "score": score,
-        "quality": quality,
-        "outcome": outcome,
-        "positives": positives,
-        "negatives": negatives,
+        "entry": entry,
+        "exit": exit_p,
+        "pnl": round(pnl, 2),
         "root_cause": root_cause,
         "fix": fix,
-        "prevention_rule": prevention_rule,
+        "prevention_rule": prevention_rule
     }
-
-
-def detect_patterns(critiques):
-    """Detect patterns across all trades in the window."""
-    patterns = []
-    total = len(critiques)
-    if total == 0:
-        return patterns, 0, 0
-
-    wins = [c for c in critiques if c["outcome"] == "win"]
-    losses = [c for c in critiques if c["outcome"] == "loss"]
-    win_rate = (len(wins) / total) * 100 if total > 0 else 0
-
-    if win_rate < 40:
-        patterns.append({
-            "pattern": "Low win rate",
-            "severity": "CRITICAL",
-            "detail": f"{win_rate:.1f}% win rate across {total} trades"
-        })
-    elif win_rate < 50:
-        patterns.append({
-            "pattern": "Below average win rate",
-            "severity": "WARNING",
-            "detail": f"{win_rate:.1f}% win rate across {total} trades"
-        })
-
-    cons_losses = 0
-    max_cons_losses = 0
-    for c in critiques:
-        if c["outcome"] == "loss":
-            cons_losses += 1
-            max_cons_losses = max(max_cons_losses, cons_losses)
-        else:
-            cons_losses = 0
-    if max_cons_losses >= 3:
-        patterns.append({
-            "pattern": "Consecutive losses",
-            "severity": "CRITICAL",
-            "detail": f"{max_cons_losses} losses in a row"
-        })
-
-    avg_score = sum(c["score"] for c in critiques) / total if total > 0 else 0
-    return patterns, win_rate, avg_score
-
-
-def log_mistake(critique):
-    """Append a losing trade to the mistakes ledger."""
-    entry = {
-        "date": critique["close_time"][:10],
-        "direction": critique["direction"],
-        "entry": critique["entry_price"],
-        "exit": critique["exit_price"],
-        "pnl": critique["pnl"],
-        "root_cause": critique["root_cause"],
-        "fix": critique["fix"],
-        "prevention_rule": critique["prevention_rule"],
-    }
-    with open(LEDGER_PATH, "r+") as f:
-        ledger = json.load(f)
-        ledger["mistakes"].append(entry)
-        f.seek(0)
+    
+    ledger["mistakes"].append(mistake)
+    
+    with open(MISTAKES_LEDGER, "w") as f:
         json.dump(ledger, f, indent=2)
-        f.truncate()
-    return entry
+    
+    print(f"✓ Appended mistake to ledger: {direction} {SYMBOL} PnL={pnl:.2f}")
+    return True
 
+# ─── Pattern Detection ─────────────────────────────────────────────
+def detect_patterns(trades):
+    patterns = []
+    if not trades:
+        return patterns
+    
+    wins = [t for t in trades if t["outcome"] == "win"]
+    losses = [t for t in trades if t["outcome"] == "loss"]
+    total = len(trades)
+    wr = (len(wins) / total * 100) if total > 0 else 0
+    
+    # Low win rate
+    if wr < 40 and total >= 3:
+        patterns.append({"pattern": "Low win rate", "severity": "CRITICAL",
+                         "detail": f"{wr:.1f}% across {total} trades"})
+    elif wr < 50 and total >= 3:
+        patterns.append({"pattern": "Below average WR", "severity": "WARNING",
+                         "detail": f"{wr:.1f}% across {total} trades"})
+    
+    # Consecutive losses
+    if len(losses) >= 3:
+        patterns.append({"pattern": "Consecutive losses", "severity": "CRITICAL",
+                         "detail": f"{len(losses)} losses in a row"})
+    
+    # Exit reason patterns
+    sl_count = sum(1 for t in trades if t.get("exit_reason") == "SL")
+    tp_count = sum(1 for t in trades if t.get("exit_reason") == "TP")
+    if sl_count > tp_count * 2 and total >= 3:
+        patterns.append({"pattern": "SL/TP imbalance", "severity": "HIGH",
+                         "detail": f"{sl_count} SL hits vs {tp_count} TP hits"})
+    
+    return patterns
 
-def main():
-    print(f"=== Post-Trade Critic — Propfirm Pass v8 (Magic {MAGIC}, {SYMBOL}) ===")
-    now_local = datetime.now()
-    print(f"Time: {now_local.isoformat()}")
-    print(f"Lookback: {LOOKBACK_HOURS}h\n")
-
-    # ── Connect to MT5 ──────────────────────────────────────────────────
-    print("[1/4] Connecting to MT5...")
-    if not mt5.initialize(login=login, password=password, server=server):
-        print(f"ERROR: MT5 initialize failed: {mt5.last_error()}")
-        sys.exit(1)
-    print(f"  Connected: MT5 version {mt5.version()}")
-
-    # ── Fetch closed trades ─────────────────────────────────────────────
-    print(f"\n[2/4] Fetching closed trades for {SYMBOL} (magic={MAGIC})...")
-    now = datetime.now()
-    from_time = now - timedelta(hours=LOOKBACK_HOURS)
-
-    # Get history deals by time range
-    deals = mt5.history_deals_get(from_time, now)
-    if deals is None:
-        print(f"  No deals found: {mt5.last_error()}")
-        mt5.shutdown()
-        print("\nNo trades — staying silent.")
-        return
-
-    # Filter by symbol and magic
-    relevant = []
-    for d in deals:
-        d_dict = d._asdict()
-        if d_dict.get("symbol") == SYMBOL and d_dict.get("magic") == MAGIC:
-            relevant.append(d_dict)
-
-    print(f"  Found {len(relevant)} deals matching {SYMBOL}/magic {MAGIC}")
-
-    if not relevant:
-        mt5.shutdown()
-        print("\nNo trades — staying silent.")
-        return
-
-    # Group by position_id to get full trades (entry + exit)
-    position_deals = defaultdict(list)
-    for d in relevant:
-        pid = d.get("position_id", 0)
-        if pid == 0:
-            pid = d.get("order", 0)
-        position_deals[pid].append(d)
-
-    combined_trades = []
-    for pid, pdeals in position_deals.items():
-        # Sort by time
-        pdeals.sort(key=lambda x: x.get("time", 0))
-
-        # Determine direction from first deal
-        entry_deal = pdeals[0]
-        exit_deal = pdeals[-1]
-        entry_type = entry_deal.get("type", 0)
-        # MT5 deal types: 0=BUY, 1=SELL
-        direction = "BUY" if entry_type in (0,) else "SELL"
-
-        entry_price = entry_deal.get("price", 0)
-        # For exit, find the opposite direction deal
-        exit_price = exit_deal.get("price", entry_price)
-
-        volume = entry_deal.get("volume", 0)
-        total_profit = sum(d.get("profit", 0) for d in pdeals)
-        total_commission = sum(d.get("commission", 0) for d in pdeals)
-        total_swap = sum(d.get("swap", 0) for d in pdeals)
-
-        time_open = datetime.fromtimestamp(entry_deal.get("time", 0))
-        time_close = datetime.fromtimestamp(exit_deal.get("time", 0))
-
-        # Get order info for SL/TP if available
-        order = mt5.history_orders_get(ticket=pid)
-        sl_price = 0
-        tp_price = 0
-        if order:
-            o = order[0]
-            sl_price = o.sl if o.sl else 0
-            tp_price = o.tp if o.tp else 0
-
-        trade = {
-            "ticket": pid,
-            "direction": direction,
-            "price_open": entry_price,
-            "price_close": exit_price,
-            "volume": volume,
-            "pnl": total_profit + total_commission + total_swap,
-            "sl": sl_price,
-            "tp": tp_price,
-            "time_open": time_open,
-            "time_close": time_close,
-        }
-        combined_trades.append(trade)
-
-    total_pnl = sum(t["pnl"] for t in combined_trades)
-    print(f"  Total P&L: ${total_pnl:.2f}")
-    print(f"  Unique trades (position-based): {len(combined_trades)}")
-
-    # ── Analyze each trade ─────────────────────────────────────────────
-    print(f"\n[3/4] Analyzing {len(combined_trades)} trades...")
-    critiques = []
-    wins = []
-    losses = []
-
-    for trade in combined_trades:
-        critique = evaluate_trade(trade)
-        critiques.append(critique)
-
-        emoji = "✅" if critique["outcome"] == "win" else "❌"
-        print(f"  Ticket #{critique['ticket']} | {critique['direction']} | "
-              f"P&L: ${critique['pnl']:.2f} | Score: {critique['score']}/10 ({critique['quality']}) | {emoji}")
-        for p in critique["positives"]:
-            print(f"    + {p}")
-        for n in critique["negatives"]:
-            print(f"    - {n}")
-
-        if critique["outcome"] == "win":
-            wins.append(critique)
-        else:
-            losses.append(critique)
-
-    # ── Pattern detection ──────────────────────────────────────────────
-    patterns, win_rate, avg_score = detect_patterns(critiques)
-    print(f"\n[4/5] Pattern detection:")
-    print(f"  Win rate: {win_rate:.1f}% ({len(wins)}W / {len(losses)}L)")
-    print(f"  Avg score: {avg_score:.1f}/10")
-    if patterns:
-        for p in patterns:
-            print(f"  [{p['severity']}] {p['pattern']}: {p['detail']}")
-    else:
-        print("  No concerning patterns detected.")
-
-    # ── Handle losses: log to ledger ───────────────────────────────────
+# ─── Recommendations ──────────────────────────────────────────────
+def generate_recommendations(trades, patterns, losses):
+    recs = []
+    
+    for p in patterns:
+        if p["pattern"] == "Low win rate":
+            recs.append(f"Review entry criteria — WR {p['detail']}. Consider tightening VWAP deviation filter or adding trend confirmation.")
+        elif p["pattern"] == "Consecutive losses":
+            recs.append(f"Consecutive losses detected ({p['detail']}). Implement cooldown timer or daily loss limit.")
+        elif p["pattern"] == "SL/TP imbalance":
+            recs.append(f"SL/TP imbalance: {p['detail']}. Consider widening stops or tightening targets.")
+    
     if losses:
-        print(f"\n[5/5] Logging {len(losses)} loss(es) to mistakes_ledger.json...")
-        for loss in losses:
-            entry = log_mistake(loss)
-            print(f"  → {loss['direction']} @ {loss['entry_price']} | "
-                  f"P&L: ${loss['pnl']:.2f} | Root: {loss['root_cause'][:60]}...")
-            print(f"    Fix: {loss['fix']}")
-            print(f"    Prevention: {loss['prevention_rule']}")
+        recs.append("Review each losing trade's root cause in mistakes_ledger.json and verify prevention rules are actionable.")
+    
+    return recs
 
-    # ── Handle wins: log what went right ───────────────────────────────
-    if wins:
-        print(f"\n  {len(wins)} winning trade(s):")
-        for w in wins:
-            print(f"  ✅ {w['direction']} @ {w['entry_price']} | "
-                  f"P&L: ${w['pnl']:.2f} | Score: {w['score']}/10")
-            for p in w["positives"]:
-                print(f"    ✓ {p}")
-
-    # ── Build daily critique report ────────────────────────────────────
-    report_date = now_local.strftime("%Y-%m-%d")
+# ─── Main ──────────────────────────────────────────────────────────
+def main():
+    run_time = dt.now().strftime("%Y-%m-%dT%H:%M:%S")
+    today = dt.now().strftime("%Y-%m-%d")
+    
+    print(f"=== Post-Trade Critic | {run_time} UTC | Magic={MAGIC} {SYMBOL} ===\n")
+    
+    # Step 0: Connect to MT5
+    if not connect():
+        print("ERROR: Failed to connect to MT5")
+        # Check if terminal is running
+        import subprocess
+        r = subprocess.run(['tasklist'], capture_output=True, text=True, timeout=10)
+        if 'terminal64' in r.stdout:
+            print("  MT5 terminal is running but connection failed — possible IPC handshake issue")
+        else:
+            print("  MT5 terminal is NOT running")
+        return 1
+    
+    # Step 1: Verify MT5 account
+    info = mt5.account_info()
+    if not info:
+        print("ERROR: Cannot get account info")
+        return 1
+    
+    actual_login = info.login
+    actual_server = info.server
+    print(f"Connected: login={actual_login}, server={actual_server}")
+    
+    if actual_login != EXPECTED_LOGIN or actual_server != EXPECTED_SERVER:
+        print(f"WARNING: Connected to {actual_login}/{actual_server}, expected {EXPECTED_LOGIN}/{EXPECTED_SERVER}")
+    
+    # Step 2: Query trades
+    local_now = dt.now()
+    from_time = local_now - timedelta(hours=LOOKBACK_HOURS)
+    print(f"Query range: {from_time} → {local_now} (local, {LOOKBACK_HOURS}h)")
+    
+    raw_deals = query_trades()
+    if raw_deals is None:
+        print("ERROR: Failed to query MT5 history")
+        return 1
+    
+    print(f"Raw deals: {len(raw_deals)}")
+    
+    trades = pair_trades(raw_deals)
+    print(f"Paired trades: {len(trades)}")
+    
+    if not trades:
+        print("No completed trades found in last 2 hours.")
+        return 0  # [SILENT]
+    
+    # Step 3: Analyze each trade
+    wins = [t for t in trades if t["outcome"] == "win"]
+    losses = [t for t in trades if t["outcome"] == "loss"]
+    total_pnl = sum(t["pnl"] for t in trades)
+    avg_score = sum(t["score"] for t in trades) / len(trades) if trades else 0
+    wr = (len(wins) / len(trades) * 100) if trades else 0
+    
+    print(f"\nResults: {len(wins)}W / {len(losses)}L | Win rate: {wr:.1f}% | PnL: ${total_pnl:.2f}")
+    
+    for t in trades:
+        print(f"\n  [{t['outcome'].upper()}] {t['direction']} {t['symbol']} | "
+              f"Entry: {t['entry_price']} → Exit: {t['exit_price']} | "
+              f"PnL: ${t['pnl']:.2f} | Score: {t['score']}/10 ({t['quality']}) | "
+              f"Exit: {t['exit_reason']} | Hold: {t['holding_minutes']}min")
+        
+        if t["outcome"] == "win":
+            print(f"  ✓ Positives: Winning trade (+${t['pnl']:.2f})")
+            if t["exit_reason"] == "TP":
+                print(f"  ✓ Take-profit hit — strategy executed as expected")
+        else:
+            print(f"  ✗ Root cause: {t.get('exit_reason', 'close')} exit at {t['exit_price']}")
+            if t["holding_minutes"] and t["holding_minutes"] < 5:
+                print(f"  ✗ Quick exit — possible premature entry or fakeout")
+    
+    # Step 4: Append losing trades to mistakes ledger
+    for t in losses:
+        append_mistake(t)
+    
+    # Step 5: Pattern detection
+    patterns = detect_patterns(trades)
+    recs = generate_recommendations(trades, patterns, losses)
+    
+    # Step 6: Build report
+    per_symbol = {SYMBOL: {"wins": len(wins), "losses": len(losses),
+                           "total_pnl": round(total_pnl, 2)}}
+    
+    trade_critiques = []
+    for t in trades:
+        positives = []
+        negatives = []
+        if t["outcome"] == "win":
+            positives.append(f"Winning trade: +${t['pnl']:.2f}")
+            if t["exit_reason"] == "TP":
+                positives.append("Take-profit hit — strategy executed correctly")
+        else:
+            negatives.append(f"Losing trade: ${t['pnl']:.2f}")
+            if t["exit_reason"] == "SL":
+                negatives.append("Stop-loss hit")
+        
+        trade_critiques.append({
+            "ticket": t["position_id"],
+            "symbol": t["symbol"],
+            "direction": t["direction"],
+            "entry_price": t["entry_price"],
+            "exit_price": t["exit_price"],
+            "volume": t["volume"],
+            "pnl": t["pnl"],
+            "score": t["score"],
+            "quality": t["quality"],
+            "outcome": t["outcome"],
+            "positives": positives,
+            "negatives": negatives,
+            "root_cause": "N/A (winning trade)" if t["outcome"] == "win" else f"SL hit at {t['exit_price']}",
+            "holding_minutes": t["holding_minutes"],
+            "exit_reason": t["exit_reason"]
+        })
+    
     report = {
-        "date": report_date,
-        "run_time": datetime.now().isoformat(),
-        "total_trades": len(critiques),
+        "date": today,
+        "run_time": run_time,
+        "total_trades": len(trades),
         "wins": len(wins),
         "losses": len(losses),
-        "win_rate": round(win_rate, 1),
+        "win_rate": round(wr, 1),
         "total_pnl": round(total_pnl, 2),
         "avg_score": round(avg_score, 1),
-        "per_symbol": {
-            SYMBOL: {
-                "wins": len(wins),
-                "losses": len(losses),
-                "total_pnl": round(total_pnl, 2),
-            }
-        },
+        "per_symbol": per_symbol,
         "patterns": patterns,
-        "trade_critiques": critiques,
-        "recommendations": [],
+        "trade_critiques": trade_critiques,
+        "recommendations": recs
     }
-
-    if patterns:
-        for p in patterns:
-            if p["severity"] == "CRITICAL":
-                report["recommendations"].append(f"ADDRESS: {p['pattern']} — {p['detail']}")
-    if losses:
-        report["recommendations"].append(
-            "Check high-impact news calendar before entering US session EURUSD trades."
-        )
-        if any(l.get("root_cause") and "stop-out" in (l["root_cause"] or "").lower() for l in losses):
-            report["recommendations"].append(
-                "Consider widening SL by 2-3 pips or adding ATR-based dynamic SL."
-            )
-
-    report_path = os.path.join(CRITIQUE_DIR, f"daily_critique_{report_date}.json")
+    
+    # Save report
+    report_path = os.path.join(CRITIQUE_DIR, f"daily_critique_{today}.json")
     with open(report_path, "w") as f:
-        # Convert datetime objects to strings
-        class DateTimeEncoder(json.JSONEncoder):
-            def default(self, obj):
-                if isinstance(obj, datetime):
-                    return obj.isoformat()
-                return super().default(obj)
-        json.dump(report, f, indent=2, cls=DateTimeEncoder)
-    print(f"\n  Report saved: {report_path}")
-
-    # ── Summary ─────────────────────────────────────────────────────────
-    print(f"\n{'='*60}")
-    print(f"CRITIQUE SUMMARY — {report_date}")
-    print(f"{'='*60}")
-    print(f"  Trades:     {len(critiques)} ({'✅' if win_rate >= 50 else '⚠️'} {win_rate:.1f}% WR)")
-    print(f"  P&L:        ${total_pnl:.2f}")
-    print(f"  Avg Score:  {avg_score:.1f}/10")
-    print(f"  Patterns:   {len(patterns)}")
-    print(f"  Losses:     {len(losses)}")
-    if report["recommendations"]:
-        print(f"\n  RECOMMENDATIONS:")
-        for i, r in enumerate(report["recommendations"], 1):
-            print(f"    {i}. {r}")
-    print(f"{'='*60}")
-
-    mt5.shutdown()
-    print("\n=== Critique complete ===")
-
+        json.dump(report, f, indent=2)
+    print(f"\nReport saved: {report_path}")
+    
+    # Print patterns
+    if patterns:
+        print(f"\nPatterns detected:")
+        for p in patterns:
+            print(f"  [{p['severity']}] {p['pattern']}: {p['detail']}")
+    
+    if recs:
+        print(f"\nRecommendations:")
+        for r in recs:
+            print(f"  → {r}")
+    
+    # Verify mistakes ledger was modified
+    if losses:
+        mtime = os.path.getmtime(MISTAKES_LEDGER)
+        print(f"\nMistakes ledger mtime: {dt.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

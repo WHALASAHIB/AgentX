@@ -1,6 +1,6 @@
 {
-  "iteration": 699,
-  "last_run": "2026-07-29T00:53:42Z",
+  "iteration": 702,
+  "last_run": "2026-07-29T01:53:33Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "Short-only failed again (0 WR, 7 losing trades, cascadeRatio=7). Switch back to both-direction EMA3/8 crossover with RSI(50) filter, no ADX. Use 1:1 TP/SL ratio (500/500 ticks) to maximize win rate. Fix cascade by replacing exitPlaced guard with proper `var bool scaledOut=false` pattern (reset on position_size==0, set true after strategy.exit fires). Long side was profitable in iter 688 (PF=1.41 all-direction) — restore that signal logic.",
+  "current_hypothesis": "BB mean reversion XAU30m without RSI got PF=0.47 (improved from 0.20 with RSI) but WR=20% with 8/40 wins. Cascade ratio 1.6 still  present — BB re-entry during same touch zone causes multiple entries. Try: tighten TP/SL to 1:1.5 ratio (TP=500, SL=750 ticks) so profits are captured faster, increasing WR. Also strengthen exit guard to prevent re-entry until after a full bar closes above lower band (long) or below upper band (short).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -161,7 +161,7 @@
     },
     {
       "iteration": 694,
-      "hypothesis": "Restore strategy.exit() TP/SL with onceexit guard (iter 688 approach) instead of manual strategy.close() — iter 688 achieved PF=1.41 on XAUUSD 30m with ADX25. Manual exits (iter 693) produced cascade=1.64 and PF=1.03. strategy.exit with onceexit solved cascade at iter 688 (PF=1.41, no cascade). Go back to that proven pattern: ADX25 + strategy.exit(loss=750*tick, profit=500*tick) + exitPlaced guard.",
+      "hypothesis": "Restore strategy.exit() TP/SL with onceexit guard (iter 688 approach) instead of manual strategy.close() — iter 688 achieved PF=1.41 on XAUUSD 30m with ADX25.",
       "metrics": {
         "pf": 1.29681444,
         "sharpe": 1.47816138,
@@ -177,7 +177,7 @@
     },
     {
       "iteration": 695,
-      "hypothesis": "Add post-exit cooldown (3 bars before re-entry) to break cascade pattern. Iter 694 cascade=2.14 despite onceexit guard because exitPlaced resets on position_size==0 and re-fires immediately if conditions still favorable. Cooldown should prevent re-entry long enough for exit orders to settle.",
+      "hypothesis": "Add post-exit cooldown (3 bars before re-entry) to break cascade pattern.",
       "metrics": {
         "pf": 1.29299116,
         "sharpe": 1.4996136,
@@ -194,7 +194,7 @@
     },
     {
       "iteration": 696,
-      "hypothesis": "Replace strategy.exit() with manual price-tracked exits to eliminate OCO cascade. Track entryPrice on bar of entry. Each bar: if close >= entryPrice + TP_ticks * syminfo.mintick -> strategy.close('EL', comment='TP'). If close <= entryPrice - SL_ticks * syminfo.mintick -> strategy.close('EL', comment='SL'). Use oneShotExit bool to prevent double-firing on same bar. Keep EMA3/8, RSI50, ADX25, pyramiding=0, TP=500 ticks, SL=750 ticks.",
+      "hypothesis": "Replace strategy.exit() with manual price-tracked exits.",
       "metrics": {
         "pf": 0.65964022,
         "sharpe": -3.64444906,
@@ -204,14 +204,14 @@
         "net_profit": -71.348940372931,
         "cascade": 1.8461538461538463
       },
-      "verdict": "rejected (PF=0.66 < 1.3, Sharpe=-3.64 < 0.5, cascade=1.85 > 1.2) — manual exit reduced cascade from 2.08 to 1.85 but strategy lost money; long side lost -$130, short side gained +$59",
+      "verdict": "rejected (PF=0.66 < 1.3, Sharpe=-3.64 < 0.5)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T07:38:39Z"
     },
     {
       "iteration": 697,
-      "hypothesis": "Switch to short-only EMA3/8 crossover. On XAUUSD 30m, short trades made +$59.27 (19 trades) while long trades lost -$130.62 (5 trades). Go short-only: EMA3/8 crossunder + RSI < 50 + ADX > 25. Use strategy.exit() with from_entry parameter for TP/SL (500/750 ticks via syminfo.mintick) + onceexit guard. Pyramiding=0. This eliminates the losing long side entirely.",
+      "hypothesis": "Switch to short-only EMA3/8 crossover.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -221,14 +221,14 @@
         "net_profit": 0.0,
         "cascade": 0.0
       },
-      "verdict": "invalid (no trades) — short-only EMA3/8 crossunder + RSI<50 + ADX>25 too restrictive on XAUUSD 30m",
+      "verdict": "invalid (no trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-28T07:53:18Z"
     },
     {
       "iteration": 698,
-      "hypothesis": "Remove ADX(25) filter from short-only strategy. 0 trades on EMA3/8 crossunder + RSI<50 + ADX>25 — too restrictive. Try EMA3/8 crossunder + RSI<50 only (no ADX) on XAUUSD 30m with same TP/SL (500/750 ticks). This should capture more short entries and produce at least 20 trades.",
+      "hypothesis": "Remove ADX(25) filter from short-only strategy.",
       "metrics": {
         "pf": 0.0,
         "sharpe": 2.04691178,
@@ -238,10 +238,59 @@
         "net_profit": -11.547983494092,
         "cascade": 7.0
       },
-      "verdict": "invalid (low sample, 7 trades) — cascadeRatio=7 (1 entry split into 7 exits), 0/7 short trades won",
+      "verdict": "invalid (low sample, 7 trades)",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-29T00:53:42Z"
+    },
+    {
+      "iteration": 699,
+      "hypothesis": "Restore both-direction EMA3/8 crossover with RSI(50) filter and ADX(25). First attempt had 0 trades (RSI50 + no ADX too restrictive). Bare EMA3/8 cross got 97 trades but PF=0.17 (commission $523). ADX25+RSI50 restored: 81 trades, PF=0.37, WR=16% — improved from bare cross but still rejected. Choppy market window (577 bars) kills trend following.",
+      "metrics": {
+        "pf": 0.36810661,
+        "sharpe": -12.77445307,
+        "wr": 16.04938272,
+        "dd": 2.81545173,
+        "trades": 81,
+        "net_profit": -281.545172814078
+      },
+      "verdict": "rejected (PF=0.37 < 1.3, Sharpe=-12.77 < 0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T01:26:19Z"
+    },
+    {
+      "iteration": 700,
+      "hypothesis": "Bollinger Bands (20,2) mean reversion on XAUUSD 30m. Buy when close touches lower band + RSI(7)<40, sell when close touches upper band + RSI(7)>60. TP=750 ticks, SL=500 ticks (1.5:1). exitPlaced guard to prevent cascade.",
+      "metrics": {
+        "pf": 0.1976515,
+        "sharpe": -25.32250819,
+        "wr": 28.0,
+        "dd": 5.25382082,
+        "trades": 75,
+        "net_profit": -512.955356015582
+      },
+      "verdict": "rejected (PF=0.20 < 1.3, Sharpe=-25.32 < 0.5)",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T01:44:30Z"
+    },
+    {
+      "iteration": 701,
+      "hypothesis": "BB mean reversion on XAUUSD 30m. Remove RSI filter (pure BB touch entries). Widen TP/SL to 1000/500 (2:1 ratio) so winners can run longer. Add 3-bar bars-since-exit cooldown to prevent cascade.",
+      "metrics": {
+        "pf": 0.46813885,
+        "sharpe": -8.55044715,
+        "wr": 20.0,
+        "dd": 2.67560892,
+        "trades": 40,
+        "net_profit": -247.318230862844,
+        "cascade": 1.6
+      },
+      "verdict": "rejected (PF=0.47 < 1.3, Sharpe=-8.55 < 0.5) — removing RSI improved PF from 0.20 to 0.47 but still losing. Cascade at 1.6 still problematic.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T01:53:33Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

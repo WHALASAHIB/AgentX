@@ -1,0 +1,60 @@
+//@version=6
+strategy(title="EMA3/8 Both RSI50 1:1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen   = input.int(3,   "EMA Fast",   minval=1, maxval=50)   // sweep: 1-10 step 1
+emaSlowLen   = input.int(8,   "EMA Slow",   minval=2, maxval=100)  // sweep: 5-30 step 1
+rsiLen       = input.int(14,  "RSI Length", minval=2, maxval=50)   // sweep: 7-21 step 2
+adxLen       = input.int(14,  "ADX Length", minval=5, maxval=50)   // sweep: 10-30 step 2 (currently unused)
+adxThresh    = input.int(0,   "ADX Min (0=disabled)", minval=0, maxval=100) // sweep: 0, 15-30 step 5
+tpTicks      = input.int(500, "TP ticks",   minval=50, maxval=5000) // sweep: 200-1000 step 100
+slTicks      = input.int(500, "SL ticks",   minval=50, maxval=5000) // sweep: 200-1000 step 100
+useLong      = input.bool(true,  "Enable Long Trades")
+useShort     = input.bool(true,  "Enable Short Trades")
+
+//--- indicators
+emaFast       = ta.ema(close, emaFastLen)
+emaSlow       = ta.ema(close, emaSlowLen)
+rsi           = ta.rsi(close, rsiLen)
+adxVal        = ta.sma(ta.tr(true) > 0 ? math.abs(close - close[1]) / ta.tr(true) * 100 : 0, adxLen)  // simplified ADX for compatibility
+atr           = ta.atr(14)
+tickSize      = syminfo.mintick
+
+//--- state — scaledOut guard to prevent cascade fills
+var bool scaledOut = false
+var float entryPrice = na
+
+//--- entry logic
+buyCondition  = useLong  and ta.crossover(emaFast, emaSlow) and rsi > 50
+sellCondition = useShort and ta.crossunder(emaFast, emaSlow) and rsi < 50
+
+// ADX filter (only if threshold > 0)
+adxCondition = (adxThresh == 0) or (adxVal > adxThresh)
+
+// Reset scaledOut flag when flat
+if (strategy.position_size == 0)
+    scaledOut := false
+
+//--- long entry
+if (buyCondition and adxCondition and not scaledOut and strategy.position_size == 0)
+    strategy.entry("EL", strategy.long)
+    entryPrice := close
+    scaledOut := true  // mark pending TP/SL exit
+
+//--- short entry
+if (sellCondition and adxCondition and not scaledOut and strategy.position_size == 0)
+    strategy.entry("ES", strategy.short)
+    entryPrice := close
+    scaledOut := true  // mark pending TP/SL exit
+
+//--- exit management — via strategy.exit() with from_entry
+if (strategy.position_size > 0 and scaledOut)
+    strategy.exit("XL", "EL", loss=slTicks * tickSize, profit=tpTicks * tickSize)
+
+if (strategy.position_size < 0 and scaledOut)
+    strategy.exit("XS", "ES", loss=slTicks * tickSize, profit=tpTicks * tickSize)
+
+//--- clean reset on flat after exit executes
+if (strategy.position_size == 0 and scaledOut)
+    scaledOut := false
+    entryPrice := na
