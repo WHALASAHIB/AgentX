@@ -1,0 +1,55 @@
+//@version=6
+strategy(title="MACD Crossover XAU H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+// MACD parameters
+fastLen = input.int(12, "MACD Fast", minval=5, maxval=30)       // sweep: 8-20 step 2
+slowLen = input.int(26, "MACD Slow", minval=15, maxval=50)      // sweep: 20-40 step 5
+sigLen  = input.int(9,  "MACD Signal", minval=5, maxval=20)     // sweep: 7-15 step 2
+
+// TP/SL (fixed ticks for 1h timeframe)
+tpTicks = input.int(2000, "Take Profit (ticks)", minval=500, maxval=5000)   // sweep: 1000-4000 step 500
+slTicks = input.int(1500, "Stop Loss (ticks)", minval=500, maxval=5000)     // sweep: 1000-3000 step 500
+
+// Cooldown bars after exit
+cooldown = input.int(3, "Exit Cooldown (bars)", minval=1, maxval=20)        // sweep: 1-10 step 2
+
+//--- indicator calculations
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, sigLen)
+
+//--- exit management
+var int barsSinceExit = 999
+var bool inPosition = false
+
+//--- entry logic
+longCondition = ta.crossover(macdLine, signalLine) and barsSinceExit >= cooldown
+shortCondition = ta.crossunder(macdLine, signalLine) and barsSinceExit >= cooldown
+
+//--- entries
+if longCondition and not inPosition
+    strategy.entry("MACD Long", strategy.long)
+    inPosition := true
+
+if shortCondition and not inPosition
+    strategy.entry("MACD Short", strategy.short)
+    inPosition := true
+
+//--- exit management with strategy.exit()
+if inPosition
+    strategy.exit("MACD Exit", "MACD Long", loss=slTicks, profit=tpTicks)
+    strategy.exit("MACD Exit", "MACD Short", loss=slTicks, profit=tpTicks)
+
+//--- track position state
+if strategy.position_size == 0 and inPosition
+    inPosition := false
+    barsSinceExit := 0
+
+//--- increment cooldown counter
+if not inPosition
+    barsSinceExit := barsSinceExit + 1
+
+//--- plot indicators for visual reference
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dotted)
+plot(macdLine, "MACD Line", color=color.blue)
+plot(signalLine, "Signal Line", color=color.orange)
+plot(histLine, "Histogram", color=color.purple, style=plot.style_histogram)

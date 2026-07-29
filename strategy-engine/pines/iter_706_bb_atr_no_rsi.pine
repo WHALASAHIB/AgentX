@@ -1,0 +1,60 @@
+//@version=6
+strategy(title="BB ATR Mean Reversion XAU30m (no RSI)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_value=0.04, commission_type=strategy.commission.percent, process_orders_on_close=true)
+
+//--- inputs
+bb_length = input.int(20, "BB Length", minval=5, maxval=50)        // sweep: 10-30 step 5
+bb_mult = input.float(2.0, "BB Mult", minval=1.0, maxval=4.0)       // sweep: 1.5-3.0 step 0.5
+atr_length = input.int(14, "ATR Length", minval=5, maxval=30)        // sweep: 10-20 step 2
+tp_atr_mult = input.float(1.0, "TP (ATR mult)", minval=0.3, maxval=3.0)  // sweep: 0.5-2.0 step 0.25
+sl_atr_mult = input.float(1.5, "SL (ATR mult)", minval=0.5, maxval=3.0)  // sweep: 1.0-2.5 step 0.25
+cooldown_bars = input.int(3, "Cooldown bars", minval=1, maxval=10)   // sweep: 1-6 step 1
+use_short = input.bool(true, "Allow Shorts")
+
+//--- indicators
+[bb_mid, bb_upper, bb_lower] = ta.bb(close, bb_length, bb_mult)
+atr_val = ta.atr(atr_length)
+
+//--- entry logic
+var int bars_since_exit = 999
+var bool in_position = false
+var float entry_price = 0.0
+var float tp_price_fixed = 0.0
+var float sl_price_fixed = 0.0
+
+// Track exit
+if (strategy.position_size == 0 and in_position)
+    in_position := false
+    bars_since_exit := 0
+    entry_price := 0.0
+    tp_price_fixed := 0.0
+    sl_price_fixed := 0.0
+
+if (strategy.position_size != 0)
+    in_position := true
+    bars_since_exit := 0
+
+// Increment cooldown
+if (strategy.position_size == 0 and bars_since_exit < cooldown_bars)
+    bars_since_exit := bars_since_exit + 1
+
+// Entry signals (no RSI filter)
+long_signal = close <= bb_lower and strategy.position_size == 0 and bars_since_exit >= cooldown_bars and not in_position
+short_signal = close >= bb_upper and strategy.position_size == 0 and bars_since_exit >= cooldown_bars and not in_position and use_short
+
+if (long_signal)
+    entry_price := close
+    atr_entry = atr_val
+    tp_price_fixed := entry_price + (atr_entry * tp_atr_mult * syminfo.mintick)
+    sl_price_fixed := entry_price - (atr_entry * sl_atr_mult * syminfo.mintick)
+    strategy.entry("BBL", strategy.long)
+    strategy.exit("BBL_X", "BBL", loss=math.round((entry_price - sl_price_fixed) / syminfo.mintick), profit=math.round((tp_price_fixed - entry_price) / syminfo.mintick))
+
+if (short_signal)
+    entry_price := close
+    atr_entry = atr_val
+    tp_price_fixed := entry_price - (atr_entry * tp_atr_mult * syminfo.mintick)
+    sl_price_fixed := entry_price + (atr_entry * sl_atr_mult * syminfo.mintick)
+    strategy.entry("BBH", strategy.short)
+    strategy.exit("BBH_X", "BBH", loss=math.round((sl_price_fixed - entry_price) / syminfo.mintick), profit=math.round((entry_price - tp_price_fixed) / syminfo.mintick))
+
+//--- exit management — handled by strategy.exit() above

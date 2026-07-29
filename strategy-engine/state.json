@@ -1,6 +1,6 @@
 {
-  "iteration": 706,
-  "last_run": "2026-07-29T10:55:00Z",
+  "iteration": 710,
+  "last_run": "2026-07-29T13:57:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "BB mean reversion XAU30m with ATR exits improved PF to 6.92 but only 2 entries (10 trades cascade) in 574 bars — too restrictive. Remove RSI(14) filter to get more BB touch signals. Keep BB(20,2) with ATR TP=1.0x, SL=1.5x. Fix cascade by using fixed offset ticks from entry_price at entry time (not recalculating per bar), so tp_price/sl_price are frozen and don't shift with ATR changes.",
+  "current_hypothesis": "Replace RSI(14) with ADX(14)>20 filter on MACD(12,26,9) crossover XAUUSD 1h. ADX ensures entries only in trending conditions, preventing counter-trend trades that killed PF in iter 708 (0.35) and iter 709 (0.22 with RSI). Keep TP=2000 ticks, SL=1500 ticks, 3-bar cooldown. This iteration changes: swap RSI filter for ADX(14)>20 trending filter.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -351,18 +351,89 @@
         "wr": 10.0,
         "dd": 5.28752407,
         "trades": 10,
-        "net_profit": 57.34,
-        "symbol": "XAUUSD",
-        "timeframe": "30m",
-        "iteration": 705
+        "net_profit": 57.34
       },
       "verdict": "invalid (low sample, 10 trades) — only 2 unique entries (cascade 5.0). BB+RSI+ATR combo too restrictive on XAU30m. One long trade won $67 but short entry cascaded into 9 partial fills for -$9.69. PF=6.92 impressive but unreliable with 10 trades.",
       "symbol": "XAUUSD",
       "timeframe": "30m",
       "time": "2026-07-29T10:55:00Z"
+    },
+    {
+      "iteration": 706,
+      "hypothesis": "BB mean reversion XAU30m with ATR exits. Remove RSI(14) filter to get more BB touch signals. Keep BB(20,2) with ATR TP=1.0x, SL=1.5x. Freeze TP/SL at entry price using fixed offset ticks at entry_time (not recalculated per bar).",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -43.59149433,
+        "wr": 0.0,
+        "dd": 2.84149148,
+        "trades": 40,
+        "net_profit": -284.149148267403,
+        "cascade": 1.3793103448275863
+      },
+      "verdict": "rejected (PF=0.00 < 1.3, Sharpe=-43.59 < 0.5, WR=0%) — removing RSI filter caused BB mean reversion to fade every touch without confirmation. All 40 trades lost.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T03:09:21Z"
+    },
+    {
+      "iteration": 707,
+      "hypothesis": "BB mean reversion XAU30m with RSI(14) filter (long when close<=BB_lower AND RSI<50, short when close>=BB_upper AND RSI>50). ATR-based TP=0.8xATR, SL=1.5xATR. Add 5-bar cooldown to reduce cascade. Restore RSI filter absent in iter 706.",
+      "metrics": {
+        "pf": 0.37710082,
+        "sharpe": -13.6217771,
+        "wr": 27.27272727,
+        "dd": 5.58225146,
+        "trades": 55,
+        "net_profit": -521.321225902899,
+        "cascade": 1.7741935483870968
+      },
+      "verdict": "rejected (PF=0.38 < 1.3, Sharpe=-13.62 < 0.5) — RSI restoration worsened PF from 0.68 (iter 704) to 0.38. 5-bar cooldown didn't help cascade (1.77 vs 1.59 from iter 704). Commission $301 is 58% of gross loss.",
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "time": "2026-07-29T13:10:00Z"
+    },
+    {
+      "iteration": 708,
+      "hypothesis": "Switch to MACD(12,26,9) crossover on XAUUSD 1h. Enter long when MACD line crosses above signal line, short when MACD crosses below signal line. Exit via fixed TP=2000 ticks, SL=1500 ticks. 3-bar cooldown. New indicator family (MACD) and timeframe (1h) — entirely different from BB/EMA approach.",
+      "metrics": {
+        "pf": 0.3464905,
+        "sharpe": -9.63846687,
+        "wr": 16.0,
+        "dd": 2.70915928,
+        "trades": 25,
+        "net_profit": -246.810031603107
+      },
+      "verdict": "rejected (PF=0.35 < 1.3, Sharpe=-9.64 < 0.5) — MACD crossover on H1 produced 25 trades with 16% WR. Commission $129 eating 34% of gross loss. Pure MACD crossover without trend filter enters counter-trend trades.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-29T13:37:00Z"
+    },
+    {
+      "iteration": 709,
+      "hypothesis": "Add RSI(14) filter to MACD(12,26,9) crossover on XAUUSD 1h. Long only when RSI(14)>50, short only when RSI(14)<50. Keep TP=2000 ticks, SL=1500 ticks, 3-bar cooldown. This iteration changes: add RSI(14) trend-confirmation filter to improve PF from 0.35.",
+      "metrics": {
+        "pf": 0.22403494,
+        "sharpe": -10.01227346,
+        "wr": 11.76470588,
+        "dd": 2.43528428,
+        "trades": 17,
+        "net_profit": -217.385159082005
+      },
+      "verdict": "invalid (low sample, 17 trades) — RSI filter made MACD too restrictive on H1. 17 trades < 20 minimum. WR dropped from 16% to 11.8%. Avg win $31.38 vs avg loss $18.68 (1.68:1 ratio) but only 2 winning trades.",
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "time": "2026-07-29T13:57:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
-  "pairs_explored": ["XAUUSD", "BYBIT:BTCUSDT.P", "EURUSD", "GBPUSD"],
-  "timeframes_explored": ["1h", "30m"]
+  "pairs_explored": [
+    "XAUUSD",
+    "GBPUSD",
+    "BYBIT:BTCUSDT.P",
+    "EURUSD"
+  ],
+  "timeframes_explored": [
+    "1h",
+    "30m"
+  ]
 }
