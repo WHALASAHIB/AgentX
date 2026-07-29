@@ -1,0 +1,52 @@
+//@version=6
+strategy(title="Supertrend ATR2 XAUUSD H1", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+atrPeriod = input.int(7, "ATR Period", minval=1, maxval=50, tooltip="ATR period for Supertrend calculation")  // sweep: 5-14 step 2
+atrFactor = input.float(2.0, "ATR Factor", minval=1.0, maxval=10.0, step=0.5, tooltip="Supertrend multiplier — REDUCED from 3.0 to 2.0 for more signals")  // sweep: 1.5-6 step 0.5
+tpTicks   = input.int(1000, "Take Profit (ticks)", minval=100, maxval=5000, step=100, tooltip="TP distance in ticks")  // sweep: 500-3000 step 500
+slTicks   = input.int(1500, "Stop Loss (ticks)", minval=100, maxval=5000, step=100, tooltip="SL distance in ticks")  // sweep: 500-3000 step 500
+cooldown  = input.int(3, "Cooldown (bars)", minval=0, maxval=20, step=1, tooltip="Min bars between entries")  // sweep: 1-10 step 1
+useLong   = input.bool(true, "Allow Longs", tooltip="Enable long entries")
+useShort  = input.bool(true, "Allow Shorts", tooltip="Enable short entries")
+
+//--- Supertrend calculation (ATR Factor=2.0 for more sensitive flips)
+[supertrend, direction] = ta.supertrend(atrFactor, atrPeriod)
+plot(supertrend, "Supertrend", color = direction < 0 ? color.green : color.red, style=plot.style_linebr, linewidth=2)
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_dotted)
+
+//--- Trend direction: 1 = uptrend (green), -1 = downtrend (red)
+trendUp   = direction < 0
+trendDown = direction > 0
+
+//--- Entry cooldown tracking
+var int barsSinceLastEntry = 999
+barsSinceLastEntry := barsSinceLastEntry + 1
+
+//--- Entry logic: detect supertrend flip
+enterLong  = trendUp   and not trendUp[1]   and barsSinceLastEntry >= cooldown and useLong
+enterShort = trendDown and not trendDown[1] and barsSinceLastEntry >= cooldown and useShort
+
+//--- Exit management with once-exit guard
+var bool exitPlaced = false
+
+// Reset exitPlaced when no position
+if strategy.position_size == 0
+    exitPlaced := false
+
+//--- Entry execution
+if enterLong
+    strategy.entry("Long", strategy.long)
+    exitPlaced := false
+    barsSinceLastEntry := 0
+
+if enterShort
+    strategy.entry("Short", strategy.short)
+    exitPlaced := false
+    barsSinceLastEntry := 0
+
+//--- Place TP/SL once per entry
+if strategy.position_size != 0 and not exitPlaced
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks, comment="ExitL")
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks, comment="ExitS")
+    exitPlaced := true

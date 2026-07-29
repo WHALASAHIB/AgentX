@@ -1,0 +1,68 @@
+//@version=6
+strategy(title="EMA3/8 ADX25 RSI50 XAUUSD 30m TP400 SL800", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFast   = input.int(3, "Fast EMA", minval=2, maxval=21, tooltip="Fast EMA period for crossover entry")  // sweep: 2-10 step 1
+emaSlow   = input.int(8, "Slow EMA", minval=5, maxval=34, tooltip="Slow EMA period for crossover entry")  // sweep: 5-21 step 2
+adxLen    = input.int(14, "ADX Length", minval=7, maxval=28, tooltip="ADX period")  // sweep: 7-21 step 7
+adxThresh = input.int(25, "ADX Threshold", minval=15, maxval=35, tooltip="Min ADX for trending filter")  // sweep: 15-30 step 5
+rsiLen    = input.int(14, "RSI Length", minval=7, maxval=21, tooltip="RSI period")  // sweep: 7-14 step 7
+rsiThresh = input.int(50, "RSI Threshold", minval=40, maxval=60, tooltip="RSI > threshold for long, < threshold for short")  // sweep: 40-60 step 10
+tpTicks   = input.int(400, "Take Profit (ticks)", minval=100, maxval=3000, step=100, tooltip="TP distance in ticks (1:2 ratio with SL)")  // sweep: 200-1000 step 100
+slTicks   = input.int(800, "Stop Loss (ticks)", minval=100, maxval=3000, step=100, tooltip="SL distance in ticks (1:2 ratio with TP)")  // sweep: 400-1500 step 100
+cooldown  = input.int(3, "Cooldown (bars)", minval=0, maxval=20, step=1, tooltip="Min bars between entries")  // sweep: 1-10 step 1
+useLong   = input.bool(true, "Allow Longs", tooltip="Enable long entries")
+useShort  = input.bool(true, "Allow Shorts", tooltip="Enable short entries")
+
+//--- EMA crossover
+fastMA = ta.ema(close, emaFast)
+slowMA = ta.ema(close, emaSlow)
+plot(fastMA, "Fast EMA", color=color.blue, linewidth=1)
+plot(slowMA, "Slow EMA", color=color.red, linewidth=1)
+
+//--- ADX trend strength filter
+[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
+plot(adxVal, "ADX(" + str.tostring(adxLen) + ")", color=color.purple, linewidth=1)
+hline(adxThresh, "ADX Threshold", color=color.gray, linestyle=hline.style_dotted)
+
+//--- RSI momentum filter
+rsiVal = ta.rsi(close, rsiLen)
+hline(rsiThresh, "RSI Threshold", color=color.orange, linestyle=hline.style_dotted)
+
+//--- Combined conditions
+crossOver  = ta.crossover(fastMA, slowMA)      // Fast EMA crosses above slow = bullish
+crossUnder = ta.crossunder(fastMA, slowMA)      // Fast EMA crosses below slow = bearish
+trending   = adxVal > adxThresh                  // ADX confirms strong trend
+rsiLongOK  = rsiVal > rsiThresh                  // RSI bullish momentum
+rsiShortOK = rsiVal < rsiThresh                  // RSI bearish momentum
+
+//--- Entry cooldown tracking
+var int barsSinceLastEntry = 999
+barsSinceLastEntry := barsSinceLastEntry + 1
+
+//--- Entry logic: EMA crossover + ADX trend confirmation + RSI momentum alignment
+enterLong  = crossOver and trending and rsiLongOK and barsSinceLastEntry >= cooldown and useLong
+enterShort = crossUnder and trending and rsiShortOK and barsSinceLastEntry >= cooldown and useShort
+
+//--- Exit management with once-exit guard
+var bool exitPlaced = false
+
+if strategy.position_size == 0
+    exitPlaced := false
+
+//--- Entry execution
+if enterLong
+    strategy.entry("Long", strategy.long)
+    exitPlaced := false
+    barsSinceLastEntry := 0
+
+if enterShort
+    strategy.entry("Short", strategy.short)
+    exitPlaced := false
+    barsSinceLastEntry := 0
+
+//--- Place TP/SL once per entry (wider 1:2 ratio to improve WR)
+if strategy.position_size != 0 and not exitPlaced
+    strategy.exit("XL", "Long", loss=slTicks, profit=tpTicks, comment="ExitL")
+    strategy.exit("XS", "Short", loss=slTicks, profit=tpTicks, comment="ExitS")
+    exitPlaced := true
