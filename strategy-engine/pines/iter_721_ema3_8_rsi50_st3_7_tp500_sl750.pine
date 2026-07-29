@@ -1,0 +1,59 @@
+//@version=6
+strategy(title="EMA3/8 XAU30m RSI50 Supertrend3_7 TP500 SL750", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+ema_fast_len = input.int(3, "EMA Fast Length", minval=1, maxval=50)
+ema_slow_len = input.int(8, "EMA Slow Length", minval=1, maxval=50)
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50, step=1)
+rsi_upper = input.int(50, "RSI Bullish Min", minval=20, maxval=80, step=5)
+rsi_lower = input.int(50, "RSI Bearish Max", minval=20, maxval=80, step=5)
+st_factor = input.float(3.0, "Supertrend Factor", minval=1.0, maxval=10.0, step=0.5)
+st_atr_period = input.int(7, "Supertrend ATR Period", minval=1, maxval=50, step=1)
+tp_ticks = input.int(500, "Take Profit (ticks)", minval=100, maxval=2000, step=50)
+sl_ticks = input.int(750, "Stop Loss (ticks)", minval=100, maxval=2000, step=50)
+cooldown_bars = input.int(3, "Cooldown Bars", minval=0, maxval=20, step=1)
+
+//--- indicators
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+[st_trend, st_dir] = ta.supertrend(st_factor, st_atr_period)  // st_dir: 1=up/green, -1=down/red
+
+//--- entry logic
+var int bars_since_exit = 999
+var bool in_position = false
+exit_long_trigger = false
+exit_short_trigger = false
+
+// Track position state
+if strategy.position_size == 0 and in_position
+    in_position := false
+    bars_since_exit := 0
+if strategy.position_size != 0
+    in_position := true
+    bars_since_exit := 999
+if not in_position and bars_since_exit < 999
+    bars_since_exit := bars_since_exit + 1
+
+// Entry conditions — long
+long_entry = ta.crossover(ema_fast, ema_slow) and rsi_val > rsi_upper and st_dir > 0
+// Entry conditions — short
+short_entry = ta.crossunder(ema_fast, ema_slow) and rsi_val < rsi_lower and st_dir < 0
+
+// Wait for cooldown
+can_trade = bars_since_exit >= cooldown_bars
+
+// Place entries
+if long_entry and can_trade and strategy.position_size == 0
+    strategy.entry("LONG", strategy.long)
+    exit_long_trigger := true
+
+if short_entry and can_trade and strategy.position_size == 0
+    strategy.entry("SHORT", strategy.short)
+    exit_short_trigger := true
+
+//--- exit management
+if exit_long_trigger
+    strategy.exit("XL", "LONG", loss=sl_ticks, profit=tp_ticks)
+if exit_short_trigger
+    strategy.exit("XS", "SHORT", loss=sl_ticks, profit=tp_ticks)

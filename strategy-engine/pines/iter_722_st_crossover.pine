@@ -1,0 +1,37 @@
+//@version=6
+strategy(title="ST Crossover RSI50 XAU30m", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+stFactor = input.float(3.0, "Supertrend Factor", minval=1.0, maxval=10.0, step=0.5)  // sweep: 1.5-5.0
+stPeriod = input.int(7, "Supertrend Period", minval=1, maxval=30)  // sweep: 5-15
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(50, "RSI Threshold", minval=20, maxval=80)
+
+//--- Supertrend as primary signal
+[st_val, st_dir] = ta.supertrend(stFactor, stPeriod)
+st_bullish = st_dir == 1   // green = uptrend
+st_bearish = st_dir == -1  // red = downtrend
+
+//--- Direction change detection (Supertrend flip)
+prev_st_dir = st_dir[1]
+st_turned_bullish = st_dir == 1 and prev_st_dir == -1
+st_turned_bearish = st_dir == -1 and prev_st_dir == 1
+
+//--- RSI filter
+rsi_val = ta.rsi(close, rsiLen)
+rsi_long_ok = rsi_val > rsiThreshold
+rsi_short_ok = rsi_val < rsiThreshold
+
+//--- Entry via opposite-direction entry (auto-closes previous position)
+// No strategy.exit() used — avoids cascade entirely
+if (st_turned_bullish and rsi_long_ok)
+    strategy.entry("L", strategy.long, comment="STflipL")
+
+if (st_turned_bearish and rsi_short_ok)
+    strategy.entry("S", strategy.short, comment="STflipS")

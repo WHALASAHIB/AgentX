@@ -1,0 +1,98 @@
+//@version=6
+strategy(title="EMA3/8 RSI50+ST+ADX25 XAU30m", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+emaFast = input.int(3, "Fast EMA", minval=1, maxval=50)
+emaSlow = input.int(8, "Slow EMA", minval=2, maxval=100)
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(50, "RSI Threshold", minval=20, maxval=80)
+stFactor = input.float(3.0, "Supertrend Factor", minval=1.0, maxval=10.0, step=0.5)
+stPeriod = input.int(7, "Supertrend Period", minval=1, maxval=30)
+adxLen = input.int(14, "ADX Length", minval=5, maxval=50)
+adxThreshold = input.int(25, "ADX Threshold", minval=10, maxval=50)
+tpTicks = input.int(500, "TP (ticks)", minval=50, maxval=5000, step=50)
+slTicks = input.int(750, "SL (ticks)", minval=50, maxval=5000, step=50)
+cooldownBars = input.int(3, "Cooldown Bars", minval=0, maxval=20)
+
+//--- EMA calculations
+ema_fast = ta.ema(close, emaFast)
+ema_slow = ta.ema(close, emaSlow)
+
+//--- RSI
+rsi_val = ta.rsi(close, rsiLen)
+
+//--- Supertrend
+[supertrend_val, supertrend_dir] = ta.supertrend(stFactor, stPeriod)
+
+//--- Manual ADX calculation (Wilder's smoothing)
+// True Range
+tr_val = ta.tr(true)
+// Directional movement
+up_move = high - high[1]
+down_move = low[1] - low
+pos_dm = up_move > down_move and up_move > 0 ? up_move : 0
+neg_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+// Wilder's smoothing using rma-equivalent formula
+var float tr_smooth = na
+var float pos_dm_smooth = na
+var float neg_dm_smooth = na
+
+if na(tr_smooth)
+    tr_smooth := ta.sma(tr_val, adxLen)
+    pos_dm_smooth := ta.sma(pos_dm, adxLen)
+    neg_dm_smooth := ta.sma(neg_dm, adxLen)
+else
+    tr_smooth := (tr_smooth * (adxLen - 1) + tr_val) / adxLen
+    pos_dm_smooth := (pos_dm_smooth * (adxLen - 1) + pos_dm) / adxLen
+    neg_dm_smooth := (neg_dm_smooth * (adxLen - 1) + neg_dm) / adxLen
+
+pos_di = tr_smooth > 0 ? 100 * pos_dm_smooth / tr_smooth : 0
+neg_di = tr_smooth > 0 ? 100 * neg_dm_smooth / tr_smooth : 0
+dx_val = pos_di + neg_di > 0 ? 100 * math.abs(pos_di - neg_di) / (pos_di + neg_di) : 0
+adx_val = ta.sma(dx_val, adxLen)
+
+//--- entry signals
+cross_above = ta.crossover(ema_fast, ema_slow)
+cross_below = ta.crossunder(ema_fast, ema_slow)
+
+// Direction filters
+rsi_long_ok = rsi_val > rsiThreshold
+rsi_short_ok = rsi_val < rsiThreshold
+st_long_ok = supertrend_dir == 1
+st_short_ok = supertrend_dir == -1
+adx_ok = adx_val > adxThreshold
+
+// Combined entry conditions
+long_entry = cross_above and rsi_long_ok and st_long_ok and adx_ok
+short_entry = cross_below and rsi_short_ok and st_short_ok and adx_ok
+
+// Cooldown
+var lastExitBar = na
+if (strategy.position_size[0] == 0 and strategy.position_size[1] != 0)
+    lastExitBar := bar_index
+cooldown_ok = na(lastExitBar) or (bar_index - lastExitBar >= cooldownBars)
+
+//--- exit management
+mintick = syminfo.mintick
+tp_price = strategy.position_avg_price + (tpTicks * mintick)
+sl_price = strategy.position_avg_price - (slTicks * mintick)
+tp_price_short = strategy.position_avg_price - (tpTicks * mintick)
+sl_price_short = strategy.position_avg_price + (slTicks * mintick)
+
+//--- execute
+entry_guard = strategy.position_size == 0 and cooldown_ok
+
+if entry_guard and long_entry
+    strategy.entry("L", strategy.long)
+    strategy.exit("L-X", "L", limit=tp_price, stop=sl_price)
+
+if entry_guard and short_entry
+    strategy.entry("S", strategy.short)
+    strategy.exit("S-X", "S", limit=tp_price_short, stop=sl_price_short)

@@ -1,0 +1,57 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 CascadeGuard XAU30m", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     process_orders_on_close=true)
+
+//--- inputs
+emaFast = input.int(3, "Fast EMA", minval=1, maxval=50)
+emaSlow = input.int(8, "Slow EMA", minval=2, maxval=100)
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(50, "RSI Threshold", minval=20, maxval=80)
+tpTicks = input.int(500, "TP (ticks)", minval=50, maxval=5000, step=50)
+slTicks = input.int(750, "SL (ticks)", minval=50, maxval=5000, step=50)
+cooldownBars = input.int(3, "Cooldown Bars", minval=0, maxval=20)
+
+//--- cascade prevention: fire strategy.exit exactly once per entry
+var exitPlaced = false
+
+//--- track last exit bar for cooldown
+var lastExitBar = na
+if (strategy.position_size[0] == 0 and strategy.position_size[1] != 0)
+    lastExitBar := bar_index
+cooldown_ok = na(lastExitBar) or (bar_index - lastExitBar >= cooldownBars)
+
+//--- calculations
+ema_fast = ta.ema(close, emaFast)
+ema_slow = ta.ema(close, emaSlow)
+rsi_val = ta.rsi(close, rsiLen)
+cross_above = ta.crossover(ema_fast, ema_slow)
+cross_below = ta.crossunder(ema_fast, ema_slow)
+rsi_long_ok = rsi_val > rsiThreshold
+rsi_short_ok = rsi_val < rsiThreshold
+long_signal = cross_above and rsi_long_ok
+short_signal = cross_below and rsi_short_ok
+
+//--- reset exitPlaced when flat
+if (strategy.position_size == 0)
+    exitPlaced := false
+
+//--- entry
+if (strategy.position_size == 0 and cooldown_ok)
+    if (long_signal)
+        strategy.entry("L", strategy.long)
+    if (short_signal)
+        strategy.entry("S", strategy.short)
+
+//--- exit (fire exactly once per entry)
+if (not exitPlaced)
+    if (strategy.position_size > 0)
+        strategy.exit("L-X", "L", profit=tpTicks, loss=slTicks)
+        exitPlaced := true
+    if (strategy.position_size < 0)
+        strategy.exit("S-X", "S", profit=tpTicks, loss=slTicks)
+        exitPlaced := true

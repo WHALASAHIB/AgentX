@@ -1,0 +1,57 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 Supertrend XAU30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+emaFastLen = input.int(3, "EMA Fast Length", minval=1, maxval=50)
+emaSlowLen = input.int(8, "EMA Slow Length", minval=2, maxval=100)
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50)
+rsiThreshold = input.int(50, "RSI Threshold", minval=1, maxval=100)
+stFactor = input.float(3.0, "Supertrend Factor", minval=1.0, maxval=10.0, step=0.5)
+stPeriod = input.int(7, "Supertrend ATR Period", minval=1, maxval=50)
+tpTicks = input.int(400, "Take Profit (ticks)", minval=50, maxval=5000, step=50)  // sweep: 100-1000 step 100
+slTicks = input.int(800, "Stop Loss (ticks)", minval=50, maxval=5000, step=50)    // sweep: 200-1500 step 100
+coolBars = input.int(3, "Cooldown Bars", minval=1, maxval=20)
+
+//--- indicators
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+// Supertrend(3,7) — returns [trend, direction]
+// direction: +1 = uptrend (green), -1 = downtrend (red)
+[supertrendVal, supertrendDir] = ta.supertrend(stFactor, stPeriod)
+
+//--- crossover detection
+emaCrossOver = ta.crossover(emaFast, emaSlow)
+emaCrossUnder = ta.crossunder(emaFast, emaSlow)
+
+//--- cooldown counter (3 bars after exit before re-entry)
+var int barsSinceExit = 999
+if (strategy.position_size == 0 and strategy.position_size[1] != 0)
+    barsSinceExit := 0
+else
+    barsSinceExit := barsSinceExit + 1
+
+//--- entry logic — BOTH directions
+// LONG: EMA8 > EMA3 (fast above slow), RSI > 50, Supertrend green (uptrend), cooldown done
+longCondition = emaCrossOver and rsiVal > rsiThreshold and supertrendDir == 1 and barsSinceExit >= coolBars
+// SHORT: EMA8 < EMA3 (fast below slow), RSI < 50, Supertrend red (downtrend), cooldown done
+shortCondition = emaCrossUnder and rsiVal < rsiThreshold and supertrendDir == -1 and barsSinceExit >= coolBars
+
+//--- exit management via strategy.exit with fixed tick distances
+if (strategy.position_size > 0)
+    strategy.exit("XL", "L", loss=slTicks, profit=tpTicks)
+if (strategy.position_size < 0)
+    strategy.exit("XS", "S", loss=slTicks, profit=tpTicks)
+
+//--- entry orders
+if (longCondition and strategy.position_size == 0)
+    strategy.entry("L", strategy.long)
+if (shortCondition and strategy.position_size == 0)
+    strategy.entry("S", strategy.short)
+
+//--- plot
+plot(emaFast, "EMA Fast", color.blue, 1)
+plot(emaSlow, "EMA Slow", color.red, 1)
+hline(rsiThreshold, "RSI Threshold", color.gray, hline.style_dashed)
+plot(supertrendVal, "Supertrend", supertrendDir == 1 ? color.lime : color.red, 2)
