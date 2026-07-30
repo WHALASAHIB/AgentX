@@ -1,0 +1,29 @@
+//@version=6
+strategy(title="Supertrend Flip Guard XAUUSD H1", overlay=true,
+         initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100, commission_type=strategy.commission.percent,
+         commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+factor = input.float(3.0, "Supertrend Factor", minval=1.0, maxval=5.0, step=0.5)           // sweep: 1.0-5.0 step 0.5
+atrPeriod = input.int(7, "ATR Period", minval=3, maxval=21, step=2)                        // sweep: 3-21 step 2
+
+//--- Supertrend
+[st, dir] = ta.supertrend(factor, atrPeriod)
+// dir = 1 (uptrend, price above ST), -1 (downtrend, price below ST)
+
+//--- flip-change detection
+// Buy signal: direction goes from -1 to +1 (price crosses UP through Supertrend)
+buyFlip = ta.crossover(dir, 0)
+// Sell signal: direction goes from +1 to -1 (price crosses DOWN through Supertrend)
+sellFlip = ta.crossunder(dir, 0)
+
+//--- entry logic — ONLY on flip changes, NOT every bar
+if buyFlip
+    strategy.entry("Long", strategy.long)
+
+if sellFlip
+    strategy.entry("Short", strategy.short)
+
+//--- No explicit exit — opposite-direction entry auto-closes the prior position
+// pyramiding=1 (forced by engine), so each entry closes the opposite-side position first

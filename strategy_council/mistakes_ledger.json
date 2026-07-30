@@ -1,14 +1,14 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-07-25",
+  "last_updated": "2026-07-29",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
   "win_rate_pct": 10.0,
   "mistakes": [
     {
-      "date": "2026-07-25",
+      "date": "2026-07-23",
       "pattern": "Chronic losing streak — 0/4 in last 7 days, all SL hits",
       "root_cause": "Entry signals occur after trend has already moved, bot enters against momentum. All exits via SL, zero TP hits.",
       "fix": "Consider disabling bot (auto-disable triggered: 10 trades, 10% WR < 30% threshold). Tighten entry criteria or reduce risk per trade from 1.07% to 0.5%.",
@@ -41,20 +41,76 @@
       "root_cause": "State persistence logic may not capture SL/TP exit reasons from MT5 deal comments, or deal comment parsing is broken.",
       "fix": "Audit propfirm_pass_bot.py state file update logic for SL/TP tracking.",
       "prevention_rule": "Verify SL/TP tracking reads d.comment field correctly after every trade close."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "17+ zombie instances of propfirm_pass_bot.py accumulated — no PID lock cleanup on cron restart",
+      "root_cause": "Cron launcher(s) start new instances without killing old ones. Bots from C:/Hermess/bots/ and -u bots/ paths have no shared lock file.",
+      "fix": "Kill ALL propfirm_pass_bot.py instances, then restart single instance. Add lock-file check shared across both deployment paths.",
+      "prevention_rule": "Process count must be verified after every restart. More than 1 instance = zombie cascade."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "propfirm_pass_state.json MISSING — all trade tracking data lost",
+      "root_cause": "State file was deleted or never persisted. Bot starts fresh each time, losing consecutive loss count, SL/TP tracking, and daily trade limits.",
+      "fix": "Regenerate state file from MT5 history or restart bot with clean state generation logic.",
+      "prevention_rule": "Verify state file exists after every bot restart. Missing state = blind bot."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "Trades entered outside declared session window (01:29-02:12 UTC vs 07:00-15:00 UTC)",
+      "root_cause": "Timezone bug — bot uses local HKT time for session detection while declaring UTC window. Entries at HKT 09:29 fall in Asian session, not London/US.",
+      "fix": "Fix session detection to use datetime.now(timezone.utc) instead of datetime.now()",
+      "prevention_rule": "Cross-check every trade's UTC hour against declared session window. Off-window trades = timezone bug."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "GBPUSD and USDJPY bots also have zombie cascades (3 and 4 instances each)",
+      "root_cause": "Same cron launcher issue as propfirm_pass_bot.py — no cleanup between restarts.",
+      "fix": "Kill all instances of all bot types, restart cleanly with shared PID locks.",
+      "prevention_rule": "All bot types in the fleet must be checked for duplicate instances, not just the primary EURUSD bot."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "M780014 variant also losing (-$982.73 in 7 days, 1/1 W/L = 50% but negative PnL)",
+      "root_cause": "Second magic number variant of the same strategy, same structural flaws. No isolation from M780012.",
+      "fix": "Disable M780014 alongside M780012 until root cause of strategy failure is resolved.",
+      "prevention_rule": "Variant bots must be independently evaluated. Same strategy = same failure mode."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "News calendar feed IS working (returned 22 events including FOMC), contradicting earlier report",
+      "root_cause": "The ForexFactory issue may have been intermittent or specific to a different endpoint. Current caching feed works.",
+      "fix": "No fix needed — verified functional. Update mistakes ledger to reflect resolution.",
+      "prevention_rule": "Verify each reported issue independently before recording. Cross-reference cache vs live feed."
+    },
+    {
+      "date": "2026-07-29",
+      "pattern": "Risk supervisor EMERGENCY state persists — drawdown at FTMO limit boundary",
+      "root_cause": "Account dropped from $100,940 peak to $90,035 current. Static FTMO DD ≈ 9.96% (just under 10% limit). Risk supervisor correctly flagged.",
+      "fix": "Cannot fix — drawdown is real. Bot must be paused until Commander decides on challenge continuation.",
+      "prevention_rule": "Monitor FTMO static drawdown (from initial balance), not peak-based drawdown. Update risk supervisor to use static DD calculation."
     }
   ],
   "action_items": [
-    "Commander decision needed: Disable propfirm pass bot (M780012) due to 10% WR auto-disable trigger?",
-    "Commander decision needed: Fix or disable news calendar (ForexFactory blocked)?",
-    "Commander decision needed: Fix sentiment engine crash?",
-    "Commander decision needed: Reduce risk from 1.07% to 0.5%?",
-    "Audit SL/TP tracking in state file"
+    "Commander decision needed: Disable M780012 permanently? (10% WR auto-disable triggered)",
+    "Commander decision needed: Kill all 17+ zombie instances?",
+    "Commander decision needed: Continue FTMO challenge with $90K balance at 9.96% static DD?",
+    "Kill ALL bot instances across propfirm_pass_bot.py, propfirm_pass_gbpusd.py, usdjpy_momentum_bot.py",
+    "Regenerate missing state files",
+    "Fix timezone bug in session detection (local vs UTC)",
+    "Fix risk supervisor to use static FTMO DD (from initial balance, not peak)",
+    "Update mistakes ledger and close this session"
   ],
   "lessons_learned": [
-    "10 total trades at 10% WR meets auto-disable criteria per FTMO Algo Combat skill",
-    "All 4 recent losses hit SL — entry timing is the weak point, not stop distance",
-    "News calendar and sentiment engine are both non-functional — trading with zero external context",
-    "Risk per trade at 1% is double the Monte Carlo-validated 0.5% optimum",
-    "48 hours without a trade — lack of volatility is protecting the account from further losses"
+    "10 total trades at 10% WR meets auto-disable criteria — strategy is fundamentally failing",
+    "All 4 recent losses in last 7 days: -$991, -$997, -$962, -$960 = -$3,910 total",
+    "Total account drawdown from peak: $100,940 → $90,035 = -$10,905 (-10.8%)",
+    "17+ zombie instances found — cron launcher needs process-cleanup before restart",
+    "State file missing means consecutive loss counter, SL/TP tracking, daily limits all reset on restart",
+    "Trades entered at 01-02 UTC confirm timezone bug in session detection",
+    "News calendar works (FOMC rate decision at 18:00 UTC today is the high-impact event)",
+    "FOMC decision at 14:00 ET / 18:00 UTC today — bot must not trade during event window regardless of session",
+    "EURUSD sentiment mildly bullish (+0.33) but geopolitical risk elevated (Iran/US tensions)"
   ]
 }

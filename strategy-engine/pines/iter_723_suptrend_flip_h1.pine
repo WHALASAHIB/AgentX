@@ -1,0 +1,25 @@
+//@version=6
+strategy(title="Supertrend Flip XAUUSD H1", overlay=true,
+  initial_capital=10000, default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100, commission_type=strategy.commission.percent,
+  commission_value=0.04, process_orders_on_close=true)
+
+//--- inputs
+atrPeriod = input.int(7, "ATR Period", minval=1, maxval=50, step=1)  // sweep: 3-14 step 1
+atrMultiplier = input.float(3.0, "ATR Multiplier", minval=0.5, maxval=10.0, step=0.5)  // sweep: 1.5-5 step 0.5
+
+//--- Supertrend calculation
+[supertrend, direction] = ta.supertrend(atrMultiplier, atrPeriod)
+
+//--- entry logic — pure flip: opposite-direction entry auto-closes prior position
+// direction < 0 = uptrend (green), direction > 0 = downtrend (red)
+if (direction < 0)
+    strategy.entry("Long", strategy.long, comment="ST_Long")
+
+if (direction > 0)
+    strategy.entry("Short", strategy.short, comment="ST_Short")
+
+//--- plot Supertrend
+plot(supertrend, "Supertrend", color=color.new(color.purple, 0))
+plot(direction < 0 ? supertrend : na, "Up Trend", style=plot.style_linebr, color=color.new(color.green, 50), linewidth=2)
+plot(direction > 0 ? supertrend : na, "Down Trend", style=plot.style_linebr, color=color.new(color.red, 50), linewidth=2)
