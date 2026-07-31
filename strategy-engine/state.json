@@ -1,6 +1,6 @@
 {
-  "iteration": 727,
-  "last_run": "2026-07-30T08:27:00Z",
+  "iteration": 730,
+  "last_run": "2026-07-31T04:53:46Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "Remove RSI(14) filter from Supertrend flip-change on XAUUSD 15m (caused 0 trades — RSI filtered out all flips). Instead, reduce cascade by using manual price-tracked exits with strategy.close() at fixed TP/SL levels. Use var int barrier tracking instead of OCO strategy.exit(). Also try widening TP/SL to 1:1 (TP=500, SL=500 ticks) to increase trade viability. If cascade persists, try exit-only signal flip: exit by opposite Supertrend flip signal (no TP/SL) with 2-bar cooldown.",
+  "current_hypothesis": "Family switch: drop Supertrend flip entirely. Return to the best-ever XAUUSD entry set -- EMA3/8 crossover + RSI(50) filter + manual Wilder ADX(14)>25 (iter 688: PF 1.41, Sharpe 2.01, 32 trades on 30m) -- but replace cascade-prone strategy.exit with the now-proven manual price-barrier exits (TP=500/SL=750 ticks, 1:1.5, min 1-bar hold). Timeframe back to XAUUSD 30m for deeper data coverage.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -686,6 +686,60 @@
       },
       "verdict": "invalid (no trades) -- RSI filter was too strict, filtered out ALL Supertrend flip entries on XAUUSD 15m. 0 trades in 1019 bars.",
       "time": "2026-07-30T08:27:00Z"
+    },
+    {
+      "iteration": 727,
+      "symbol": "XAUUSD",
+      "timeframe": "15m",
+      "hypothesis": "Remove RSI(14) filter from Supertrend flip-change on XAUUSD 15m (caused 0 trades in iter 726). Replace OCO strategy.exit() with manual price-barrier tracked strategy.close() exits at 1:1 TP/SL (TP=500, SL=500 ticks) to eliminate cascade.",
+      "metrics": {
+        "pf": 0.51957328,
+        "sharpe": -5.7020001,
+        "wr": 36.84210526,
+        "dd": 1.19110025,
+        "trades": 19,
+        "net_profit": -89.272314321164,
+        "cascade": 1.0555555555555556,
+        "commission_paid": 179.413604380062
+      },
+      "verdict": "invalid (low sample, 19 trades) -- CASCADE FIXED: ratio 1.06 (was 2-3x). Manual barrier exits work. RSI removal restored trade flow (19 vs 0). But 1 trade short of the 20 minimum and PF=0.52 weak. Only ~1233 bars evaluated (May 2026 window, 74% coverage).",
+      "time": "2026-07-31T04:28:39Z"
+    },
+    {
+      "iteration": 728,
+      "symbol": "XAUUSD",
+      "timeframe": "15m",
+      "hypothesis": "Reduce Supertrend ATR factor from 3.0 to 2.0 on XAUUSD 15m to generate more flips (iter 727 had only 19 trades). Keep manual barrier exits.",
+      "metrics": {
+        "pf": 0.24742701,
+        "sharpe": -16.36549276,
+        "wr": 29.41176471,
+        "dd": 4.20315374,
+        "trades": 51,
+        "net_profit": -364.325368236327,
+        "cascade": 1.2142857142857142,
+        "commission_paid": 413.455963128105
+      },
+      "verdict": "rejected (PF=0.25 < 1.3, Sharpe=-16.37 < 0.5) -- trade count jumped 19->51 as intended, but PF collapsed 0.52->0.25. f=2.0 whipsaws in chop: WR 29.4%, avg win 7.99 vs avg loss 13.45 (1:1 tick barrier gets overrun by intrabar gaps). Cascade stayed low at 1.21.",
+      "time": "2026-07-31T04:38:39Z"
+    },
+    {
+      "iteration": 729,
+      "symbol": "XAUUSD",
+      "timeframe": "15m",
+      "hypothesis": "Supertrend flip midpoint sweep: ATR factor 2.0 -> 2.5 on XAUUSD 15m with manual barrier exits (TP=500/SL=500 ticks).",
+      "metrics": {
+        "pf": 0.07344655,
+        "sharpe": -19.71883421,
+        "wr": 12.5,
+        "dd": 2.75376104,
+        "trades": 24,
+        "net_profit": -274.8278012052,
+        "cascade": 1.0909090909090908,
+        "commission_paid": 217.005107662973
+      },
+      "verdict": "rejected (PF=0.07 < 1.3, Sharpe=-19.72 < 0.5) -- sweep midpoint f=2.5 is WORSE than both endpoints: f=3.0 PF 0.52 (19T), f=2.0 PF 0.25 (51T), f=2.5 PF 0.07 (24T). No monotonic tradeoff; supertrend flip family on XAUUSD is exhausted. Cascade stayed low (1.09, barrier exits working). Only 1231 bars (May 2026, 74% coverage) -- 15m XAUUSD data is shallow.",
+      "time": "2026-07-31T04:53:46Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

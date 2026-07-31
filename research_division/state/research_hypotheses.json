@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 206,
+    "total_ideas": 209,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1815,6 +1815,63 @@
       "diversification_value": "The only cross_asset idea using futures calendar spreads as a physical-demand proxy \u2014 a mechanism fundamentally distinct from every existing cross_asset idea. Gold_Bitcoin_Divergence_Rotator (B) trades gold vs speculative digital-asset flows. Cross_Asset_Gamma_Flip (B) trades gold vs bond gamma. DXY_Deviation_Regime_Scalp trades USD direction. This occupies the previously empty Futures/Spot Basis cluster with a commodity-microstructure mechanism that no existing idea uses: the physical settlement pipeline of gold futures. Daily timeframe only makes it easy to backtest with available futures data.",
       "self_grade": "A-",
       "generated_at": "2026-07-30T08:40:41Z"
+    },
+    {
+      "name": "Value_Area_Excess_Fade",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Fades initiative pushes that trade beyond the developing session value area (VAH/VAL) back into the value band, using market-profile auction theory with failing tick-volume confirmation.",
+      "market_behaviour": "Intraday auction theory (market profile). Each session, price conducts an auction that establishes a 'value area' \u2014 the price range containing roughly 70% of session volume, anchored by the point of control (POC). When price makes an initiative push beyond the developing value area high or low (excess), the auction is temporarily unbalanced: the push is driven by aggressive participants, but the range beyond value lacks the two-way flow needed to sustain it. Responsive participants who trade against the push typically fade the excess, and price reverts into the value area before a new balanced range can develop. In XAUUSD the Asian session builds the overnight value, London extends it, and the US session frequently prints excess beyond VAH/VAL that reverts into value \u2014 a recognizable intraday rhythm for discretionary gold traders.",
+      "entry_logic": "1. Build a developing volume profile for the current session from the session open (use the Asian-session profile as the anchor for London/US entries), updating every bar. 2. Compute the 70% value area around the POC -> VAH (value area high) and VAL (value area low). 3. Wait for price to trade beyond VAH or VAL by an excess distance of at least 0.2 x the current session range (or 0.5 x H1 ATR). 4. Confirm failing initiative: tick volume on the excess bars is below the 20-bar average tick volume (the push is running out of participants). 5. Enter counter-direction on the first bar that closes back inside the value area (long-excess fade: sell the close back inside VAH; short-excess fade: buy the close back inside VAL). 6. Skip if: (a) within 2 hours of a scheduled high-impact event (NFP, FOMC, CPI); (b) the excess exceeds 1.5 x the session range (genuine breakaway/trend day \u2014 do not fade); (c) H1 ATR is in the top decile of its 100-day history (panic regime).",
+      "exit_logic": "Stop loss beyond the excess extreme by 0.5 x H1 ATR. TP1 = opposite value-area boundary (VAL for a long-excess fade, VAH for a short-excess fade) on 50% of position; TP2 = session POC. Time stop: exit the remainder at session close \u2014 never hold a value-area fade overnight into the next session. If price spends more than 2 hours outside the value area without re-entering, the auction is re-anchoring: exit flat on the next pullback to the boundary. No re-entry after two failed fades in the same session.",
+      "failure_mode": "1. True trend/initiative day \u2014 a genuine breakaway move (news-driven or one-way institutional accumulation) keeps extending beyond value; each fade fills and loses. This is the classic 'fading a trend day' death. 2. Value re-anchoring \u2014 after the excess, a new value area forms at the extended level (POC migrates higher/lower) and price never returns to the original value area; the fade sits in a losing position until the time-stop. 3. Two-sided chop around VAH/VAL \u2014 price oscillates across the boundary multiple times, generating repeated small stop-outs that bleed the account even though the market is ostensibly ranging.",
+      "diversification_value": "The Volume/Profile PARTIAL cluster in mean_reversion holds only Intraday_Volume_Profile_Mean_Reverter (reversion to the HVN node when price arrives at it \u2014 node-magnetism entry). Value_Area_Excess_Fade enters on the OPPOSITE event: price trading OUTSIDE the value area (excess), fading the extension back into the value band \u2014 it uses the whole 70% value area and auction-theory excess, not the single highest-volume node. It differs from Session_Value_Area_Reversion (previous-session value area gap-fill \u2014 inter-session mechanics) because it trades the CURRENT session's developing profile. It is also the inverse-direction cousin of Volume_Profile_POC_Momentum_Capture (momentum) and Volume_Profile_Acceptance_Breakout (breakout), which ride the extension this idea fades.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-31T04:43:05Z"
+    },
+    {
+      "name": "Gold_Copper_Ratio_Extreme_Reverter",
+      "family": "mean_reversion",
+      "instruments": [
+        "XAUUSD",
+        "HG"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Fades extreme moves in the gold/copper ratio \u2014 a de facto global risk-appetite gauge \u2014 back toward its trailing 2-year median, requiring a volatility-shock signature to confirm the extreme is event-driven.",
+      "market_behaviour": "Gold prices monetary conditions (real yields, USD, risk-off demand); copper prices global industrial activity ('Dr. Copper', the cyclical bellwether). The gold/copper ratio is therefore a de facto global risk-appetite gauge: in risk-off shocks (banking stress, EM crisis, equity drawdowns) gold spikes while copper dumps, pushing the ratio to extremes; in growth surprises (China stimulus, PMI beats, inventory restocking) copper outpaces gold, compressing it. At multi-month extremes the shock is usually transitory \u2014 the driver (a liquidity panic or a growth blip) normalizes and the ratio mean-reverts toward its trailing equilibrium. Unlike gold/silver (two monetary metals) or gold/oil (supply-shock driven), gold/copper splits along the demand axis: monetary vs industrial, giving it a distinct shock signature.",
+      "entry_logic": "1. Compute the daily ratio: XAUUSD close / copper front-month close (HG), normalized to its trailing 2-year mean. 2. Track the trailing 2-year (504-session) distribution. Extreme trigger: ratio in the top decile (gold overextended vs copper) or bottom decile. 3. Require a shock signature to confirm the extreme is event-driven rather than structural drift: the ratio's 20-day realized volatility in the top quartile of its own 2-year distribution. 4. Fade the extreme: at a top-decile ratio, sell XAUUSD (or buy HG); at a bottom-decile ratio, buy XAUUSD (or sell HG). 5. Enter only on D1 closes beyond the trigger percentile (no intraday entries \u2014 the ratio is too noisy). 6. Skip if the extreme coincides with a persistent real-yield collapse (10Y TIPS trend confirms gold is structurally repriced) or an announced copper supply disruption (mine shutdown, export tariff).",
+      "exit_logic": "Stop loss = 1 x ATR of the ratio beyond the extreme (roughly a 2-3% gold move in single-leg terms). Take profit = ratio reversion to the 2-year median (50th percentile). Time stop: 30 trading days \u2014 if the ratio has not reverted, exit flat (the shock may be becoming structural). Scale out half at the 25th/75th percentile retracement and the remainder at the median. Re-entry only on a fresh decile extreme with a new shock signature.",
+      "failure_mode": "1. Structural regime change \u2014 if the extreme is a repricing (e.g. gold entering a secular bull on central-bank buying while copper stagnates), the ratio stays at the extreme for months; the fade bleeds via repeated time-stops. 2. Copper supply-side shocks \u2014 a mine disruption or export tariff rallies copper for non-demand reasons, compressing the ratio even in a risk-off tape; the model misreads it as a growth signal. 3. Execution mismatch \u2014 retail traders cannot easily run the two-legged spread; a gold-only leg is effectively a 'gold vs global growth' trade carrying extra beta to USD/rates, diluting the pure ratio-reversion edge.",
+      "diversification_value": "The Cross-Asset Ratio PARTIAL cluster in mean_reversion holds only Gold_Oil_Ratio_Extreme_Reverter (oil = supply/geopolitics channel, equilibrium ~15-16x). Gold/copper splits on the DEMAND axis (industrial cycle vs monetary), giving an orthogonal shock signature: copper reacts to China PMIs and restocking, oil to OPEC and geopolitics. It is distinct from XAUXAG_Extreme_Reverter (gold/silver: both monetary metals, ratio driven by industrial silver demand and ETF flows) and from Gold_Copper_Seasonal_Divergence_Trader (seasonal family: fixed calendar windows of gold/copper divergence \u2014 this idea trades ANY statistical extreme regardless of season, with a volatility-shock confirmation). No existing archive idea trades the gold/copper ratio on a shock-driven statistical extreme basis.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-31T04:43:05Z"
+    },
+    {
+      "name": "Event_Convexity_Size_Limiter",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Risk overlay that sizes positions inversely to scheduled high-impact event risk (FOMC, NFP, CPI): time-to-event multipliers, historical-impact penalty, breakeven stop-lock for winners, and spread-normalization re-entry gate.",
+      "market_behaviour": "Scheduled high-impact macro events (FOMC, NFP, CPI, ECB) create a structurally different trading environment: liquidity thins into the release, spreads widen, and the post-release move is bimodal (a large gap in either direction). For a bot holding a position through the window, expected slippage on the stop is materially worse than normal and the P&L distribution becomes convex (fat-tailed). Discretionary traders instinctively cut size or flatten before events. Existing overlays in the archive handle spread regimes (Spread_Regime_Adaptive_Sizer) and market-impact curves (Liquidity_Tier_Slippage_Curve_Sizer) but none price the scheduled-event window itself, where the event \u2014 not just the spread \u2014 drives the convexity. This overlay treats the event window as a known, calendar-priced source of negative convexity and sizes positions inversely to the residual event risk.",
+      "entry_logic": "1. Maintain a macro calendar of gold-relevant high-impact events (FOMC rate decision, NFP, CPI, PCE, ECB/BOJ decisions) with expected-impact flags. 2. For each event compute a time-to-event risk multiplier: 1.0 outside 24h; 0.5 inside 24h; 0.25 inside 2h; 0 (no new entries) inside 30 minutes. 3. Multiply by the event's historical gold impact: events whose past 60-minute gold move exceeded 1.5x the 6-month average 60-minute move get an additional 0.5x penalty. 4. For open positions: if in profit, trail the stop to breakeven + 0.5 x ATR before the event window (lock in pre-event edge); if in loss, reduce size by the same multiplier instead of adding. 5. Block new entries within 30 minutes of the event; resume 30 minutes after the initial post-event spike once bid-ask spread is below 1.5x its median. 6. Skip entirely for strategies that are flat through the window (no position, no action).",
+      "exit_logic": "This is a sizing/management overlay \u2014 it takes no directional view. It caps event-window exposure, moves stops to breakeven for winners, and delays re-entry until spread normalization. Its own risk is over-conservatism: flattening too early and missing the post-event trend move that momentum strategies are designed to capture \u2014 the accepted trade-off is foregone upside in exchange for removing the fat left tail.",
+      "failure_mode": "1. Event whipsaw/retraction \u2014 the post-event move retraces within minutes; the overlay's stop-to-breakeven gets hit and the bot misses the subsequent continuation a no-overlay bot captures (opportunity cost is the failure mode). 2. Calendar error \u2014 an unannounced speech or press conference (e.g. an unscheduled central-bank remark) moves the market without the overlay being armed; the protection silently does not exist. 3. Over-application \u2014 if applied to low-impact events, the overlay cuts size so often it strangles trade frequency and the bot underperforms its baseline; impact classification must be conservative.",
+      "diversification_value": "risk_overlay's Slippage/Convexity PARTIAL cluster holds only Multi_TF_Vol_Convexity_Sizer (volatility convexity divergence across timeframes \u2014 a continuous vol-structure signal). Event_Convexity_Size_Limiter is a discrete, calendar-driven overlay: it prices the scheduled-event window itself, where slippage and bimodality are known in advance. It does not overlap Spread_Regime_Adaptive_Sizer (measured spread percentiles \u2014 reactive) or Liquidity_Tier_Slippage_Curve_Sizer (market-impact curve \u2014 position size vs book volume) because those react to CURRENT conditions while this one prices KNOWN FUTURE event risk. It is the risk-side counterpart to signal-side event ideas (NFP_Volatility_Momentum, Event_Volatility_Straddle_Reversal): no existing risk_overlay idea gates exposure around scheduled events.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-31T04:43:05Z"
     }
   ],
   "archived": [
@@ -3914,7 +3971,9 @@
       "Tick_Volume_Divergence_Reverter",
       "Gold_RealYield_Extreme_Divergence_Reverter",
       "XAUXAG_Extreme_Reverter",
-      "Session_Value_Area_Reversion"
+      "Session_Value_Area_Reversion",
+      "Value_Area_Excess_Fade",
+      "Gold_Copper_Ratio_Extreme_Reverter"
     ],
     "breakout": [
       "London_Killzone_Breakout",
@@ -4012,7 +4071,8 @@
       "Volatility_Skew_Adaptive_Sizer",
       "CrossAsset_Entropy_Sizer",
       "Liquidity_Tier_Slippage_Curve_Sizer",
-      "Signal_Convergence_Entropy_Gate"
+      "Signal_Convergence_Entropy_Gate",
+      "Event_Convexity_Size_Limiter"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",
