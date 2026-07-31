@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 203,
+    "total_ideas": 206,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1759,6 +1759,62 @@
       "failure_mode": "1. Months where a major news event (FOMC, NFP) coincides with expiry week \u2014 the fundamental shock overwhelms the Max Pain mechanical effect as dealers abandon pinning strategies during uncertainty. 2. Months where gold is in a strong trend with high momentum \u2014 the Max Pain pinning is only a gravitational pull, not a guarantee, and a strong trend can blow through it. 3. Data dependency \u2014 Max Pain calculation requires COMEX options OI by strike, which may not be available in real-time from all data sources. A stale or incorrect Max Pain level produces the wrong entry direction.",
       "diversification_value": "Differs from Vanna_Flow_Momentum_Capture (B+) which uses proxy indicators for dealer gamma/vanna hedging in a reactive, short-term timeframe. Max_Pain_Momentum_Gravity operates on a multi-day calendar window driven by monthly options expiry mechanics \u2014 a fundamentally different time horizon and signal source. Also distinct from Gamma_Strike_Momentum_Gravitation (A-) which targets high-Gamma strikes in real-time based on current OI concentration \u2014 this idea specifically targets the Max Pain level on a fixed monthly calendar schedule, making it a forward-looking, time-bound strategy rather than a reactive positioning trade. No existing momentum idea uses Max Pain as an entry target.",
       "self_grade": "A-"
+    },
+    {
+      "name": "Volatility_Average_Duration_Carry_Harvester",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "D1"
+      ],
+      "description": "Harvests the structural volatility risk premium in gold by systematically shorting volatility during non-crisis windows when the implied-to-realized vol gap is elevated, holding for a fixed 7-day duration to capture theta decay.",
+      "market_behaviour": "Gold's volatility risk premium (VRP) \u2014 the gap between option-implied volatility and subsequent realized volatility \u2014 is systematically positive across all time horizons, but its reliability varies by duration. In gold, short-duration implied volatility consistently overprices subsequent realized volatility by 3-7% annually during non-crisis periods. This structural premium exists because gold option market makers charge a premium for gap risk (overnight geopolitical events, central bank surprises) that rarely materializes on most weeks. The edge is the structural carry from being positioned for VRP compression during windows when the market has no proximate catalyst to trigger the priced-in gap risk. The VRP in gold shows duration-dependency: 1-week windows offer the most consistent decay, while longer windows risk event overlap.",
+      "entry_logic": "1. Compute daily realized volatility (RV) using 14-period ATR expressed as % of gold price, annualized. 2. Compare to the 1-month gold implied volatility proxy (trailing 20-day ATR standard deviation, annualized as substitute for GVZ). 3. Trigger when: RV < IV proxy by at least 5 vol points AND the prior week's maximum daily range was below the 20-week median range (no recent gap risk materialization). 4. Enter a short-vol bias: take a position OPPOSITE the dominant 4-hour trend (buy puts in uptrends, buy calls in downtrends) with ATR-based stops at 1.5x weekly ATR. 5. Skip entry if: within 3 days of FOMC/NFP/CPI, trailing 5-day ATR(14) > 2x its 50-day average (crisis mode), or DXY is in a 5-day >2-sigma move (correlation regime instability).",
+      "exit_logic": "1. Hold position for exactly 7 calendar days to capture the VRP decay window. 2. Stop loss: 2.0x weekly ATR from entry (tail risk protection). 3. Take profit: close at 60% of initial ATR(14) contraction from entry day to day 7 \u2014 if volatility compresses faster than expected, take profit early. 4. Hard time stop at 7 days regardless of P&L: the VRP is earned by time passage, not directional bets. 5. No re-entry within 48 hours of exit.",
+      "failure_mode": "1. A tail-risk event (surprise rate hike, geopolitical crisis, bank failure) within the 7-day hold period causes the short-vol position to lose faster than theta can compensate \u2014 the gap risk that the premium was meant to insure against materializes. 2. The VRP structural relationship breaks down during regime shifts: if gold enters a structurally higher vol regime (e.g., persistent stagflation feud), realized volatility catches up to implied and the structural carry disappears for weeks at a time. 3. The implied-vol proxy (trailing ATR stdev) diverges from true GVZ during options-driven vol moves, causing false signals.",
+      "diversification_value": "Distinct from Volatility_Risk_Premium_Decay (B+, which compares implied vs realized post-event and fades the gap) \u2014 this enters pre-emptively based on duration carry math and holds a fixed 7-day window. Different from PostEvent_VolRiskPremium_Collapse (A-, which trades the immediate post-event window) \u2014 this harvests structural carry during non-event windows. Different from Asian_Session_Vol_Carry_Harvest (B+, Asian session only, 1-day holds) \u2014 this runs 7-day holds across all sessions. Different from Volatility_Premium_Event_Contraction (A-, which targets event-specific VRP contraction) \u2014 this uses a multi-day duration approach independent of the event calendar. Adds a distinct short-vol structural carry mechanism to the Risk Premium/Carry cluster.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-30T08:40:41Z"
+    },
+    {
+      "name": "Intraday_Vol_Mean_Reversion_Rhythm",
+      "family": "volatility",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M5",
+        "H1"
+      ],
+      "description": "Exploits the predictable intraday volatility spike-and-decay pattern at session opens (London 08:00 UTC, US 13:00 UTC) where initial microstructure-driven volatility mechanically recedes within 60-90 minutes.",
+      "market_behaviour": "Gold's intraday volatility follows a multi-peak rhythm driven by the staggered opening of global financial centers. At each major session transition (Asian close \u2192 London open, London lunch \u2192 US open), gold experiences a 15-30 minute volatility spike where 5-minute ATR surges to 1.5-2.5x the daily average. This initial spike is a microstructure artifact: order book restacking after an overnight gap, stop runs triggered by stale orders, and delayed reaction orders flooding the tape simultaneously. The edge: this artificial volatility elevation is not a persistent directional signal \u2014 it mechanically recedes within 60-90 minutes as the order book stabilizes and genuine liquidity returns. The reversion magnitude correlates with the spike magnitude: larger initial spikes mean larger subsequent compression.",
+      "entry_logic": "1. Track 5-minute ATR(5) and compare to 60-minute ATR(60) on the same 5-min bars (rolling window). 2. Trigger when: 5-min ATR(5) > 2.0x 5-min ATR(60) AND current time is within 20 minutes of London open (08:00-08:20 UTC) or US open (13:00-13:20 UTC). 3. Enter a mean-reverting trade OPPOSITE the direction of the dominant 5-minute candle pattern in the 5 minutes preceding the trigger: if last 3 consecutive 5-min candles closed bearish (lower highs, lower lows), take a bullish mean-reversion entry. 4. Skip if: (a) FOMC/NFP/CPI within the last 2 hours, (b) price is within 3 ATR(5) of a prior day's high/low (daily-level resistance), (c) the 5-min ATR(60) has been monotonically rising for the entire current session (trending vol, not spike), (d) current ATR(5) is above 3.5x the 50-period median of ATR(5) (extreme outlier \u2014 may not revert).",
+      "exit_logic": "1. Stop loss: 2.5x current ATR(5) from entry price. 2. Take profit: 1.5x current ATR(5) \u2014 the mean reversion rarely completes fully back to the pre-spike price level. 3. Hard time stop: 90 minutes after entry \u2014 if neither SL/TP hit, close at market. 4. No re-entry within the same session window. 5. Partial scale-out: close 50% at 1.0x ATR(5), move SL to breakeven on the remainder.",
+      "failure_mode": "1. A coincident news event (scheduled economic data, unscheduled headline) at the session open overwhelms the microstructure effect \u2014 the initial vol spike is justified by genuine information and continues rather than receding. 2. During holiday-weakened sessions (Christmas week, post-NFP Friday), the spike pattern is absent or sub-threshold \u2014 the strategy generates zero trades for days. 3. In high-volatility regimes where ATR(60) is already elevated, the ATR ratio never triggers because baseline vol is already high.",
+      "diversification_value": "Different from Volatility_Skew_Mean_Reverter (B+, which fades ATR percentile spikes regardless of time or session context) \u2014 this is session-bound and microstructure-specific with a precise time window. Different from Event_Volatility_Straddle_Reversal (B, which uses options structures around scheduled events) \u2014 this is pure price-action with no options dependency. Different from Volatility_Session_Transition_Fade (A-, which fades the mechanical vol spike at transitions with a directional entry) \u2014 this uses a quantified ATR ratio trigger with explicit mean-reversion entry opposite the dominant candle pattern and a structured scale-out. Adds a defined intraday rhythm product to the Mean Reversion cluster.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-30T08:40:41Z"
+    },
+    {
+      "name": "Gold_Calendar_Spread_Physical_Demand_Proxy",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Uses the gold futures calendar spread (front-month vs 6-month) as a physical demand proxy \u2014 backwardation signals delivery stress that precedes price rallies, while deep contango signals speculative froth that tends to fade.",
+      "market_behaviour": "The gold futures calendar spread \u2014 the price difference between front-month and deferred-month contracts \u2014 reveals physical gold demand pressure invisible in spot price alone. When commercial buyers need immediate delivery (ETF accumulation, central bank purchasing, industrial fabrication), they bid up front-month contracts relative to deferred, narrowing the spread toward backwardation. This physical demand signal reliably precedes short-term gold price rallies as inventory is drawn down for physical delivery. Conversely, when the spread widens into deep contango, it signals ample above-ground inventory and speculator-driven paper positioning that tends to fade as contracts roll. The signal is a genuine institutional flow indicator because it reflects real economic activity (physical settlement through the COMEX) rather than speculative paper positions.",
+      "entry_logic": "1. Track GC front-month futures price vs GC 6-month deferred price (continuous contract). Compute the annualized calendar spread as: (front_price / deferred_price - 1) * (365 / days_between_expiry). 2. LONG entry when: (a) annualized calendar spread is in backwardation (positive by > 0.5%), (b) spread has widened by > 0.3% in the last 5 trading days (momentum in physical demand), (c) spot XAUUSD is within 2% of the 50-day SMA (not excessively stretched from fair value). 3. SHORT entry when: (a) annualized contango > 2% (deep contango \u2014 ample supply), (b) spot has rallied > 5% in the last 10 days (speculative excess), (c) front-month is NOT within 5 days of expiry (avoid roll distortion). 4. Skip if: (a) front-month is within 5 days of expiry (roll volatility), (b) DXY is in a >2% 10-day rally (USD headwind overwhelms physical demand), (c) any scheduled FOMC meeting within 3 days (event risk dominates physical flow).",
+      "exit_logic": "1. LONG exit: close when (a) calendar spread returns to zero or negative (contango), (b) target gain of 4% reached, or (c) 15 trading days elapsed \u2014 whichever comes first. 2. SHORT exit: close when (a) contango compresses below 1%, (b) target gain of 3% reached, or (c) 20 trading days elapsed. 3. Stop loss: 2.5% below/above entry for LONG/SHORT respectively. 4. Trail stop after 50% of target profit: set to 50% of initial ATR(14) from peak.",
+      "failure_mode": "1. The calendar spread signal is distorted by structural factors: gold ETF creation/redemption cycles, regulatory changes in COMEX position limits, or large option expiration hedges that artificially widen/narrow the spread unrelated to physical demand. 2. A macro shock (surprise rate hike, dollar liquidity crisis, war) overwhelms any physical-demand-based signal \u2014 spot price moves directionally irrespective of the underlying supply-demand balance. 3. During gold's seasonal illiquid periods (August, late December), the spread widens artificially due to thin futures participation, producing false signals.",
+      "diversification_value": "The only cross_asset idea using futures calendar spreads as a physical-demand proxy \u2014 a mechanism fundamentally distinct from every existing cross_asset idea. Gold_Bitcoin_Divergence_Rotator (B) trades gold vs speculative digital-asset flows. Cross_Asset_Gamma_Flip (B) trades gold vs bond gamma. DXY_Deviation_Regime_Scalp trades USD direction. This occupies the previously empty Futures/Spot Basis cluster with a commodity-microstructure mechanism that no existing idea uses: the physical settlement pipeline of gold futures. Daily timeframe only makes it easy to backtest with available futures data.",
+      "self_grade": "A-",
+      "generated_at": "2026-07-30T08:40:41Z"
     }
   ],
   "archived": [
@@ -3907,7 +3963,9 @@
       "Volatility_Duration_Contraction_Expansion",
       "Volatility_Session_Transition_Fade",
       "PostEvent_VolRiskPremium_Collapse",
-      "VolOfVol_MeanReversion"
+      "VolOfVol_MeanReversion",
+      "Volatility_Average_Duration_Carry_Harvester",
+      "Intraday_Vol_Mean_Reversion_Rhythm"
     ],
     "regime_filter": [
       "ATR_Regime_Selector",
@@ -3973,7 +4031,8 @@
       "Gold_Bitcoin_Divergence_Rotator",
       "EM_Currency_Gold_Transmission_Divergence",
       "TIPS_Breakeven_Gold_Momentum_Spreader",
-      "Industrial_Metals_Gold_Activity_Proxy"
+      "Industrial_Metals_Gold_Activity_Proxy",
+      "Gold_Calendar_Spread_Physical_Demand_Proxy"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",

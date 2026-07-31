@@ -1,0 +1,69 @@
+//@version=6
+strategy(title="Supertrend Flip RSI XAU 15m", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     commission_type=strategy.commission.percent,
+     commission_value=0.04,
+     process_orders_on_close=true,
+     pyramiding=1)
+
+//--- inputs
+st_factor = input.float(3.0, "Supertrend ATR Factor", minval=1.0, maxval=10.0, step=0.5)
+st_period = input.int(7, "Supertrend ATR Period", minval=3, maxval=21, step=1)
+rsi_len   = input.int(14, "RSI Length", minval=7, maxval=28, step=1)
+rsi_long  = input.int(50, "RSI Threshold Long (min)", minval=30, maxval=70, step=5)
+rsi_short = input.int(50, "RSI Threshold Short (max)", minval=30, maxval=70, step=5)
+tp_ticks  = input.int(500, "Take Profit (ticks)", minval=100, maxval=2000, step=50)
+sl_ticks  = input.int(750, "Stop Loss (ticks)", minval=100, maxval=2000, step=50)
+
+//--- Supertrend flip detection
+[st_dir, st_line] = ta.supertrend(st_factor, st_period)
+// st_dir: 1 = up (bullish), -1 = down (bearish)
+
+st_bull = st_dir == 1
+st_bear = st_dir == -1
+
+// Detect flip: from bear to bull = crossover(0), from bull to bear = crossunder(0)
+flip_up   = ta.crossover(st_dir, 0)
+flip_down = ta.crossunder(st_dir, 0)
+
+//--- RSI filter
+rsi_val = ta.rsi(close, rsi_len)
+rsi_bull_ok = rsi_val > rsi_long
+rsi_bear_ok = rsi_val < rsi_short
+
+//--- Entry logic
+long_cond = flip_up and rsi_bull_ok
+short_cond = flip_down and rsi_bear_ok
+
+//--- Exit management
+var bool in_long = false
+var bool in_short = false
+var int exit_placed = 0  // 0=none, 1=long exit, 2=short exit
+
+// Track position state
+in_long := strategy.position_size > 0
+in_short := strategy.position_size < 0
+
+// Reset exit flag when flat
+if strategy.position_size == 0
+    exit_placed := 0
+
+// Entry signals
+if long_cond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long)
+    exit_placed := 0
+
+if short_cond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short)
+    exit_placed := 0
+
+// Exit management — only place exit once per entry
+if strategy.position_size > 0 and exit_placed != 1
+    strategy.exit("XL", "Long", loss=sl_ticks, profit=tp_ticks)
+    exit_placed := 1
+
+if strategy.position_size < 0 and exit_placed != 2
+    strategy.exit("XS", "Short", loss=sl_ticks, profit=tp_ticks)
+    exit_placed := 2

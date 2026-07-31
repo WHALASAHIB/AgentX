@@ -1,7 +1,24 @@
 {
-  "cached_at": "2026-07-29T00:52:03.337798",
-  "count": 16,
+  "cached_at": "2026-07-30T08:33:57.516460",
+  "count": 17,
   "trades": [
+    {
+      "position_id": 506538749,
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "volume": 14.91,
+      "entry_price": 163.711,
+      "exit_price": 163.602,
+      "open_time": "2026-07-29 04:00",
+      "close_time": "2026-07-29 06:45",
+      "profit": -993.38,
+      "swap": 0.0,
+      "commission": -74.56,
+      "net_profit": -1067.94,
+      "duration": "2h 45m",
+      "magic": 780014,
+      "comment": "USDMOM_L"
+    },
     {
       "position_id": 506154832,
       "symbol": "EURUSD",
