@@ -1,6 +1,6 @@
 {
-  "iteration": 730,
-  "last_run": "2026-07-31T04:53:46Z",
+  "iteration": 734,
+  "last_run": "2026-07-31T05:53:55Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "Family switch: drop Supertrend flip entirely. Return to the best-ever XAUUSD entry set -- EMA3/8 crossover + RSI(50) filter + manual Wilder ADX(14)>25 (iter 688: PF 1.41, Sharpe 2.01, 32 trades on 30m) -- but replace cascade-prone strategy.exit with the now-proven manual price-barrier exits (TP=500/SL=750 ticks, 1:1.5, min 1-bar hold). Timeframe back to XAUUSD 30m for deeper data coverage.",
+  "current_hypothesis": "Tighten TP from 500 to 400 ticks (keep SL 750) on short-only EMA3/8 + RSI50 + ADX15 + barrier-exit XAUUSD 30m. Iter 733: PF 1.28 just under 1.3 target, WR 47.6% -- a closer TP converts more 500-tick near-misses into wins, lifting WR toward 55%+ and PF past 1.3. One change: TP 500->400.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -740,6 +740,78 @@
       },
       "verdict": "rejected (PF=0.07 < 1.3, Sharpe=-19.72 < 0.5) -- sweep midpoint f=2.5 is WORSE than both endpoints: f=3.0 PF 0.52 (19T), f=2.0 PF 0.25 (51T), f=2.5 PF 0.07 (24T). No monotonic tradeoff; supertrend flip family on XAUUSD is exhausted. Cascade stayed low (1.09, barrier exits working). Only 1231 bars (May 2026, 74% coverage) -- 15m XAUUSD data is shallow.",
       "time": "2026-07-31T04:53:46Z"
+    },
+    {
+      "iteration": 730,
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "hypothesis": "Family switch: return to best-ever XAUUSD entry set (EMA3/8 + RSI50 + manual Wilder ADX25, iter 688) but replace cascade-prone strategy.exit with proven manual price-barrier exits (TP=500/SL=750 ticks, min 1-bar hold).",
+      "metrics": {
+        "pf": 1.96617929,
+        "sharpe": 3.90149554,
+        "wr": 50.0,
+        "dd": 0.46053158,
+        "trades": 14,
+        "net_profit": 64.098679745481,
+        "cascade": 1.0769230769230769,
+        "commission_paid": 130.254063745994
+      },
+      "verdict": "invalid (low sample, 14 trades) -- CASCADE FIXED (1.08) with barrier exits. Best XAUUSD metrics since iter 688: PF 1.97, Sharpe 3.90, WR 50%, DD 0.46%, +$64 P&L. But only 14 trades in 726 bars (May 2026 window, 87.7% coverage -- XAUUSD 30m data store truncated).",
+      "time": "2026-07-31T05:11:13Z"
+    },
+    {
+      "iteration": 731,
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "hypothesis": "Reduce ADX threshold from 25 to 20 on EMA3/8 + RSI50 + barrier-exit XAUUSD 30m (iter 730: 14 trades, PF 1.97, but low sample). One change: ADX 25->20 to lift trade count past 20.",
+      "metrics": {
+        "pf": 1.13743905,
+        "sharpe": 0.99808674,
+        "wr": 42.10526316,
+        "dd": 0.78825172,
+        "trades": 19,
+        "net_profit": 17.747558448256
+      },
+      "verdict": "invalid (low sample, 19 trades) -- ADX 25->20 lifted trades 14->19, still 1 short of the 20 minimum. PF 1.14, Sharpe 1.00, WR 42.1%, DD 0.79%, cascade 1.12 (barrier exits stable). Shorts carry the book: 7W/14 +$42.13 vs longs 1W/5 -$24.38. Commission $169.92 on 19 rows. Coverage 87.7% (726 bars, May 2026 window truncated).",
+      "time": "2026-07-31T05:23:45Z"
+    },
+    {
+      "iteration": 732,
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "hypothesis": "Reduce ADX threshold from 20 to 15 on EMA3/8 + RSI50 + barrier-exit XAUUSD 30m (iter 731: 19 trades, 1 short of 20 min). One change: ADX 20->15.",
+      "metrics": {
+        "pf": 0.75295865,
+        "sharpe": -2.81484534,
+        "wr": 37.5,
+        "dd": 1.00803043,
+        "trades": 32,
+        "net_profit": -58.207405247687,
+        "cascade": 1.103448275862069,
+        "commission_paid": 289.156150523554
+      },
+      "verdict": "rejected (PF=0.75 < 1.3, Sharpe=-2.81 < 0.5) -- trade count hit 32 (target met) but ADX 15 let weak-trend chop in: PF collapsed 1.14->0.75. Same failure signature as iter 691. Per-side: longs -0.69 (3W/12, 25% WR) vs shorts +2.48 (9W/20, 45% WR). Commission 89 on 32 trades. Cascade stable at 1.10. Coverage 87.8% (726 bars, May 2026 window).",
+      "time": "2026-07-31T05:40:00Z"
+    },
+    {
+      "iteration": 733,
+      "symbol": "XAUUSD",
+      "timeframe": "30m",
+      "hypothesis": "Short-only EMA3/8 + RSI50 + ADX15 + barrier-exit XAUUSD 30m (iter 732 evidence: longs -0.69 PF 3W/12 25% WR vs shorts +2.48 PF 9W/20 45% WR). One change: disable long entries.",
+      "metrics": {
+        "pf": 1.27979594,
+        "sharpe": 1.8741401,
+        "wr": 47.61904762,
+        "dd": 0.70540886,
+        "trades": 21,
+        "net_profit": 33.895201808833,
+        "cascade": 1.1666666666666667,
+        "commission_paid": 180.323410340429,
+        "long_trades": 0,
+        "short_trades": 21
+      },
+      "verdict": "rejected (PF=1.28 < 1.3, Sharpe=1.87 DD=0.71%) -- SHORT-ONLY CONFIRMS DIRECTIONAL EDGE: 21 shorts only (0 longs), WR jumped 37.5->47.6%, PF 0.75->1.28, Sharpe -2.81->+1.87, P&L -$58->+$34. Just 0.02 PF short of the 1.3 accept bar. Commission $180 on 21 trades (~$8.6/trade) still heavy vs gross edge. Cascade 1.17 stable (barrier exits). Coverage 87.8% (726 bars, May 2026 window truncated).",
+      "time": "2026-07-31T05:53:55Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
