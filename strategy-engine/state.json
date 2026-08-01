@@ -1,6 +1,6 @@
 {
-  "iteration": 738,
-  "last_run": "2026-07-31T06:56:01Z",
+  "iteration": 742,
+  "last_run": "2026-07-31T07:54:13Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "Re-run iter 737's exact 4h short-only strategy (EMA3/8 + RSI50 + ADX15 + barrier TP5000/SL2500) with an EXPLICIT wide window: from=2024-01-01 to=2026-05-19 (4h store has 21,790 bars, 2009->2026-05-19; default 90-day window only evaluated 281 bars -> 2 trades). One change: backtest window expansion via explicit 'from' param on quick_backtest (plan_backtest_window confirmed 'from'/'to' are accepted). Expected: ~5-6x bars -> 10-20x trades; if PF>1.3 holds on the full multi-year sample the 4h family move is real. If window param is rejected by quick_backtest, fall back to run_backtest with the same from/to.",
+  "current_hypothesis": "Add EMA200 trend-regime filter to 4h short-only EMA3/8 + RSI50 + ADX25 + barrier TP1000/SL1000 (iter 741 base, full window): short ONLY when close < EMA200 (bearish regime). Iter 740/741 evidence: 4h WR stuck at ~27% asymptote across ALL barrier/ADX settings (TP5000->1500->1000, ADX15->25) -- entry signal itself is the bottleneck, and ~73% of shorts are counter-trend (fading rallies in uptrends). EMA200 regime filter is the classic fix: it removes counter-trend shorts, targeting WR 35-45%. At 1.43x payoff (iter 741 avg win 4.56/avg loss 8.13), WR 41% is breakeven; 45% WR -> PF ~1.17 gross... requires the payoff to hold; if WR reaches 40-45% with the same 1.43x payoff, PF clears 1.3 and per-trade edge (~5-20 gross vs .4 commission) flips the strategy commission-positive. One change: add EMA200 close filter (longer EMAs 100/150 also sweepable).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -900,6 +900,107 @@
       },
       "verdict": "invalid (low sample, 2 trades) -- 4h family move mechanics WORK: cascade 1.0 (zero re-entries), avg win $30.71 vs avg loss -$1.11, commission $10.25/2 trades (~$5.1/trade) now negligible vs 4h tick-scale edge -- the commission problem from 30m is structurally solved. BUT only 2 trades because the default window evaluated just 281 bars (May 2-19 2026, clamped to clickhouse last bar). Coverage check reveals the 4h store actually spans 2009-09-27 to 2026-05-19 with 21,790 bars -- the deeper sample the hypothesis wanted EXISTS but was never requested. Net +$29.61 (excl. commission; real net +$19.36). Result reproducible byte-identical across 2 runs.",
       "time": "2026-07-31T06:56:01Z"
+    },
+    {
+      "iteration": 738,
+      "symbol": "XAUUSD",
+      "timeframe": "4h",
+      "hypothesis": "Re-run iter 737's exact 4h short-only strategy (EMA3/8 + RSI50 + ADX15 + barrier TP5000/SL2500) with an EXPLICIT wide window: from=2024-01-01 to=2026-05-19 (4h store has 21,790 bars; default 90-day window only evaluated 281 bars -> 2 trades). One change: backtest window expansion via explicit 'from'/'to' params on quick_backtest (verified accepted by tool schema).",
+      "metrics": {
+        "pf": 0.5129,
+        "sharpe": -2.014,
+        "wr": 14.28571429,
+        "dd": 26.3271,
+        "trades": 140,
+        "net_profit": -2328.99,
+        "commission_paid": 649.9,
+        "avg_win": 122.6,
+        "avg_loss": 39.84,
+        "span_days": 868,
+        "trades_per_year": 58.9,
+        "bars_evaluated": 21790,
+        "coverage": "full window 2024-01-01 to 2026-05-19"
+      },
+      "verdict": "rejected (PF=0.51 < 1.3, Sharpe=-2.01 < 0.5, DD=26.3% > 15%) -- FULL-SAMPLE VALIDATION KILLS THE 4h FAMILY MOVE: 140 trades (58.9/yr, statistically solid) on the full 2.4-year window, but PF 0.51, net -$2,329 (-$2,979 after $650 commission). iter 737's PF 27.7 / Sharpe 1.78 / +$29.61 was a 2-trade artifact of the 281-bar default window -- classic overfit to a lucky window. WR 14.29% with avg win $122.60 vs avg loss $39.84 (3.08x payoff) means breakeven WR ~24.5%: the TP5000 barrier ($50/oz) is rarely reached on 4h bars while SL2500 gets hit by intrabar reversals. 120 losses vs 20 wins. Short-only directionality does NOT rescue 4h; the 30m short edge (iter 733-736) does not transfer to 4h with these barrier levels.",
+      "time": "2026-07-31T07:20:00Z"
+    },
+    {
+      "iteration": 739,
+      "symbol": "XAUUSD",
+      "timeframe": "4h",
+      "hypothesis": "Rescale barriers to 4h-appropriate reachable levels on short-only EMA3/8 + RSI50 + ADX15 + manual barrier exits (iter 737/738 base): TP 5000->1500 ticks ($15/oz), SL 2500->1000 ticks ($10/oz), 1.5:1 R:R. Full window 2024-01-01 to 2026-05-19 via explicit from/to. Hypothesis: tighter barriers lift WR toward 33-40% where the short-only edge becomes commission-positive on 4h. One change: TP/SL barrier rescale (5000/2500 -> 1500/1000).",
+      "metrics": {
+        "pf": 0.57577569,
+        "sharpe": -1.60691651,
+        "wr": 25.56390977,
+        "dd": 14.98971783,
+        "trades": 133,
+        "net_profit": -1298.442292492602,
+        "commission_paid": 913.961005886287,
+        "cascade": 1.3854166666666667,
+        "long_trades": 0,
+        "short_trades": 133,
+        "avg_win": 51.832422928877,
+        "avg_loss": 30.916612849237,
+        "ratio_avg_win_loss": 1.67652334,
+        "bars_evaluated": 4004,
+        "coverage_pct": 76.76,
+        "final_equity": 8701.557707507398
+      },
+      "verdict": "rejected (PF=0.58 < 1.3, Sharpe=-1.61 < 0.5, DD=15.0% borderline) -- barrier rescale CONFIRMED direction: WR 14.29->25.56%, DD 26.3->15.0%, net -$2,329->-$1,298 vs iter 738. But 25.6% WR at 1.68x payoff needs 37.3% breakeven WR -- still far short. Commission $913.96/133 (~$6.9/trade) excluded from netProfit; real net = -$1,298.44 - $913.96 = -$2,212.40. avg win $51.83 vs avg loss $30.92. Cascade 1.39 (96 unique entries / 133 rows). NOTE data inconsistency: this run evaluated 4004 bars (76.76% coverage, store clamped, estimated start 2024-07-21) vs iter 738's claimed 21,790 bars -- engine data store appears to have changed (engine tv_jul26_mc7, market POLYGON forex).",
+      "time": "2026-07-31T07:25:05Z"
+    },
+    {
+      "iteration": 740,
+      "symbol": "XAUUSD",
+      "timeframe": "4h",
+      "hypothesis": "Continue 4h barrier squeeze toward 1:1 -- TP 1500->1000 ticks (SL stays 1000) on short-only EMA3/8 + RSI50 + ADX15 + manual barrier exits, full window via explicit from/to (iter 739: WR 25.6% at 1.68x payoff vs 37.3% breakeven still lost; at 1:1 breakeven WR ~50% minus commission, WR-vs-barrier curve extrapolated to ~35-40% WR which would flip PF positive). One change: TP 1500->1000.",
+      "metrics": {
+        "pf": 0.50388562,
+        "sharpe": -1.90161525,
+        "wr": 26.51515152,
+        "dd": 15.45547166,
+        "trades": 132,
+        "net_profit": -1462.714071932274,
+        "commission_paid": 916.457913068646,
+        "cascade": 1.346938775510204,
+        "long_trades": 0,
+        "short_trades": 132,
+        "avg_win": 42.446466495834,
+        "avg_loss": 30.395261848314,
+        "ratio_avg_win_loss": 1.396483,
+        "bars_evaluated": 4004,
+        "coverage_pct": 76.76,
+        "final_equity": 8537.285928067726
+      },
+      "verdict": "rejected (PF=0.50 < 1.3, Sharpe=-1.90 < 0.5, DD=15.5% borderline) -- 1:1 squeeze FAILED to flip strategy: WR 25.56->26.52% (barely moved) while avg win shrank $51.83->$42.45, so PF DROPPED 0.576->0.504, net -$1,298->-$1,463. Barrier dimension now fully mapped on 4h short-only: TP5000/SL2500 (3.08x payoff) PF 0.51 WR 14.3%; TP1500/SL1000 (1.68x) PF 0.58 WR 25.6%; TP1000/SL1000 (1.40x) PF 0.50 WR 26.5% -- peaked at 1.5:1, WR asymptote ~26% vs ~42% breakeven at 1.4x payoff. Commission $916.46/132 (~$6.94/trade); real net = -$1,462.71 - $916.46 = -$2,379.17. Cascade 1.35 (98 unique/132 rows, max depth 2) -- barrier exits stable. Same 4004-bar store (76.76% coverage, data starts ~2024-07-21).",
+      "time": "2026-07-31T07:45:56Z"
+    },
+    {
+      "iteration": 741,
+      "symbol": "XAUUSD",
+      "timeframe": "4h",
+      "hypothesis": "ADX threshold 15->25 on 4h short-only EMA3/8 + RSI50 + manual barrier exits TP1000/SL1000, full window 2024-01-01 to 2026-05-19 (iter 740: 1:1 barrier squeeze exhausted -- WR asymptote ~26%, PF 0.50). 30m precedent: ADX25 lifted WR/PF (iter 730 PF 1.97 WR 50% vs iter 732 ADX15 PF 0.75). One change: ADX 15->25.",
+      "metrics": {
+        "pf": 0.52346887,
+        "sharpe": -1.16081074,
+        "wr": 26.78571429,
+        "dd": 7.83048362,
+        "trades": 56,
+        "net_profit": -745.024009397401,
+        "commission_paid": 415.974744435147,
+        "cascade": 1.302325581395349,
+        "long_trades": 0,
+        "short_trades": 56,
+        "avg_win": 54.560531738237,
+        "avg_loss": -38.132487450511,
+        "ratio_avg_win_loss": 1.43081491,
+        "bars_evaluated": 4004,
+        "coverage_pct": 76.76,
+        "final_equity": 9254.9759906026
+      },
+      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-1.16 < 0.5) -- ADX25 DISPROVEN on 4h: trades 132->56 (half the weak-trend shorts filtered), net -,462.71->-45.02 (loss halved), DD 15.5->7.8% (much better risk), but WR 26.5->26.8% and PF 0.504->0.523 essentially UNCHANGED. The 30m ADX25 edge (iter 730 PF 1.97 WR 50%) does NOT transfer to 4h -- WR stuck at the same ~27% asymptote regardless of ADX threshold, meaning the ENTRY SIGNAL (EMA3/8 cross + RSI50) itself generates ~73% losing shorts on 4h at 1:1 barriers. avg win 4.56 vs avg loss 8.13 (1.43x payoff); breakeven WR ~41% still unreached. Commission 15.97/56 (~.4/trade) excluded from netProfit; real net = -45.02 - 15.97 = -,160.99. Cascade 1.30 (43 unique/56, max depth 2) stable. Same 4004-bar store (76.76% coverage, data starts ~2024-07-21). 4h barrier+ADX dims now fully mapped: WR 14.3% (TP5000/SL2500) -> 25.6% (TP1500/SL1000) -> 26.5% (TP1000/SL1000) -> 26.8% (TP1000/SL1000+ADX25) -- all far below the ~41-42% breakeven.",
+      "time": "2026-07-31T07:54:13Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

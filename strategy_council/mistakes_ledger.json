@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-07-29",
+  "last_updated": "2026-07-31",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -90,6 +90,41 @@
       "root_cause": "Account dropped from $100,940 peak to $90,035 current. Static FTMO DD ≈ 9.96% (just under 10% limit). Risk supervisor correctly flagged.",
       "fix": "Cannot fix — drawdown is real. Bot must be paused until Commander decides on challenge continuation.",
       "prevention_rule": "Monitor FTMO static drawdown (from initial balance), not peak-based drawdown. Update risk supervisor to use static DD calculation."
+    },
+    {
+      "date": "2026-07-31",
+      "pattern": "Config-poison regression — bot, terminal AND risk supervisor all on 5051185832/MetaQuotes-Demo; 0 trades for 3+ days",
+      "root_cause": "C:\\Hermess\\mt5_config.json still carries login 5051185832 (edited Jul 29 22:44). Terminal window title, bot account_info(), and risk supervisor state ALL agree on the wrong account, so the critic script's own check is blind (config+terminal agree). Expected: 1513990433/FTMO-Demo per C:\\Trading\\mt5_config.json (stable Jul 15).",
+      "fix": "Restore C:\\Hermess\\mt5_config.json to 1513990433/FTMO-Demo; kill all instances; restart exactly ONE bot; verify ACCOUNT READY line.",
+      "prevention_rule": "Config mtime check before every council: any mt5_config.json edited outside a documented deployment = poison suspect. Verify account_info().login AND server against the STABLE config, not the local one."
+    },
+    {
+      "date": "2026-07-31",
+      "pattern": "News calendar type-comparison bug — 7,719 occurrences of '<' not supported between 'str' and 'datetime.datetime'",
+      "root_cause": "News check code compares a string-typed date field against a datetime object (likely event date parsed inconsistently). Combined with the 403/429 feed failure, the cache is always stale and the bug fires every cycle.",
+      "fix": "Fix the type comparison in the news-calendar check (parse both sides to datetime). Replace the ForexFactory feed (403/429 since Jul 30 23:10 UTC) or gate fail-open behavior.",
+      "prevention_rule": "Fail-open 'allowing trade' with a permanently broken news feed = trading blind. News protection must fail CLOSED (skip trading) when feed down AND cache expired."
+    },
+    {
+      "date": "2026-07-31",
+      "pattern": "Zombie cascade worsened 17 → 23 instances of propfirm_pass_bot.py (+3 propfirm_pass_gbpusd.py)",
+      "root_cause": "Cron launchers (Paper Signal jobs, watchdog restarts) start instances without killing prior ones. Instances launched from both C:\\Hermess\\bots\\ and relative 'bots/' paths; log shows session-window oscillation (some sleep to 09:00 UTC, others declare 7:00-15:00 active within the same second) = multiple configs fighting.",
+      "fix": "Kill ALL propfirm_pass_bot.py and propfirm_pass_gbpusd.py instances (23+3), verify 0 remain, restart single instance.",
+      "prevention_rule": "Post-restart instance count must be exactly 1 per bot. Interleaved 'Sleeping N min until X:00' with different X values in the same log = multi-instance signature."
+    },
+    {
+      "date": "2026-07-31",
+      "pattern": "Bridge data pipeline stale 17.5h — last_data_timestamp 2026-07-30T13:34:31Z while bridge process alive (uptime 8d)",
+      "root_cause": "Bridge HTTP endpoint responds (status 'degraded', connected:false, both accounts stale:true) but coordinator can no longer fetch MT5 data — terminal is on the wrong account and EURUSD tick data unavailable (29,892 'No tick data' warnings in bot log).",
+      "fix": "Fix account first (config restore + terminal login), then verify bridge last_data_timestamp refreshes. Backend on 8005 is healthy; 8008 is not listening.",
+      "prevention_rule": "Bridge health = HTTP 200 is NOT data freshness. Always compare last_data_timestamp against UTC now."
+    },
+    {
+      "date": "2026-07-31",
+      "pattern": "State file trade-count mismatch — total_trades=12 but wins(1)+losses(7)=8 (4 unaccounted)",
+      "root_cause": "Opening deals (PnL=0) counted as separate trades, or stale _counted_position_ids from the 23-instance cascade. State also shows session_trend_price 1.13779 vs EURUSD ~1.150 — trend baseline stale.",
+      "fix": "Reconcile from MT5 history grouped by position_id; clear _counted_position_ids; single-instance restart.",
+      "prevention_rule": "total_trades must equal wins+losses after every session. State-file values never override MT5 history ground truth."
     }
   ],
   "action_items": [
@@ -111,6 +146,9 @@
     "Trades entered at 01-02 UTC confirm timezone bug in session detection",
     "News calendar works (FOMC rate decision at 18:00 UTC today is the high-impact event)",
     "FOMC decision at 14:00 ET / 18:00 UTC today — bot must not trade during event window regardless of session",
-    "EURUSD sentiment mildly bullish (+0.33) but geopolitical risk elevated (Iran/US tensions)"
+    "EURUSD sentiment mildly bullish (+0.33) but geopolitical risk elevated (Iran/US tensions)",
+    "Risk supervisor GREEN on the WRONG account (5051185832/MetaQuotes-Demo, DD 3.79% vs contaminated peak $100,940) is meaningless for the FTMO challenge — supervisor must verify account login matches the FTMO config before reporting.",
+    "0 trades since Jul 28 is NOT strategy failure — it is wrong-account + no-tick-data paralysis. Do not tune strategy parameters on zero new data.",
+    "EURUSD above 1.1500, DXY double-top breakdown toward 99.00, Eurozone Flash CPI today (headline expected 2.9% y/y) — high-impact event within session window."
   ]
 }
