@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 209,
+    "total_ideas": 211,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1872,6 +1872,45 @@
       "diversification_value": "risk_overlay's Slippage/Convexity PARTIAL cluster holds only Multi_TF_Vol_Convexity_Sizer (volatility convexity divergence across timeframes \u2014 a continuous vol-structure signal). Event_Convexity_Size_Limiter is a discrete, calendar-driven overlay: it prices the scheduled-event window itself, where slippage and bimodality are known in advance. It does not overlap Spread_Regime_Adaptive_Sizer (measured spread percentiles \u2014 reactive) or Liquidity_Tier_Slippage_Curve_Sizer (market-impact curve \u2014 position size vs book volume) because those react to CURRENT conditions while this one prices KNOWN FUTURE event risk. It is the risk-side counterpart to signal-side event ideas (NFP_Volatility_Momentum, Event_Volatility_Straddle_Reversal): no existing risk_overlay idea gates exposure around scheduled events.",
       "self_grade": "A-",
       "generated_at": "2026-07-31T04:43:05Z"
+    },
+    {
+      "name": "Consolidation_Volume_DryUp_Expansion_Timer",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "M15"
+      ],
+      "description": "Anticipates expansion from aged consolidations by tracking volume dry-up (accumulation signature) plus time-in-range percentile, entering on the expansion candle with volume confirmation \u2014 a leading-timer complement to duration-based breakout filters.",
+      "market_behaviour": "Consolidations are not passive pauses \u2014 they are battlegrounds where institutional accumulation happens quietly while retail participation drains. As a range ages, the volume signature tells the story: early in the range both sides trade actively; as the range narrows and ages, marginal participants leave, volume contracts toward a dry-up, and large players accumulate size at the edges without moving price (absorption). This is the Wyckoff spring-loading phase. The edge is that the dry-up is a LEADING condition \u2014 it reliably precedes expansion more often than raw duration alone, because duration measures the passage of time while volume measures the actual depletion of opposing liquidity. When expansion finally comes it is violent precisely because so little resting liquidity remains inside the range. Gold exhibits this clearly in H1 ranges that form after trend exhaustion or before major session opens.",
+      "entry_logic": "1) Define a consolidation: at least 12 consecutive H1 bars whose high-low range stays within 0.8x H1 ATR(14) of the range anchor (first bar's midpoint), with no bar closing beyond the range. 2) Track range age (bars) and compute time-in-range percentile against the trailing 60-bar rolling distribution of completed range ages (age above the 60th percentile = 'aged'). 3) Volume dry-up precondition: 3-bar average volume below 45% of the 20-bar average volume, persisting for at least 3 bars (tick volume or futures volume as proxy). 4) Spring check: price must tag the range edge at least once during the dry-up without closing beyond it (absorption evidence). 5) Trigger: an H1 bar closes beyond the range boundary AND its volume is at least 1.5x the 20-bar average (expansion confirmation). 6) Optional M15 filter: enter only if the expansion candle's M15 close is beyond the range edge and M15 ATR is expanding (current M15 ATR above previous 5-bar average). 7) Skip if the range formed within 2 hours of a high-impact news event (FOMC/NFP/CPI) \u2014 news-driven breaks have a different, less tradable signature.",
+      "exit_logic": "Stop loss: 1x H1 ATR(14) beyond the opposite range boundary (or 1.2x range height if larger). Take profit 1: 1.5x range height (close 50%). Take profit 2: 2.5x range height for the remainder. Trailing: after TP1, trail at 1x ATR behind the highest H1 close. Time-stop: if TP1 is not reached within 8 H1 bars, close at market \u2014 an expansion that stalls within a day is a failed spring. No re-entry after a stopped-out spring unless a NEW dry-up range forms (minimum 12 new bars).",
+      "failure_mode": "1) Dry-up without expansion \u2014 aged ranges can persist for weeks in gold during low-volatility regimes (summer doldrums, pre-FOMC compression); the timer fires late and the position bleeds in time. 2) False spring / stop-run \u2014 the expansion candle closes beyond the range but immediately reverses the next bar (liquidity grab engineered to run stops, not to trend); volume confirmation is real but the move is a trap. 3) Volume proxy noise \u2014 MT5 tick volume can diverge from true traded volume during low-liquidity sessions (Asian close), producing dry-up signals that are artefacts of market closure rather than accumulation.",
+      "diversification_value": "Consolidation_Duration_Breakout (A-) counts consecutive narrow bars and enters on range exit \u2014 duration is the filter and the signal is reactive. This idea adds the volume dry-up signature (leading accumulation gauge), time-in-range percentile against a rolling age distribution, an explicit absorption (spring) precondition, and a volume-expansion confirmation on the trigger candle \u2014 a different signal chain (volume microstructure + range ageing) rather than bar-counting. It also complements Structural_Compression_Breakout (price compression at H4 levels) by working on standalone H1 ranges anywhere in the session, and Bollinger_Squeeze_Momentum_Breakout (band-width geometry) by using raw volume rather than band width.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-01T06:44:23Z"
+    },
+    {
+      "name": "Breaker_Block_Reclaim_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H4",
+        "H1",
+        "M15"
+      ],
+      "description": "Trades the breaker-block flip \u2014 after an order block is failed (price trades fully through it), the level reverses polarity; when price reclaims the failed level with a displacement candle, the resulting breakout rides the stop-cascade plus momentum flow.",
+      "market_behaviour": "In the SMC framework, an order block is a supply/demand zone where institutional orders rest. When price trades THROUGH an order block instead of respecting it, the resting orders at that level have been consumed \u2014 but the stops of everyone who entered at the block now sit just beyond it. The failed level flips polarity (a failed demand zone becomes supply, and vice versa): this is the breaker block. The natural behaviour is that a failed level attracts price back like a magnet: traders who were stopped out re-enter against the move, institutional flow that absorbed the first pass now pushes the other way, and the stop cluster beyond the failed level fuels a fast breakout on reclaim. Gold, with its deep stop clusters around round numbers and prior H4 structure, shows this flip repeatedly \u2014 a broken H4 demand zone that is reclaimed becomes a launch pad for the next leg. The edge is that the reclaim breakout is mechanically driven (stop cascades plus forced re-entries) rather than discretionary.",
+      "entry_logic": "1) Identify a swing order block on H4: the last 3-5 candles before a strong displacement move (a candle with range at least 1.5x the ATR(14) of the prior 10 candles). 2) Mark the block zone (high-low of the block-forming candles). 3) Wait for FAILURE: price must trade through the entire block zone and close beyond it (full mitigation \u2014 the block is now 'broken'). 4) Wait for RECLAIM: price returns and closes back beyond the failed block's edge in the opposite direction (e.g. a broken bullish block: bearish close through it, then a bullish close back above it). 5) M15 confirmation: after the reclaim close, wait for an M15 pullback that holds above/below the reclaimed edge, then enter on the M15 candle that breaks the pullback high/low with a body at least 60% of its range. 6) Optional trend filter: in an uptrend (price above H4 50-EMA) take only bullish reclaims of broken buy blocks; in a downtrend take only bearish reclaims of broken sell blocks. 7) Skip if the reclaim happens within 3 hours of a high-impact news event, or if H4 ATR is below its 20th percentile over 20 bars (compressed regime \u2014 flips whipsaw).",
+      "exit_logic": "Stop loss: 1x H1 ATR(14) beyond the reclaimed edge (the far side of the failed block). Take profit 1: next opposing H4 swing high/low (close 50%). Take profit 2: 2x the risk distance from entry (remainder). Trailing: after TP1, trail at 1.5x H1 ATR behind the highest/lowest H1 close. Time-stop: flat if TP1 is not reached within 12 H1 bars. Re-entry: allowed once per breaker \u2014 a second failed reclaim of the SAME level means the flip is exhausted; do not re-enter that level again for 48 hours.",
+      "failure_mode": "1) Whipsaw in ranges \u2014 in a ranging regime levels flip repeatedly: each failed reclaim becomes a new breaker, price oscillates across the same zone multiple times, and every entry gets stopped (this is why the compressed-regime skip filter exists). 2) Reclaim without follow-through \u2014 price closes back beyond the failed level but the expected stop cascade never materialises (stops were already run in the first pass); the move stalls and the position bleeds back through the level. 3) Late entry \u2014 the reclaim candle can be violent (2-3x ATR); waiting for the M15 pullback can mean missing the whole move, while entering on the reclaim candle itself means poor fills on spread/slippage during the cascade.",
+      "diversification_value": "OrderBlock_Fractal_Breakout (B+) enters on the FIRST touch of an UNMITIGATED H4 order block with a fractal \u2014 this idea is the opposite phase of the same level's life cycle: it trades only AFTER the block has been fully failed and reclaimed (the breaker flip). Structural_Compression_Breakout (A-) works on H4 swing highs/lows with compression preconditions \u2014 no order-block mechanics or polarity flip. Structural_Level_Breakout_With_Retest (A-) retests UNBROKEN structure levels for continuation \u2014 this idea trades BROKEN levels for their reversal polarity. MultiTimeframe_Liquidity_Stacked_Breakout (A-) enters through stacked liquidity clusters en route to a target \u2014 this idea is a single-level flip with a defined reclaim trigger. No existing breakout idea codifies the failed-level polarity reversal (breaker) mechanism.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-01T06:44:23Z"
     }
   ],
   "archived": [
@@ -3997,7 +4036,9 @@
       "ATR_Percentile_Compression_Breakout",
       "Ascending_Triangle_Breakout",
       "PinBar_Rejection_Breakout",
-      "Momentum_Divergence_Breakout_Fade"
+      "Momentum_Divergence_Breakout_Fade",
+      "Consolidation_Volume_DryUp_Expansion_Timer",
+      "Breaker_Block_Reclaim_Breakout"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",

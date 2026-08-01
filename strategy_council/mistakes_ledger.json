@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-07-31",
+  "last_updated": "2026-08-01",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -125,6 +125,13 @@
       "root_cause": "Opening deals (PnL=0) counted as separate trades, or stale _counted_position_ids from the 23-instance cascade. State also shows session_trend_price 1.13779 vs EURUSD ~1.150 — trend baseline stale.",
       "fix": "Reconcile from MT5 history grouped by position_id; clear _counted_position_ids; single-instance restart.",
       "prevention_rule": "total_trades must equal wins+losses after every session. State-file values never override MT5 history ground truth."
+    },
+    {
+      "date": "2026-08-01",
+      "pattern": "Zombie cascade 23 -> 25 + NEW terminal64 kill/restart loop — MT5 init hangs on all methods",
+      "root_cause": "25 idle zombie instances of propfirm_pass_bot.py (created Jul 21-31, no lock cleanup) each run shared mt5_connect which taskkills terminal64.exe on reconnect. Terminal PID churns every ~20s; IPC handshake never completes; bare and path-based mt5.initialize() both hang (exit 124). Bot log silent since Jul 31 23:21 local.",
+      "fix": "Kill ALL 25 zombie instances, restore C:\\Hermess\\mt5_config.json to 1513990433/FTMO-Demo, restart a SINGLE bot instance, verify account_info() before window opens.",
+      "prevention_rule": "Cron launchers must kill prior instances before starting new ones. Process count must be <= 1 before any trading window. Never allow zombie instances to reach mt5_connect (taskkill) concurrently."
     }
   ],
   "action_items": [
