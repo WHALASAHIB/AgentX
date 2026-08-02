@@ -1,0 +1,76 @@
+//@version=6
+strategy(title="EMA3/8 RSI45 ManualADX25 LongOnly EMA150Filter BarrierExit TP667 SL750 GBPUSD4h", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)       // sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=50)       // sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(45, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 758: RSI 50->45 (ONLY CHANGE -- Rulebook: trades < 20 -> reduce entry threshold. iter 757: ADX 25->30 DISPROVEN -- trade count COLLAPSED 30->14 (below the 20-trade floor), PF 1.28->1.19, Sharpe 0.46->0.24, net +$195.16->+$60.50; WR held 63.3->64.3% and DD improved to 1.66%, but the trade starvation makes it statistically meaningless. iter-753 control remains GBPUSD 4h family peak (PF 1.28, Sharpe 0.46, WR 63.3%, net +$195, 30 trades) -- rejected only by razor-thin margins (PF 0.02 below 1.3 bar, Sharpe 0.04 below 0.5 bar). GBPUSD 4h family map nearly COMPLETE: symbol/timeframe/TP/SL/BE/ADX all mapped; the last UNMAPPED entry-filter dimension is the RSI threshold (constant 50 across the entire GBPUSD family). Relaxing RSI 50->45 admits more pullback-zone entries -> trade count 30 -> ~35-45 at similar quality; if WR holds ~60% with the 0.74x realized payoff, PF and Sharpe clear the bars. Risk: admitting weaker momentum may lower WR -- that is the experiment. sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(25, "ADX Threshold", minval=10, maxval=50)   // iter 758: REVERTED 30->25 (iter-753 control value -- ADX30 starved trades to 14; ADX dimension FULLY MAPPED: ADX25 (iter 753: WR 63.3%, PF 1.28, net +$195, 30 trades PEAK) > ADX30 (iter 757: WR 64.3%, PF 1.19, net +$60, 14 trades low-sample)). sweep: 20-40 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 753: regime EMA 150 (proven-best long-side from iter 745/747). sweep: 100-200 step 50
+take_profit_tick = input.int(667, "Take Profit (ticks)", minval=100, maxval=20000, step=50)  // iter 753: TP UNCHANGED at 667 (peak of long-side TP map: TP1000 PF 0.851 < TP667 PF 0.859 > TP500 PF 0.810; GBPUSD TP map iter 749 peak). sweep: 500-1000 step 167
+stop_loss_tick = input.int(750, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 753: SL 1000->750 CONFIRMED as GBPUSD 4h family best (iter 753: WR 63.3%, PF 1.28, net +$195.16, DD 2.19%). SL gradient FULLY MAPPED: SL1000 (PF 1.01) < SL750 (PF 1.28 PEAK) > SL500 (PF 0.67). sweep: 500-1000 step 125
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- crossover detection
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+//--- entry conditions (LONG-ONLY. iter 758: RSI threshold 50->45 -- the last UNMAPPED GBPUSD 4h entry-filter dimension. iter 757: ADX 25->30 DISPROVEN (trade count 30->14 below validity floor, PF 1.28->1.19, Sharpe 0.46->0.24, net +$195.16->+$60.50 -- WR held 64.3% but statistically meaningless); ADX dimension FULLY MAPPED, iter-753 ADX25 is the peak. iter 756: EURUSD 1h pivot DISPROVEN (WR 63.3->47.0%, PF 1.28->0.586, net +$195->-$1,093) -- the GBPUSD 4h edge does NOT transfer to EURUSD; EURUSD family complete. iter-753 control remains GBPUSD 4h family peak: WR 63.3%, PF 1.28 (bar 1.3), Sharpe 0.46 (bar 0.5), net +$195.16, DD 2.19%, cascade 1.0. Rulebook: trades < 20 -> reduce entry threshold. Relaxing RSI 50->45 admits more pullback-zone entries -> trade count 30 -> ~35-45 at similar quality; if WR holds ~60% with the 0.74x realized payoff, PF and Sharpe clear the bars. Risk: admitting weaker momentum may lower WR -- that is the experiment. One change: rsi_threshold 50->45 on GBPUSD 4h (iter-753 config otherwise intact: EMA3/8 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven).)
+long_condition = cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
