@@ -1,0 +1,7 @@
+1. state.json OK: iteration=747, log=61, last=iter746 XAUUSD 4h, best unchanged, next-hyp set
+2. pine OK: pines/iter_746_ema3_8_rsi50_adx25_longonly_ema200_tp1000_sl1000_xau4h.pine 4307 bytes; v6, ema_regime_len=200, manual closes, no strategy.exit(), no code semicolons, sections present
+3. cleanup OK: all 4 prior temp files removed (verify script self-deletes post-run)
+4. backtest evidence: resultId 01KYY3AATB5AG5BC88GEJAB9JZ | tv_jul26 | 4004 bars | cascade 1.0
+   viewUrl: https://mcp-api.trader.dev/backtest/01KYY3AATB5AG5BC88GEJAB9JZ
+
+ALL CHECKS PASSED
