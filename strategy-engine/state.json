@@ -1,6 +1,6 @@
 {
-  "iteration": 761,
-  "last_run": "2026-08-02T05:55:15Z",
+  "iteration": 763,
+  "last_run": "2026-08-02T06:24:23Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "PIVOT to a testable store: GBPUSD 1h is now ALSO truncated (449-bar stub at iter 760 vs 14913 bars at iter 752 ~2.7h earlier) -- the clickhouse truncation has spread from 4h (EURUSD iter 755: 277 bars; GBPUSD iter 759: 283 bars) to 1h. All POLYGON forex stores are unreliable while the store trims to ~2026-04-19..2026-05-19. XAUUSD is not on the POLYGON forex feed (its 1h store last verified intact at iters 708-713). Per the symbol-pivot pattern (iter 755/756: GBPUSD->EURUSD), apply the iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven) to XAUUSD 1h. One change: symbol GBPUSD->XAUUSD (timeframe 1h forced by the 4h/1h forex store truncation; ema_slow returns to 8 -- the EMA3/13 test stays queued until a full-length store is found). Risk: if XAUUSD 1h coverage is also < ~1000 bars, pivot again -- next candidate BYBIT:BTCUSDT.P 30m (home of the iter-464 family best, crypto feed unaffected by the POLYGON forex truncation).",
+  "current_hypothesis": "RETRY on BYBIT:BTCUSDT.P 30m with the iter-753 control (EMA3/8 + RSI50 + ADX25 + EMA150 manual barrier exits, long-only, NO breakeven) with ONE change: scale the barrier ticks to BTC volatility -- take_profit_tick 667->4000, stop_loss_tick 750->4500 (~$400/$450 ≈ 0.4%/0.45% of BTC price ≈ 1x ATR, preserving the proven 0.89 TP/SL ratio). iter 762: BYBIT pivot IS testable (4607 bars, coverage 107%, 40 trades, no truncation warnings -- crypto feed fully resolves the POLYGON forex store gap) but the forex-sized fixed tick barriers were DISPROVEN: avg hold 2.1 bars, WR 25%, PF 0.36, net -$474 -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ≈ 0.07% of BTC ≈ 0.15x ATR vs ~1x ATR on GBPUSD 4h; the tick barrier geometry does not scale across markets. The iter-464 family best used ATR-trail exits; scaling barriers to ~1x ATR restores a comparable exit geometry while keeping the proven entry stack. One change: TP/SL tick values (rulebook: WR<40% -> TP/SL dimension), iter-753 control otherwise intact. Risk: BTC 30m whipsaw may still beat 1x-ATR barriers -- that is the experiment; if WR stays <40% at 1x ATR, the EMA3/8 entry stack itself does not transfer to BTC and the family map moves to the last untested store or back to forex when stores recover.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1540,6 +1540,62 @@
       },
       "verdict": "invalid (no trades) -- GBPUSD 1h DATA GAP on tv_jul26_mc7: window collapsed from 14913 bars (iter 752, coverage 71.5%, data starts ~2024-01) to 449 bars (~18 days, 2026-04-19 to 2026-05-19, coveragePct 123.35) on the SAME symbol/timeframe/call pattern; 0 qualifying EMA3/13+RSI50+ADX25+EMA150 entries in the stub window. NOT a strategy rejection -- the ema_slow 8->13 hypothesis remains UNTESTABLE while the clickhouse store is truncated (same failure mode as iter 759 GBPUSD 4h: 283-bar stub, and iter 755 EURUSD 4h: 277-bar stub). The truncation has now spread from the 4h stores to GBPUSD 1h (was 14913 bars at iter 752 ~2.7h earlier). Next: find a testable store -- pivot the iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750) to XAUUSD 1h (XAUUSD is not on the POLYGON forex feed; its 1h store was last verified intact at iters 708-713).",
       "time": "2026-08-02T05:55:15Z"
+    },
+    {
+      "iteration": 761,
+      "symbol": "XAUUSD",
+      "timeframe": "1h",
+      "hypothesis": "PIVOT to XAUUSD 1h with the iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven), full window. iter 760: GBPUSD 1h UNTESTABLE -- clickhouse store truncated to 449-bar stub (~18 days, 2026-04-19 to 2026-05-19) vs 14913 bars at iter 752; iter 759 GBPUSD 4h also truncated (283-bar stub). Truncation has spread from 4h to 1h across POLYGON forex stores. XAUUSD is NOT on the POLYGON forex feed -- its 1h store was last verified intact at iters 708-713. One change: symbol GBPUSD->XAUUSD (timeframe 1h forced by the 4h/1h forex store truncation; ema_slow returns to 8 -- the EMA3/13 test stays queued until a full-length store is found). Risk: if XAUUSD 1h coverage is also < ~1000 bars, pivot again -- next candidate BYBIT:BTCUSDT.P 30m (home of the iter-464 family best, crypto feed unaffected by the POLYGON forex truncation).",
+      "metrics": {
+        "pf": 0.76,
+        "sharpe": -0.88,
+        "wr": 50.0,
+        "dd": 0.9,
+        "trades": 4,
+        "net_profit": -21.0,
+        "commission_paid": 0.0,
+        "cascade": 0.0,
+        "long_trades": 0,
+        "short_trades": 0,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ0HJMREMHZVCKQSSCXNDHBP",
+        "window_note": "XAUUSD 1h DATA GAP: backtest card shows 'May 2026 - May 2026', only 4 trades, $10,000 -> $9,979 (net -$21), WR 50% (2W/2L), PF 0.76, Sharpe -0.88, DD 0.9%. The XAUUSD 1h store is ALSO truncated to ~1 month -- same failure mode as iters 755/759/760. XAUUSD was previously intact at iters 708-713 (1h) so this is a NEW truncation, not a coverage limitation."
+      },
+      "verdict": "invalid (low sample, 4 trades) -- XAUUSD 1h DATA GAP on tv_jul26_mc7: the backtest card shows 'May 2026 - May 2026' (only 4 trades, WR 50% 2W/2L, PF 0.76, Sharpe -0.88, net -$21, $10,000 -> $9,979). XAUUSD 1h store is ALSO truncated to ~1 month -- the clickhouse truncation now spans ALL tested stores: GBPUSD 4h (283-bar stub, iter 759), GBPUSD 1h (449-bar stub, iter 760), EURUSD 4h (277-bar stub, iter 755), and now XAUUSD 1h. NOT a strategy rejection -- the iter-753 control hypothesis remains UNTESTABLE while stores are truncated. XAUUSD was verified intact at iters 708-713 (1h, 13K+ bars), so this is a NEW truncation of the XAUUSD store. Next: pivot to BYBIT:BTCUSDT.P 30m -- crypto feed (BYBIT) is unaffected by the POLYGON forex truncation and is the home of the iter-464 family best (PF 104.45, Sharpe 22.28, WR 92.4%, 264 trades).",
+      "time": "2026-08-02T06:12:31Z"
+    },
+    {
+      "iteration": 762,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "PIVOT to BYBIT:BTCUSDT.P 30m with the iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven), full window. iter 761: XAUUSD 1h UNTESTABLE -- backtest card 'May 2026 - May 2026', 4 trades, store truncated to ~1 month; iters 759/760 GBPUSD 4h/1h truncated (283/449-bar stubs); iter 755 EURUSD 4h truncated (277-bar stub). The clickhouse truncation spans ALL tested POLYGON forex stores. BYBIT:BTCUSDT.P is a crypto feed (BYBIT provider), unaffected by the POLYGON forex truncation, and home of the iter-464 family best (PF 104.45, Sharpe 22.28, WR 92.4%, 264 trades, 30m). One change: symbol XAUUSD->BYBIT:BTCUSDT.P, timeframe 1h->30m (forced by the XAUUSD store truncation; iter-753 control otherwise intact -- EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven).",
+      "metrics": {
+        "pf": 0.35542604,
+        "sharpe": -4.61287049,
+        "wr": 25.0,
+        "dd": 4.74412516,
+        "trades": 40,
+        "net_profit": -474.412516100008,
+        "commission_paid": 391.1297161,
+        "cascade": 1.0,
+        "long_trades": 40,
+        "short_trades": 0,
+        "long_winning": 10,
+        "avg_win": 26.15969234,
+        "avg_loss": -24.533647983334,
+        "ratio_avg_win_loss": 1.06627813,
+        "avg_bars_in_trade": 2.1,
+        "gross_profit": 261.596923399999,
+        "gross_loss": 736.009439500007,
+        "bars_evaluated": 4607,
+        "coverage_pct": 106.97,
+        "final_equity": 9525.587483899992,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ0J89G8D2PG9S03DJWDZ06Z",
+        "window_note": "BYBIT:BTCUSDT.P 30m store covers ~2026-04-25 to 2026-08-02 (4607 bars, coverage 106.97%, NO truncation warnings -- crypto feed unaffected by POLYGON forex store truncation; effectiveTradeRange firstTradeEntryTs 2026-04-29, lastTradeExitTs 2026-07-30; store is ~3 months, SHORT but not truncated). Bybit lot filters applied: tick=0.1, qtyStep=0.001. Commission 0.05% parity profile applied; finalEquity 9525.59 confirms netProfit INCLUDES commission ($391.13/40 ~ $9.78/trade)."
+      },
+      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ≈ 0.07% of BTC price ≈ 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 ≈ 0.4%/0.45% ≈ 1x ATR) to restore the exit geometry the entry edge needs.",
+      "time": "2026-08-02T06:24:23Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
