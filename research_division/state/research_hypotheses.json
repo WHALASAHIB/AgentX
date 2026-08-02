@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 211,
+    "total_ideas": 214,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1911,6 +1911,71 @@
       "diversification_value": "OrderBlock_Fractal_Breakout (B+) enters on the FIRST touch of an UNMITIGATED H4 order block with a fractal \u2014 this idea is the opposite phase of the same level's life cycle: it trades only AFTER the block has been fully failed and reclaimed (the breaker flip). Structural_Compression_Breakout (A-) works on H4 swing highs/lows with compression preconditions \u2014 no order-block mechanics or polarity flip. Structural_Level_Breakout_With_Retest (A-) retests UNBROKEN structure levels for continuation \u2014 this idea trades BROKEN levels for their reversal polarity. MultiTimeframe_Liquidity_Stacked_Breakout (A-) enters through stacked liquidity clusters en route to a target \u2014 this idea is a single-level flip with a defined reclaim trigger. No existing breakout idea codifies the failed-level polarity reversal (breaker) mechanism.",
       "self_grade": "A-",
       "generated_at": "2026-08-01T06:44:23Z"
+    },
+    {
+      "name": "Commodity_Breadth_Inflation_Regime_Gate",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "WTI",
+        "Brent",
+        "Copper",
+        "Silver",
+        "Platinum",
+        "Aluminium",
+        "Natural Gas"
+      ],
+      "timeframes": [
+        "D1",
+        "H1"
+      ],
+      "description": "Gates gold direction on broad commodity breadth: gold breakouts with expanding breadth are inflation-driven and persist; breakouts on collapsing breadth are fragile safe-haven bids that fade.",
+      "market_behaviour": "Gold rallies originate from two distinct demand channels that leave different fingerprints in the commodity complex. Inflation-hedge demand (reflation trades, commodity-index inflows, EM growth) moves gold TOGETHER with the broad complex - copper, oil, silver, platinum and industrial metals all participate. Safe-haven demand (geopolitical shocks, equity sell-offs, USD crises) moves gold ALONE or against the complex, because investors buy gold as monetary insurance while dumping cyclical commodities. Commodity breadth - the fraction of the complex trading above its trend - cleanly separates these channels. When breadth expands and gold breaks out together, the rally is broad-based inflation positioning: durable and followable for weeks. When gold makes new highs on collapsing breadth, the bid is monetary flight: sharp, fast, and statistically prone to retracement once the shock is absorbed. The behaviour persists because the buyer bases are different institutions with different holding horizons - commodity-index and macro funds versus fast-money safe-haven flow.",
+      "entry_logic": "1) Compute D1 breadth = % of basket (WTI, Brent, copper, silver, platinum, aluminium, natural gas) above their 50-day SMA. 2) LONG: gold closes above its 20-day high AND breadth >= 70% AND breadth today > breadth 5 days ago (expanding). 3) FADE/SHORT: gold closes above its 20-day high AND breadth <= 40% (divergent monetary bid) - enter short on the first rejection candle below the breakout bar's low. 4) SKIP when breadth is between 40-70% (ambiguous regime). 5) Re-compute breadth daily; signal persists until invalidated.",
+      "exit_logic": "Long: SL below the breakout bar low or 1.5x ATR(14), whichever is wider; TP at 2R; trail at 1R using the 20-day low; time-stop after 15 sessions. Short (fade): SL above the 20-day high; TP at 1.5R (fades are smaller targets); time-stop after 8 sessions. Any exit immediately if breadth crosses the opposite extreme (breadth >70% on a short, <40% on a long).",
+      "failure_mode": "1) Liquidity-crisis flights (2020 COVID, 2008) - gold rises while breadth collapses for months; fade shorts get run over by forced buying and the D1 gate is too slow to react. 2) Central-bank-driven rallies (2022-2024) - CB purchases are price-insensitive and decouple gold from the commodity complex for quarters; breadth stays low while gold trends up, generating persistent false short signals. 3) Basket composition sensitivity - different commodity baskets change breadth readings at the margin and shift the 70/40 thresholds.",
+      "diversification_value": "Differs from Industrial_Metals_Gold_Activity_Proxy (copper as a single-metal activity FORECASTING proxy for gold - this is a multi-commodity breadth CONFIRMATION gate on gold direction, not an activity forecast). Differs from CRB_Gold_Momentum_Spread (relative momentum between a CRB index and gold with catch-up logic - this trades gold direction conditioned on breadth participation, with no index-relative spread). Differs from DXY_Valence_Correlation (USD-correlation channel - the commodity channel is orthogonal: a gold rally can be USD-confirmed yet breadth-divergent).",
+      "self_grade": "A-",
+      "generated_at": "2026-08-02T02:29:14Z"
+    },
+    {
+      "name": "COMEX_Inventory_Coverage_Scarcity",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "W1",
+        "H4"
+      ],
+      "description": "Tracks COMEX vault stock coverage (inventory vs open interest): when deliverable stocks compress toward 1-2x coverage, delivery stress builds and gold enters a persistent bullish squeeze regime lasting weeks-to-quarters.",
+      "market_behaviour": "The COMEX gold futures market is a paper market layered on physical metal in CME vaults. The coverage ratio - vault stocks (registered + eligible) relative to open interest - measures how much paper each physical ounce backs. In normal times the market is heavily over-covered (5-10x+) and the ratio is ignored. But when vault stocks are drawn down hard - ETF redemptions converting to physical deliveries, London-to-New York arbitrage moving metal, central-bank-linked buying absorbing float, or delivery demands on expiring contracts - coverage compresses toward 1-2x. At that point the market is structurally short physical metal against a wall of paper longs, and further demand triggers delivery stress: longs refuse to roll, shorts scramble for metal, and price gaps up as squeeze mechanics play out. March 2020 and the 2024-2025 inventory drain are the canonical episodes. This is a slow, persistent, high-conviction bullish signal that lasts weeks-to-quarters while inventories are depleted, then dies abruptly when replenishment arrives.",
+      "entry_logic": "1) Weekly: read the CME gold stocks report (registered + eligible vault stocks) and open interest. 2) Signal LONG when: total stocks < 2.0x trailing 90-day average daily volume, OR stocks fell >15% over 4 weeks while OI is flat or rising. 3) Enter on an H4 pullback to the 20-EMA with a bullish rejection candle, only while the weekly signal is active. 4) Re-check weekly; add on further drawdown (stocks -10% more). 5) No signal = no trade.",
+      "exit_logic": "SL below the 4-week swing low (or 1.5x ATR); TP at +3R or when inventory stabilises (two consecutive weekly increases); hard time-stop at 8 weeks; exit immediately if the weekly report shows a single-week stock increase >10% (replenishment shock).",
+      "failure_mode": "1) Replenishment shocks - 2020 showed metal can be flown in en masse (hundreds of tonnes) within weeks, killing the squeeze and reversing the rally before the 3R target is reached. 2) Long liquidation instead of delivery stress - if OI collapses WITH inventory (mass deleveraging), the ratio stays low but the market is simply shrinking; no squeeze materialises and price falls instead. 3) Signal lag - weekly data means the move often starts before the report confirms, so entries chase extended price.",
+      "diversification_value": "Differs from Gold_Calendar_Spread_Physical_Demand_Proxy (futures CURVE shape / backwardation expectations - this uses VAULT STOCK COVERAGE, a physical-quantity signal, not a price-curve signal). Differs from Futures_Spot_Convergence_Arbitrage (spot-futures spread mean reversion - this is a directional inventory-regime trade with no arbitrage leg). Differs from COMEX_First_Notice_Day_Gold_Flow (seasonal FND roll mechanics with sell-pressure rebound - this is a persistent inventory regime independent of the delivery calendar).",
+      "self_grade": "A-",
+      "generated_at": "2026-08-02T02:29:14Z"
+    },
+    {
+      "name": "Global_Equity_Momentum_Transmission",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD",
+        "SPX"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Trades gold via the lagged transmission of SPX momentum phase shifts, gated on the gold-equity correlation regime being negative (rotation channel active).",
+      "market_behaviour": "Institutional multi-asset portfolios rotate between risk assets and monetary assets along the equity trend. When equity momentum breaks down (SPX rolling 20-day ROC turning negative and accelerating), de-risking flows rotate INTO gold - but with a lag, because rebalancing runs on cadence (monthly/quarterly) and portfolio managers stage exits rather than dump. When equity momentum is strongly positive, gold faces chronic opportunity-cost selling as capital chases the risk side - again with a lag. The transmission is only active while the gold-equity correlation regime is NEGATIVE (the classic rotation channel). In regimes where gold and equities rise together (liquidity-driven, e.g. 2020-2021 QE), the rotation channel is dead and equity momentum is not a gold signal. The edge is the predictable lag: equity momentum phase shifts precede gold allocation flows by days to weeks, and the correlation-regime gate filters out regimes where the transmission is inverted.",
+      "entry_logic": "1) Compute SPX 20-day ROC and its 5-day change (acceleration). 2) LONG gold when: SPX ROC crosses below -2% AND acceleration is negative, AND the 60-day rolling XAUUSD-SPX correlation < 0 (rotation channel active). 3) SHORT gold when: SPX ROC crosses above +3% AND acceleration is positive, AND correlation < 0. 4) SKIP when correlation >= 0 (channel dead). 5) SKIP during the first 5 sessions after a 3%+ single-day SPX crash (liquidation phase - gold is often sold for margin before it is bought). 6) Enter on an H4 pullback to the 20-EMA with a rejection candle.",
+      "exit_logic": "Long: SL below the 4-week low; TP at 2.5R or when SPX ROC turns positive again; trail at 1R. Short: SL above the 4-week high; TP at 2R; time-stop at 20 sessions. Exit immediately if the 60-day correlation regime flips positive (channel inversion).",
+      "failure_mode": "1) Margin-liquidation phase - in fast crashes (2020 March) gold is sold alongside equities for margin for days before the safe-haven bid arrives; entries inside that window get stopped out. 2) Liquidity-driven regimes (2020-2021) where both assets rise together - the correlation gate handles this but the gate itself lags the regime change by weeks. 3) Whipsaw in rangebound equity markets - ROC oscillates around the thresholds; the acceleration condition reduces but does not eliminate chop entries.",
+      "diversification_value": "Differs from CrossAsset_Momentum_Transmission (uses DXY, US10Y, VIX as leading momentum instruments - this uses SPX PRICE momentum with a correlation-regime gate; VIX is a fear-level signal while SPX ROC is a trend-acceleration signal, different trigger and timing). Differs from DXY_Momentum_Phase_Shift_Capture (DXY phase shifts - the equity channel is orthogonal to the USD channel). Differs from VIX_Gold_Regime_Divergence (volatility family - that trades VIX divergence, this transmits equity price momentum).",
+      "self_grade": "A-",
+      "generated_at": "2026-08-02T02:29:14Z"
     }
   ],
   "archived": [
@@ -3987,7 +4052,8 @@
       "Tick_Volume_Impulse_Momentum_Entry",
       "Momentum_Implied_Vol_Alpha_Capture",
       "Tick_Imbalance_Delta_Momentum",
-      "Max_Pain_Momentum_Gravity"
+      "Max_Pain_Momentum_Gravity",
+      "Global_Equity_Momentum_Transmission"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -4133,7 +4199,9 @@
       "EM_Currency_Gold_Transmission_Divergence",
       "TIPS_Breakeven_Gold_Momentum_Spreader",
       "Industrial_Metals_Gold_Activity_Proxy",
-      "Gold_Calendar_Spread_Physical_Demand_Proxy"
+      "Gold_Calendar_Spread_Physical_Demand_Proxy",
+      "Commodity_Breadth_Inflation_Regime_Gate",
+      "COMEX_Inventory_Coverage_Scarcity"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",

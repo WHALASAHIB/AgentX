@@ -1,6 +1,6 @@
 {
-  "iteration": 749,
-  "last_run": "2026-08-01T07:54:33Z",
+  "iteration": 752,
+  "last_run": "2026-08-02T02:54:36Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "PIVOT SYMBOL: GBPUSD 4h with iter-747's proven-best long-only config (EMA3/8 + RSI50 + ADX25 + EMA150 regime filter + manual barrier exits TP667/SL1000), full window 2024-01-01 to 2026-05-19. Rationale: XAUUSD 4h long-only family CONCLUDED (iters 745-748 fully mapped: side, regime EMA 100/150/200, TP 1000/667/500 -- peak iter 747 PF 0.859 WR 40.9% 44T, but real net -$665 incl $450 commission; WR capped ~41% at 1.24x payoff vs 44.6% breakeven, structurally commission-negative). All rulebook levers already present (RSI50 + ADX25 filters). Next-highest-EV move: apply the proven family to a fresh pair with different 2024-2026 market structure; GBPUSD already in pairs_explored. One change: symbol XAUUSD->GBPUSD (all params identical to iter 747).",
+  "current_hypothesis": "MOVE to GBPUSD 1h: restore iter-749 proven control (TP667/SL1000, NO breakeven) with timeframe 4h->1h. iter 751: BE50 at 333 ticks DISPROVEN -- WR 65.5->55.2%, avg win $46.32->$26.14 (BE cut winners early), PF 1.01->0.52, net +$9->-$390; exit management on the win side destroys the edge. The diagnosed structural loss-maker remains SL overruns on 4h gaps (avg loss $87 runs ~2x avg win $46 at the 0.67x barrier). 1h bars gap less than 4h bars -> less SL overrun -> loss side shrinks toward win side without touching the entry edge; 1h also lifts trade count from 29/2yr (14.5/yr, below the 50-200/yr active range) toward a statistically valid sample. One change: timeframe 4h->1h (BE removed = restoration of the proven iter-749 control, all other params identical: EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL1000 manual barrier exits).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1197,6 +1197,88 @@
       },
       "verdict": "rejected (PF=0.81 < 1.3, Sharpe=-0.25 < 0.5) -- TP 667->500 DISPROVEN: WR FLAT at 40.9% (18W/26L identical to iter 747 -- the WR-lift gradient FLATTENED, did not reach the extrapolated 42-43%), payoff compressed 1.24x->1.17x (avg win 72.62->68.03), so PF FELL 0.859->0.810 and net worsened -$214.83->-$286.61. TP dimension fully mapped on 4h long-only: TP1000 (PF 0.851, WR 38.6%) < TP667 (PF 0.859, WR 40.9%) > TP500 (PF 0.810, WR 40.9%) -- peak confirmed at TP667 (iter 747). Commission $447.56/44 (~$10.2/trade) excluded from netProfit; true net = -$286.61 - $447.56 = -$734.17. Cascade 1.0 perfect (44 unique/44 rows, max depth 1). Same 4004-bar store (76.76% coverage, data starts ~2024-07-21), engine tv_jul26_mc7. XAUUSD 4h long-only family CONCLUDED: side/regime-EMA/TP dims fully mapped (iters 745-748), peak PF 0.859 WR 40.9% at TP667/EMA150 -- structurally commission-negative, WR capped ~41% at 1.24x payoff vs ~44.6% breakeven.",
       "time": "2026-08-01T07:54:33Z"
+    },
+    {
+      "iteration": 749,
+      "symbol": "GBPUSD",
+      "timeframe": "4h",
+      "hypothesis": "PIVOT SYMBOL GBPUSD 4h: iter-747 proven-best long-only config (EMA3/8 + RSI50 + ADX25 + EMA150 regime filter + manual barrier exits TP667/SL1000), full window 2024-01-01 to 2026-05-19. One change: symbol XAUUSD->GBPUSD (all params identical to iter 747).",
+      "metrics": {
+        "pf": 1.01048619,
+        "sharpe": 0.03250994,
+        "wr": 65.51724138,
+        "dd": 2.94590272,
+        "trades": 29,
+        "net_profit": 9.13344977021,
+        "commission_paid": 292.655210536075,
+        "cascade": 1.0,
+        "long_trades": 29,
+        "short_trades": 0,
+        "long_winning": 19,
+        "avg_win": 46.322712519576,
+        "avg_loss": -87.099808810173,
+        "ratio_avg_win_loss": 0.53183484,
+        "bars_evaluated": 4039,
+        "coverage_pct": 77.43,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ04BT5GRMBZSK30G2J4KVDN"
+      },
+      "verdict": "rejected (PF=1.01 < 1.3, Sharpe=0.03 < 0.5)",
+      "time": "2026-08-02T02:21:03Z"
+    },
+    {
+      "iteration": 750,
+      "symbol": "GBPUSD",
+      "timeframe": "4h",
+      "hypothesis": "Widen TP barrier 667->1000 ticks (1:1.5 -> 1:1 ratio, SL stays 1000) on GBPUSD 4h LONG-ONLY EMA3/8 + RSI50 + ADX25 + EMA150 regime filter + manual barrier exits, full window (iter 749: symbol pivot produced the family's HIGHEST WR -- 65.5% (19W/10L) vs XAUUSD 4h cap ~41% -- but PF only 1.01 because payoff is 0.53x realized (avg win $46.32 vs avg loss $87.10; SL overruns on 4h gaps worsen the 0.67x barrier ratio). WR is the STRONG metric now; per rulebook exploit it with a symmetric 1:1 barrier: breakeven WR at 1:1 is ~50%, and 65.5% WR at 1:1 should yield PF well above 1.3 (est. gross PF ~1.7 if avg win/loss scale toward parity). Commission $292.66/29 (~$10.1/trade) excluded from netProfit; true net = +$9.13 - $292.66 = -$283.53. Cascade 1.0 perfect (29 unique/29 rows, max depth 1). Coverage 77.43% (4039 bars, data starts ~2024-07-15). One change: tp 667->1000 (1:1.5 -> 1:1 ratio).",
+      "metrics": {
+        "pf": 0.8116333,
+        "sharpe": -0.38248829,
+        "wr": 51.72413793,
+        "dd": 3.82082856,
+        "trades": 29,
+        "net_profit": -230.977947101532,
+        "commission_paid": 287.417978111178,
+        "cascade": 1.0,
+        "long_trades": 29,
+        "short_trades": 0,
+        "long_winning": 15,
+        "avg_win": 66.349091097177,
+        "avg_loss": -87.586736682799,
+        "ratio_avg_win_loss": 0.75752441,
+        "gross_profit": 995.236366457649,
+        "gross_loss": 1226.214313559181,
+        "bars_evaluated": 4039,
+        "coverage_pct": 77.43,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ05E89PXSTQ5VRQWTADH3HH"
+      },
+      "verdict": "rejected (PF=0.81 < 1.3, Sharpe=-0.38 < 0.5) -- TP 667->1000 DISPROVEN: WR FELL 65.5->51.7% (-13.8pp), PF 1.01->0.81, net +$9.13->-$230.98 (both ex-commission), payoff ratio IMPROVED 0.53->0.76 (avg win $46.32->$66.35, avg loss ~flat -$87.10->-$87.59) -- but the 1:1 barrier bet FAILED: breakeven WR at 0.76x realized payoff is ~56.8%, actual 51.7% sits below it. Same 29 trades as iter 749 (TP667) -- widening TP converted 4 wins to losses (19W/10L -> 15W/14L) without scaling avg win to SL parity. GBpUSD 4h TP map now complete: TP667 (WR 65.5%, PF 1.01, net +$9) > TP1000 (WR 51.7%, PF 0.81, net -$231) -- TP667 confirmed peak. Commission $287.42/29 (~$9.9/trade) excluded from netProfit; true net = -$230.98 - $287.42 = -$518.40. Cascade 1.0 perfect (29 unique/29 rows, max depth 1). Coverage 77.43% (4039 bars, data starts ~2024-07-21), engine tv_jul26_mc7. All rulebook filters (RSI50, ADX25) already present; the structural weakness is realized payoff -- SL overruns on 4h gaps. Next lever: breakeven management.",
+      "time": "2026-08-02T02:40:18Z"
+    },
+    {
+      "iteration": 751,
+      "symbol": "GBPUSD",
+      "timeframe": "4h",
+      "hypothesis": "REVERT TP to 667 (iter 749 peak: WR 65.5%, PF 1.01, net +$9 ex-comm) AND add breakeven stop: once price advances 50% of TP distance (333 ticks of TP667), move SL from entry-1000 to entry. iter 750: TP 667->1000 disproven -- WR fell 65.5->51.7% (13.8pp below the ~56.8% breakeven at 0.76x realized payoff); TP667 is the confirmed peak. The structural loss-maker is the avg-loss side: SL overruns on 4h gaps make avg loss ($87.10-87.59) run ~2x avg win at TP667 ($46.32). A 50% breakeven stop converts post-favorable-move retracements from full -$87 SL hits to $0, directly attacking the 0.53x payoff asymmetry without touching the entry edge. One change: add breakeven stop at 50% of TP distance (TP reverts to proven 667).",
+      "metrics": {
+        "pf": 0.51738906,
+        "sharpe": -1.06775449,
+        "wr": 55.17241379,
+        "dd": 4.23808236,
+        "trades": 29,
+        "net_profit": -390.171266772923,
+        "commission_paid": 286.08561388927,
+        "cascade": 1.0,
+        "long_trades": 29,
+        "short_trades": 0,
+        "avg_win": 26.142997448965,
+        "avg_loss": -62.189171227412,
+        "bars_evaluated": 4039,
+        "coverage_pct": 77.43
+      },
+      "verdict": "rejected (PF=0.52 < 1.3, Sharpe=-1.07 < 0.5) -- BREAKEVEN STOP DISPROVEN: vs iter 749 control (TP667, no BE) on the same 4039-bar window, WR FELL 65.5->55.2% (19W/10L -> 16W/13L), avg win COLLAPSED $46.32->$26.14 (the BE at 333 ticks converts would-be TP667 winners into small exits when price retraces below entry after arming), avg loss only shrank -$87.10->-$62.19, so PF 1.01->0.52 and net +$9.13->-$390.17. Cutting the win side destroys far more edge than the loss side saves: BE exit management on this entry set is a net negative. Commission $286.09/29 (~$9.9/trade) excluded from netProfit; real net = -$390.17 - $286.09 = -$676.26. Cascade 1.0 perfect (29 unique/29 rows, max depth 1). Coverage 77.43% (4039 bars, data starts ~2024-07-21), engine tv_jul26_mc7. GBPUSD 4h exit-management dims now fully mapped: iter 749 control (TP667, no BE: WR 65.5%, PF 1.01) > iter 750 (TP1000: WR 51.7%, PF 0.81) > iter 751 (TP667+BE50: WR 55.2%, PF 0.52). The 65.5% WR entry edge is real but cannot clear commission + SL-overrun losses at 4h gap scale.",
+      "time": "2026-08-02T02:54:36Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
