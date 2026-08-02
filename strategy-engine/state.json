@@ -1,6 +1,6 @@
 {
-  "iteration": 756,
-  "last_run": "2026-08-02T03:53:59Z",
+  "iteration": 757,
+  "last_run": "2026-08-02T04:52:49Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "RETRY EURUSD pivot on 1h: iter 755 EURUSD 4h UNTESTABLE -- tv_jul26_mc7 has no EURUSD 4h data (window clamped to 2026-05-19, only 277 bars ~46 days, 0 trades; GBPUSD 4h same engine had 4039 bars). EURUSD 1h has ~58K bars (2020 to 2026-05) per engine coverage notes. Keep the iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven), ONE change: timeframe 4h->1h (symbol pivot GBPUSD->EURUSD preserved; timeframe forced by the 4h data gap).",
+  "current_hypothesis": "REVERT to GBPUSD 4h iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven) with ONE change: adx_threshold 25->30. iter 756: EURUSD 1h pivot DISPROVEN -- WR 63.3->47.0%, PF 1.28->0.586, net +$195->-$1,093, DD 2.19->12.48%; the GBPUSD 4h edge does NOT transfer to EURUSD (EURUSD family complete: 4h untestable data gap, 1h rejected). iter 753 was rejected by razor-thin margins: PF 1.28 (bar 1.3) and Sharpe 0.46 (bar 0.5). Both rulebook filters already present (RSI50, ADX25); the UNMAPPED GBPUSD 4h dimension is the ADX threshold (constant 25 across iters 749-754). Rulebook: Sharpe < 1.0 -> strengthen ADX filter. Raising ADX 25->30 admits only stronger trends -> fewer trades (30 -> ~20-25) but higher quality entries; if WR holds ~60%+ at tighter payoff, PF and Sharpe both clear the bars and GBPUSD 4h becomes the deployable candidate. Risk: trade count may fall below the 20-trade validity floor -- that is the experiment. One change: adx_threshold 25->30 on GBPUSD 4h (iter-753 config otherwise intact).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1394,6 +1394,38 @@
       },
       "verdict": "invalid (no trades) -- EURUSD 4h DATA GAP on tv_jul26_mc7: window clamped to 2026-05-19 (last clickhouse bar), only 277 bars ~46 days evaluated vs 4039 bars for GBPUSD 4h on the same engine; 0 qualifying EMA3/8+RSI50+ADX25+EMA150 entries in the stub window. NOT a strategy rejection -- the symbol-pivot hypothesis is UNTESTABLE on 4h for EURUSD. Next: retry EURUSD pivot on 1h (~58K bars coverage per engine notes).",
       "time": "2026-08-02T03:53:59Z"
+    },
+    {
+      "iteration": 756,
+      "symbol": "EURUSD",
+      "timeframe": "1h",
+      "hypothesis": "RETRY EURUSD pivot on 1h with the iter-753 proven-best control (EMA3/8 + RSI50 + ADX25 + EMA150 + TP667/SL750 manual barrier exits, long-only, NO breakeven), full window 2024-01-01 to 2026-05-19. iter 755: EURUSD 4h UNTESTABLE -- tv_jul26_mc7 has no EURUSD 4h data (window clamped to 2026-05-19, only 277 bars ~46 days, 0 trades; GBPUSD 4h same engine had 4039 bars). EURUSD 1h has ~58K bars (2020 to 2026-05) per engine coverage notes -- the data gap is timeframe-specific, not symbol-specific. One change: timeframe 4h->1h (symbol pivot GBPUSD->EURUSD preserved; timeframe forced by the 4h data gap).",
+      "metrics": {
+        "pf": 0.58583681,
+        "sharpe": -1.64874893,
+        "wr": 46.96969697,
+        "dd": 12.48007341,
+        "trades": 66,
+        "net_profit": -1093.051483524354,
+        "commission_paid": 627.386314743287,
+        "cascade": 1.0,
+        "long_trades": 66,
+        "short_trades": 0,
+        "long_winning": 31,
+        "avg_win": 49.87513403636,
+        "avg_loss": -75.405161104329,
+        "ratio_avg_win_loss": 0.66142865,
+        "gross_profit": 1546.129155127168,
+        "gross_loss": 2639.180638651523,
+        "bars_evaluated": 14881,
+        "coverage_pct": 71.32,
+        "final_equity": 8906.948516475646,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ0D08PBFN0JW7D2N882EXGK",
+        "window_note": "requested 2024-01-01 to 2026-05-19; data store starts ~2024-09-06 (estimatedEffectiveFromTs), toTs clamped to clickhouse last bar 2026-05-19"
+      },
+      "verdict": "rejected (PF=0.59 < 1.3, Sharpe=-1.65 < 0.5) -- EURUSD 1h PIVOT DISPROVEN: vs iter-753 GBPUSD 4h control (same config, TP667/SL750) on full window, WR FELL 63.3->47.0% (-16.3pp, 31W/35L), PF 1.28->0.586, net +$195.16->-$1,093.05 (final equity $8,907). Realized payoff 0.66x (avg win $49.88 vs avg loss $75.41) puts breakeven WR at ~60.2% -- actual 47.0% sits far below. The 63-65% WR entry edge is specific to GBPUSD 4h market structure; EURUSD 1h adds 66 noise trades at lower quality (vs 30 on GBPUSD 4h) and DD widened 2.19->12.48%. Commission $627.39/66 (~$9.5/trade) excluded from netProfit; true net = -$1,093.05 - $627.39 = -$1,720.44. Cascade 1.0 perfect (66 unique/66 rows, max depth 1). Coverage 71.32% (14881 bars, data starts ~2024-09-06), engine tv_jul26_mc7. EURUSD family map now COMPLETE: 4h untestable (data gap, iter 755) + 1h rejected (iter 756) -- the GBPUSD 4h edge does NOT transfer to EURUSD. iter-753 GBPUSD 4h control remains family best (PF 1.28, Sharpe 0.46, WR 63.3%, DD 2.19%, net +$195) -- rejected only by razor-thin margins (PF 0.02 below 1.3 bar, Sharpe 0.04 below 0.5 bar). Next: revert to GBPUSD 4h, strengthen the ADX trend filter (the one unmapped GBPUSD dimension).",
+      "time": "2026-08-02T04:52:49Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
