@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 214,
+    "total_ideas": 217,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -1976,6 +1976,74 @@
       "diversification_value": "Differs from CrossAsset_Momentum_Transmission (uses DXY, US10Y, VIX as leading momentum instruments - this uses SPX PRICE momentum with a correlation-regime gate; VIX is a fear-level signal while SPX ROC is a trend-acceleration signal, different trigger and timing). Differs from DXY_Momentum_Phase_Shift_Capture (DXY phase shifts - the equity channel is orthogonal to the USD channel). Differs from VIX_Gold_Regime_Divergence (volatility family - that trades VIX divergence, this transmits equity price momentum).",
       "self_grade": "A-",
       "generated_at": "2026-08-02T02:29:14Z"
+    },
+    {
+      "name": "Strategy_Drawdown_Attribution_Brake",
+      "family": "risk_overlay",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD",
+        "AUDUSD",
+        "USDJPY",
+        "USDCAD",
+        "NZDUSD",
+        "USDCHF"
+      ],
+      "timeframes": [
+        "D1",
+        "H4"
+      ],
+      "description": "Per-strategy drawdown attribution brake \u2014 isolates WHICH bot is bleeding the portfolio and brakes only that strategy's sizing instead of applying a portfolio-wide drawdown lock.",
+      "market_behaviour": "The AGENTX portfolio runs 10+ bots with different magics (MACD, Gold Phoenix, Bollinger, SMA variants across 9 pairs). Drawdowns are rarely portfolio-wide: typically one strategy or pair enters a bad regime (e.g., the MACD bot bleeding during a ranging week) while others stay profitable. Portfolio-level drawdown locks (Max_Drawdown_Lock_Protector, Drawdown_Regime_Recovery_Sizer) punish all bots equally, cutting size on the strategies that are actually paying the bills. Institutional desks do the opposite: risk is attributed to the P&L source, and only the losing book gets its risk budget cut. This behaviour \u2014 attribution before braking \u2014 is what keeps a multi-strategy book alive through concentrated regime failure.",
+      "entry_logic": "1. Maintain a rolling attribution window (default 20 closed trades per magic, min 5 trades). 2. Each day, compute per-strategy contribution to the portfolio drawdown: for each magic, PnL in the window vs the strategy's own trailing 60-day average PnL; flag strategies below -1.5x their historical standard deviation. 3. Compute portfolio drawdown from equity curve peak. 4. If portfolio DD < 5%: no action (all bots at base size). 5. If portfolio DD >= 5%: identify the flagged (bleeding) strategies; cut ONLY their size by 50% for every 5% of DD beyond 5% (cap at 75% reduction). 6. Non-flagged strategies keep full size. 7. Re-evaluate daily; restore a strategy to full size only after it has 5 consecutive closed trades with positive net PnL. 8. Skip entirely if fewer than 3 strategies have enough trade history \u2014 fall back to portfolio-level lock.",
+      "exit_logic": "This is a sizing overlay, not an entry system: stops/targets come from the underlying strategy. Risk controls: max single-strategy size cut 75%; never increases any bot above its base size; attribution window min 5 trades prevents single-trade overreaction; a strategy with <5 trades in window is treated as neutral (no cut) to avoid noise-driven braking. Re-entry rule: strategy restored when it prints 5 consecutive profitable closes, or the portfolio makes a new equity high (all brakes released).",
+      "failure_mode": "1. Attribution lag: a strategy that just flipped profitable but had 19 bad trades in the window stays braked for days, missing the recovery (mitigate: 5-consecutive-win fast-restore path). 2. Single bad trade with small sample: 5-trade minimum reduces but does not eliminate false flags \u2014 a 1-loss, 4-win window can still flag if the loss is huge. 3. All strategies bleeding simultaneously (true market-wide crash): the per-strategy brake degenerates into a portfolio lock, which is correct behaviour but adds no information over existing overlays. 4. Magic-number misattribution: if the bridge reports trades under the wrong magic, the brake punishes the wrong bot \u2014 requires the attribution key to be verified against bot logs.",
+      "diversification_value": "Differs from Max_Drawdown_Lock_Protector (portfolio-wide progressive lock \u2014 this brakes per-strategy, leaving profitable bots untouched) and Drawdown_Regime_Recovery_Sizer (regime-classified portfolio sizing \u2014 this is strategy-attribution, not portfolio-regime). No other risk_overlay idea attributes drawdown to individual magics; the closest, Sharpe_Ratio_Rotator, rotates risk budget toward high-Sharpe strategies rather than braking the bleeding one, and Signal_Convergence_Entropy_Gate gates on directional agreement, not per-strategy PnL attribution.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-03T00:59:26Z"
+    },
+    {
+      "name": "Volume_Expansion_Momentum_Persistence",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "description": "Momentum entry on volume-expansion thrusts, held while volume stays elevated, exited on volume contraction \u2014 trades the persistence of institutional participation, not the thrust itself.",
+      "market_behaviour": "In gold, a single strong candle can be a liquidity event (stop run, news spike) with no follow-through, while a thrust accompanied by sustained volume expansion is typically institutional accumulation \u2014 large participants entering over multiple bars. The edge is not the direction of the first push but whether participation PERSISTS: institutions cannot dump or accumulate a meaningful position in one bar, so elevated volume over 3-5 bars signals unfinished business. Retail traders chase the first candle and get shaken out; the institutional flow continues. This is why momentum strategies that filter on volume persistence outperform those that enter on price thrust alone \u2014 the volume signature distinguishes committed flow from one-off liquidity events.",
+      "entry_logic": "1. On H1, wait for a bar whose volume >= 1.8x the 20-bar average volume AND whose range >= 0.8x the 20-bar average range (a real thrust, not a low-volume wick). 2. Confirm: the next 2 bars must hold volume >= 1.2x average (participation continues) and price must not fully retrace the thrust bar (close stays beyond 50% of thrust range). 3. Enter in thrust direction at the close of the confirmation bar, only if H1 trend filter agrees (20-EMA slope aligned, or price above/below the 50-SMA for long/short). 4. Skip if the thrust bar closes outside a 1.5x ATR extension from the 20-EMA (chase risk) \u2014 wait for a pullback entry or pass. 5. M15 not used for entry, only for early-exit timing (below).",
+      "exit_logic": "Initial stop: 1.2x ATR(20) below/above the thrust-bar extreme (institutional invalidation). Take profit: trail with the volume: exit the position when a bar closes with volume < 0.7x the 20-bar average while price is still in profit (participation drying up = move over), or when price makes a lower-high/lower-low structure against the trade (M15). Time-stop: if neither TP nor volume-exit triggers within 6 hours, exit at market (thrust thesis expired). No re-entry after exit; next entry requires a fresh thrust setup.",
+      "failure_mode": "1. News-spike false thrusts: a high-impact release (NFP, FOMC) prints a 1.8x-volume bar but the move fully retraces within minutes \u2014 the 2-bar confirmation catches most, but a fast 3-bar reversal still slips through. 2. Volume exhaustion at tops: climax volume on the final push of a trend looks like 'expansion' but is distribution \u2014 the strategy buys the top. Mitigated by the trend filter but not eliminated. 3. Low-volume regime whipsaw: in Asian-session compression, a 1.8x average volume bar is still tiny in absolute terms and often reverses \u2014 requires a minimum absolute volume floor (e.g., bar volume >= 30th percentile of 90-day distribution). 4. Spread/window effects: volume data from MT5 is tick volume, not true volume \u2014 during fast markets tick count inflates and can fake the persistence signal.",
+      "diversification_value": "The Volume Momentum cluster in momentum has ONE idea (Momentum_Volume_Convergence, B+) which enters when price momentum AND volume momentum both rise \u2014 a convergence filter at entry. This idea is about PERSISTENCE: it requires volume to stay elevated after the thrust and exits on volume contraction, so it trades the continuation, not the convergence. Distinct from Tick_Volume_Impulse_Momentum_Entry (tick impulse 1-3 bars BEFORE the move \u2014 leading signal) and Tick_Imbalance_Delta_Momentum (bid/ask delta accumulation \u2014 footprint, not bar volume). No existing momentum idea uses volume-sustained holding with a volume-contraction exit.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-03T00:59:26Z"
+    },
+    {
+      "name": "Regime_Weighted_Momentum_Ensemble",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD",
+        "AUDUSD",
+        "USDJPY"
+      ],
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "description": "Momentum ensemble where each signal's weight is set by its trailing efficacy in the current volatility/trend regime \u2014 instead of equal-weighting 10 signals, weight the ones that have actually worked in this regime.",
+      "market_behaviour": "MultiDecile_Momentum_Ensemble equal-weights 10 momentum signals, implicitly assuming each signal carries the same information in every market state. But momentum signals have regime-dependent efficacy: ROC and MACD-histogram acceleration work in high-ADX trending regimes, while RSI-slope and close-location-in-range work better in normal (non-parabolic) regimes, and momentum signals as a class degrade in low-volatility chop. A discretionary trader knows this \u2014 they lean on the momentum measure that has been paid in the current regime. Institutional quant desks formalize it with regime-conditional signal weighting. This is the difference between an ensemble that averages signals (diluting the informative one) and one that reweights toward the signals the current regime actually rewards.",
+      "entry_logic": "1. Classify the current regime daily on H4: (a) TRENDING if ADX(20) > 25 AND ATR percentile(20, 90d) > 50; (b) COMPRESSING if ADX < 20 AND ATR percentile < 30; (c) NORMAL otherwise. 2. Maintain a rolling efficacy table per signal (ROC_5_13_34 acceleration, MACD histogram slope, ADX slope, 20-EMA slope, RSI slope, close-in-range position, momentum of momentum, etc.): for each signal, the win rate of its last 30 H1 signals in EACH regime class, minimum 10 samples per cell. 3. Weight each signal by its regime-specific win rate minus 50% (baseline), floor at 0 (uninformative signals drop out). 4. Ensemble score = weighted sum of signal votes, normalized. 5. Enter long when score >= +2.0 and regime is TRENDING (or NORMAL with score >= +2.5); short mirror. 6. Skip entirely in COMPRESSING regime unless score >= +3.0 (extreme only). 7. Recompute weights daily; regime reclassified at each H4 close.",
+      "exit_logic": "Stop: 1.0x ATR(20) on H1 from entry. Take profit: 2.0x ATR(20), or exit early if the regime flips to COMPRESSING mid-trade (score regime invalidated) \u2014 flatten at market. Trailing: once +1.5x ATR in profit, trail by 1.0x ATR on H1 closes. Time-stop: 12 hours max holding on H1 entries. Re-entry: allowed only after a fresh regime reclassification, not on the same score value (prevents re-entry into the same failed setup).",
+      "failure_mode": "1. Regime misclassification at transitions: a regime flip from TRENDING to COMPRESSING happens AFTER the move dies \u2014 the reweighting lags the regime change and the ensemble holds stale high weights into the chop. 2. Weight overfitting: with 30-signal samples split across 3 regimes, cell sizes get small and weights become noise \u2014 the 10-sample minimum helps but a family of 5-6 regimes x 10 signals can still overfit. 3. Regime-constant markets: in markets that never produce ADX>25 (persistent chop), the TRENDING weights are never validated and the strategy effectively only trades NORMAL \u2014 degrades to a diluted version of the equal-weight ensemble. 4. Weight flip-flopping: daily reweighting can oscillate between regimes at boundaries, causing stop-start behaviour that churns transaction costs.",
+      "diversification_value": "Directly extends MultiDecile_Momentum_Ensemble (equal-weight decile ensemble \u2014 this adds regime-conditional weighting, the exact gap the equal-weight approach leaves open) and differs from Momentum_Entropy_Rotational_Sizer (rotates CAPITAL across signals by entropy \u2014 this weights SIGNAL VOTES by regime efficacy, a different mechanism: vote-weighting vs capital allocation). Differs from ML_Regime_Ensemble_Switch (regime_filter family: ML classifier switches whole strategies \u2014 this keeps one ensemble and reweights inside it). No momentum idea currently conditions signal weights on regime-specific historical efficacy.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-03T00:59:26Z"
     }
   ],
   "archived": [
@@ -4053,7 +4121,9 @@
       "Momentum_Implied_Vol_Alpha_Capture",
       "Tick_Imbalance_Delta_Momentum",
       "Max_Pain_Momentum_Gravity",
-      "Global_Equity_Momentum_Transmission"
+      "Global_Equity_Momentum_Transmission",
+      "Volume_Expansion_Momentum_Persistence",
+      "Regime_Weighted_Momentum_Ensemble"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -4179,7 +4249,8 @@
       "CrossAsset_Entropy_Sizer",
       "Liquidity_Tier_Slippage_Curve_Sizer",
       "Signal_Convergence_Entropy_Gate",
-      "Event_Convexity_Size_Limiter"
+      "Event_Convexity_Size_Limiter",
+      "Strategy_Drawdown_Attribution_Brake"
     ],
     "cross_asset": [
       "DXY_Valence_Correlation",

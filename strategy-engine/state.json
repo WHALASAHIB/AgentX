@@ -1,6 +1,6 @@
 {
-  "iteration": 764,
-  "last_run": "2026-08-02T08:08:53Z",
+  "iteration": 765,
+  "last_run": "2026-08-03T00:53:49Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "KEEP BYBIT:BTCUSDT.P 30m with the iter-763 entry stack (EMA3/8 + RSI50 + ADX25 + EMA150 long-only, NO breakeven) with ONE change: exit geometry -- replace the fixed TP4000/SL4500 manual barriers with the iter-464 ATR-trail exit (atr_len 14, trail_mult 2.0, initial_sl_mult 1.5). iter 763: barrier scaling 667/750->4000/4500 (~1x ATR) CONFIRMED directionally (WR 25->50%, PF 0.36->0.78, hold 2.1->8.6 bars) but still rejected (PF 0.78, Sharpe -1.14, net -$203.55, breakeven WR 56.2% at 0.78x realized payoff vs actual 50%). Fixed barriers now DISPROVEN at both scales on BTC 30m (0.15x ATR iter 762, 1x ATR iter 763). The iter-464 family best (PF 104.45, Sharpe 22.28, WR 92.4%, 264 trades on THIS symbol/timeframe) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece flagged at iter 762. One change: exit management (barrier -> ATR trail), iter-763 entry stack otherwise intact. Risk: trailing exits hold through 30m pullbacks and give back profit on whipsaw -- that is the experiment.",
+  "current_hypothesis": "REVERT to the iter-763 barrier config on BYBIT:BTCUSDT.P 30m (EMA3/8 + RSI50 + ADX25 + EMA150 long-only, TP4000/SL4500 manual barriers, NO breakeven) with ONE change per rulebook (iter 764 WR 25% < 40% -> tighten TP/SL ratio): take_profit_tick 4000->3000 (~0.75x ATR), stop_loss_tick 4500 UNCHANGED (ratio 0.89 -> 0.67 ~ 1:1.5). iter 764: iter-464 ATR-trail exit DISPROVEN on BTC 30m (WR 25%, PF 0.32, net -$452.71, avg hold 3.97 bars -- trail stops out on 30m pullbacks before reaching the 1x-ATR profit zone); iter 763 1x-ATR barriers remain the best BTC 30m variant (WR 50%, PF 0.78, net -$203.55) with the sole deficit realized payoff 0.78x vs breakeven WR 56.2%. A 1:1.5 TP/SL ratio lowers the breakeven WR requirement (higher WR capture) at the cost of smaller avg wins. One change: TP/SL ratio (take_profit_tick 4000->3000), iter-763 config otherwise intact. Risk: smaller TP may convert winners to scratches/losers if 30m momentum fades before 0.75x ATR -- that is the experiment.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -1628,6 +1628,37 @@
       },
       "verdict": "rejected (PF=0.78 < 1.3, Sharpe=-1.14 < 0.5) -- BTC barrier scaling 667/750->4000/4500 CONFIRMED directionally but strategy still rejected: on the SAME 4603-bar BYBIT:BTCUSDT.P 30m window (coverage 106.97%, no truncation warnings) vs iter 762, WR 25.0->50.0% (10W/30L -> 15W/15L), PF 0.355->0.780, net -$474.41->-$203.55 (final equity $9,796.45), avgBarsInTrade 2.1->8.6 (1x-ATR barriers now give trades room to breathe -- the exit geometry restoration worked exactly as hypothesized). BUT realized payoff SHRANK to 0.78x (avg win $48.11 vs avg loss -$61.68): breakeven WR at 0.78x = ~56.2%, actual 50.0% sits below it, so the 30-trade sample still nets negative. Commission $293.47/30 (~$9.78/trade) included in netProfit (finalEquity confirms). Cascade 1.0 perfect (30 unique/30 rows, max depth 1). Fixed barriers now DISPROVEN at BOTH scales on BTC 30m (0.15x ATR iter 762, 1x ATR iter 763); the iter-464 family best (PF 104.45, Sharpe 22.28, WR 92.4%, 264 trades) used ATR-TRAIL exits, not barriers -- the unported exit piece flagged at iter 762. Next: keep BYBIT:BTCUSDT.P 30m entry stack (EMA3/8 + RSI50 + ADX25 + EMA150 long-only), ONE change exit geometry: fixed barriers -> iter-464 ATR-trail exit (atr_len 14, trail_mult 2.0, initial_sl_mult 1.5) which is the exact geometry of the family best on this symbol/timeframe.",
       "time": "2026-08-02T08:08:53Z"
+    },
+    {
+      "iteration": 764,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "KEEP BYBIT:BTCUSDT.P 30m with the iter-763 entry stack (EMA3/8 + RSI50 + ADX25 + EMA150 long-only, NO breakeven) with ONE change: exit geometry -- replace the fixed TP4000/SL4500 manual barriers with the iter-464 ATR-trail exit (atr_len 14, trail_mult 2.0, initial_sl_mult 1.5). iter 763: barrier scaling 667/750->4000/4500 (~1x ATR) CONFIRMED directionally (WR 25->50%, PF 0.36->0.78, hold 2.1->8.6 bars) but still rejected (PF 0.78, Sharpe -1.14, net -$203.55, breakeven WR 56.2% at 0.78x realized payoff vs actual 50%). Fixed barriers now DISPROVEN at both scales on BTC 30m (0.15x ATR iter 762, 1x ATR iter 763). The iter-464 family best (PF 104.45, Sharpe 22.28, WR 92.4%, 264 trades on THIS symbol/timeframe) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece flagged at iter 762. One change: exit management (barrier -> ATR trail), iter-763 entry stack otherwise intact. Risk: trailing exits hold through 30m pullbacks and give back profit on whipsaw -- that is the experiment.",
+      "metrics": {
+        "pf": 0.31613622,
+        "sharpe": -3.79705244,
+        "wr": 25.0,
+        "dd": 5.29510993,
+        "trades": 36,
+        "net_profit": -452.705355100008,
+        "commission_paid": 353.2077551,
+        "cascade": 1.0,
+        "long_trades": 36,
+        "short_trades": 0,
+        "long_winning": 9,
+        "avg_win": 23.252935022222,
+        "avg_loss": -24.517843344445,
+        "ratio_avg_win_loss": 0.94840866,
+        "avg_bars_in_trade": 3.97222222,
+        "bars_evaluated": 4618,
+        "coverage_pct": 106.95,
+        "final_equity": 9547.294644899992,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ2HRZXSCSS42R6PZESJSRQG",
+        "window_note": "BYBIT:BTCUSDT.P 30m store intact: 4618 bars, coverage 106.95%, no truncation warnings (crypto feed unaffected by POLYGON forex store truncation). ATR-trail exit (atr_len 14, trail_mult 2.0, initial_sl_mult 1.5) on the iter-763 entry stack: WR 25.0% (9W/27L), PF 0.316, Sharpe -3.80, net -$452.71 (final equity $9,547.29, commission $353.21 incl. in netProfit). avgBarsInTrade 3.97 vs 8.6 at iter 763 -- the 2.0x ATR trail stops trades out on 30m pullbacks BEFORE they reach the 1x-ATR barrier profit zone; realized payoff 0.95x (avg win $23.25 vs avg loss -$24.52). Iter-464 ATR-trail geometry does NOT transfer to the current BTC 30m regime/entry stack. Cascade 1.0 perfect (36 unique/36 rows, max depth 1)."
+      },
+      "verdict": "rejected (PF=0.32 < 1.3, Sharpe=-3.80 < 0.5) -- ATR-trail exit DISPROVEN on BYBIT:BTCUSDT.P 30m: on the SAME 4618-bar window (coverage 106.95%, no truncation warnings) vs iter 763, WR 50.0->25.0% (15W/15L -> 9W/27L), PF 0.780->0.316, net -$203.55->-$452.71 (final equity $9,796.45->$9,547.29), avgBarsInTrade 8.6->3.97. The iter-464 ATR-trail geometry (trail_mult 2.0, initial_sl_mult 1.5, atr_len 14) exits trades ~4 bars in on 30m pullbacks, giving back the room the 1x-ATR barriers (iter 763) allowed -- WR fell back to the iter-762 level (25%). Exit geometry now DISPROVEN in all three forms on BTC 30m: fixed barriers 0.15x ATR (iter 762), fixed barriers 1x ATR (iter 763, best variant: WR 50%, PF 0.78), ATR trail (iter 764). The iter-763 1x-ATR barrier variant remains the best BTC 30m config (WR 50%, PF 0.78, net -$203.55) -- its only deficit is realized payoff 0.78x vs 56.2% breakeven WR. Next: revert to the iter-763 barrier config (TP4000/SL4500) with ONE change per rulebook (WR<40% -> tighten TP/SL ratio): take_profit_tick 4000->3000 (~0.75x ATR), stop_loss_tick unchanged 4500 -- ratio 4000/4500=0.89 -> 3000/4500=0.67 (~1:1.5), capturing more wins at the 1x-ATR scale.",
+      "time": "2026-08-03T00:53:49Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
