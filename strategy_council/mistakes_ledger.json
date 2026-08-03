@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-08-01",
+  "last_updated": "2026-08-02",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -139,6 +139,13 @@
       "root_cause": "Zombie cascade (25 instances) keeps taskkilling terminal64.exe -> MT5 IPC never completes -> risk_supervisor.py subprocess times out after 60s and backend_watchdog exits 1. News feed 429/403 since Jul 30 23:10 UTC and cache file now holds empty array, so bot trades with NO news calendar data at all.",
       "fix": "BEFORE Monday 07:00 UTC window: kill all 25 propfirm instances (verify 0), restore C:\\Hermess\\mt5_config.json to 1513990433/FTMO-Demo (currently poisoned 5051185832/MetaQuotes-Demo, mtime Jul 29 22:44), restart exactly ONE bot, replace or disable news feed (fail-CLOSED).",
       "prevention_rule": "Check cron list for risk supervisor/backend-watchdog errors BEFORE each trading window — a timing-out supervisor is blind. Verify news cache is non-empty before allowing trades."
+    },
+    {
+      "date": "2026-08-02",
+      "pattern": "Council Aug 2 16:10 HKT - PRE-MONDAY BLOCKERS: fleet cleaned 25->2 (partial), config STILL poisoned, risk supervisor kills CORRECT account, bridge_watchdog cron failing",
+      "root_cause": "Zombie fleet reduced from 25 to 2 (partial cleanup done since Aug 1) but BOTH C:\\Hermess\\mt5_config.json and C:\\Hermess\\config\\mt5_config.json still carry login 5051185832/MetaQuotes-Demo (mtime Jul 29 22:44 unchanged). Risk supervisor reads its own poisoned config copy and actively taskkills the terminal whenever it lands on the CORRECT account 1513990433/FTMO-Demo (log: 'Terminal on WRONG account #1513990433 (expected #5051185832)'). Bot (PID 20008) connected to wrong account Aug 1 13:18 UTC, log silent since. Infrastructure Watchdog (bridge_watchdog.py) cron now ALSO erroring exit 1 alongside Risk Supervisor (TimeoutExpired 60s) and backend-watchdog (exit 1).",
+      "fix": "BEFORE Monday 07:30 UTC launcher: (1) restore BOTH C:\\Hermess\\mt5_config.json and C:\\Hermess\\config\\mt5_config.json to 1513990433/FTMO-Demo (ground truth C:\\Trading\\mt5_config.json Jul 15); (2) kill PIDs 20008 + 20272, verify 0 propfirm instances; (3) restart risk supervisor - verify it stops killing terminal on correct account; (4) restart exactly ONE bot, verify ACCOUNT READY login=1513990433; (5) investigate bridge_watchdog exit 1.",
+      "prevention_rule": "Re-verify config mtimes + instance count EVERY council run until mtime changes. Risk supervisor config copy must match the bot config - a poisoned supervisor fights the correct account. Monday 07:00 UTC window: launchers fire 07:30/12:50 UTC."
     }
   ],
   "action_items": [

@@ -1,0 +1,83 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ManualADX25 LongOnly EMA150Filter ATRTrail2x BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)       // sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=50)       // sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 764: RSI>50 for long side; sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(25, "ADX Threshold", minval=10, maxval=50)   // iter 764: ADX UNCHANGED at 25; sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 764: regime EMA 150. sweep: 100-200 step 50
+atr_len = input.int(14, "ATR Length", minval=1, maxval=100)        // iter 464 family best used atr_len 14. sweep: 7-21 step 2
+trail_mult = input.float(2.0, "Trailing Stop Multiplier", minval=0.5, maxval=5.0, step=0.1) // iter 464: 2.0. sweep: 1.0-3.0 step 0.25
+initial_sl_mult = input.float(1.5, "Initial SL Multiplier", minval=0.5, maxval=5.0, step=0.1) // iter 464: 1.5. sweep: 1.0-3.0 step 0.25
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+atr_val = ta.atr(atr_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- crossover detection
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+//--- entry conditions (LONG-ONLY. iter 764: keep BYBIT:BTCUSDT.P 30m (only fully testable store). ONE change: exit geometry -- replace fixed TP4000/SL4500 barriers with the iter-464 ATR-trail exit (atr_len 14, trail_mult 2.0, initial_sl_mult 1.5) that produced the family best (PF 104.45, Sharpe 22.28, WR 92.4%, 264 trades on THIS symbol/timeframe). iter 763: barrier scaling 667/750->4000/4500 (~1x ATR) CONFIRMED directionally -- WR 25->50%, PF 0.36->0.78, avg hold 2.1->8.6 bars -- but still rejected (PF 0.78, Sharpe -1.14, net -$203.55, breakeven WR 56.2% at 0.78x realized payoff vs actual 50%). Fixed barriers at BOTH scales are now disproven on BTC 30m (0.15x ATR iter 762, 1x ATR iter 763); the iter-464 note flagged ATR-trail exits as the unported piece. Entry stack unchanged (EMA3/8 + RSI50 + ADX25 + EMA150 long-only, NO breakeven). Risk: trailing exits hold through pullbacks and give back profit on 30m whipsaw -- that is the experiment.)
+long_condition = cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- state tracking (iter-464 ATR trail)
+var float entry_price = na
+var float trail_stop = na
+var int bars_since_entry = 0
+
+if strategy.position_size > 0
+    bars_since_entry := bars_since_entry + 1
+    float highest_since = ta.highest(close, bars_since_entry)
+    trail_stop := highest_since - (trail_mult * atr_val)
+    trail_stop := math.max(trail_stop, entry_price - (initial_sl_mult * atr_val))
+else
+    bars_since_entry := 0
+    trail_stop := na
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    entry_price := close
+    trail_stop := close - (initial_sl_mult * atr_val)
+    strategy.entry("Long", strategy.long)
+
+//--- exit management (ATR trailing stop, iter-464 geometry)
+if strategy.position_size > 0 and not na(trail_stop)
+    strategy.exit("TrailExit", "Long", stop=trail_stop)

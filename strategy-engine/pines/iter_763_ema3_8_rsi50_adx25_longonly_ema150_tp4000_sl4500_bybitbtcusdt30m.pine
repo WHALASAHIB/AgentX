@@ -1,0 +1,76 @@
+//@version=6
+strategy(title="EMA3/8 RSI50 ManualADX25 LongOnly EMA150Filter BarrierExit TP4000 SL4500 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)       // sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=50)       // sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(50, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 763: RSI>50 for long side; sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(25, "ADX Threshold", minval=10, maxval=50)   // iter 763: ADX UNCHANGED at 25; sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 763: regime EMA 150 (proven-best long-side from iter 745/747). sweep: 100-200 step 50
+take_profit_tick = input.int(4000, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 763: TP 667->4000 (ONLY CHANGE -- scale barrier to BTC volatility. iter 762: TP667/SL750 ticks x tick=0.1 = $66.7/$75 ~ 0.07% of BTC ~ 0.15x ATR vs ~1x ATR on GBPUSD 4h; WR 25%, PF 0.36, avg hold 2.1 bars -- fixed forex tick geometry does not transfer. 4000 ticks = $400 ~ 0.4% ~ 1x ATR. sweep: 2000-6000 step 500
+stop_loss_tick = input.int(4500, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 763: SL 750->4500 (preserves the proven 0.89 TP/SL ratio from the iter-753 control). 4500 ticks = $450 ~ 0.45% ~ 1x ATR. sweep: 3000-6000 step 500
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- crossover detection
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+//--- entry conditions (LONG-ONLY. iter 763: RETRY on BYBIT:BTCUSDT.P 30m with the iter-753 control (EMA3/8 + RSI50 + ADX25 + EMA150 manual barrier exits, long-only, NO breakeven) with ONE change: scale the barrier ticks to BTC volatility -- take_profit_tick 667->4000, stop_loss_tick 750->4500 (~$400/$450 ~ 0.4%/0.45% of BTC price ~ 1x ATR, preserving the proven 0.89 TP/SL ratio). iter 762: BYBIT pivot IS testable (4607 bars, coverage 107%, 40 trades, no truncation warnings -- crypto feed fully resolves the POLYGON forex store gap) but the forex-sized fixed tick barriers were DISPROVEN: avg hold 2.1 bars, WR 25%, PF 0.36, net -$474 -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ~ 0.07% of BTC ~ 0.15x ATR vs ~1x ATR on GBPUSD 4h; the tick barrier geometry does not scale across markets. The iter-464 family best used ATR-trail exits; scaling barriers to ~1x ATR restores a comparable exit geometry while keeping the proven entry stack. One change: TP/SL tick values (rulebook: WR<40% -> TP/SL dimension), iter-753 control otherwise intact. Risk: BTC 30m whipsaw may still beat 1x-ATR barriers -- that is the experiment.)
+long_condition = cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
