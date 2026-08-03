@@ -1,0 +1,92 @@
+//@version=6
+strategy(title="MACD12/26/9 LONG-ONLY RSI40 ManualADX28 EMA150Filter BarrierExit TP3000 SL4500 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 781: CONTINUE the MACD(12,26,9) family on BYBIT:BTCUSDT.P 30m per the iter-780 finding.
+// iter 780: MACD family pivot TESTABLE (46 trades >= 20 floor, coverage 106.96%, no truncation)
+// but QUALITY-NEGATIVE (PF 0.588, Sharpe -2.95, net -$449.10, final equity $9,550.90) -- the SHORT
+// leg is the drag: 28 shorts lost -$424.60 (94.6% of total loss, 8W/20L) vs 18 longs at -$24.50
+// (12W/6L, near breakeven); the mirrored filter stack (RSI<40 + close<EMA150) admits low-quality
+// counter-trend shorts on this uptrend window.
+// ONE change: signal direction both -> long-only (remove short_condition) -- mirrors the iter-779
+// EMA3/8 peak which was long-only with the same EMA150 regime gate and achieved PF 1.66 / WR 70.8%
+// / +$273.58 on 24 trades. Keep the filter stack UNCHANGED (RSI40, ADX28, EMA150 long-side regime,
+// TP3000/SL4500 manual barriers, flat-only entry, 1-bar min hold, NO breakeven).
+// Expected: trade count drops toward the 20-30 range (18 long entries in iter 780); if long-only
+// MACD is profitable, the MACD family becomes a viable second family; if PF still < 1.3, ABANDON
+// the MACD family and REVERT to the iter-779 EMA3/8 ADX28 peak (the confirmed BTC 30m family best).
+
+//--- inputs
+macd_fast_len = input.int(12, "MACD Fast Length", minval=3, maxval=30, step=1)       // sweep: 8-16 step 2 (iter 781: 12 UNCHANGED per classic default)
+macd_slow_len = input.int(26, "MACD Slow Length", minval=8, maxval=60, step=1)       // sweep: 17-34 step 3 (iter 781: 26 UNCHANGED per classic default)
+macd_signal_len = input.int(9, "MACD Signal Length", minval=3, maxval=30, step=1)    // sweep: 7-12 step 1 (iter 781: 9 UNCHANGED per classic default)
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 781: RSI UNCHANGED at 40 (iter-769/770 peak). sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(28, "ADX Threshold", minval=10, maxval=50)   // iter 781: ADX UNCHANGED at 28 (iter-772/774 peak; ADX dimension FULLY MAPPED: ADX22 < ADX25 < ADX28 PEAK > ADX30 invalid). sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 781: regime EMA 150 UNCHANGED (proven-best long-side from iter 745/747). sweep: 100-200 step 50
+take_profit_tick = input.int(3000, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 781: TP UNCHANGED at 3000 (iter-765 peak, ~0.75x ATR). sweep: 2000-4000 step 500
+stop_loss_tick = input.int(4500, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 781: SL UNCHANGED at 4500 (iter-765 peak, ~1x ATR). sweep: 3000-6000 step 500
+
+//--- indicator calculations
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- MACD (built-in; returns [macd_line, signal_line, hist])
+[macd_line, macd_signal, macd_hist] = ta.macd(close, macd_fast_len, macd_slow_len, macd_signal_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- crossover detection (MACD line vs signal line)
+cross_up = ta.crossover(macd_line, macd_signal)
+
+//--- entry conditions (LONG-ONLY per iter-780 finding: short leg lost -$424.60 = 94.6% of total loss; filter stack UNCHANGED from iter-772/774 peak: RSI40 + ADX28 + EMA150 regime)
+long_condition = cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
