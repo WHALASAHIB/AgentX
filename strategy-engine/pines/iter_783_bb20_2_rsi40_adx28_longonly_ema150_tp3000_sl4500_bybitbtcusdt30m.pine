@@ -1,0 +1,93 @@
+//@version=6
+strategy(title="BB Breakout RSI40 ManualADX28 LongOnly EMA150Filter BarrierExit TP3000 SL4500 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 783: PIVOT to a THIRD signal family on BYBIT:BTCUSDT.P 30m per the iter-782 plan
+// (iter 782 re-confirmed the EMA3/8 ADX28 peak for the 3rd time: 24 trades, PF 1.66, Sharpe 1.78,
+// WR 70.8%, DD 2.23%, net +$273.58 -- all gates met; both prior alternate families conclusively
+// mapped: Supertrend(3,7) = ENTRY-STARVED 4-8 trades, MACD(12,26,9) = QUALITY-NEGATIVE
+// PF 0.59/0.94): replace the EMA3/8 crossover signal with BOLLINGER BAND BREAKOUT on
+// BYBIT:BTCUSDT.P 30m. Signal: long when close crosses above the upper Bollinger band (momentum
+// breakout) -- keep the proven filter stack UNCHANGED (RSI40 filter, ADX28 trending gate, EMA150
+// long-side regime filter, TP3000/SL4500 manual barriers, flat-only entry, 1-bar min hold,
+// NO breakeven) -- ONE change: signal family EMA3/8 -> Bollinger Band breakout (20,2). Risk:
+// breakout entries in a trending window should align with the ADX28 gate; if BB breakout is
+// entry-starved like Supertrend (<20 trades), fallback candidate: fast-EMA variant EMA2/5
+// crossover (same filter stack) to push trade count above the current 24.
+
+//--- inputs
+bb_len = input.int(20, "BB Length", minval=5, maxval=50)        // sweep: 10-30 step 5
+bb_mult = input.float(2.0, "BB StdDev Mult", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.5-3.0 step 0.5
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 783: RSI UNCHANGED at 40 (iter-769/770 peak). sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(28, "ADX Threshold", minval=10, maxval=50)   // iter 783: ADX UNCHANGED at 28 (iter-772/774/779/782 peak). sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 783: regime EMA 150 (proven-best long-side from iter 745/747). sweep: 100-200 step 50
+take_profit_tick = input.int(3000, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 783: TP UNCHANGED at 3000 (iter-765 peak, ~0.75x ATR). sweep: 2000-4000 step 500
+stop_loss_tick = input.int(4500, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 783: SL UNCHANGED at 4500 (iter-765 peak, ~1x ATR). sweep: 3000-6000 step 500
+
+//--- indicator calculations
+[bb_mid, bb_upper, bb_lower] = ta.bb(close, bb_len, bb_mult)
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- breakout detection
+bb_breakout = ta.crossover(close, bb_upper)
+
+//--- entry conditions (LONG-ONLY. iter 783: PIVOT to THIRD signal family per the iter-782 plan
+// (iter 782 re-confirmed the EMA3/8 ADX28 peak for the 3rd time: 24 trades, PF 1.66, WR 70.8%,
+// net +$273.58; Supertrend = ENTRY-STARVED, MACD = QUALITY-NEGATIVE): signal family EMA3/8
+// crossover -> Bollinger Band breakout (20,2). Signal: long when close crosses above the upper
+// Bollinger band (momentum breakout). Filter stack UNCHANGED: RSI40, ADX28, EMA150 long-side
+// regime, TP3000/SL4500 manual barriers, flat-only, 1-bar min hold, NO breakeven.)
+long_condition = bb_breakout and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")

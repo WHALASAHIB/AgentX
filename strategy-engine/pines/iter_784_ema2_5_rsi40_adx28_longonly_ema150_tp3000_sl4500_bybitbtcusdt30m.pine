@@ -1,0 +1,100 @@
+//@version=6
+strategy(title="EMA2/5 RSI40 ManualADX28 LongOnly EMA150Filter BarrierExit TP3000 SL4500 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 784: FAST-EMA VARIANT on BYBIT:BTCUSDT.P 30m per the iter-782/783 plan.
+// ALL THREE alternate signal families from the iter-774 pivot plan are now conclusively
+// mapped: Supertrend(3,7) = ENTRY-STARVED (4-8 trades, never reached floor), MACD(12,26,9)
+// = QUALITY-NEGATIVE (iter 780 both-direction PF 0.588 net -$449.10, iter 781 long-only
+// PF 0.935 net -$27.40), BB breakout(20,2) = QUALITY-NEGATIVE (iter 783: 22 trades --
+// VALID sample -- PF 0.462, Sharpe -3.14, WR 50%, net -$419.92, breakeven WR ~68.4% vs
+// actual 50%). The EMA3/8 ADX28 peak (24 trades, PF 1.66, WR 70.8%, net +$273.58) remains
+// the confirmed BTC 30m family best, re-confirmed stable in iters 779/782.
+// Last untested dimension per the iter-782 plan: FAST-EMA VARIANT -- replace EMA3/8 with
+// EMA2/5 crossover (same proven filter stack UNCHANGED: RSI40 filter, ADX28 trending gate,
+// EMA150 long-only regime filter, TP3000/SL4500 manual barriers, flat-only entry, 1-bar min
+// hold, NO breakeven). ONE change: ema_fast 3->2, ema_slow 8->5.
+// Rationale: a faster EMA pair generates more crossovers -> more trades than the current 24,
+// directly attacking the trade-count dimension; the ADX28 + RSI40 + EMA150 gates should
+// still filter weak crossovers (iter-779 peak proved the stack filters well). Risk: faster
+// EMAs admit more whipsaw crossovers in chop (mitigated by ADX28 trending gate); if EMA2/5
+// quality degrades below the EMA3/8 peak, REVERT to the iter-782 EMA3/8 ADX28 peak (the
+// confirmed family best).
+
+//--- inputs
+ema_fast_len = input.int(2, "Fast EMA", minval=1, maxval=50)       // iter 784: 3->2 (FAST-EMA VARIANT). sweep: 2-5 step 1
+ema_slow_len = input.int(5, "Slow EMA", minval=1, maxval=50)       // iter 784: 8->5 (FAST-EMA VARIANT). sweep: 5-8 step 1
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 784: RSI UNCHANGED at 40 (iter-769/770 peak, RSI dimension mapped: RSI60 < RSI50 < RSI40 == RSI30). sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(28, "ADX Threshold", minval=10, maxval=50)   // iter 784: ADX UNCHANGED at 28 (iter-772/774/779 peak, ADX dimension fully mapped: ADX22 < ADX25 < ADX28 PEAK > ADX30 invalid). sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 784: regime EMA 150 (proven-best long-side from iter 745/747; EMA100 saturated in iter 777). sweep: 100-200 step 50
+take_profit_tick = input.int(3000, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 784: TP UNCHANGED at 3000 (iter-765 peak, ~0.75x ATR). sweep: 2000-4000 step 500
+stop_loss_tick = input.int(4500, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 784: SL UNCHANGED at 4500 (iter-765 peak, ~1x ATR). sweep: 3000-6000 step 500
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- crossover detection
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+//--- entry conditions (LONG-ONLY. iter 784: FAST-EMA VARIANT -- EMA3/8 -> EMA2/5 crossover,
+// filter stack UNCHANGED from the iter-782 peak: RSI40 filter, ADX28 trending gate, EMA150
+// long-only regime filter, TP3000/SL4500 manual barriers, flat-only entry, 1-bar min hold,
+// NO breakeven. Rationale: faster EMA pair -> more crossovers -> attack the trade-count
+// dimension (current 24 trades); ADX28+RSI40+EMA150 gates filter weak crossovers. If EMA2/5
+// degrades below the EMA3/8 peak (PF 1.66 / WR 70.8% / +$273.58 on 24 trades), REVERT.)
+long_condition = cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
