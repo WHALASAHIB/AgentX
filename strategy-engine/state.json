@@ -1,6 +1,6 @@
 {
-  "iteration": 790,
-  "last_run": "2026-08-03T07:53:16Z",
+  "iteration": 793,
+  "last_run": "2026-08-04T04:53:21Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "POSITION-SIZING / RISK variant on the confirmed 30m PEAK config (EMA3/8 + RSI40 + ADX28 + EMA150 long-only + TP3000/SL4500 manual barriers) per the iter-787/788 plan lever (b) -- the peak re-confirmed for the 6th time at iter 789 (24 trades, PF 1.66, Sharpe 1.78, WR 70.8%, DD 2.23%, net +$273.58, result 01KZ39S74K4HYF59APZZMASKTA); signal-family, entry, exit-regime, and timeframe dimensions are all conclusively mapped on the current store. ONE change: default_qty_value 100 -> 50 (position size 100% -> 50% of equity). Rationale: fixed-barrier exit with 100% equity sizing gives DD 2.23% and net +$273.58; halving size should halve DD (~1.1%) with roughly proportionate P&L (~+$137) -- same PF/Sharpe/WR if the signal is size-invariant, which validates the edge is real and not a sizing artifact. Risk: fewer dollars per trade, but trade count, PF, WR, and Sharpe should be identical; if PF/Sharpe degrade materially, sizing interacts with the edge (investigate ATR-volatility scaling next).",
+  "current_hypothesis": "CONTINUE TP BARRIER SWEEP in the improving direction per the iter-792 result (TP2500/SL4500 BEAT the TP3000 peak on every quality gate: PF 1.79 vs 1.66, Sharpe 1.96 vs 1.78, WR 77.3% vs 70.8%, DD 1.94% vs 2.23%, net +$268.17 vs +$273.58, result 01KZ5HVZ1MK94N7Z0PEABQDES9 -- new current-store peak; the tighter TP harvested more partial wins, avgBarsInTrade 7.14 vs 8.96). ONE change: take_profit_tick 2500 -> 2000 on BYBIT:BTCUSDT.P 30m (stop_loss_tick 4500 UNCHANGED; TP/SL ratio 0.556x -> 0.444x). Rationale: TP 3000->2500 improved PF/WR/Sharpe/DD, so the improving direction is TIGHTER TP -- TP2000 (~0.5x ATR) should push WR higher (77.3% -> ~80%+) with a further DD reduction; payoff per win drops further (realized 0.527x -> ~0.45x, breakeven WR ~69%), so this tests whether the WR gain outpaces the payoff loss. If TP2000 degrades below the iter-792 TP2500 peak (PF 1.79, net +$268.17), REVERT to TP2500 as the new terminal peak and test the complementary loose direction (TP 3500, SL 4500) to complete the TP map, or accept TP2500 as terminal.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1594,7 +1594,7 @@
         "result_id": "01KZ0J89G8D2PG9S03DJWDZ06Z",
         "window_note": "BYBIT:BTCUSDT.P 30m store covers ~2026-04-25 to 2026-08-02 (4607 bars, coverage 106.97%, NO truncation warnings -- crypto feed unaffected by POLYGON forex store truncation; effectiveTradeRange firstTradeEntryTs 2026-04-29, lastTradeExitTs 2026-07-30; store is ~3 months, SHORT but not truncated). Bybit lot filters applied: tick=0.1, qtyStep=0.001. Commission 0.05% parity profile applied; finalEquity 9525.59 confirms netProfit INCLUDES commission ($391.13/40 ~ $9.78/trade)."
       },
-      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 \u2248 0.07% of BTC price \u2248 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 \u2248 0.4%/0.45% \u2248 1x ATR) to restore the exit geometry the entry edge needs.",
+      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ≈ 0.07% of BTC price ≈ 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 ≈ 0.4%/0.45% ≈ 1x ATR) to restore the exit geometry the entry edge needs.",
       "time": "2026-08-02T06:24:23Z"
     },
     {
@@ -2459,6 +2459,102 @@
       },
       "verdict": "accepted (incremental) -- 30m peak EXACTLY REPLICATED for the 6th time (result 01KZ39S74K4HYF59APZZMASKTA): 24 trades (17W/7L, WR 70.8%), PF 1.66, Sharpe 1.78, DD 2.23%, net +$273.58, cascade 1.0 -- timeframe dimension conclusively mapped: 30m peak stable > 15m loss-maker. Family best unchanged (iter-464 BTCUSDT.P 30m PF 104.45 is from the older store) -- the CURRENT-store peak remains the EMA3/8+RSI40+ADX28+EMA150+TP3000/SL4500 stack.",
       "time": "2026-08-03T07:53:16Z"
+    },
+    {
+      "iteration": 790,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "POSITION-SIZING / RISK variant on the confirmed 30m PEAK config per the iter-787/788 plan lever (b) (peak re-confirmed 6th time at iter 789: 24 trades, PF 1.66, Sharpe 1.78, WR 70.8%, DD 2.23%, net +$273.58, result 01KZ39S74K4HYF59APZZMASKTA). ONE change: default_qty_value 100 -> 50 (position size 100% -> 50% of equity). Rationale: halving size should halve DD 2.23% -> ~1.1% with proportionate P&L (~+$137) and IDENTICAL PF/Sharpe/WR if the edge is size-invariant (validates the edge is real, not a sizing artifact).",
+      "metrics": {
+        "pf": 1.59839895,
+        "sharpe": 1.61935997,
+        "wr": 68.18181818,
+        "dd": 2.22852325,
+        "trades": 22,
+        "net_profit": 247.181757399991,
+        "commission_paid": 221.3292426,
+        "cascade": 1.0,
+        "long_trades": 22,
+        "short_trades": 0,
+        "long_winning": 15,
+        "avg_win": 44.016906603333,
+        "avg_loss": -59.010263092858,
+        "ratio_avg_win_loss": 0.74591951,
+        "avg_bars_in_trade": 9.40909091,
+        "gross_profit": 660.253599049996,
+        "gross_loss": 413.071841650007,
+        "bars_evaluated": 4611,
+        "coverage_pct": 106.96,
+        "final_equity": 10247.18175739999,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5G2XA0EEKMQ1A1B3J1FBB5"
+      },
+      "verdict": "accepted (incremental) -- POSITION-SIZING TEST INVALIDATED BY ENGINE OVERRIDE: the parity profile FORCED sizing back to percent_of_equity:100 (parityAdjustments: requested pine_or_override -> applied percent_of_equity:100, reason mcp_parity_profile_pct_equity_100), so the default_qty_value 100->50 change was NOT applied -- commission $221.33/22 ~ $10.06/trade confirms full-size notional (half-size would be ~$5/trade). The run therefore functions as a 7th replication of the EMA3/8+RSI40+ADX28+EMA150 long-only+TP3000/SL4500 peak on the extended window (4611 bars, toTs clamped 2026-08-04T00:00): 22 trades (15W/7L, WR 68.2%), PF 1.598, Sharpe 1.62, DD 2.23%, net +$247.18, final equity $10,247.18, cascade 1.0 perfect, mcpruleValidated true, engine tv_jul26_mc7, result 01KZ5G2XA0EEKMQ1A1B3J1FBB5. Realized payoff 0.746x (avg win $44.02 vs avg loss -$59.01) puts breakeven WR at ~57.3%; actual 68.2% clears it by ~10.9pp. Trade count 22 vs 24 (small window shift, 1 extra day of data: firstBarOpenTs 1777501800000 / lastBarOpenTs 1785801600000). All rulebook gates MET (PF>=1.5, Sharpe>=1.0, WR>=40%, DD<=15%, trades>=20). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). KEY MAPPING RESULT: the position-sizing / risk dimension via default_qty_value is NOT TESTABLE on Trader Dev -- the parity profile forces 100% equity sizing on every run (same for commission 0.05%). Next per the iter-787 plan lever (a): test the same proven stack on a NEW SYMBOL (BYBIT:ETHUSDT.P 30m) to check cross-asset generality.",
+      "time": "2026-08-04T04:22:51Z"
+    },
+    {
+      "iteration": 791,
+      "symbol": "BYBIT:ETHUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "NEW-SYMBOL GENERALITY TEST on the same proven stack per the iter-787 plan lever (a) (iter 790 proved the position-sizing lever is BLOCKED on Trader Dev: parity profile forces percent_of_equity:100, mcp_parity_profile_pct_equity_100 -- default_qty_value 100->50 silently overridden, run merely re-confirmed the peak a 7th time: 22 trades, PF 1.598, Sharpe 1.62, WR 68.2%, DD 2.23%, net +$247.18, result 01KZ5G2XA0EEKMQ1A1B3J1FBB5). ONE change: symbol BYBIT:BTCUSDT.P -> BYBIT:ETHUSDT.P, timeframe 30m, ALL parameters UNCHANGED (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime + TP3000/SL4500 manual barriers, flat-only, 1-bar min hold, NO breakeven). Rationale: if the EMA3/8 ADX28 stack's edge is structural (trend-following on crypto perps with fixed tick barriers), it should transfer to ETHUSDT with similar WR/PF; if ETH quality degrades below PF 1.3, the edge is BTC-specific and the current-store peak (BTC 30m) is the final answer -- then the remaining untested levers are TP/SL barrier sweeps (TP 2500/3500, SL 4000/5000) or acceptance of the peak as terminal.",
+      "metrics": {
+        "pf": 0.95973201,
+        "sharpe": -0.09528972,
+        "wr": 57.14285714,
+        "dd": 7.54506154,
+        "trades": 21,
+        "net_profit": -80.980426350001,
+        "commission_paid": 211.79652635,
+        "cascade": 1.0,
+        "long_trades": 21,
+        "short_trades": 0,
+        "long_winning": 12,
+        "avg_win": 160.838078129167,
+        "avg_loss": -223.448595988889,
+        "ratio_avg_win_loss": 0.71979901,
+        "avg_bars_in_trade": 35.0952381,
+        "gross_profit": 1930.056937549998,
+        "gross_loss": 2011.037363899999,
+        "bars_evaluated": 4610,
+        "coverage_pct": 106.96,
+        "final_equity": 9919.019573649999,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5H0GVB3XMK1Q26ZDTCT400"
+      },
+      "verdict": "rejected (PF=0.96 < 1.3, Sharpe=-0.10 < 0.5) -- NEW-SYMBOL GENERALITY TEST TESTABLE but QUALITY-NEGATIVE on BYBIT:ETHUSDT.P 30m: on the SAME 4610-bar window (coverage 106.96%, no truncation warnings, engine tv_jul26_mc7, result 01KZ5H0GVB3XMK1Q26ZDTCT400, toTs clamped 2026-08-04T00:00 clickhouse last bar, ETHUSDT lot filters tick=0.01/qtyStep=0.01/minQty=0.01, parity profile commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the EMA3/8 + RSI40 + ADX28 + EMA150 long-only stack with TP3000/SL4500 barriers produced 21 trades (12W/9L, WR 57.1%, PF 0.96, Sharpe -0.10, DD 7.55%, net -$80.98, final equity $9,919.02, commission $211.80/21 ~ $10.09/trade incl. in netProfit) -- VALID sample (21 >= 20 floor, just above). Quality-negative vs the iter-789/790 BTC 30m peak (24/22 trades, WR ~70%, PF 1.66/1.60, net +$273.58/+$247.18): payoff 0.72x (avg win +$160.84 vs avg loss -$223.45) puts breakeven WR at ~58.1%; actual 57.1% misses by ~1.0pp -- the edge does NOT transfer to ETH with unchanged tick barriers. KEY MAPPING RESULT: the tick-based TP3000/SL4500 barriers are NOT symbol-transferable -- ETHUSDT tick=0.01 makes the barriers ~$30/$45 of price distance vs BTC's $300/$450 (tick=0.1), and avgBarsInTrade 35.1 (vs 8.96 on BTC) confirms ETH 30m trends grind toward the barriers proportionally slower, so the same nominal tick stack behaves as a much tighter relative barrier on ETH (longer holds, worse payoff, DD 7.55% vs 2.23%). LONG-ONLY exactly as intended (21 longs/0 shorts, EMA150 regime gate kept). Cascade 1.0 perfect (21 unique/21 rows, max depth 1). All rulebook gates FAILED. NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). The symbol dimension is now mapped: the EMA3/8 ADX28 fixed-barrier stack's edge is BTC-SPECIFIC on the current store (BTC 30m PF 1.66 peak vs ETH 30m PF 0.96). Per the iter-791 plan contingency: the remaining untested levers are TP/SL barrier sweeps on the BTC 30m peak (TP 2500/3500, SL 4000/5000) or acceptance of the peak as terminal.",
+      "time": "2026-08-04T04:38:34Z"
+    },
+    {
+      "iteration": 792,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "TP/SL BARRIER SWEEP on the confirmed BTC 30m PEAK per the iter-791 contingency (iter 791 proved the EMA3/8+RSI40+ADX28+EMA150+TP3000/SL4500 stack is BTC-SPECIFIC: identical stack on BYBIT:ETHUSDT.P 30m produced 21 trades, PF 0.96, Sharpe -0.10, WR 57.1%, net -$80.98, result 01KZ5H0GVB3XMK1Q26ZDTCT400 -- valid sample, quality-negative). ONE change: take_profit_tick 3000 -> 2500 on BYBIT:BTCUSDT.P 30m (stop_loss_tick 4500 UNCHANGED; TP/SL ratio 0.667x -> 0.556x). Rationale: TP is the under-tested half of the barrier pair on the peak config (TP3000 fixed since iter 765; SL sweeps already mapped: SL4500 PEAK > SL3000/5000/1000; ATR-trail exits quality-negative at iter 786); a tighter TP 2500 should harvest more partial wins in BTC 30m pullbacks (WR up from 70.8%) at the cost of lower payoff per win.",
+      "metrics": {
+        "pf": 1.79189572,
+        "sharpe": 1.95768428,
+        "wr": 77.27272727,
+        "dd": 1.94212629,
+        "trades": 22,
+        "net_profit": 268.172720599991,
+        "commission_paid": 222.0046794,
+        "cascade": 1.0,
+        "long_trades": 22,
+        "short_trades": 0,
+        "long_winning": 17,
+        "avg_win": 35.695248708823,
+        "avg_loss": -67.729301490001,
+        "ratio_avg_win_loss": 0.52702815,
+        "avg_bars_in_trade": 7.13636364,
+        "gross_profit": 606.819228049996,
+        "gross_loss": 338.646507450005,
+        "bars_evaluated": 4610,
+        "coverage_pct": 106.96,
+        "final_equity": 10268.17272059999,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5HVZ1MK94N7Z0PEABQDES9"
+      },
+      "verdict": "accepted (incremental) -- TP BARRIER SWEEP 3000->2500 IMPROVED the peak on BYBIT:BTCUSDT.P 30m (result 01KZ5HVZ1MK94N7Z0PEABQDES9): on the SAME 4610-bar window (coverage 106.96%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the EMA3/8 + RSI40 + ADX28 + EMA150 long-only stack with TP2500/SL4500 barriers produced 22 trades (17W/5L, WR 77.3%, PF 1.792, Sharpe 1.96, DD 1.94%, net +$268.17, final equity $10,268.17, commission $222.00/22 ~ $10.09/trade incl. in netProfit) -- VALID sample (22 >= 20 floor). Quality BEAT the iter-789/790 TP3000 peak on every gate: PF 1.79 vs 1.66, Sharpe 1.96 vs 1.78, WR 77.3% vs 70.8%, DD 1.94% vs 2.23% -- the tighter TP 2500 harvests more partial wins exactly as hypothesized (17W/5L vs 17W/7L; avgBarsInTrade 7.14 vs 8.96 -- faster exits). Net +$268.17 vs +$273.58 (marginally lower: tighter TP caps per-win payoff, realized payoff 0.527x vs 0.684x, breakeven WR ~65.5% vs ~59.4%; actual WR 77.3% clears it by ~11.8pp). LONG-ONLY exactly as intended (22 longs/0 shorts, EMA150 regime gate kept). Cascade 1.0 perfect (22 unique/22 rows, max depth 1). All rulebook gates MET (PF>=1.5, Sharpe>=1.0, WR>=40%, DD<=15%, trades>=20). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). NEW CURRENT-STORE PEAK: TP2500/SL4500 > TP3000/SL4500 (iter 789/790) > TP3000/SL5000/1000 > ATR-trail. The TP dimension is now partially mapped: tighter TP improved quality; the improving direction suggests continuing the sweep.",
+      "time": "2026-08-04T04:53:21Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
@@ -2466,7 +2562,8 @@
     "XAUUSD",
     "GBPUSD",
     "BYBIT:BTCUSDT.P",
-    "EURUSD"
+    "EURUSD",
+    "BYBIT:ETHUSDT.P"
   ],
   "timeframes_explored": [
     "1h",
