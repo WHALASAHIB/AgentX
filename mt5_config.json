@@ -1,16 +1,16 @@
 {
-    "login": 1513990433,
-    "password": "NTa14s??m",
-    "server": "FTMO-Demo",
+    "login": 5051185832,
+    "password": "YyEd*j7w",
+    "server": "MetaQuotes-Demo",
     "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
     "symbols": ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"],
     "accounts": [
         {
-            "id": "ftmo-demo",
-            "name": "FTMO-Demo",
-            "login": 1513990433,
-            "password": "NTa14s??m",
-            "server": "FTMO-Demo",
+            "id": "metaquotes-demo",
+            "name": "MetaQuotes-Demo",
+            "login": 5051185832,
+            "password": "YyEd*j7w",
+            "server": "MetaQuotes-Demo",
             "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
             "symbols": ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD", "BTCUSD"],
             "enabled": true

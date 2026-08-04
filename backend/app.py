@@ -56,6 +56,21 @@ from backend.redis_client import get_redis
 logger = logging.getLogger(__name__)
 _start_time = time.time()
 
+# ── TTL Cache (avoids slow bridge calls on hot paths) ──────────────────────
+_ttl_cache: dict[str, dict] = {}
+
+
+def _ttl_get(key: str, ttl_seconds: float):
+    """Return cached value if fresh, else None."""
+    entry = _ttl_cache.get(key)
+    if entry and (time.time() - entry["ts"]) < ttl_seconds:
+        return entry["value"]
+    return None
+
+
+def _ttl_set(key: str, value):
+    _ttl_cache[key] = {"ts": time.time(), "value": value}
+
 # ── User Store (password-based auth for dev/signup) ─────────────────────────
 _USERS: dict[str, dict] = {}  # email -> {"password_hash": str}
 
@@ -865,12 +880,19 @@ async def consolidated_stats(account_id: Optional[str] = None):
     """Aggregate positions, trades, and bridge data for a quick trading overview."""
     bridge = get_bridge()
     db = get_db()
-    
+
     # Use active account or provided account ID
     account_id = await _resolve_account_id(account_id, bridge)
     if account_id is None:
         return _empty_stats_response()
-    
+
+    # 5s TTL cache — stats are heavy (multiple bridge round-trips); the
+    # dashboard polls anyway, so serving a 5s-old snapshot is imperceptible.
+    cache_key = f"stats:{account_id}"
+    cached = _ttl_get(cache_key, 5)
+    if cached is not None:
+        return cached
+
     stats = {
         "total_positions": 0,
         "open_positions": 0,
@@ -1005,6 +1027,7 @@ async def consolidated_stats(account_id: Optional[str] = None):
     except Exception:
         pass
 
+    _ttl_set(cache_key, stats)
     return stats
 
 # ── Account Endpoints ─────────────────────────────────────────────────────────
@@ -3268,11 +3291,51 @@ async def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
 
     bridge = get_bridge()
 
+    # Cache daily opens — they only change once per day, and the bridge's
+    # history endpoint is extremely slow (subprocess proxy, 45-60s timeouts).
+    # 15-minute TTL is more than enough; avoids hammering the bridge.
+    cache_key = f"daily_opens:{','.join(sorted(symbols))}"
+    cached = _ttl_get(cache_key, 900)
+    if cached is not None:
+        return cached
+
     # Resolve which account to use for price data
     account_id = await _resolve_account_id(None, bridge)
     if account_id is None:
         logger.warning("_fetch_daily_opens: no account resolved, skipping")
         return daily_open
+
+    # FAST PATH: the bridge's coordinator already caches daily opens from its
+    # price fetches — read them from cache (milliseconds) instead of the slow
+    # history subprocess endpoint.
+    try:
+        fast_opens = await bridge.get(f"/api/v1/accounts/{account_id}/daily-opens")
+        if isinstance(fast_opens, dict) and fast_opens:
+            for sym in symbols:
+                val = fast_opens.get(sym)
+                if val is not None:
+                    daily_open[sym] = float(val)
+            if daily_open:
+                logger.info("Daily opens from bridge cache (%d symbols) — fast path", len(daily_open))
+                _ttl_set(cache_key, daily_open)
+                return daily_open
+    except Exception as e:
+        logger.debug("Fast daily-opens path failed: %s", e)
+
+    # If MT5/bridge is not connected, skip the slow history fallback entirely —
+    # there is no fresh data to fetch anyway, and the history subprocess can
+    # take 45-60s per symbol. change_pct will simply be null until live data
+    # returns, which is far better than a 20s page load.
+    try:
+        bh = await bridge.health()
+        if not bh.get("connected"):
+            logger.info("Bridge not connected — skipping slow daily-opens history fallback")
+            _ttl_set(cache_key, daily_open)  # cache empty result briefly
+            return daily_open
+    except Exception:
+        pass
+
+    logger.info("Bridge cache has no daily opens — falling back to history endpoint (slow)")
 
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -3322,6 +3385,7 @@ async def _fetch_daily_opens(symbols: list[str]) -> dict[str, float]:
             logger.debug("Failed to fetch daily open for %s: %s", symbol, e)
 
     await asyncio.gather(*(fetch_one(sym) for sym in symbols))
+    _ttl_set(cache_key, daily_open)
     return daily_open
 
 
@@ -3345,6 +3409,13 @@ async def get_prices():
     except Exception as e:
         logger.warning("Could not read mt5_config.json: %s", e)
         symbols = []
+
+    # 3s response cache — the dashboard polls every few seconds; ticks only
+    # change at most a few times per second, so this is imperceptible but
+    # saves ~10 bridge round-trips per poll.
+    cached_prices = _ttl_get("prices_response", 3)
+    if cached_prices is not None:
+        return cached_prices
 
     bridge = get_bridge()
     prices: dict[str, Any] = {}
@@ -3412,6 +3483,7 @@ async def get_prices():
             prices[symbol]["error"] = error
 
     await asyncio.gather(*(fetch_one(sym) for sym in symbols))
+    _ttl_set("prices_response", prices)  # short cache for dashboard polls
     return prices
 
 
