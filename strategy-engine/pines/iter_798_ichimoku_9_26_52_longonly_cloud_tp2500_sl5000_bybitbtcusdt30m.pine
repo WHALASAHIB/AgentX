@@ -1,0 +1,67 @@
+//@version=6
+strategy(title="Ichimoku Cloud Breakout LongOnly BarrierExit TP2500 SL5000 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 798: INDICATOR-FAMILY PIVOT per the iter-797 conclusion (SL5500 DEGRADED the
+// peak: 22 trades, PF 1.958 vs 2.06, Sharpe 2.06 vs 2.21, WR 77.3% equal, DD 1.55%
+// equal, net +$297.57 vs +$313.74, result 01KZ5PD4MJ2JGAWE54AECJFT0H -- the looser
+// stop let the 5 losers run further: avg loss -$62.15 vs -$59.03, payoff 0.576x vs
+// 0.607x, breakeven-WR margin narrowed 15.1pp -> 13.9pp; the loose-side improving
+// direction TERMINATED at SL5000; SL MAP at TP2500 now COMPLETE: SL4000 == SL4500
+// < SL5000 PEAK > SL5500 -- TP2500/SL5000 confirmed TERMINAL current-store optimum,
+// barrier map fully closed).
+// ONE change: indicator family EMA3/8+RSI40+ADX28+EMA150 -> Ichimoku cloud
+// (tenkan 9 / kijun 26 / senkou 52, standard) on BYBIT:BTCUSDT.P 30m, LONG-ONLY
+// cloud breakout entry (close crosses above the cloud = long while price above
+// cloud; keep the proven TP2500/SL5000 manual barrier exit and flat-only
+// 1-bar-min-hold structure UNCHANGED). Rationale: Ichimoku is the only untested
+// major family on the exploration ledger (EMA/MACD/BB/Supertrend all mapped on
+// BTC 30m: Supertrend entry-starved, MACD/BB/ATR-trail quality-negative,
+// EMA3/8+RSI40+ADX28+EMA150 PEAK) -- this tests whether the BTC 30m edge is
+// ENTRY-specific or EXIT-driven (barrier exit re-used unchanged). If Ichimoku
+// quality degrades below PF 1.3, the edge is entry-specific, TP2500/SL5000 stands
+// as terminal, and the remaining untested levers are (a) Ichimoku variants
+// (tenkan/kijun/senkou lengths) or (b) a fresh symbol with ATR-scaled barriers.
+
+//--- inputs
+tenkan_len = input.int(9, "Tenkan-sen Length", minval=3, maxval=30)       // iter 798: standard 9. sweep: 5-15 step 2
+kijun_len = input.int(26, "Kijun-sen Length", minval=10, maxval=60)       // iter 798: standard 26. sweep: 13-39 step 4
+senkou_len = input.int(52, "Senkou Span B Length", minval=20, maxval=120) // iter 798: standard 52. sweep: 26-78 step 13
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 798: TP UNCHANGED at 2500 (PF peak, iter 792). sweep: 2000-4000 step 500
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 798: SL UNCHANGED at 5000 (terminal peak, iter 796). sweep: 3000-6500 step 500
+
+//--- indicator calculations (standard Ichimoku, same-timeframe)
+tenkan = (ta.highest(high, tenkan_len) + ta.lowest(low, tenkan_len)) / 2
+kijun = (ta.highest(high, kijun_len) + ta.lowest(low, kijun_len)) / 2
+span_a = (tenkan + kijun) / 2
+span_b = (ta.highest(high, senkou_len) + ta.lowest(low, senkou_len)) / 2
+
+// Cloud as plotted at the current bar = span values from 26 bars ago (displacement)
+cloud_top = math.max(span_a[kijun_len], span_b[kijun_len])
+cloud_bottom = math.min(span_a[kijun_len], span_b[kijun_len])
+
+//--- entry logic (LONG-ONLY cloud breakout: close crosses ABOVE the cloud top,
+// and price stays above the cloud while in the trade. iter 798: indicator family
+// pivot only -- barrier exit TP2500/SL5000, flat-only, 1-bar min hold, NO breakeven,
+// structure identical to the iter-796 peak.)
+cross_above_cloud = ta.crossover(close, cloud_top)
+
+long_condition = cross_above_cloud and close > cloud_top
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade; same as peak)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")

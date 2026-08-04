@@ -1,6 +1,6 @@
 {
-  "iteration": 797,
-  "last_run": "2026-08-04T05:53:25Z",
+  "iteration": 800,
+  "last_run": "2026-08-04T06:54:40Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "SL BARRIER SWEEP CONTINUED -- LOOSE side improving per the iter-796 result (SL 4000->5000 IMPROVED the TP2500 peak: 22 trades, PF 2.06, Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74, result 01KZ5N9ZKQBSW9AHAM59GTH4CG -- SL map so far at TP2500: SL4000 == SL4500 neutral < SL5000 PEAK; loosening the stop gave winners more room: avgBarsInTrade 7.14 -> 7.32, gross loss $338.65 -> $295.15, breakeven-WR margin widened 11.8pp -> 15.1pp). ONE change: stop_loss_tick 5000 -> 5500 on BYBIT:BTCUSDT.P 30m (take_profit_tick 2500 UNCHANGED; TP/SL ratio 0.5x -> 0.455x). Rationale: the loose-side direction is improving, so continue the sweep one step -- SL5500 (~1.22x ATR) gives winners even more room; if SL5500 degrades below the TP2500/SL5000 peak (PF 2.06, net +$313.74), the SL map is complete (SL4000 == SL4500 < SL5000 PEAK > SL5500) and TP2500/SL5000 is the confirmed terminal current-store optimum -- next pivot is a new symbol/timeframe or indicator family per the exploration ledger (XAUUSD/GBPUSD/EURUSD/ETHUSDT 30m/1h/4h all previously mapped quality-negative on this stack).",
+  "current_hypothesis": "FRESH-SYMBOL PIVOT per the iter-799 conclusion (Ichimoku TK-cross-above-cloud DEGRADED the peak again: 41 trades, PF 0.708 vs 0.609, Sharpe -1.68 vs -2.87, WR 70.7% vs 58.0%, DD 6.59% vs 12.56%, net -$298.04 vs -$1,008.40, result 01KZ5RSNQYYRGZDKJ56AWM9FH0 -- frequency cut 81->41 exactly as hypothesized but payoff 0.293x puts breakeven WR at ~77.3% vs actual 70.7%; ICHIMOKU FAMILY CLOSED on BTC 30m: raw cloud breakout AND TK-cross both degrade below PF 1.3; BTC 30m edge CONFIRMED ENTRY-SPECIFIC to the EMA3/8+RSI40+ADX28+EMA150 stack; TP2500/SL5000 stands as terminal barrier optimum). ONE change: take the proven iter-796 stack (EMA3/8 + RSI40 + ADX28 + EMA150 long-only, TP2500/SL5000 manual barriers, flat-only, 1-bar min hold) to a FRESH SYMBOL -- BYBIT:ETHUSDT.P 30m -- to test whether the edge is symbol-transferable (ETH is the highest-liquidity alt perp on Bybit; iter-791 tested ETHUSDT 30m with TP3000/SL4500 and got 15 trades -- sub-20 invalid -- so the barrier geometry must be re-validated on ETH; the exploration ledger shows XAUUSD/GBPUSD/EURUSD 1h/4h all quality-negative on this stack, ETHUSDT 30m is the untested-valid frontier). If ETHUSDT 30m also degrades below PF 1.3, the strategy-engine store is saturated on this stack and the pivot is a genuinely new indicator family + symbol pair.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1594,7 +1594,7 @@
         "result_id": "01KZ0J89G8D2PG9S03DJWDZ06Z",
         "window_note": "BYBIT:BTCUSDT.P 30m store covers ~2026-04-25 to 2026-08-02 (4607 bars, coverage 106.97%, NO truncation warnings -- crypto feed unaffected by POLYGON forex store truncation; effectiveTradeRange firstTradeEntryTs 2026-04-29, lastTradeExitTs 2026-07-30; store is ~3 months, SHORT but not truncated). Bybit lot filters applied: tick=0.1, qtyStep=0.001. Commission 0.05% parity profile applied; finalEquity 9525.59 confirms netProfit INCLUDES commission ($391.13/40 ~ $9.78/trade)."
       },
-      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 \u2248 0.07% of BTC price \u2248 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 \u2248 0.4%/0.45% \u2248 1x ATR) to restore the exit geometry the entry edge needs.",
+      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ≈ 0.07% of BTC price ≈ 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 ≈ 0.4%/0.45% ≈ 1x ATR) to restore the exit geometry the entry edge needs.",
       "time": "2026-08-02T06:24:23Z"
     },
     {
@@ -2682,6 +2682,102 @@
       },
       "verdict": "accepted (incremental) -- SL BARRIER SWEEP LOOSE SIDE 4000->5000 IMPROVED the TP2500 peak on BYBIT:BTCUSDT.P 30m (result 01KZ5N9ZKQBSW9AHAM59GTH4CG): on the SAME ~4610-bar window (barsEvaluated 4608, coverage 106.96%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the EMA3/8 + RSI40 + ADX28 + EMA150 long-only stack with TP2500/SL5000 barriers produced 22 trades (17W/5L, WR 77.3%, PF 2.063, Sharpe 2.21, DD 1.55%, net +$313.74, final equity $10,313.74, commission $222.86/22 ~ $10.13/trade incl. in netProfit) -- VALID sample (22 >= 20 floor). Quality BEAT the iter-792/795 TP2500/SL4500 peak on every gate: PF 2.06 vs 1.79, Sharpe 2.21 vs 1.96, DD 1.55% vs 1.94%, net +$313.74 vs +$268.17 (WR equal at 77.3%: 17W/5L both). avgBarsInTrade 7.32 vs 7.14 -- winners get slightly more room as hypothesized; realized payoff 0.607x (avg win +$35.82 vs avg loss -$59.03) puts breakeven WR at ~62.2%; actual 77.3% clears it by ~15.1pp (vs ~11.8pp at SL4500). Gross loss shrank $338.65 -> $295.15 (SL5000 losers exited closer to barrier on bar-close fills). LONG-ONLY exactly as intended (22 longs/0 shorts, EMA150 regime gate kept). Cascade 1.0 perfect (22 unique/22 rows, max depth 1). All rulebook gates MET (PF>=1.5, Sharpe>=1.0, WR>=40%, DD<=15%, trades>=20). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). NEW CURRENT-STORE PEAK: TP2500/SL5000 (PF 2.06, net +$313.74) > TP2500/SL4500 (PF 1.79) == SL4000 > TP3500 (PF 1.74) > TP3000 (PF 1.66) > TP2000 (PF 1.30). SL MAP at TP2500 so far: SL4000 == SL4500 (neutral) < SL5000 PEAK -- the improving direction is LOOSER SL, so the map is NOT complete; next test SL5500 to see if the loose-side improvement extends or terminates.",
       "time": "2026-08-04T05:57:00Z"
+    },
+    {
+      "iteration": 797,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "SL BARRIER SWEEP CONTINUED -- LOOSE side per the iter-796 result (SL 5000 IMPROVED the TP2500 peak on every gate: 22 trades, PF 2.063 vs 1.79, Sharpe 2.21 vs 1.96, WR 77.3% equal, DD 1.55% vs 1.94%, net +$313.74 vs +$268.17, result 01KZ5N9ZKQBSW9AHAM59GTH4CG -- loosening the stop gave winners more room: avgBarsInTrade 7.14 -> 7.32, gross loss $338.65 -> $295.15, breakeven-WR margin widened 11.8pp -> 15.1pp; SL map so far at TP2500: SL4000 == SL4500 neutral < SL5000 PEAK; the improving direction is LOOSER SL, so the map is NOT complete). ONE change: stop_loss_tick 5000 -> 5500 on BYBIT:BTCUSDT.P 30m (take_profit_tick 2500 UNCHANGED; TP/SL ratio 0.5x -> 0.455x). Rationale: continue the loose-side sweep one step -- SL5500 (~1.22x ATR) gives winners even more room; if SL5500 degrades below the TP2500/SL5000 peak (PF 2.06, net +$313.74), the SL map is complete (SL4000 == SL4500 < SL5000 PEAK > SL5500) and TP2500/SL5000 is the confirmed terminal current-store optimum -- next pivot is a new symbol/timeframe or indicator family per the exploration ledger (XAUUSD/GBPUSD/EURUSD/ETHUSDT 30m/1h/4h all previously mapped quality-negative on this stack).",
+      "metrics": {
+        "pf": 1.95752404,
+        "sharpe": 2.06312887,
+        "wr": 77.27272727,
+        "dd": 1.55494173,
+        "trades": 22,
+        "net_profit": 297.573896699991,
+        "commission_paid": 222.5913033,
+        "cascade": 1.0,
+        "long_trades": 22,
+        "short_trades": 0,
+        "long_winning": 17,
+        "avg_win": 35.785190111764,
+        "avg_loss": -62.154867040001,
+        "ratio_avg_win_loss": 0.57574236,
+        "avg_bars_in_trade": 7.45454545,
+        "gross_profit": 608.348231899996,
+        "gross_loss": 310.774335200004,
+        "bars_evaluated": 4607,
+        "coverage_pct": 106.97,
+        "final_equity": 10297.57389669999,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5PD4MJ2JGAWE54AECJFT0H"
+      },
+      "verdict": "accepted (incremental) -- SL BARRIER SWEEP LOOSE SIDE 5000->5500 DEGRADED the iter-796 TP2500/SL5000 peak on BYBIT:BTCUSDT.P 30m (result 01KZ5PD4MJ2JGAWE54AECJFT0H): on the SAME ~4610-bar window (barsEvaluated 4607, coverage 106.97%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the EMA3/8 + RSI40 + ADX28 + EMA150 long-only stack with TP2500/SL5500 barriers produced 22 trades (17W/5L, WR 77.3%, PF 1.958, Sharpe 2.06, DD 1.55%, net +$297.57, final equity $10,297.57, commission $222.59/22 ~ $10.12/trade incl. in netProfit) -- VALID sample (22 >= 20 floor). Quality DEGRADED vs the iter-796 TP2500/SL5000 peak on the economic gates: PF 1.96 vs 2.06, Sharpe 2.06 vs 2.21, net +$297.57 vs +$313.74 (WR 77.3% and DD 1.55% equal). avgBarsInTrade 7.45 vs 7.32 -- winners got slightly more room, but the 5 losers ran further: avg loss -$62.15 vs -$59.03 (the looser stop let losing trades travel the extra 500 ticks), realized payoff 0.576x vs 0.607x puts breakeven WR at ~63.5%; actual 77.3% clears it by ~13.9pp (vs ~15.1pp at SL5000) -- gross loss $310.77 vs $295.15, +$15.62 worse on the loss side while gross profit stayed flat ($608.35 vs $608.89). LONG-ONLY exactly as intended (22 longs/0 shorts, EMA150 regime gate kept). Cascade 1.0 perfect (22 unique/22 rows, max depth 1). All rulebook gates MET (PF>=1.5, Sharpe>=1.0, WR>=40%, DD<=15%, trades>=20). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). SL MAP at TP2500 now COMPLETE: SL4000 == SL4500 (neutral) < SL5000 PEAK (PF 2.06, net +$313.74) > SL5500 (PF 1.96, net +$297.57) -- the loose-side improving direction TERMINATED at SL5000 exactly as the iter-797 contingency predicted. TP2500/SL5000 is the confirmed TERMINAL current-store optimum on the BTC 30m EMA3/8+RSI40+ADX28+EMA150 long-only stack; the barrier map is fully closed (TP2000 1.30 < TP3000 1.66 < TP3500 1.74 < TP2500 1.79 PEAK with TP3500 best-net, SL1000/3000 < SL4000 == SL4500 < SL5000 PEAK > SL5500, ATR-trail quality-negative). Next pivot per the exploration ledger: NEW INDICATOR FAMILY (Ichimoku) on the strongest symbol, or acceptance of TP2500/SL5000 as the terminal answer.",
+      "time": "2026-08-04T06:13:40Z"
+    },
+    {
+      "iteration": 798,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "INDICATOR-FAMILY PIVOT per the iter-797 conclusion (SL5500 DEGRADED the peak: 22 trades, PF 1.958 vs 2.06, Sharpe 2.06 vs 2.21, WR 77.3% equal, DD 1.55% equal, net +$297.57 vs +$313.74, result 01KZ5PD4MJ2JGAWE54AECJFT0H -- SL MAP at TP2500 now COMPLETE: SL4000 == SL4500 < SL5000 PEAK > SL5500, TP2500/SL5000 confirmed TERMINAL current-store optimum, barrier map fully closed). ONE change: indicator family EMA3/8+RSI40+ADX28+EMA150 -> Ichimoku cloud (tenkan 9 / kijun 26 / senkou 52, standard) on BYBIT:BTCUSDT.P 30m, LONG-ONLY cloud breakout entry (close crosses above the cloud = long while price above cloud; keep the proven TP2500/SL5000 manual barrier exit and flat-only 1-bar-min-hold structure UNCHANGED). Rationale: Ichimoku is the only untested major family on the exploration ledger (EMA/MACD/BB/Supertrend all mapped on BTC 30m) -- tests whether the BTC 30m edge is ENTRY-specific or EXIT-driven.",
+      "metrics": {
+        "pf": 0.60854244,
+        "sharpe": -2.86636857,
+        "wr": 58.02469136,
+        "dd": 12.55775832,
+        "trades": 81,
+        "net_profit": -1008.398708999983,
+        "commission_paid": 762.745709,
+        "cascade": 1.0,
+        "long_trades": 81,
+        "short_trades": 0,
+        "long_winning": 47,
+        "avg_win": 33.353438698936,
+        "avg_loss": -75.765009642647,
+        "ratio_avg_win_loss": 0.44022219,
+        "avg_bars_in_trade": 7.41975309,
+        "gross_profit": 1567.611618850005,
+        "gross_loss": 2576.010327849989,
+        "bars_evaluated": 4607,
+        "coverage_pct": 106.97,
+        "final_equity": 8991.601291000017,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5Q3WHZZHBW5NTHZV08P3XE"
+      },
+      "verdict": "rejected (PF=0.61 < 1.3, Sharpe=-2.87 < 0.5) -- INDICATOR-FAMILY PIVOT to Ichimoku cloud DEGRADED the iter-796 terminal peak on BYBIT:BTCUSDT.P 30m (result 01KZ5Q3WHZZHBW5NTHZV08P3XE): on the SAME ~4610-bar window (barsEvaluated 4607, coverage 106.97%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the Ichimoku cloud breakout (tenkan 9 / kijun 26 / senkou 52, standard) LONG-ONLY entry with the UNCHANGED TP2500/SL5000 manual barriers produced 81 trades (47W/34L, WR 58.0%, PF 0.609, Sharpe -2.87, DD 12.56%, net -$1,008.40, final equity $8,991.60, commission $762.75/81 ~ $9.42/trade incl. in netProfit) -- VALID sample (81 >= 20 floor). Quality CRATERED vs the iter-796 EMA3/8+RSI40+ADX28+EMA150 peak (22 trades, PF 2.06, Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74): trade frequency exploded 22 -> 81 (cloud breakout fires on every pullback-reclaim above the cloud), realized payoff 0.440x (avg win +$33.35 vs avg loss -$75.77) puts breakeven WR at ~69.4%; actual 58.0% misses it by ~11.4pp, largest loss -$465.52. LONG-ONLY exactly as intended (81 longs/0 shorts). Cascade 1.0 perfect (81 unique/81 rows, max depth 1). All rulebook gates FAILED. NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). KEY MAPPING RESULT: with the barrier exit held IDENTICAL, swapping the entry family EMA3/8+RSI40+ADX28+EMA150 -> Ichimoku cloud destroyed the edge (PF 2.06 -> 0.61, net +$313.74 -> -$1,008.40) -- the BTC 30m edge is ENTRY-SPECIFIC, not exit-driven. TP2500/SL5000 stands as the confirmed terminal barrier optimum (barrier map complete: TP2500 PEAK, SL5000 PEAK). Per the iter-797 contingency, the remaining untested levers are (a) Ichimoku variants (tenkan/kijun/senkou lengths or TK-cross-above-cloud entry to cut the 81-trade frequency) or (b) a fresh symbol with ATR-scaled barriers (tick barriers proven non-transferable at iter 791).",
+      "time": "2026-08-04T06:25:37Z"
+    },
+    {
+      "iteration": 799,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "ICHIMOKU VARIANT per the iter-798 mapping result (base Ichimoku cloud breakout DEGRADED the peak: 81 trades, PF 0.609, Sharpe -2.87, WR 58.0%, DD 12.56%, net -$1,008.40, result 01KZ5Q3WHZZHBW5NTHZV08P3XE -- with the TP2500/SL5000 barrier exit held IDENTICAL the entry-family swap EMA3/8+RSI40+ADX28+EMA150 -> Ichimoku destroyed the edge, proving the BTC 30m edge is ENTRY-SPECIFIC; the pure cloud breakout fired 81 times (vs 22 on the EMA stack) at 0.44x payoff). ONE change: Ichimoku entry refinement -- tenkan/kijun TK-cross ABOVE the cloud (bullish TK cross = tenkan crosses above kijun while close > cloud_top) instead of the raw close-crosses-above-cloud breakout (tenkan 9 / kijun 26 / senkou 52 UNCHANGED; TP2500/SL5000 barriers UNCHANGED). Rationale: the TK cross is the classic Ichimoku momentum signal -- it should cut the 81-trade frequency toward the 20-40 band (crosses are rarer than cloud re-claims) and improve payoff by entering on the stronger tenkan/kijun impulse; if TK-cross also degrades below PF 1.3, the Ichimoku family is closed on BTC 30m and the final untested lever is a fresh symbol with ATR-scaled barriers per the iter-797 contingency.",
+      "metrics": {
+        "pf": 0.7080762,
+        "sharpe": -1.67864122,
+        "wr": 70.73170732,
+        "dd": 6.59477458,
+        "trades": 41,
+        "net_profit": -298.037830199999,
+        "commission_paid": 397.7338302,
+        "cascade": 1.0,
+        "long_trades": 41,
+        "short_trades": 0,
+        "long_winning": 29,
+        "avg_win": 24.927796324138,
+        "avg_loss": -85.0786603,
+        "ratio_avg_win_loss": 0.29299705,
+        "avg_bars_in_trade": 7.41463415,
+        "gross_profit": 722.906093400002,
+        "gross_loss": 1020.9439236,
+        "bars_evaluated": 4606,
+        "coverage_pct": 106.97,
+        "final_equity": 9701.962169800001,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5RSNQYYRGZDKJ56AWM9FH0"
+      },
+      "verdict": "rejected (PF=0.71 < 1.3, Sharpe=-1.68 < 0.5) -- ICHIMOKU TK-CROSS VARIANT DEGRADED the iter-796 terminal peak on BYBIT:BTCUSDT.P 30m (result 01KZ5RSNQYYRGZDKJ56AWM9FH0): on the SAME ~4610-bar window (barsEvaluated 4606, coverage 106.97%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the tenkan/kijun TK-cross-above-cloud entry (tenkan 9 / kijun 26 / senkou 52 standard, close > cloud_top required) with the UNCHANGED TP2500/SL5000 manual barriers produced 41 trades (29W/12L, WR 70.7%, PF 0.708, Sharpe -1.68, DD 6.59%, net -$298.04, final equity $9,701.96, commission $397.73/41 ~ $9.70/trade incl. in netProfit) -- VALID sample (41 >= 20 floor). Frequency cut EXACTLY as hypothesized (81 -> 41 trades, the TK cross fires rarer than the cloud re-claim), but the edge still does NOT materialize: realized payoff 0.293x (avg win +$24.93 vs avg loss -$85.08) puts breakeven WR at ~77.3%; actual 70.7% misses it by ~6.6pp -- the TK-cross entry is BETTER than the raw cloud breakout (PF 0.708 vs 0.609, WR 70.7% vs 58.0%, DD 6.59% vs 12.56%, net -$298 vs -$1,008) but still far below the iter-796 EMA peak (22 trades, PF 2.06, Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74). LONG-ONLY exactly as intended (41 longs/0 shorts). Cascade 1.0 perfect (41 unique/41 rows, max depth 1). All rulebook gates FAILED (PF<1.3, Sharpe<0.5). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). ICHIMOKU FAMILY NOW CLOSED on BTC 30m: raw cloud breakout (iter 798, PF 0.61, 81 trades) AND TK-cross-above-cloud (iter 799, PF 0.71, 41 trades) both degrade below PF 1.3 -- the BTC 30m edge is CONFIRMED ENTRY-SPECIFIC to the EMA3/8+RSI40+ADX28+EMA150 stack. Per the iter-797/798 contingency, the final untested lever is a FRESH SYMBOL with the proven stack.",
+      "time": "2026-08-04T06:54:40Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",

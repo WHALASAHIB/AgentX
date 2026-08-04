@@ -1,0 +1,62 @@
+//@version=6
+strategy(title="Ichimoku TKCrossAboveCloud LongOnly BarrierExit TP2500 SL5000 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 799: ICHIMOKU VARIANT per the iter-798 mapping result (base Ichimoku cloud
+// breakout DEGRADED the peak: 81 trades, PF 0.609, Sharpe -2.87, WR 58.0%, DD 12.56%,
+// net -$1,008.40, result 01KZ5Q3WHZZHBW5NTHZV08P3XE -- with the TP2500/SL5000 barrier
+// exit held IDENTICAL the entry-family swap EMA3/8+RSI40+ADX28+EMA150 -> Ichimoku
+// destroyed the edge, proving the BTC 30m edge is ENTRY-SPECIFIC; the pure cloud
+// breakout fired 81 times (vs 22 on the EMA stack) at 0.44x payoff).
+// ONE change: Ichimoku entry refinement -- tenkan/kijun TK-cross ABOVE the cloud
+// (bullish TK cross = tenkan crosses above kijun while close > cloud_top) instead of
+// the raw close-crosses-above-cloud breakout (tenkan 9 / kijun 26 / senkou 52
+// UNCHANGED; TP2500/SL5000 barriers UNCHANGED). Rationale: the TK cross is the classic
+// Ichimoku momentum signal -- it should cut the 81-trade frequency toward the 20-40
+// band (crosses are rarer than cloud re-claims) and improve payoff by entering on the
+// stronger tenkan/kijun impulse; if TK-cross also degrades below PF 1.3, the Ichimoku
+// family is closed on BTC 30m and the final untested lever is a fresh symbol with
+// ATR-scaled barriers per the iter-797 contingency.
+
+//--- inputs
+tenkan_len = input.int(9, "Tenkan-sen Length", minval=3, maxval=30)       // iter 799: standard 9 (UNCHANGED). sweep: 5-15 step 2
+kijun_len = input.int(26, "Kijun-sen Length", minval=10, maxval=60)       // iter 799: standard 26 (UNCHANGED). sweep: 13-39 step 4
+senkou_len = input.int(52, "Senkou Span B Length", minval=20, maxval=120) // iter 799: standard 52 (UNCHANGED). sweep: 26-78 step 13
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 799: TP UNCHANGED at 2500 (PF peak, iter 792). sweep: 2000-4000 step 500
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 799: SL UNCHANGED at 5000 (terminal peak, iter 796). sweep: 3000-6500 step 500
+
+//--- indicator calculations (standard Ichimoku, same-timeframe)
+tenkan = (ta.highest(high, tenkan_len) + ta.lowest(low, tenkan_len)) / 2
+kijun = (ta.highest(high, kijun_len) + ta.lowest(low, kijun_len)) / 2
+span_a = (tenkan + kijun) / 2
+span_b = (ta.highest(high, senkou_len) + ta.lowest(low, senkou_len)) / 2
+
+// Cloud as plotted at the current bar = span values from 26 bars ago (displacement)
+cloud_top = math.max(span_a[kijun_len], span_b[kijun_len])
+cloud_bottom = math.min(span_a[kijun_len], span_b[kijun_len])
+
+//--- entry logic (LONG-ONLY TK-cross ABOVE the cloud: tenkan crosses above kijun
+// while close is above the cloud top. iter 799: ENTRY refinement only -- barrier exit
+// TP2500/SL5000, flat-only, 1-bar min hold, NO breakeven, structure identical to the
+// iter-796 peak. TK cross is rarer than a cloud re-claim: expect 20-40 trades vs 81.)
+tk_cross_up = ta.crossover(tenkan, kijun)
+
+long_condition = tk_cross_up and close > cloud_top
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade; same as peak)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
