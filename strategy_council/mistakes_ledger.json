@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-08-02",
+  "last_updated": "2026-08-03",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -146,6 +146,13 @@
       "root_cause": "Zombie fleet reduced from 25 to 2 (partial cleanup done since Aug 1) but BOTH C:\\Hermess\\mt5_config.json and C:\\Hermess\\config\\mt5_config.json still carry login 5051185832/MetaQuotes-Demo (mtime Jul 29 22:44 unchanged). Risk supervisor reads its own poisoned config copy and actively taskkills the terminal whenever it lands on the CORRECT account 1513990433/FTMO-Demo (log: 'Terminal on WRONG account #1513990433 (expected #5051185832)'). Bot (PID 20008) connected to wrong account Aug 1 13:18 UTC, log silent since. Infrastructure Watchdog (bridge_watchdog.py) cron now ALSO erroring exit 1 alongside Risk Supervisor (TimeoutExpired 60s) and backend-watchdog (exit 1).",
       "fix": "BEFORE Monday 07:30 UTC launcher: (1) restore BOTH C:\\Hermess\\mt5_config.json and C:\\Hermess\\config\\mt5_config.json to 1513990433/FTMO-Demo (ground truth C:\\Trading\\mt5_config.json Jul 15); (2) kill PIDs 20008 + 20272, verify 0 propfirm instances; (3) restart risk supervisor - verify it stops killing terminal on correct account; (4) restart exactly ONE bot, verify ACCOUNT READY login=1513990433; (5) investigate bridge_watchdog exit 1.",
       "prevention_rule": "Re-verify config mtimes + instance count EVERY council run until mtime changes. Risk supervisor config copy must match the bot config - a poisoned supervisor fights the correct account. Monday 07:00 UTC window: launchers fire 07:30/12:50 UTC."
+    },
+    {
+      "date": "2026-08-03",
+      "pattern": "Council Aug 3 15:03 HKT - DAY 4 kill-loop: configs STILL poisoned (mtime Jul 29 22:44), zombies 20008+20272 NOT killed, probe exit 124, 2 concurrent terminal64, risk sup/watchdogs failing, 07:30 UTC launcher imminent",
+      "root_cause": "Aug 2 council order not executed. C:\\Hermess\\mt5_config.json AND C:\\Hermess\\config\\mt5_config.json still login 5051185832/MetaQuotes-Demo (mtime Jul 29 22:44 unchanged; ground truth 1513990433/FTMO-Demo in C:\\Trading\\mt5_config.json Jul 15). PIDs 20008 (propfirm_pass_bot.py) + 20272 (propfirm_pass_gbpusd.py) still alive at 37MB each. TWO concurrent terminal64.exe (PIDs 9152+21684, liveupdate path, empty MainWindowTitle, ~103MB) stable across 3 samples but mt5.initialize HANGS (probe exit 124) = kill-loop persists. Risk supervisor TimeoutExpired 60s at 15:02+15:12 HKT, backend-watchdog exit 1 (15:07), bridge_watchdog exit 1 (14:30), paper_propfirm_pass timed out 3600s Aug 1. risk_state.json stale 29h (Aug 2 02:08 UTC, >24h CRITICAL). Bridge data stale since Jul 30 13:34 UTC (4+ days). Bot log silent since Aug 1 21:18 local.",
+      "fix": "EXECUTE Aug 2 order BEFORE 07:30 UTC launcher fires: (1) restore BOTH C:\\Hermess\\mt5_config.json + C:\\Hermess\\config\\mt5_config.json to 1513990433/FTMO-Demo; (2) taskkill /F PIDs 20008+20272, verify 0 propfirm instances; (3) kill BOTH terminal64.exe instances so a single clean terminal restarts; (4) restart risk supervisor, verify it stops killing the CORRECT account; (5) restart exactly ONE bot, verify ACCOUNT READY login=1513990433; (6) verify bridge last_data_timestamp refreshes past Jul 30 13:34 UTC.",
+      "prevention_rule": "Council orders must be executed or explicitly deferred the same day. Verify config mtimes, propfirm instance count, AND concurrent terminal64 count every council run until all normalize. 2+ concurrent terminal64 + init hang (exit 124) = kill-loop regardless of PID stability. Launcher fires 07:30 UTC Mon-Fri - pre-flight check must run before it."
     }
   ],
   "action_items": [
