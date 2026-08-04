@@ -140,6 +140,9 @@
         </div>
       </div>
       <div class="header-controls">
+      <select id="accountSwitcher" class="account-switcher" onchange="switchActiveAccount(this.value)" title="Switch active account">
+        <option value="">Loading accounts…</option>
+      </select>
       <span id="liveIndicator" class="live-inactive">○ Offline</span>
     </div>
   </div>
