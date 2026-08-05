@@ -1,0 +1,103 @@
+//@version=6
+strategy(title="VWAPhlc3 Dev Reversion ManualADX22 EMA150LongOnly BarrierExit TP2500 SL5000 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 813: VWAP(hlc3) DEVIATION MEAN-REVERSION RE-TEST STEP 4 per the iter-812
+// result (result 01KZ83EMPNM5ZP2CPBBM09JTXP): band widening 1.5->1.0 lifted
+// trades 8 -> 12 and WR 62.5% -> 75% (9W/3L) but net stayed negative -$76.90
+// (PF 0.61, Sharpe -1.02, DD 1.22%): 12 trades is STILL below the 20-trade
+// validity floor, and 75% WR at 0.204 avg-win/avg-loss ratio (avg win $13.54
+// vs avg loss -$66.26) cannot overcome the 1:2 TP2500/SL5000 barrier
+// asymmetry. Store remains locked at iter-796 champion (EMA3/8 + RSI40 +
+// ADX28 + EMA150 long-only + TP2500/SL5000 manual barriers, PF 2.06 /
+// Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74).
+// ONE change: manual ADX threshold 28 -> 22 (gate loosened to free more
+// entries), per the pre-registered contingency (trades still < 20 at
+// 1.0-sigma -> reduce ADX threshold 28 -> 22). ALL else UNCHANGED:
+// BYBIT:BTCUSDT.P 30m, long when close crosses below vwap - 1.0*stdev (band
+// multiplier stays at 1.0), exit at VWAP reversion (close back above vwap)
+// or TP2500/SL5000 manual tick barriers, EMA150 long-only regime retained,
+// flat-only, 1-bar min hold, NO breakeven.
+// Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep
+// TP/SL from there); PF 1.3-1.5 -> incremental; trades >= 20 below PF 1.3 ->
+// VWAP family closed (8 families mapped, store locked at iter-796); trades
+// still < 20 at ADX22 -> VWAP family closed as un-sampleable on this engine
+// and store stays locked at iter-796.
+
+//--- inputs
+vwap_band_len = input.int(20, "VWAP Band Length (stdev)", minval=5, maxval=50, step=1)  // sweep: 10-30 step 5
+vwap_band_mult = input.float(1.0, "VWAP Band Multiplier", minval=1.0, maxval=4.0, step=0.5)  // sweep: 1.0-3.0 step 0.5
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)                       // sweep: 7-21 step 7
+adx_threshold = input.int(22, "ADX Threshold", minval=10, maxval=50)             // lowered 28->22 (iter 813) to free entries. sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)      // proven best long-side 150. sweep: 100-200 step 50
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // proven peak 2500. sweep: 2000-4000 step 500
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // proven peak 5000. sweep: 3000-6000 step 500
+
+//--- indicator calculations
+// VWAP anchor with hlc3 input (engine supports ta.vwap(hlc3) -- hlc3 series computed manually)
+hlc3_val = (high + low + close) / 3.0
+vwap_anchor = ta.vwap(hlc3_val)
+vwap_stdev = ta.stdev(hlc3_val, vwap_band_len)
+vwap_lower = vwap_anchor - vwap_band_mult * vwap_stdev
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- entry logic (VWAP deviation mean-reversion, long-only, flat-only)
+// Long entry: close crosses BELOW vwap - 1.0*stdev (dip to the VWAP anchor band)
+// AND ADX > 22 (trending; threshold lowered 28 -> 22 in iter 813 to free more
+// entries toward the 20-trade validity floor) AND close above EMA150 long-only
+// regime (dip in uptrend). Band multiplier stays at 1.0 (iter 812). RSI gate
+// remains REMOVED (iter 810 finding: not the constraint).
+cross_down = ta.crossunder(close, vwap_lower)
+long_condition = cross_down and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers + VWAP reversion, min 1-bar hold)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
+    if close > vwap_anchor
+        strategy.close("Long", comment="REV")

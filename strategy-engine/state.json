@@ -1,6 +1,6 @@
 {
-  "iteration": 811,
-  "last_run": "2026-08-05T03:53:59Z",
+  "iteration": 814,
+  "last_run": "2026-08-05T04:55:00Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "VWAP FAMILY RE-TEST STEP 2 per the iter-810 result (RSI gate REMOVED produced a BYTE-IDENTICAL result to iter-809: same 3 trades 0W/3L, PF 0.00, Sharpe -3.48, WR 0%, DD 1.71%, net -$170.78, result 01KZ80VSQ58EXYYTKP8ZK9892B -- the iter-809 root-cause attribution was WRONG: the RSI40 gate was NOT suppressing the VWAP entry; the binding constraints are ta.crossunder(close, vwap - 2.0*stdev) at 2.0-sigma + manual ADX28 + EMA150 long-only, which co-occur only 3 times in 4564 bars on BYBIT:BTCUSDT.P 30m; the VWAP family is STILL UNTESTED for any edge conclusion). ONE change: VWAP band multiplier 2.0 -> 1.5 (vwap_lower = vwap - 1.5*stdev, widening the entry band toward the anchor so close crosses below it more often), per the pre-registered contingency (trades < 20 -> drop band multiplier 2.0 -> 1.5 next). ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, long when close crosses below the 1.5-sigma band, exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, manual ADX28 + EMA150 long-only regime retained, flat-only, 1-bar min hold, NO breakeven. Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep TP/SL from there); PF 1.3-1.5 -> incremental; trades still < 20 at 1.5-sigma -> drop band multiplier further to 1.0; below PF 1.3 with >= 20 trades -> VWAP family closed and fixed-tick exploration CONCLUSION (8 families mapped, store locked at iter-796).",
+  "current_hypothesis": "CHAMPION SAMPLE-EXPANSION TEST per the iter-813 result (result 01KZ84AD4R11B80N9N48XMBDJS -- VWAP FAMILY CLOSED: ADX 28->22 achieved the 20-trade floor (27 trades) but PF collapsed to 0.31 (net -$675.44, Sharpe -4.42, DD 7.03%, WR 55.6%): the loosened gate admitted weak trends and the VWAP(hlc3) deviation mean-reversion family shows NO edge on BYBIT:BTCUSDT.P 30m at a valid sample. 8/8 indicator families now mapped; fresh-symbol (ETH/SOL/XRP) and timeframe (1h) transfers already failed; store stays locked at iter-796 champion (EMA3/8 + RSI40 + ADX28 + EMA150 + TP2500/SL5000 manual barriers, PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). ONE change: RSI(14) threshold 40 -> 35 on the champion stack (untested parameter cell at TP2500/SL5000) to expand the 22-trade sample toward statistical robustness, per the trades-close-to-floor weakness rule. ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, EMA3/8 crossover, manual ADX28, EMA150 long-only regime, flat-only, TP2500/SL5000 manual tick barriers, 1-bar min hold. Decision rule: PF >= 1.5 and trades >= 20 -> new candidate store peak (sweep RSI from there); PF 1.3-1.5 -> incremental; below PF 1.3 with >= 20 trades -> champion stands at iter-796 and the store stays locked (mapping complete).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -3111,6 +3111,94 @@
       },
       "verdict": "invalid (low sample, 3 trades) -- RSI-GATE REMOVAL PRODUCED A BYTE-IDENTICAL RESULT TO iter-809 on BYBIT:BTCUSDT.P 30m (result 01KZ80VSQ58EXYYTKP8ZK9892B): backtest executed cleanly (engine tv_jul26_mc7, 4564 bars evaluated May 2026-Aug 2026, coverage 107.04%, no truncation warnings, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, cascade 1.0 perfect 3/3 rows max depth 1, no compile errors) but totalTrades=3 (0W/3L), PF 0.00, Sharpe -3.48, WR 0%, DD 1.71%, net -$170.78, final equity $9,829.22, commission $29.62/3 ~ $9.87/trade incl. in netProfit, avgBarsInTrade 11.67, first trade 2026-07-07 / last exit 2026-07-31. KEY MAPPING RESULT: netProfit, grossLoss, commission, avg loss -$56.93, avgBarsInTrade 11.67, barsEvaluated 4564, and every reported metric are IDENTICAL to iter-809 -- REMOVING the RSI(14)>40 gate changed ZERO trade outcomes, which DISPROVES the iter-809 root-cause attribution: the RSI gate was NOT the binding constraint (the 3 trades that fired in iter-809 already satisfied RSI>40). The true binding constraints are the remaining gate stack -- ta.crossunder(close, vwap - 2.0*stdev) at 2.0-sigma (a ~3-5x/95-day event on BTC 30m) AND manual ADX28 AND close > EMA150 -- which co-occur only 3 times in 4564 bars. The VWAP(hlc3) deviation mean-reversion hypothesis remains UNTESTED for any edge conclusion (3 trades is not a sample). LONG-ONLY exactly as intended (3 longs/0 shorts). NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades stands; store locked at iter-796 PF 2.06). NEXT: per the pre-registered contingency (trades still < 20 -> drop band multiplier 2.0 -> 1.5), iter 811 lowers vwap_band_mult 2.0 -> 1.5 to widen the entry band toward the VWAP anchor and obtain a VALID sample before any family verdict.",
       "time": "2026-08-05T03:53:59Z"
+    },
+    {
+      "iteration": 811,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "VWAP FAMILY RE-TEST STEP 2 per the iter-810 byte-identical result (result 01KZ80VSQ58EXYYTKP8ZK9892B -- RSI gate removal changed ZERO outcomes, disproving the iter-809 root-cause attribution; the binding constraints are the 2.0-sigma band crossunder + ADX28 + EMA150 which co-occur only 3x/4564 bars). ONE change: VWAP band multiplier 2.0 -> 1.5 (vwap_lower = vwap - 1.5*stdev, widening the entry band toward the anchor), per the pre-registered contingency (trades < 20 -> drop band multiplier 2.0 -> 1.5 next). ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, long when close crosses below the 1.5-sigma band, exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, manual ADX28 + EMA150 long-only regime retained, flat-only, 1-bar min hold, NO breakeven.",
+      "metrics": {
+        "pf": 0.87980687,
+        "sharpe": -0.23096726,
+        "wr": 62.5,
+        "dd": 1.80907745,
+        "trades": 8,
+        "net_profit": -22.617480349998,
+        "commission_paid": 80.33778035,
+        "cascade": null,
+        "long_trades": 8,
+        "short_trades": 0,
+        "long_winning": 5,
+        "avg_win": null,
+        "avg_loss": null,
+        "avg_bars_in_trade": 8.5,
+        "gross_profit": 165.55867225,
+        "gross_loss": 188.176152599998,
+        "bars_evaluated": 4563,
+        "final_equity": 9977.382519650002,
+        "result_id": "01KZ82EBZ64K5C8P1G42SXWNNZ"
+      },
+      "verdict": "invalid (low sample, 8 trades) -- BAND WIDENING 2.0->1.5 WORKED AS DESIGNED: trade count tripled 3 -> 8 on BYBIT:BTCUSDT.P 30m (result 01KZ82EBZ64K5C8P1G42SXWNNZ, engine tv_jul26_mc7, 4563 bars evaluated, coverage ~107%, toTs clamped 2026-08-04 clickhouse last bar, parity 0.05% commission + percent_of_equity:100, cascade clean) but STILL below the 20-trade validity floor. WR jumped 0% -> 62.5% (5W/3L) yet net is -2.62 (PF 0.88, Sharpe -0.23, DD 1.81%, final equity ,977.38, commission 0.34): the 1:2 barrier asymmetry (TP2500/SL5000 ticks) makes avg win only 0.53x avg loss (grossProfit 65.56 / grossLoss 88.18), so 62.5% WR is NOT enough to be net positive. 8 longs/0 shorts exactly as intended. NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades stands; store locked at iter-796 PF 2.06). NEXT: per the pre-registered contingency (trades still < 20 at 1.5-sigma -> drop band multiplier further to 1.0), iter 812 lowers vwap_band_mult 1.5 -> 1.0 to widen the entry band closer to the VWAP anchor and obtain a >= 20-trade sample; if the sample is achieved with PF >= 1.5 -> candidate store peak (sweep TP/SL); PF 1.3-1.5 -> incremental; below PF 1.3 with >= 20 trades -> VWAP family closed.",
+      "time": "2026-08-05T04:21:23Z"
+    },
+    {
+      "iteration": 812,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "VWAP FAMILY RE-TEST STEP 3 per the iter-811 result (result 01KZ82EBZ64K5C8P1G42SXWNNZ -- band widening 2.0->1.5 tripled trades 3 -> 8 and lifted WR 0% -> 62.5% but net stayed negative -$22.62, PF 0.88: 8 trades is still not a valid sample, and 62.5% WR at 0.53 avg-win/avg-loss ratio cannot overcome the 1:2 TP2500/SL5000 barrier asymmetry). ONE change: VWAP band multiplier 1.5 -> 1.0 (vwap_lower = vwap - 1.0*stdev, entry band moved all the way to the VWAP anchor), per the pre-registered contingency (trades still < 20 at 1.5-sigma -> drop band multiplier further to 1.0). ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, long when close crosses below the 1.0-sigma band, exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, manual ADX28 + EMA150 long-only regime retained, flat-only, 1-bar min hold, NO breakeven. Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep TP/SL from there); PF 1.3-1.5 -> incremental; trades >= 20 below PF 1.3 -> VWAP family closed (8 families mapped, store locked at iter-796); trades still < 20 at 1.0-sigma -> reduce ADX threshold 28 -> 22 to free more entries.",
+      "metrics": {
+        "pf": 0.61314591,
+        "sharpe": -1.02103802,
+        "wr": 75.0,
+        "dd": 1.22343393,
+        "trades": 12,
+        "net_profit": -76.903390149999,
+        "commission_paid": 119.73649015,
+        "cascade": 1.0,
+        "long_trades": 12,
+        "short_trades": 0,
+        "winning_trades": 9,
+        "losing_trades": 3,
+        "avg_bars_in_trade": 6.83333333,
+        "gross_profit": 121.888330450001,
+        "gross_loss": 198.791720599999,
+        "bars_evaluated": 4562,
+        "final_equity": 9923.096609850001,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ83EMPNM5ZP2CPBBM09JTXP"
+      },
+      "verdict": "invalid (low sample, 12 trades) -- BAND WIDENING 1.5->1.0 CONTINUED THE TRADE-FREQUENCY RECOVERY on BYBIT:BTCUSDT.P 30m (result 01KZ83EMPNM5ZP2CPBBM09JTXP, engine tv_jul26_mc7, 4562 bars evaluated May 2026-Aug 2026, toTs clamped 2026-08-04T00:00 clickhouse last bar, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, cascade clean 12/12 rows max depth 1, mcpruleValidated true, no compile errors, no truncation warnings) but STILL below the 20-trade validity floor: trades 8 -> 12, WR 62.5% -> 75% (9W/3L), yet net -$76.90 (PF 0.61, Sharpe -1.02, DD 1.22%, final equity $9,923.10, commission $119.74/12 ~ $9.98/trade incl. in netProfit, avgBarsInTrade 6.83). The WR gain is structurally futile: ratioAvgWinLoss 0.204 (avg win $13.54 vs avg loss -$66.26, grossProfit $121.89 / grossLoss $198.79) -- 75% WR cannot overcome the 1:2 TP2500/SL5000 barrier asymmetry (largest win $31.41 vs largest loss -$100.45). 12 longs/0 shorts exactly as intended. NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades stands; store locked at iter-796 PF 2.06). NEXT: per the pre-registered contingency (trades still < 20 at 1.0-sigma -> reduce ADX threshold 28 -> 22), iter 813 loosens the manual ADX14 gate 28 -> 22 to free more entries and obtain a >= 20-trade sample; if the sample is achieved with PF >= 1.5 -> candidate store peak (sweep TP/SL); PF 1.3-1.5 -> incremental; below PF 1.3 with >= 20 trades, or still < 20 trades at ADX22 -> VWAP family closed and store stays locked at iter-796.",
+      "time": "2026-08-05T04:39:24Z"
+    },
+    {
+      "iteration": 813,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "VWAP FAMILY RE-TEST STEP 4 per the iter-812 result (result 01KZ83EMPNM5ZP2CPBBM09JTXP -- band widening 1.5->1.0 lifted trades 8 -> 12 and WR 62.5% -> 75% but net stayed negative -$76.90, PF 0.61: 12 trades still below the 20-trade floor, and 75% WR at 0.204 avg-win/avg-loss cannot overcome the 1:2 TP2500/SL5000 barrier asymmetry). ONE change: manual ADX threshold 28 -> 22 (gate loosened to free more entries), per the pre-registered contingency (trades still < 20 at 1.0-sigma -> reduce ADX threshold 28 -> 22). ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, long when close crosses below vwap - 1.0*stdev (band multiplier stays at 1.0), exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, EMA150 long-only regime retained, flat-only, 1-bar min hold, NO breakeven. Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep TP/SL from there); PF 1.3-1.5 -> incremental; trades >= 20 below PF 1.3 -> VWAP family closed (8 families mapped, store locked at iter-796); trades still < 20 at ADX22 -> VWAP family closed as un-sampleable on this engine and store stays locked at iter-796.",
+      "metrics": {
+        "pf": 0.30711451,
+        "sharpe": -4.41668111,
+        "wr": 55.55555556,
+        "dd": 7.02753628,
+        "trades": 27,
+        "net_profit": -675.444548100002,
+        "commission_paid": 262.1139481,
+        "cascade": 1.0,
+        "long_trades": 27,
+        "short_trades": 0,
+        "winning_trades": 15,
+        "losing_trades": 12,
+        "ratio_avg_win_loss": 0.2456916,
+        "avg_bars_in_trade": 6.96296296,
+        "gross_profit": 299.383982799999,
+        "gross_loss": 974.828530900001,
+        "bars_evaluated": 4562,
+        "final_equity": 9324.555451899998,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ84AD4R11B80N9N48XMBDJS"
+      },
+      "verdict": "rejected (PF=0.31 < 1.3, Sharpe=-4.42 < 0.5) -- VWAP FAMILY CLOSED: ADX 28->22 achieved the 20-trade validity floor (27 trades, 15W/12L, result 01KZ84AD4R11B80N9N48XMBDJS, engine tv_jul26_mc7, 4562 bars evaluated, coverage 107.04%, no truncation warnings, parity 0.05% commission + percent_of_equity:100 confirmed via parityAdjustments, cascade clean 27/27 rows max depth 1, mcpruleValidated true) but the loosened gate admitted weak trends: WR fell 75% -> 55.6%, DD 1.22% -> 7.03%, net -$76.90 -> -$675.44 (PF 0.31, Sharpe -4.42, final equity $9,324.56, commission $262.11/27 ~ $9.71/trade, avgBarsInTrade 6.96). ratioAvgWinLoss 0.246 (avg win $19.96 vs avg loss -$81.24, grossProfit $299.38 / grossLoss $974.83, largest win $67.96 vs largest loss -$169.56) -- the VWAP(hlc3) deviation mean-reversion family shows NO edge on BYBIT:BTCUSDT.P 30m even at a valid sample. Per the pre-registered decision rule (trades >= 20 below PF 1.3 -> VWAP family closed), the VWAP family is now CLOSED: 8/8 indicator families mapped on this symbol/timeframe, fresh-symbol and timeframe transfers already failed (iter-806/807), store stays locked at iter-796 champion (EMA3/8 + RSI40 + ADX28 + EMA150 + TP2500/SL5000, PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades stands). NEXT: single-change sample-expansion experiment on the proven champion stack -- RSI(14) threshold 40 -> 35 (untested cell at TP2500/SL5000) to push the 22-trade sample toward statistical robustness.",
+      "time": "2026-08-05T04:55:00Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
