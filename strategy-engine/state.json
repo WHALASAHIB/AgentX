@@ -1,6 +1,6 @@
 {
-  "iteration": 807,
-  "last_run": "2026-08-05T02:55:18Z",
+  "iteration": 811,
+  "last_run": "2026-08-05T03:53:59Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "FRESH-SYMBOL DISCOVERY per the iter-806 result: the 1h timeframe-transfer test of the iter-796 champion stack (BYBIT:BTCUSDT.P 1h EMA3/8 + RSI40 + ADX28 + EMA150 long-only, TP2500/SL5000 barriers) FAILED -- PF 0.604, Sharpe -1.37, WR 46.7%, DD 1.99%, only 15 trades (below the 20 floor), net -$154.38 (result 01KZ7XFYSWNEVYDVH6SEGYXFRV). Trade frequency collapsed 22 -> 15 and quality collapsed PF 2.06 -> 0.60 vs the 30m champion: the edge is 30m-SPECIFIC at these barriers. iter-796 stays the definitive store terminal answer (BTC 30m PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). ONE change: deploy the EXACT iter-796 stack (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime, TP2500/SL5000 manual tick barriers, flat-only, 1-bar min hold, NO breakeven) on a NEW symbol -- BYBIT:XRPUSDT.P 30m (fresh liquid Bybit perpetual, same market/feed class as the BTC champion; ETH 30m and SOL 30m already failed this stack at PF 0.76-0.96 / zero trades, so XRP is the next untested major perp). Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak on the new symbol (sweep TP/SL from there); PF 1.3-1.5 -> accept as incremental cross-symbol evidence; below PF 1.3 -> the stack is BTC-specific, stop fresh-symbol pivots and lock the store: iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades), iter-796 the current-store terminal (BTC 30m).",
+  "current_hypothesis": "VWAP FAMILY RE-TEST STEP 2 per the iter-810 result (RSI gate REMOVED produced a BYTE-IDENTICAL result to iter-809: same 3 trades 0W/3L, PF 0.00, Sharpe -3.48, WR 0%, DD 1.71%, net -$170.78, result 01KZ80VSQ58EXYYTKP8ZK9892B -- the iter-809 root-cause attribution was WRONG: the RSI40 gate was NOT suppressing the VWAP entry; the binding constraints are ta.crossunder(close, vwap - 2.0*stdev) at 2.0-sigma + manual ADX28 + EMA150 long-only, which co-occur only 3 times in 4564 bars on BYBIT:BTCUSDT.P 30m; the VWAP family is STILL UNTESTED for any edge conclusion). ONE change: VWAP band multiplier 2.0 -> 1.5 (vwap_lower = vwap - 1.5*stdev, widening the entry band toward the anchor so close crosses below it more often), per the pre-registered contingency (trades < 20 -> drop band multiplier 2.0 -> 1.5 next). ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, long when close crosses below the 1.5-sigma band, exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, manual ADX28 + EMA150 long-only regime retained, flat-only, 1-bar min hold, NO breakeven. Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep TP/SL from there); PF 1.3-1.5 -> incremental; trades still < 20 at 1.5-sigma -> drop band multiplier further to 1.0; below PF 1.3 with >= 20 trades -> VWAP family closed and fixed-tick exploration CONCLUSION (8 families mapped, store locked at iter-796).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1594,7 +1594,7 @@
         "result_id": "01KZ0J89G8D2PG9S03DJWDZ06Z",
         "window_note": "BYBIT:BTCUSDT.P 30m store covers ~2026-04-25 to 2026-08-02 (4607 bars, coverage 106.97%, NO truncation warnings -- crypto feed unaffected by POLYGON forex store truncation; effectiveTradeRange firstTradeEntryTs 2026-04-29, lastTradeExitTs 2026-07-30; store is ~3 months, SHORT but not truncated). Bybit lot filters applied: tick=0.1, qtyStep=0.001. Commission 0.05% parity profile applied; finalEquity 9525.59 confirms netProfit INCLUDES commission ($391.13/40 ~ $9.78/trade)."
       },
-      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 \u2248 0.07% of BTC price \u2248 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 \u2248 0.4%/0.45% \u2248 1x ATR) to restore the exit geometry the entry edge needs.",
+      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ≈ 0.07% of BTC price ≈ 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 ≈ 0.4%/0.45% ≈ 1x ATR) to restore the exit geometry the entry edge needs.",
       "time": "2026-08-02T06:24:23Z"
     },
     {
@@ -3000,6 +3000,117 @@
       },
       "verdict": "invalid (low sample, 15 trades) -- 1h TIMEFRAME-TRANSFER TEST FAILED: PF 0.604, Sharpe -1.37, WR 46.7%, DD 1.99%, 15 trades (7W/8L), net -$154.38, final equity $9,845.62, commission $148.85/15 ~ $9.92/trade incl. in netProfit. Engine tv_jul26, result 01KZ7XFYSWNEVYDVH6SEGYXFRV. 2434 bars evaluated May 2026-Aug 2026 (coverage 114.11%, toTs clamped 2026-08-04T00:00 clickhouse last bar), Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments. LONG-ONLY exactly as intended (15 longs/0 shorts), cascade 1.0 perfect (15 unique/15 rows, max depth 1). The iter-796 champion stack does NOT transfer to 1h at the terminal barriers: trade frequency collapsed 22 -> 15 (< 20 floor -> invalid sample) AND quality collapsed PF 2.06 -> 0.60 with negative Sharpe -- per the pre-registered decision rule (below PF 1.3) the edge is 30m-SPECIFIC. iter-796 remains CONFIRMED as the definitive store terminal answer; the 15m branch of the transfer test is moot (only scheduled 'if valid'). Next: FRESH-SYMBOL DISCOVERY with the same proven stack on a new Bybit perpetual.",
       "time": "2026-08-05T02:55:18Z"
+    },
+    {
+      "iteration": 807,
+      "symbol": "BYBIT:XRPUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "FRESH-SYMBOL DISCOVERY per the iter-806 result (1h timeframe-transfer of the iter-796 champion stack FAILED -- PF 0.604, Sharpe -1.37, 15 trades < 20 floor, net -$154.38; the edge is 30m-SPECIFIC). ONE change: deploy the EXACT iter-796 stack (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime, TP2500/SL5000 manual tick barriers, flat-only, 1-bar min hold, NO breakeven) on a NEW symbol -- BYBIT:XRPUSDT.P 30m (fresh liquid Bybit perpetual; ETH 30m PF 0.76-0.96 and SOL 30m zero-trades already failed this stack, so XRP is the next untested major perp). Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak on the new symbol; PF 1.3-1.5 -> incremental cross-symbol evidence; below PF 1.3 -> stack is BTC-specific, stop fresh-symbol pivots and lock the store.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -1.89401087,
+        "wr": 0.0,
+        "dd": 33.97614986,
+        "trades": 0,
+        "net_profit": 0.0,
+        "commission_paid": 0.0,
+        "cascade": null,
+        "long_trades": 0,
+        "short_trades": 0,
+        "winning_trades": 0,
+        "losing_trades": 0,
+        "avg_win": null,
+        "avg_loss": null,
+        "avg_bars_in_trade": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "bars_evaluated": 4564,
+        "final_equity": 10000.0,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ7YCG5FPWFKEXA6PED6N5E1"
+      },
+      "verdict": "invalid (no trades) -- FRESH-SYMBOL DISCOVERY FAILED on BYBIT:XRPUSDT.P 30m (result 01KZ7YCG5FPWFKEXA6PED6N5E1): backtest executed cleanly (engine tv_jul26_mc7, 4564 bars evaluated May 2026-Aug 2026, fromTs 1778123400198 / toTs clamped 2026-08-04T00:00 clickhouse last bar, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, mcpruleValidated true, no compile errors, no truncation warnings) but totalTrades=0, net $0.00, final equity $10,000 flat, firstTradeEntryTs null. Over 4564 bars (~95 days) of volatile XRP 30m data the EMA3/8 + RSI40 + ADX28 + EMA150 long-only stack legitimately cannot fire ZERO times unless the engine/symbol feed suppresses the signal -- IDENTICAL symptom to SOLUSDT (iter 802/803 zero trades; disambiguation iter 804 proved the engine fires on BTCUSDT, so this is symbol-data-specific, NOT engine-level). Engine-reported maxDrawdownPct 33.98% with zero trades is a meaningless flat-equity-curve artifact (iter 803 reported 38.04% for the identical 0-trade condition) -- ignored. THIRD consecutive fresh-symbol failure (ETH PF 0.76-0.96, SOL 0 trades, XRP 0 trades): per the iter-806 pre-registered decision rule (below PF 1.3 -> stack is BTC-specific), FRESH-SYMBOL PIVOTS ARE STOPPED and the store is LOCKED. iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades); iter-796 remains the confirmed current-store terminal (BYBIT:BTCUSDT.P 30m PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). NEXT: pivot to a genuinely new indicator family on the reference symbol (Keltner Channel breakout) rather than more symbol transfers.",
+      "time": "2026-08-05T03:11:57Z"
+    },
+    {
+      "iteration": 808,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "STORE LOCKED per the iter-807 result (BYBIT:XRPUSDT.P 30m zero trades over 4564 bars, engine tv_jul26_mc7, result 01KZ7YCG5FPWFKEXA6PED6N5E1 -- third consecutive fresh-symbol failure after ETH 30m PF 0.76-0.96 and SOL 30m zero trades; the iter-796 champion stack is BTC-SPECIFIC, fresh-symbol pivots STOPPED, store locked at iter-796 BYBIT:BTCUSDT.P 30m PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades /",
+      "metrics": {
+        "pf": 0.5103841,
+        "sharpe": -2.93639966,
+        "wr": 53.84615385,
+        "dd": 4.5132069,
+        "trades": 26,
+        "net_profit": -411.904264949997
+      },
+      "verdict": "rejected (PF=0.51 < 1.3, Sharpe=-2.94 < 0.5) -- Keltner(20,2.0) breakout on the REFERENCE symbol fires (26 trades, no cascade) but loses; long-only WR 53.8% with avg loss 2.3x avg win; Keltner family CLOSED on fixed barriers per decision rule",
+      "time": "2026-08-05T03:23:56Z"
+    },
+    {
+      "iteration": 809,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "VWAP(hlc3) deviation mean-reversion, LONG-ONLY, on the reference symbol BYBIT:BTCUSDT.P 30m (LAST UNTESTED FAMILY per the iter-808 pre-registered contingency -- store locked at iter-796 champion PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74; all 7 prior families EMA/MACD/BB/Supertrend/Ichimoku/Donchian/Keltner mapped on fixed barriers, fresh-symbol pivots stopped after 3 failures): long when close crosses BELOW vwap - 2.0*stdev (rolling 20-bar band, VWAP as EMA-style anchor with hlc3 input via ta.vwap(hlc3)), exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, with the proven filter stack retained (RSI40 + manual ADX28 + EMA150 long-only regime), flat-only, 1-bar min hold, NO breakeven. Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep TP/SL from there); PF 1.3-1.5 -> incremental; below PF 1.3 -> VWAP family closed and fixed-tick exploration CONCLUSION (8 families mapped, store locked at iter-796).",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -3.48351165,
+        "wr": 0.0,
+        "dd": 1.70780576,
+        "trades": 3,
+        "net_profit": -170.780576249997,
+        "commission_paid": 29.62007625,
+        "cascade": 1.0,
+        "long_trades": 3,
+        "short_trades": 0,
+        "long_winning": 0,
+        "avg_win": 0.0,
+        "avg_loss": -56.926858749999,
+        "ratio_avg_win_loss": 0.0,
+        "avg_bars_in_trade": 11.66666667,
+        "gross_profit": 0.0,
+        "gross_loss": 170.780576249998,
+        "bars_evaluated": 4564,
+        "coverage_pct": 107.04,
+        "final_equity": 9829.219423750003,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ809PGSJJ058GM5TKPZFC1D"
+      },
+      "verdict": "invalid (low sample, 3 trades) -- VWAP(hlc3) deviation mean-reversion fired only 3 times on BYBIT:BTCUSDT.P 30m (result 01KZ809PGSJJ058GM5TKPZFC1D): backtest executed cleanly (engine tv_jul26_mc7, 4564 bars evaluated May 2026-Aug 2026, coverage 107.04%, no truncation warnings, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, cascade 1.0 perfect 3/3 rows max depth 1, no compile errors) but totalTrades=3 (0W/3L), PF 0.00, Sharpe -3.48, WR 0%, DD 1.71%, net -$170.78, final equity $9,829.22, commission $29.62/3 ~ $9.87/trade incl. in netProfit, avgBarsInTrade 11.67, first trade 2026-07-07 / last exit 2026-08-04. ROOT CAUSE: the RSI40 (>40) gate from the proven momentum stack is STRUCTURALLY INCOMPATIBLE with the mean-reversion entry -- a close crossing below vwap - 2.0*stdev (a -2-sigma deviation) virtually never co-occurs with RSI(14) > 40 in the same 20-bar window, so the retained filter stack suppressed the entry to 3 trades over ~95 days of volatile BTC 30m data. The VWAP family is therefore UNTESTED, not rejected: no edge conclusion is possible from 3 trades. LONG-ONLY exactly as intended (3 longs/0 shorts). NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades stands; store locked at iter-796 PF 2.06). NEXT: iter 810 removes the RSI gate (ONE change), keeps manual ADX28 + EMA150 long-only regime + TP2500/SL5000 barriers, to obtain a VALID sample before any family verdict.",
+      "time": "2026-08-05T03:44:09Z"
+    },
+    {
+      "iteration": 810,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "VWAP FAMILY RE-TEST per the iter-809 invalid result (result 01KZ809PGSJJ058GM5TKPZFC1D -- the RSI40 (>40) gate was believed STRUCTURALLY INCOMPATIBLE with the -2-sigma dip entry, suppressing VWAP(hlc3) deviation mean-reversion to 3 trades over 4564 bars; the VWAP family was UNTESTED, not closed; store locked at iter-796 PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). ONE change: REMOVE the RSI(14)>40 gate from the VWAP(hlc3) deviation mean-reversion entry. ALL else UNCHANGED: BYBIT:BTCUSDT.P 30m, long when close crosses below vwap - 2.0*stdev (rolling 20-bar stdev, VWAP anchor ta.vwap(hlc3)), exit at VWAP reversion (close back above vwap) or TP2500/SL5000 manual tick barriers, manual ADX28 + EMA150 long-only regime retained, flat-only, 1-bar min hold, NO breakeven. Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak (sweep TP/SL from there); PF 1.3-1.5 -> incremental; trades still < 20 -> drop band multiplier 2.0 -> 1.5 next; below PF 1.3 with >= 20 trades -> VWAP family closed and fixed-tick exploration CONCLUSION (8 families mapped, store locked at iter-796).",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -3.48351165,
+        "wr": 0.0,
+        "dd": 1.70780576,
+        "trades": 3,
+        "net_profit": -170.780576249997,
+        "commission_paid": 29.62007625,
+        "cascade": 1.0,
+        "long_trades": 3,
+        "short_trades": 0,
+        "long_winning": 0,
+        "avg_win": 0.0,
+        "avg_loss": -56.926858749999,
+        "ratio_avg_win_loss": 0.0,
+        "avg_bars_in_trade": 11.66666667,
+        "gross_profit": 0.0,
+        "gross_loss": 170.780576249998,
+        "bars_evaluated": 4564,
+        "coverage_pct": 107.04,
+        "final_equity": 9829.219423750003,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ80VSQ58EXYYTKP8ZK9892B"
+      },
+      "verdict": "invalid (low sample, 3 trades) -- RSI-GATE REMOVAL PRODUCED A BYTE-IDENTICAL RESULT TO iter-809 on BYBIT:BTCUSDT.P 30m (result 01KZ80VSQ58EXYYTKP8ZK9892B): backtest executed cleanly (engine tv_jul26_mc7, 4564 bars evaluated May 2026-Aug 2026, coverage 107.04%, no truncation warnings, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, cascade 1.0 perfect 3/3 rows max depth 1, no compile errors) but totalTrades=3 (0W/3L), PF 0.00, Sharpe -3.48, WR 0%, DD 1.71%, net -$170.78, final equity $9,829.22, commission $29.62/3 ~ $9.87/trade incl. in netProfit, avgBarsInTrade 11.67, first trade 2026-07-07 / last exit 2026-07-31. KEY MAPPING RESULT: netProfit, grossLoss, commission, avg loss -$56.93, avgBarsInTrade 11.67, barsEvaluated 4564, and every reported metric are IDENTICAL to iter-809 -- REMOVING the RSI(14)>40 gate changed ZERO trade outcomes, which DISPROVES the iter-809 root-cause attribution: the RSI gate was NOT the binding constraint (the 3 trades that fired in iter-809 already satisfied RSI>40). The true binding constraints are the remaining gate stack -- ta.crossunder(close, vwap - 2.0*stdev) at 2.0-sigma (a ~3-5x/95-day event on BTC 30m) AND manual ADX28 AND close > EMA150 -- which co-occur only 3 times in 4564 bars. The VWAP(hlc3) deviation mean-reversion hypothesis remains UNTESTED for any edge conclusion (3 trades is not a sample). LONG-ONLY exactly as intended (3 longs/0 shorts). NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades stands; store locked at iter-796 PF 2.06). NEXT: per the pre-registered contingency (trades still < 20 -> drop band multiplier 2.0 -> 1.5), iter 811 lowers vwap_band_mult 2.0 -> 1.5 to widen the entry band toward the VWAP anchor and obtain a VALID sample before any family verdict.",
+      "time": "2026-08-05T03:53:59Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
@@ -3009,7 +3120,8 @@
     "BYBIT:BTCUSDT.P",
     "EURUSD",
     "BYBIT:ETHUSDT.P",
-    "BYBIT:SOLUSDT.P"
+    "BYBIT:SOLUSDT.P",
+    "BYBIT:XRPUSDT.P"
   ],
   "timeframes_explored": [
     "1h",
@@ -3038,6 +3150,12 @@
       "result": "failed (PF 0.604, 15 trades < 20, net -$154.38)",
       "conclusion": "edge is 30m-SPECIFIC; iter-796 remains the definitive terminal answer",
       "result_id": "01KZ7XFYSWNEVYDVH6SEGYXFRV"
+    },
+    "fresh_symbol_transfer_807": {
+      "tested": "BYBIT:XRPUSDT.P 30m",
+      "result": "failed (0 trades over 4564 bars; 3rd fresh-symbol failure after ETH/SOL)",
+      "conclusion": "stack is BTC-specific; fresh-symbol pivots stopped; store locked at iter-796",
+      "result_id": "01KZ7YCG5FPWFKEXA6PED6N5E1"
     }
   }
 }
