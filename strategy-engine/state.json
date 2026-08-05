@@ -1,6 +1,6 @@
 {
-  "iteration": 818,
-  "last_run": "2026-08-05T05:54:17Z",
+  "iteration": 819,
+  "last_run": "2026-08-05T06:15:34Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "CHAMPION RE-VALIDATION RE-CONFIRMED at iter-817 (result 01KZ87QZ0RFTM1STYXX9KXZY6G: PF 1.96 / Sharpe 2.03 / WR 76.2% / DD 1.54% / 21 trades / +$280.64 on BYBIT:BTCUSDT.P 30m -- byte-identical to iter-816, data window unchanged (clickhouse last bar 2026-08-04T00:00); within pre-registered tolerance PF>=1.5, trades>=20, WR>=60%; edge PERSISTS; terminal answer iter-796 RE-CONFIRMED for the 3rd consecutive repro; store remains permanently locked). ONE change: NONE -- next scheduled re-validation repro of the locked champion stack (EMA3/8 + RSI40 + ADX28 + EMA150 long-only + TP2500/SL5000 manual barriers, flat-only, 1-bar min hold, NO breakeven on BYBIT:BTCUSDT.P 30m). Decision rule: repro stays within tolerance (PF >= 1.5 and trades >= 20 and WR >= 60%) -> terminal answer iter-796 RE-CONFIRMED, store remains permanently locked; drift beyond tolerance -> reopen exploration on the drifted axis. Store locked at iter-796; iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades); 8/8 indicator families mapped, symbol/timeframe transfers failed.",
+  "current_hypothesis": "CHAMPION RE-VALIDATION RE-CONFIRMED at iter-818 (result 01KZ88VSK671SHMNX58QW6H9P4: PF 1.96 / Sharpe 2.03 / WR 76.2% / DD 1.54% / 21 trades / +$280.64 on BYBIT:BTCUSDT.P 30m -- byte-identical to iter-816/817, data window essentially unchanged (4559 bars, toTs clamped 2026-08-04T00:00 clickhouse last bar); within pre-registered tolerance PF>=1.5, trades>=20, WR>=60%; edge PERSISTS; terminal answer iter-796 RE-CONFIRMED for the 4th consecutive repro; store remains permanently locked). ONE change: NONE -- next scheduled re-validation repro of the locked champion stack (EMA3/8 + RSI40 + ADX28 + EMA150 long-only + TP2500/SL5000 manual barriers, flat-only, 1-bar min hold, NO breakeven on BYBIT:BTCUSDT.P 30m). Decision rule: repro stays within tolerance (PF >= 1.5 and trades >= 20 and WR >= 60%) -> terminal answer iter-796 RE-CONFIRMED, store remains permanently locked; drift beyond tolerance -> reopen exploration on the drifted axis. Store locked at iter-796; iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades); 8/8 indicator families mapped, symbol/timeframe transfers failed.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -658,7 +658,7 @@
       "iteration": 725,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars — 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
+      "hypothesis": "Switch Supertrend flip-guard to XAUUSD 15m to increase trade count (>20). Same flip-change detection with ta.crossover(dir,0)/ta.crossunder(dir,0), factor=3.0, period=7. H1 gave 14 trades in 289 bars \u2014 15m should give ~4x bars in same period, targeting >20 trades for statistical validity.",
       "metrics": {
         "pf": 0.43087281,
         "sharpe": -6.94265801,
@@ -675,7 +675,7 @@
       "iteration": 726,
       "symbol": "XAUUSD",
       "timeframe": "15m",
-      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric — RSI filter should improve win rate by preventing counter-trend entries.",
+      "hypothesis": "Add RSI(14) filter to Supertrend flip-change on XAUUSD 15m. Long only if RSI(14) > 50, short only if RSI(14) < 50. PF=0.43 is the weakest metric \u2014 RSI filter should improve win rate by preventing counter-trend entries.",
       "metrics": {
         "pf": 0.0,
         "sharpe": null,
@@ -1594,7 +1594,7 @@
         "result_id": "01KZ0J89G8D2PG9S03DJWDZ06Z",
         "window_note": "BYBIT:BTCUSDT.P 30m store covers ~2026-04-25 to 2026-08-02 (4607 bars, coverage 106.97%, NO truncation warnings -- crypto feed unaffected by POLYGON forex store truncation; effectiveTradeRange firstTradeEntryTs 2026-04-29, lastTradeExitTs 2026-07-30; store is ~3 months, SHORT but not truncated). Bybit lot filters applied: tick=0.1, qtyStep=0.001. Commission 0.05% parity profile applied; finalEquity 9525.59 confirms netProfit INCLUDES commission ($391.13/40 ~ $9.78/trade)."
       },
-      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 ≈ 0.07% of BTC price ≈ 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 ≈ 0.4%/0.45% ≈ 1x ATR) to restore the exit geometry the entry edge needs.",
+      "verdict": "rejected (PF=0.36 < 1.3, Sharpe=-4.61 < 0.5) -- BYBIT:BTCUSDT.P 30m PIVOT DISPROVEN with the iter-753 control: 40 trades (valid sample, >=20 floor) on 4607 bars (coverage 106.97%, NO data-gap truncation -- the crypto feed is fully testable, solving the 4-run POLYGON forex store truncation streak), but WR 25.0% (10W/30L), PF 0.355, Sharpe -4.61, net -$474.41 (final equity $9,525.59, commission $391.13 incl. in netProfit). ROOT CAUSE: the fixed forex-sized tick barriers do NOT scale to BTC -- TP667/SL750 ticks x tick=0.1 = $66.7/$75 \u2248 0.07% of BTC price \u2248 0.15x ATR (vs ~1x ATR equivalent on GBPUSD 4h where the same tick counts = ~67/75 pips). avgBarsInTrade 2.1 (<=1 hour hold) = pure 30m noise whipsaw; realized payoff 1.07x (avg win $26.16 vs avg loss -$24.53) puts breakeven WR at ~48.4% -- actual 25.0% sits far below. Cascade 1.0 perfect (40 unique/40 rows, max depth 1). The iter-464 family best (PF 104.45) used ATR-trail exits, NOT fixed tick barriers -- the exit geometry is the unported piece. Note: BYBIT 30m store is only ~3 months (4607 bars) so the sample window is short but valid. Next: keep BYBIT:BTCUSDT.P 30m (only fully testable store), ONE change TP/SL barrier scaling 667/750 -> 4000/4500 ticks (~$400/$450 \u2248 0.4%/0.45% \u2248 1x ATR) to restore the exit geometry the entry edge needs.",
       "time": "2026-08-02T06:24:23Z"
     },
     {
@@ -3337,6 +3337,42 @@
       },
       "verdict": "accepted (incremental) -- CHAMPION RE-CONFIRMED (result 01KZ87QZ0RFTM1STYXX9KXZY6G): scheduled re-validation repro of the locked iter-796 stack on BYBIT:BTCUSDT.P 30m produced PF 1.96 / Sharpe 2.03 / WR 76.2% (16W/5L) / DD 1.54% / 21 trades / net +$280.64 / final equity $10,280.64 / commission $211.71 (~$10.08/trade incl. in netProfit). 4560 bars evaluated, toTs clamped 2026-08-04T00:00 clickhouse last bar (data window UNCHANGED since iter-816), Bybit lot filters applied, parity 0.05% commission + percent_of_equity:100 confirmed via parityAdjustments, mcpruleValidated true, cascade clean (21/21 rows max depth 1, ratio 1.0), LONG-ONLY exactly as intended (21 longs/0 shorts). METRICS BYTE-IDENTICAL to the iter-816 repro (grossProfit $573.81, grossLoss $293.17, avg win +$35.86, avg loss -$58.63, largest win $110.47, largest loss -$87.58, avgBarsInTrade 7.52) -- the clickhouse data window did not extend between runs, so this repro is an exact re-run confirming the previous result. ALL metrics WITHIN the pre-registered tolerance (PF 1.96 >= 1.5, trades 21 >= 20, WR 76.2% >= 60%): the edge PERSISTS. Per the decision rule the terminal answer is RE-CONFIRMED (third consecutive confirmation: iter-814/815 RSI-cell repros, iter-816, iter-817) and the store remains permanently locked at iter-796 (BYBIT:BTCUSDT.P 30m PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades). NOT a new best (1.96 < 104.45; equals iter-816 exactly). NEXT: next scheduled re-validation repro of the locked champion stack as clickhouse data extends further (same decision rule); no exploration axis is open.",
       "time": "2026-08-05T05:54:17Z"
+    },
+    {
+      "iteration": 818,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "CHAMPION RE-VALIDATION (scheduled repro) per the iter-817 result (result 01KZ87QZ0RFTM1STYXX9KXZY6G -- scheduled repro produced PF 1.96 / Sharpe 2.03 / WR 76.2% / DD 1.54% / 21 trades / +$280.64, byte-identical to iter-816 (data window unchanged), WITHIN the pre-registered tolerance PF>=1.5, trades>=20, WR>=60%: edge PERSISTS; terminal answer RE-CONFIRMED for the 3rd consecutive repro; store permanently locked at iter-796; 8/8 indicator families mapped, RSI/ADX/TP/SL barrier maps complete, fresh-symbol ETH/SOL/XRP and 1h timeframe transfers failed). ONE change: NONE -- exact reproduction of the locked champion stack (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime + TP2500/SL5000 manual tick barriers, flat-only, 1-bar min hold, NO breakeven on BYBIT:BTCUSDT.P 30m) to confirm the edge persists as clickhouse data extends further past the current window. Decision rule: repro stays within tolerance (PF >= 1.5 and trades >= 20 and WR >= 60%) -> terminal answer iter-796 RE-CONFIRMED, store remains permanently locked; drift beyond tolerance -> reopen exploration on the drifted axis.",
+      "metrics": {
+        "pf": 1.95722802,
+        "sharpe": 2.02679183,
+        "wr": 76.19047619,
+        "dd": 1.54387404,
+        "trades": 21,
+        "net_profit": 280.635093399993,
+        "commission_paid": 211.7147066,
+        "cascade": 1.0,
+        "long_trades": 21,
+        "short_trades": 0,
+        "long_winning": 16,
+        "winning_trades": 16,
+        "losing_trades": 5,
+        "avg_win": 35.863115784375,
+        "avg_loss": -58.634951830001,
+        "ratio_avg_win_loss": 0.61163376,
+        "avg_bars_in_trade": 7.52380952,
+        "gross_profit": 573.809852549998,
+        "gross_loss": 293.174759150005,
+        "largest_win": 110.47405675,
+        "largest_loss": -87.576488,
+        "bars_evaluated": 4559,
+        "coverage_pct": 107.04,
+        "final_equity": 10280.635093399993,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ88VSK671SHMNX58QW6H9P4"
+      },
+      "verdict": "accepted (incremental) -- CHAMPION RE-CONFIRMED (result 01KZ88VSK671SHMNX58QW6H9P4, engine tv_jul26_mc7): scheduled re-validation repro of the locked iter-796 stack on BYBIT:BTCUSDT.P 30m produced PF 1.96 / Sharpe 2.03 / WR 76.2% (16W/5L) / DD 1.54% / 21 trades / net +$280.64 / final equity $10,280.64 / commission $211.71 (~$10.08/trade incl. in netProfit). 4559 bars evaluated (fromTs shifted slightly, toTs clamped 2026-08-04T00:00:00.000Z clickhouse last bar), Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity 0.05% commission + percent_of_equity:100 confirmed via parityProfile, mcpruleValidated true, cascade clean (21/21 rows max depth 1, ratio 1.0), LONG-ONLY exactly as intended (21 longs/0 shorts). METRICS BYTE-IDENTICAL to the iter-816/817 repros (grossProfit $573.81, grossLoss $293.17, avg win +$35.86, avg loss -$58.63, largest win $110.47, largest loss -$87.58, avgBarsInTrade 7.52) -- the clickhouse data window did not meaningfully extend between runs, so this repro exactly re-confirms the previous result. ALL metrics WITHIN the pre-registered tolerance (PF 1.96 >= 1.5, trades 21 >= 20, WR 76.2% >= 60%): the edge PERSISTS. Per the decision rule the terminal answer is RE-CONFIRMED (fourth consecutive confirmation: iter-814/815 RSI-cell repros, iter-816, iter-817, iter-818) and the store remains permanently locked at iter-796 (BYBIT:BTCUSDT.P 30m PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades). NOT a new best (1.96 < 104.45; equals iter-816/817 exactly). NEXT: next scheduled re-validation repro of the locked champion stack as clickhouse data extends further (same decision rule); no exploration axis is open.",
+      "time": "2026-08-05T06:15:34Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
@@ -3412,6 +3448,18 @@
         "net_profit": 280.64
       },
       "result": "WITHIN TOLERANCE -- byte-identical to iter-816 (data window unchanged); edge persists; terminal answer RE-CONFIRMED; store remains locked at iter-796"
+    },
+    "revalidation_818": {
+      "result_id": "01KZ88VSK671SHMNX58QW6H9P4",
+      "metrics": {
+        "pf": 1.957,
+        "sharpe": 2.027,
+        "wr": 76.2,
+        "dd": 1.54,
+        "trades": 21,
+        "net_profit": 280.64
+      },
+      "result": "WITHIN TOLERANCE -- byte-identical to iter-816/817 (data window essentially unchanged); edge persists; terminal answer RE-CONFIRMED; store remains locked at iter-796"
     }
   }
 }
