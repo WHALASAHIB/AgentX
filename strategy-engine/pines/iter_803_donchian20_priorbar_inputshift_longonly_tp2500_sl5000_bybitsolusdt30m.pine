@@ -1,0 +1,61 @@
+//@version=6
+strategy(title="Donchian20 PriorBarInputShift LongOnly Breakout BarrierExit TP2500 SL5000 BYBITSOLUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 803: REFORMULATE DONCHIAN PRIOR-BAR CHANNEL per the iter-802 result (ta.highest(high,20)[1]
+// STILL produced ZERO trades on BYBIT:SOLUSDT.P 30m, result 01KZ5W5WVJ6YEPRPDNXX76E145 -- 4603 bars
+// evaluated cleanly, engine tv_jul26_mc7, no compile errors, but totalTrades=0: the tv_jul26 engine
+// does NOT honor the [1] history operator applied directly to a ta.highest()/ta.lowest() function
+// call, so the shifted channel is either dropped (same-bar lookahead persists) or na (condition
+// never true)).
+// ONE change: prior-bar channel formulation -> INPUT-SERIES shift
+//   upper_channel = ta.highest(high[1], donchian_len)
+//   lower_channel = ta.lowest(low[1], donchian_len)
+// (shift the INPUT series instead of the function result -- high[1] is a plain built-in series
+// shift the engine MUST support since ta.crossover depends on it, so the 20-bar-prior channel is
+// computed without history-referencing a function call).
+// ALL else UNCHANGED: donchian_len 20, LONG-ONLY, flat-only, 1-bar min hold, manual TP2500/SL5000
+// tick barriers, BYBIT:SOLUSDT.P 30m.
+// If this fires >= 20 trades with PF >= 1.3 the fresh-symbol Donchian hypothesis is validated;
+// if it still produces 0 trades, the engine cannot compute a prior-bar Donchian channel at all
+// and the family must be abandoned on SOLUSDT.
+
+//--- inputs
+donchian_len = input.int(20, "Donchian Length", minval=5, maxval=100)       // sweep: 10-40 step 5
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // sweep: 1000-5000 step 500 (re-map barrier geometry on SOL tick scale)
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // sweep: 1000-5000 step 500 (re-map barrier geometry on SOL tick scale)
+
+//--- indicator calculations (PRIOR-BAR channel via INPUT-SERIES shift -- iter 803 fix:
+// ta.highest(high[1], donchian_len) shifts the high series itself one bar back BEFORE the rolling
+// highest() window, so the channel covers bars [t-20, t-1] and excludes the current bar's own
+// high -- close can legitimately cross above it. This avoids history-referencing the function
+// result (ta.highest(...)[1]) which the tv_jul26 engine drops/na's -> zero trades in iter 802.)
+upper_channel = ta.highest(high[1], donchian_len)
+lower_channel = ta.lowest(low[1], donchian_len)
+
+//--- entry conditions (LONG-ONLY. iter 803: Donchian channel breakout with input-shifted
+// prior-bar channel -- close crosses ABOVE the 20-bar-prior upper channel = long, pure breakout,
+// no RSI/ADX/EMA filters. SOLUSDT is a fresh symbol never tested on the ledger. Hypothesis: if
+// the Donchian breakout edge is structural on crypto perps it should surface on SOL at the
+// TP2500/SL5000 default, fixed BTC-tuned barriers may NOT transfer (ETH failure) so the sweep
+// comments re-map 1000-5000 step 500 on the next iterations.)
+cross_up = ta.crossover(close, upper_channel)
+long_condition = cross_up
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
