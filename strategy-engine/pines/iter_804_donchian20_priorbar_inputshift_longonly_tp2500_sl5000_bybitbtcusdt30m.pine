@@ -1,0 +1,65 @@
+//@version=6
+strategy(title="Donchian20 PriorBarInputShift LongOnly Breakpoint Exit TP2500 SL5000 BYBITBTCUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 804: DISAMBIGUATION TEST per the iter-803 result (input-series shift
+// ta.highest(high[1],20) ALSO produced ZERO trades on BYBIT:SOLUSDT.P 30m, result
+// 01KZ7R9Q3KCHAW1ZWNSXQESRVM -- 4568 bars evaluated cleanly, no compile errors,
+// totalTrades=0; two independent prior-bar formulations -- function-result shift [1]
+// in iter 802, input-series shift high[1] in iter 803 -- both fire zero times, so per
+// the pre-registered contingency the Donchian family is ABANDONED on SOLUSDT and the
+// open question is engine-level: can the tv_jul26_mc7 engine compute a prior-bar
+// Donchian channel AT ALL).
+// ONE change: symbol BYBIT:SOLUSDT.P -> BYBIT:BTCUSDT.P, timeframe 30m, ALL parameters
+// UNCHANGED: donchian_len 20, LONG-ONLY input-shift prior-bar channel
+//   upper_channel = ta.highest(high[1], donchian_len)
+//   lower_channel = ta.lowest(low[1], donchian_len)
+// flat-only, 1-bar min hold, manual TP2500/SL5000 tick barriers.
+// Rationale: BTC is the reference symbol where the EMA3/8 stack fires correctly on the
+// same engine (22 trades in iter 796), so it isolates the CHANNEL FORMULATION from
+// symbol/data quirks.
+// Decision rule: BTC also 0 trades -> engine-level limitation CONFIRMED across 2 symbols
+// -> Donchian family closed everywhere on this engine -> accept the iter-796 terminal
+// peak (BYBIT:BTCUSDT.P 30m EMA3/8+RSI40+ADX28+EMA150 long-only TP2500/SL5000, PF 2.06,
+// Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74 on 22 trades) as the store's final
+// answer and promote it. BTC fires >= 20 trades with PF >= 1.3 -> the failure is
+// SOL-specific -> Donchian BTC 30m becomes a live cell to sweep (donchian_len, TP/SL barriers).
+
+//--- inputs
+donchian_len = input.int(20, "Donchian Length", minval=5, maxval=100)       // sweep: 10-40 step 5
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // sweep: 1000-5000 step 500 (terminal BTC barrier optimum from iter 796)
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // sweep: 1000-5000 step 500 (terminal BTC barrier optimum from iter 796)
+
+//--- indicator calculations (PRIOR-BAR channel via INPUT-SERIES shift -- iter 803 fix:
+// ta.highest(high[1], donchian_len) shifts the high series itself one bar back BEFORE the rolling
+// highest() window, so the channel covers bars [t-20, t-1] and excludes the current bar's own
+// high -- close can legitimately cross above it. This avoids history-referencing the function
+// result (ta.highest(...)[1]) which the tv_jul26 engine drops/na's -> zero trades in iter 802.)
+upper_channel = ta.highest(high[1], donchian_len)
+lower_channel = ta.lowest(low[1], donchian_len)
+
+//--- entry conditions (LONG-ONLY. iter 804: Donchian channel breakout with input-shifted
+// prior-bar channel -- close crosses ABOVE the 20-bar-prior upper channel = long, pure breakout,
+// no RSI/ADX/EMA filters. BTCUSDT is the reference symbol where the EMA3/8 stack fires correctly
+// (22 trades in iter 796) so a zero-trade result here proves the ENGINE cannot compute a
+// prior-bar Donchian channel, independent of symbol/data quirks.)
+cross_up = ta.crossover(close, upper_channel)
+long_condition = cross_up
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")

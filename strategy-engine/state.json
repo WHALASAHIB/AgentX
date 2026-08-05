@@ -1,6 +1,6 @@
 {
-  "iteration": 804,
-  "last_run": "2026-08-05T01:25:47Z",
+  "iteration": 807,
+  "last_run": "2026-08-05T02:55:18Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "DISAMBIGUATION TEST per the iter-803 result (input-series shift ta.highest(high[1],20) ALSO produced ZERO trades on BYBIT:SOLUSDT.P 30m, result 01KZ7R9Q3KCHAW1ZWNSXQESRVM -- 4568 bars evaluated cleanly, no compile errors, totalTrades=0; two independent prior-bar formulations -- function-result shift [1] in iter 802, input-series shift high[1] in iter 803 -- both fire zero times, so per the pre-registered contingency the Donchian family is ABANDONED on SOLUSDT and the open question is engine-level: can the tv_jul26_mc7 engine compute a prior-bar Donchian channel AT ALL). ONE change: symbol BYBIT:SOLUSDT.P -> BYBIT:BTCUSDT.P, timeframe 30m, ALL parameters UNCHANGED: donchian_len 20, LONG-ONLY input-shift prior-bar channel upper_channel = ta.highest(high[1],20) / lower_channel = ta.lowest(low[1],20), flat-only, 1-bar min hold, manual TP2500/SL5000 tick barriers. Rationale: BTC is the reference symbol where the EMA3/8 stack fires correctly on the same engine (22 trades in iter 796), so it isolates the CHANNEL FORMULATION from symbol/data quirks. Decision rule: BTC also 0 trades -> engine-level limitation CONFIRMED across 2 symbols -> Donchian family closed everywhere on this engine -> accept the iter-796 terminal peak (BYBIT:BTCUSDT.P 30m EMA3/8+RSI40+ADX28+EMA150 long-only TP2500/SL5000, PF 2.06, Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74 on 22 trades) as the store's final answer and promote it. BTC fires >= 20 trades with PF >= 1.3 -> the failure is SOL-specific -> Donchian BTC 30m becomes a live cell to sweep (donchian_len, TP/SL barriers).",
+  "current_hypothesis": "FRESH-SYMBOL DISCOVERY per the iter-806 result: the 1h timeframe-transfer test of the iter-796 champion stack (BYBIT:BTCUSDT.P 1h EMA3/8 + RSI40 + ADX28 + EMA150 long-only, TP2500/SL5000 barriers) FAILED -- PF 0.604, Sharpe -1.37, WR 46.7%, DD 1.99%, only 15 trades (below the 20 floor), net -$154.38 (result 01KZ7XFYSWNEVYDVH6SEGYXFRV). Trade frequency collapsed 22 -> 15 and quality collapsed PF 2.06 -> 0.60 vs the 30m champion: the edge is 30m-SPECIFIC at these barriers. iter-796 stays the definitive store terminal answer (BTC 30m PF 2.06 / Sharpe 2.21 / WR 77.3% / 22 trades / +$313.74). ONE change: deploy the EXACT iter-796 stack (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime, TP2500/SL5000 manual tick barriers, flat-only, 1-bar min hold, NO breakeven) on a NEW symbol -- BYBIT:XRPUSDT.P 30m (fresh liquid Bybit perpetual, same market/feed class as the BTC champion; ETH 30m and SOL 30m already failed this stack at PF 0.76-0.96 / zero trades, so XRP is the next untested major perp). Decision rule: PF >= 1.5 and trades >= 20 -> candidate store peak on the new symbol (sweep TP/SL from there); PF 1.3-1.5 -> accept as incremental cross-symbol evidence; below PF 1.3 -> the stack is BTC-specific, stop fresh-symbol pivots and lock the store: iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 / WR 92.4% / 264 trades), iter-796 the current-store terminal (BTC 30m).",
   "evolution_log": [
     {
       "iteration": 685,
@@ -2903,6 +2903,103 @@
       },
       "verdict": "invalid (no trades) -- INPUT-SERIES SHIFT ALSO ZERO TRADES on BYBIT:SOLUSDT.P 30m (result 01KZ7R9Q3KCHAW1ZWNSXQESRVM): the backtest executed cleanly (engine tv_jul26_mc7, 4568 bars evaluated May 2026-Aug 2026, fromTs 1778117017890 / toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.01/qtyStep=0.1/minQty=0.1 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, mcpruleValidated true, cascade 1.0/0 rows, no compile errors, no truncation warnings) but totalTrades=0, net $0.00, final equity $10,000 flat. ROOT CAUSE: ta.highest(high[1], donchian_len) -- the input-series shift designed to avoid history-referencing the function result -- STILL evaluates to na/never-true on the tv_jul26_mc7 engine (identical symptom to the function-result shift ta.highest(high,20)[1] in iter 802): over 4568 bars (~96 days) of volatile SOL 30m data a genuine prior-20-bar-high breakout CANNOT legitimately fire zero times. Two independent prior-bar formulations now both produce 0 trades on SOLUSDT, which per the iter-803 pre-registered contingency CLOSES the Donchian family on SOLUSDT and strongly implies the engine cannot compute a prior-bar Donchian channel at all (both history-on-function-result and shifted-input forms). Note: engine-reported maxDrawdownPct 38.04% with zero trades is a meaningless flat-equity-curve artifact (iter 802 reported 0.0 for the identical 0-trade condition) -- ignored. NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands; current-store peak remains iter-796 BTC 30m PF 2.06). NEXT: iter 804 runs the SAME input-shift Donchian20 long-only TP2500/SL5000 stack on BYBIT:BTCUSDT.P 30m (the reference symbol where the EMA stack fires correctly) to disambiguate ENGINE-LEVEL vs SYMBOL-LEVEL failure.",
       "time": "2026-08-05T01:25:47Z"
+    },
+    {
+      "iteration": 804,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "DISAMBIGUATION TEST per the iter-803 result (input-series shift ta.highest(high[1],20) ALSO produced ZERO trades on BYBIT:SOLUSDT.P 30m, result 01KZ7R9Q3KCHAW1ZWNSXQESRVM -- 4568 bars evaluated cleanly, no compile errors, totalTrades=0). ONE change: symbol BYBIT:SOLUSDT.P -> BYBIT:BTCUSDT.P, timeframe 30m, ALL parameters UNCHANGED: donchian_len 20, LONG-ONLY input-shift prior-bar channel upper_channel = ta.highest(high[1],20) / lower_channel = ta.lowest(low[1],20), flat-only, 1-bar min hold, manual TP2500/SL5000 tick barriers. BTC is the reference symbol where the EMA3/8 stack fires correctly (22 trades in iter 796), isolating the CHANNEL FORMULATION from symbol/data quirks.",
+      "metrics": {
+        "pf": 0.4719982,
+        "sharpe": -5.5776085,
+        "wr": 53.68421053,
+        "dd": 16.20320878,
+        "trades": 95,
+        "net_profit": -1473.672792299996,
+        "commission_paid": 850.0497923,
+        "cascade": 1.0,
+        "long_trades": 95,
+        "short_trades": 0,
+        "long_winning": 51,
+        "avg_win": 25.830679370588,
+        "avg_loss": -63.432669095455,
+        "ratio_avg_win_loss": 0.40721413,
+        "avg_bars_in_trade": 8.04210526,
+        "gross_profit": 1317.364647900005,
+        "gross_loss": 2791.037440200002,
+        "bars_evaluated": 4567,
+        "coverage_pct": 107.03,
+        "final_equity": 8526.327207700004,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ7W014FFYJRQMPBT4YPHWN0"
+      },
+      "verdict": "rejected (PF=0.47 < 1.3, Sharpe=-5.58 < 0.5) -- DISAMBIGUATION RESOLVED: the input-shift Donchian formulation WORKS on the tv_jul26_mc7 engine. On BYBIT:BTCUSDT.P 30m (result 01KZ7W014FFYJRQMPBT4YPHWN0): 4567 bars evaluated May 2026-Aug 2026, coverage 107.03%, no truncation warnings, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the Donchian20 input-shift long-only breakout with TP2500/SL5000 manual barriers produced 95 trades (51W/44L, WR 53.7%, PF 0.472, Sharpe -5.58, DD 16.2%, net -$1,473.67, final equity $8,526.33, commission $850.05/95 ~ $8.95/trade incl. in netProfit) -- VALID sample (95 >= 20 floor). ENGINE-LEVEL ANSWER: ta.highest(high[1], len) DOES fire -- the iter-802/803 ZERO-trade results on SOLUSDT were SYMBOL-SPECIFIC (SOL data/feed quirk on this engine), NOT an engine limitation; the engine can compute prior-bar Donchian channels via the input-series shift form. QUALITY ANSWER: on the reference symbol at the proven terminal barriers the Donchian breakout FAILS all rulebook gates with the SAME failure signature as Ichimoku (iter 798/799): trade frequency exploded 22 -> 95 vs the EMA stack, realized payoff 0.407x (avg win +$25.83 vs avg loss -$63.43) puts breakeven WR at ~71.1%; actual 53.7% misses by ~17.4pp. LONG-ONLY exactly as intended (95 longs/0 shorts). Cascade 1.0 perfect (95 unique/95 rows, max depth 1). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands; current-store peak remains iter-796 BTC 30m PF 2.06). DONCHIAN FAMILY CLOSED on the fixed-barrier framework on BTC 30m -- all 6 major indicator families (EMA, MACD, BB, Supertrend, Ichimoku, Donchian) are now mapped on the reference symbol and the store is SATURATED on fixed-tick barriers. Per the iter-804 pre-registered contingency (family closure -> accept the iter-796 terminal peak as the store's final answer), NEXT: iter 805 re-runs the iter-796 champion EXACTLY on the current data window as a reproducibility confirmation (note the 40-bar window shift: iter 796 evaluated 4607 bars vs 4567 now) before promoting it to the store's terminal answer.",
+      "time": "2026-08-05T02:29:42Z"
+    },
+    {
+      "iteration": 805,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "CHAMPION CONFIRMATION per the iter-804 disambiguation result (input-shift Donchian20 long-only TP2500/SL5000 on BYBIT:BTCUSDT.P 30m produced 95 trades, PF 0.472, Sharpe -5.58, WR 53.7%, DD 16.2%, net -$1,473.67, result 01KZ7W014FFYJRQMPBT4YPHWN0 -- the channel formulation WORKS on the engine, so the iter-802/803 SOL zero-trades were SYMBOL-SPECIFIC, not engine-level; but on the reference symbol at the terminal barriers the Donchian breakout fails quality gates with the SAME failure signature as Ichimoku (frequency explosion 22->95, payoff 0.407x, breakeven WR ~71.1% vs actual 53.7%) -- DONCHIAN FAMILY CLOSED on the fixed-barrier framework; all 6 major families now mapped on BTC 30m; store saturated on fixed-tick barriers). ONE change: re-run the iter-796 TERMINAL PEAK exactly (BYBIT:BTCUSDT.P 30m EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime, TP2500/SL5000 manual barriers, flat-only, 1-bar min hold, NO breakeven) on the CURRENT data window as a reproducibility confirmation before promoting it to the store's FINAL ANSWER (the 40-bar window shift -- iter 796 evaluated 4607 bars vs 4567 now -- means the champion must re-verify on the freshest slice). Decision rule: reproduce PF >= 1.5 and trades >= 20 -> champion CONFIRMED -> promote iter-796 as the store's terminal answer (promotion recorded in state, current-store peak locked); if degraded below PF 1.3 -> the peak was window-dependent -> reopen the EMA stack barrier map on the new slice.",
+      "metrics": {
+        "pf": 2.06299622,
+        "sharpe": 2.22357063,
+        "wr": 77.27272727,
+        "dd": 1.54974431,
+        "trades": 22,
+        "net_profit": 313.74174734999,
+        "commission_paid": 222.85955265,
+        "cascade": 1.0,
+        "long_trades": 22,
+        "short_trades": 0,
+        "long_winning": 17,
+        "avg_win": 35.817073791176,
+        "avg_loss": -59.029701420001,
+        "ratio_avg_win_loss": 0.60676359,
+        "avg_bars_in_trade": 7.31818182,
+        "gross_profit": 608.890254449996,
+        "gross_loss": 295.148507100005,
+        "bars_evaluated": 4566,
+        "coverage_pct": 107.03,
+        "final_equity": 10313.74174734999,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ7WX7PH1R2GT641QXQTXXKT"
+      },
+      "verdict": "CHAMPION CONFIRMED -- iter-796 PROMOTED to the store's terminal answer",
+      "time": "2026-08-05T02:44:48Z"
+    },
+    {
+      "iteration": 806,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "1h",
+      "hypothesis": "TIMEFRAME-TRANSFER TEST per the iter-805 promotion decision (iter-805 confirmed iter-796 as the store's terminal answer on BYBIT:BTCUSDT.P 30m: PF 2.06 / Sharpe 2.21 / WR 77.3% / DD 1.55% / 22 trades / +$313.74; the fixed-tick barrier store is SATURATED on the 30m dimension -- all 6 major indicator families mapped; per the pre-registered saturation contingency the ledger pivots to the TIMEFRAME dimension). ONE change: test the proven iter-796 entry stack EXACTLY as-is (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime, TP2500/SL5000 manual tick barriers, flat-only, 1-bar min hold, NO breakeven) on BYBIT:BTCUSDT.P 1h to check whether the edge transfers to a higher resolution. Decision rule: 1h PF >= 1.5 and trades >= 20 -> new store peak candidate on the 1h barrier map (sweep TP/SL from there); below PF 1.3 -> the edge is 30m-SPECIFIC, confirm iter-796 as the definitive store terminal and pivot to fresh-symbol discovery with the same stack.",
+      "metrics": {
+        "pf": 0.60406919,
+        "sharpe": -1.36500445,
+        "wr": 46.66666667,
+        "dd": 1.98881172,
+        "trades": 15,
+        "net_profit": -154.383208050005,
+        "commission_paid": 148.85230805,
+        "cascade": 1.0,
+        "long_trades": 15,
+        "short_trades": 0,
+        "long_winning": 7,
+        "winning_trades": 7,
+        "losing_trades": 8,
+        "avg_win": null,
+        "avg_loss": null,
+        "avg_bars_in_trade": null,
+        "gross_profit": null,
+        "gross_loss": null,
+        "bars_evaluated": 2434,
+        "coverage_pct": 114.11,
+        "final_equity": 9845.616791949995,
+        "engine": "tv_jul26",
+        "result_id": "01KZ7XFYSWNEVYDVH6SEGYXFRV"
+      },
+      "verdict": "invalid (low sample, 15 trades) -- 1h TIMEFRAME-TRANSFER TEST FAILED: PF 0.604, Sharpe -1.37, WR 46.7%, DD 1.99%, 15 trades (7W/8L), net -$154.38, final equity $9,845.62, commission $148.85/15 ~ $9.92/trade incl. in netProfit. Engine tv_jul26, result 01KZ7XFYSWNEVYDVH6SEGYXFRV. 2434 bars evaluated May 2026-Aug 2026 (coverage 114.11%, toTs clamped 2026-08-04T00:00 clickhouse last bar), Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments. LONG-ONLY exactly as intended (15 longs/0 shorts), cascade 1.0 perfect (15 unique/15 rows, max depth 1). The iter-796 champion stack does NOT transfer to 1h at the terminal barriers: trade frequency collapsed 22 -> 15 (< 20 floor -> invalid sample) AND quality collapsed PF 2.06 -> 0.60 with negative Sharpe -- per the pre-registered decision rule (below PF 1.3) the edge is 30m-SPECIFIC. iter-796 remains CONFIRMED as the definitive store terminal answer; the 15m branch of the transfer test is moot (only scheduled 'if valid'). Next: FRESH-SYMBOL DISCOVERY with the same proven stack on a new Bybit perpetual.",
+      "time": "2026-08-05T02:55:18Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
@@ -2919,5 +3016,28 @@
     "30m",
     "15m",
     "4h"
-  ]
+  ],
+  "terminal_answer": {
+    "strategy": "iter_796_ema3_8_rsi40_adx28_longonly_ema150_tp2500_sl5000_bybitbtcusdt30m.pine",
+    "iteration": 796,
+    "promoted_at": "2026-08-05T02:44:48Z",
+    "confirmed_by": 805,
+    "metrics": {
+      "pf": 2.06,
+      "sharpe": 2.21,
+      "wr": 77.3,
+      "dd": 1.55,
+      "trades": 22,
+      "net_profit": 313.74,
+      "symbol": "BYBIT:BTCUSDT.P",
+      "timeframe": "30m"
+    },
+    "repro_805_result_id": "01KZ7WX7PH1R2GT641QXQTXXKT",
+    "timeframe_transfer_806": {
+      "tested": "BYBIT:BTCUSDT.P 1h",
+      "result": "failed (PF 0.604, 15 trades < 20, net -$154.38)",
+      "conclusion": "edge is 30m-SPECIFIC; iter-796 remains the definitive terminal answer",
+      "result_id": "01KZ7XFYSWNEVYDVH6SEGYXFRV"
+    }
+  }
 }

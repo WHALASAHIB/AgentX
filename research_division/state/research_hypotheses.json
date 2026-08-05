@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 217,
+    "total_ideas": 220,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -2044,6 +2044,66 @@
       "diversification_value": "Directly extends MultiDecile_Momentum_Ensemble (equal-weight decile ensemble \u2014 this adds regime-conditional weighting, the exact gap the equal-weight approach leaves open) and differs from Momentum_Entropy_Rotational_Sizer (rotates CAPITAL across signals by entropy \u2014 this weights SIGNAL VOTES by regime efficacy, a different mechanism: vote-weighting vs capital allocation). Differs from ML_Regime_Ensemble_Switch (regime_filter family: ML classifier switches whole strategies \u2014 this keeps one ensemble and reweights inside it). No momentum idea currently conditions signal weights on regime-specific historical efficacy.",
       "self_grade": "A-",
       "generated_at": "2026-08-03T00:59:26Z"
+    },
+    {
+      "name": "FOMC_PreDecision_Volatility_Compression_Expansion",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Trades the volatility expansion out of pre-FOMC compression: gold's realized vol compresses to ~0.88x its 20-day baseline in the 5 days before FOMC decisions (verified on 29 events 2023-2026, 59% below baseline), then expands sharply when the decision lands.",
+      "market_behaviour": "In the run-up to FOMC decisions the Fed's communications blackout removes new information flow, market makers pull liquidity and flatten inventory ahead of the binary event, and option dealers accumulate gamma - all of which suppress realized volatility. Verified on XAUUSD 2023-2026 (29 FOMC events): 5-day realized vol before the decision averages 0.88x the trailing 20-day baseline (median 0.89), with the deepest compressions reaching 0.36-0.50x (vol at roughly half baseline: 2026-03, 2026-01, 2025-12, 2024-01). The compression is a positioning artifact - everyone waits for the decision, so the range narrows; when the decision lands, pent-up order flow and dealer re-hedging produce an outsized directional expansion that typically exhausts within the first 1-4 hours.",
+      "entry_logic": "1) From 5 trading days before the scheduled FOMC decision, track gold's 3-day realized vol vs 20-day realized vol on D1 closes. 2) REGIME GATE: only proceed if 3-day vol < 0.7 x 20-day vol by the day before the decision - compression must actually register, otherwise skip the event entirely (compression fails ~40% of the time, mostly in high-vol macro regimes). 3) Once the gate passes, mark the high and low of the 48-hour range ending 2 hours before the announcement. 4) Place two pending stop orders: buy-stop at range high + 5 pips, sell-stop at range low - 5 pips (bracket entry, no directional bias). 5) If one fills, immediately cancel the other; the fill only happens on post-announcement expansion.",
+      "exit_logic": "Stop loss = opposite side of the 48h range (the compressed range should hold after the initial expansion; a full retracement back through it invalidates the expansion thesis). Take profit 1 = 1.0 x range width, then move to breakeven; take profit 2 = 1.6 x range width with a 0.5 x range width trailing stop. Hard time-stop: exit flat 4 hours after entry if no target hit - the expansion is front-loaded. No re-entry for this FOMC event after a stop-out. Position size 0.5x normal (event volatility).",
+      "failure_mode": "1) High-volatility macro regimes (2024 H2 easing-cycle uncertainty, crisis periods): pre-FOMC vol does NOT compress - the 29-event sample shows ratios up to 1.60 - the regime gate filters most of these but a registered compression can still precede a violent two-sided whipsaw. 2) The expansion can gap through the bracket then reverse hard (post-decision reversal days); the far-side SL caps the loss at one range width. 3) Gold can compress into the event and STAY compressed (uneventful decision) - the 4h time-stop is the defence. 4) Data limitation: the compression side is verified here (29 events, 2023-2026); the expansion-side statistics are well-documented but must be re-verified in backtest before deployment.",
+      "diversification_value": "Mirror-image of FOMC_Blackout_Volatility_RangeTrade (B+), which fades the compressed range DURING the blackout; this idea trades the EXPANSION OUT of the compression via bracket breakouts - opposite mechanism, opposite positioning, and it only enters at/after the decision. Distinct from NFP_Week_Mean_Reversion_Bias (post-event fade of the over-extension) and Central_Bank_Calendar_Dovish_Hawkish_Window (48h post-decision real-yield-delta drift with no compression setup or bracket structure). No other seasonal idea uses a vol-compression regime gate; Event_Window_Seasonal_Compression concerns diffuse multi-week seasonal windows, not binary-event microstructure. This is the first A-range idea in the Event Windows cluster (was 0/12 A/A- before this run).",
+      "self_grade": "A-",
+      "generated_at": "2026-08-05T02:25:59Z"
+    },
+    {
+      "name": "Consolidation_Time_Symmetry_Breakout",
+      "family": "breakout",
+      "instruments": [
+        "XAUUSD",
+        "EURUSD",
+        "GBPUSD"
+      ],
+      "timeframes": [
+        "H1",
+        "D1"
+      ],
+      "description": "Breakout entry timed by Wyckoff time/price balance: a consolidation whose duration reaches 0.6x-1.2x the duration of the preceding impulse leg, combined with a 3-bar volatility squeeze, produces high-follow-through breakouts. Premature breakouts (before the time balance completes) tend to fail.",
+      "market_behaviour": "Institutional accumulation is not random in time. Wyckoff's time/price balance principle and practitioner evidence show the duration of a reaccumulation/consolidation phase tends to be proportional to the duration of the impulse leg that preceded it: a market that trended for 10 sessions typically needs a comparable period to redistribute ownership before the next leg. Breakouts that fire too early (before time balance completes) fail because the institutional inventory build is incomplete; breakouts after the time balance completes have much higher follow-through. This is the time-dimension complement to the price-dimension rule (consolidation width drives move magnitude) already captured in the archive.",
+      "entry_logic": "1) Identify the last completed impulse leg on H1: a directional move of >= 1.5x ATR(14) over a measured duration T (8-40 H1 bars) with H1 closes on the same side of a 10-EMA for most of the leg. 2) Mark consolidation start at the leg's extreme; measure consolidation duration D bar by bar. 3) ENTRY ZONE: when D reaches 0.6x-1.2x T (time-symmetry window) AND price compresses (H1 range < 0.5x ATR(14) for the last 3 bars), place a buy-stop above the 3-bar range high (uptrend) / sell-stop below the range low (downtrend). 4) Only trade the direction of the prior impulse; SKIP if D > 2x T (time balance broken - consolidation has become a reversal base). 5) Cancel the stop if unfilled within 12 bars of the symmetry window. 6) Skip entries within +-4h of scheduled Tier-1 macro events.",
+      "exit_logic": "Stop loss = 1.2x ATR(14) beyond the consolidation's opposite extreme (below consolidation low for longs). Take profit = the price distance of the prior impulse leg (leg start to leg end) projected from the breakout point; take partial at 50% of that distance, trail the rest with 0.5x ATR(14). Time-stop: exit flat after 30 bars if neither target hit - the thesis is a clean time-symmetric breakout, not a grind.",
+      "failure_mode": "1) Time symmetry is a soft statistical tendency, not a law - in strong news regimes (NFP/FOMC weeks) breakouts fire early regardless of duration and whipsaw the premature entry; the Tier-1 event filter reduces this. 2) The consolidation can be a distribution/reversal base rather than a continuation base - the D > 2xT skip rule and impulse-direction-only rule reduce this, but a failed continuation still stops out at 1.2x ATR. 3) Range-bound regimes with no trend legs produce no signals (low frequency, not a loss mode).",
+      "diversification_value": "The breakout family covers consolidation WIDTH (Consolidation_Duration_Breakout: duration proportional to move magnitude), SHAPE (Consolidation_Pattern_Measured_Move_Breakout), and VOLUME behaviour (Consolidation_Volume_DryUp_Expansion_Timer). This idea adds the TIME-BALANCE mechanism - consolidation duration measured RELATIVE to the prior impulse leg's duration - a different, Wyckoff-grounded timing rule answering WHEN to enter the breakout rather than how far it will run. None of the three existing consolidation ideas anchors to prior-leg duration. Distinct from ATR_Percentile_Compression_Breakout (pure volatility percentile, no time anchor) and Bollinger_Squeeze_Momentum_Breakout (indicator squeeze width, no duration anchor). Fills the Consolidation Duration cluster 1->2.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-05T02:25:59Z"
+    },
+    {
+      "name": "Equity_Gold_Correlation_Regime_Flow",
+      "family": "cross_asset",
+      "instruments": [
+        "XAUUSD",
+        "SPX500"
+      ],
+      "timeframes": [
+        "D1",
+        "H1"
+      ],
+      "description": "Correlation-regime overlay for gold: the 30-day rolling SPX-gold return correlation is a regime state variable - negative correlation = safe-haven regime (gold decoupled, longs reliable), strongly positive = liquidation regime (gold trades as a risk asset, longs dangerous). Re-routes the bot army's gold exposure by correlation state.",
+      "market_behaviour": "Gold's correlation with US equities is regime-dependent (Baur-Lucey hedge/safe-haven dichotomy): in normal and financial-stress regimes gold is a hedge (negative or near-zero equity correlation), but in liquidity-crunch/liquidation regimes everything sells together (strongly positive correlation). The rolling 30-day SPX-gold correlation therefore acts as a regime state variable: a sustained shift to NEGATIVE correlation signals gold being bid as a safe-haven/hedge (its own drivers - real yields, geopolitics - dominating), while a shift to POSITIVE correlation signals a risk-liquidation regime where gold cannot decouple and longs get run over by equity-driven selling. Gold trends are much more reliable when the correlation state confirms gold's driver; long gold is dangerous when the correlation is strongly positive.",
+      "entry_logic": "1) Compute the 30-day rolling correlation of daily returns (XAUUSD vs SPX500) - daily closes of both only. 2) CLASSIFY: negative regime = correlation < -0.15 (gold decoupled); positive regime = correlation > +0.35 (gold moves with equities); neutral otherwise. 3) Apply as an overlay on existing gold signals: negative regime = full-size longs AND shorts allowed in the direction of gold's H1 trend; neutral = half size; positive regime = BLOCK all long entries, allow only shorts (gold longs in a liquidation regime get run over). 4) Entry confirmation: H1 close beyond the 48h range in the bias direction with >= 0.7x ATR(14) momentum. 5) Fail-safe: if the SPX feed stalls, default to neutral - never silently remove the long-block.",
+      "exit_logic": "Stop loss = 1.0x ATR(14) beyond entry. Take profit = 1.5x ATR(14) with trailing. Overlay-level exit: while long, exit immediately if the 30-day correlation crosses above +0.10 (regime thesis invalidated); while short in the positive regime, exit if correlation drops below +0.10. Time-stop 24h. Position size: full in confirmed negative regime, half in neutral, zero longs in positive regime.",
+      "failure_mode": "1) The 30-day correlation is a SLOW state variable - it lags the true regime shift by 1-2 weeks; the worst losses occur in the first days of a liquidity crunch before the correlation flips positive (March 2020 style 'everything sells' with a still-negative lagging reading). 2) Correlation can stay negative while gold falls on its own fundamentals (real-yield spike) - the H1 trend confirmation in the entry logic is the defence. 3) Requires a reliable SPX data feed; a stalled feed must fail-safe to neutral, never to the un-blocked state.",
+      "diversification_value": "Every existing cross_asset correlation idea uses the DXY-gold pair (DXY_Valence_Correlation, DXY_Deviation_Regime_Scalp, plus Correlation_Decoupling_Trend_Capture in other). This is the first SPX-gold correlation idea in the archive: the Equity Correlation cluster holds only Gold_Mining_Equity_Leading_Index (a GDX-leads-gold leading-indicator idea with no correlation state variable). Distinct from Cross_Asset_Gamma_Flip (event-level SPX+bond asymmetry at gamma extremes) and VIX_Gold_Regime_Divergence (VIX-gold volatility regime) - neither computes the direct equity-gold return correlation nor uses it as a directional exposure gate. As an overlay it also diversifies the cross_asset family's heavily DXY-weighted surface (13 DXY ideas) toward the equity leg.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-05T02:25:59Z"
     }
   ],
   "archived": [
@@ -4174,7 +4234,8 @@
       "PinBar_Rejection_Breakout",
       "Momentum_Divergence_Breakout_Fade",
       "Consolidation_Volume_DryUp_Expansion_Timer",
-      "Breaker_Block_Reclaim_Breakout"
+      "Breaker_Block_Reclaim_Breakout",
+      "Consolidation_Time_Symmetry_Breakout"
     ],
     "volatility": [
       "Volatility_Contraction_Breakout",
@@ -4272,7 +4333,8 @@
       "Industrial_Metals_Gold_Activity_Proxy",
       "Gold_Calendar_Spread_Physical_Demand_Proxy",
       "Commodity_Breadth_Inflation_Regime_Gate",
-      "COMEX_Inventory_Coverage_Scarcity"
+      "COMEX_Inventory_Coverage_Scarcity",
+      "Equity_Gold_Correlation_Regime_Flow"
     ],
     "seasonal": [
       "Gold_Seasonal_Cycle",
@@ -4307,7 +4369,8 @@
       "COMEX_First_Notice_Day_Gold_Flow",
       "Quarter_End_Gold_Allocation_Accumulation",
       "Gold_Copper_Seasonal_Divergence_Trader",
-      "Gold_Palladium_Seasonal_Industrial_Divergence"
+      "Gold_Palladium_Seasonal_Industrial_Divergence",
+      "FOMC_PreDecision_Volatility_Compression_Expansion"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
