@@ -53,7 +53,32 @@ OLLAMA_TIMEOUT: int = 60          # seconds (increased from 30s default)
 OLLAMA_TIMEOUT_HEAVY: int = 120   # seconds for the 27b model
 
 # ── Account ───────────────────────────────────────────────────────────────────
-ACCOUNT_ID: str = "ftmo-100k"
+# Dynamically resolved so adding/removing MT5 accounts needs NO code change.
+# Resolution order: bridge active account → first configured account → "".
+def _resolve_account_id() -> str:
+    import json
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"{BRIDGE_BASE}/api/v1/active-account", timeout=3) as r:
+            data = json.loads(r.read().decode())
+        aid = data.get("active_account_id") or ""
+        if aid and aid not in ("null", "None", "default"):
+            return aid
+    except Exception:
+        pass
+    try:
+        with urllib.request.urlopen(f"{BRIDGE_BASE}/api/v1/accounts", timeout=3) as r:
+            accounts = json.loads(r.read().decode())
+        if isinstance(accounts, list) and accounts:
+            first = accounts[0].get("id") or ""
+            if first and first not in ("null", "None", "default"):
+                return first
+    except Exception:
+        pass
+    return ""
+
+
+ACCOUNT_ID: str = _resolve_account_id()
 
 # ── Bridge URL helpers ─────────────────────────────────────────────────────────
 

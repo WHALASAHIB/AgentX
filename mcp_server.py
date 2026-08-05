@@ -128,7 +128,7 @@ server = MCPServer(
              "equity, open positions count, total P&L, and connection status. "
              "Use FIRST before any trading operation to understand account state.")
 async def get_account_summary(account_id: str) -> CallToolResult:
-    """Get detailed trading account summary. account_id: e.g. mt5-demo, ftmo-10k, ftmo-100k."""
+    """Get detailed trading account summary. account_id: any configured account (see /api/v1/accounts)."""
     account = await bridge.get_account(account_id)
     if not account:
         return CallToolResult(isError=True, content=[TextContent(type="text",
@@ -149,7 +149,7 @@ async def get_account_summary(account_id: str) -> CallToolResult:
 @server.tool(description="Switch the active MT5 trading account. The bridge disconnects from "
              "current account and connects to the target. Use to change which account you trade on.")
 async def switch_active_account(account_id: str) -> CallToolResult:
-    """Switch active MT5 account. account_id: target account (mt5-demo, ftmo-10k, ftmo-100k)."""
+    """Switch active MT5 account. account_id: target account (any configured account)."""
     result = await bridge.switch_account(account_id)
     if result is None:
         return CallToolResult(isError=True, content=[TextContent(type="text",

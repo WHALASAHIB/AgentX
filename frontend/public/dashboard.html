@@ -86,6 +86,9 @@
     .live-active { color: var(--success); font-weight: 600; }
     .live-active::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 6px; vertical-align: middle; animation: pulse 2s infinite; }
     .live-inactive { color: var(--text-sec); font-weight: 500; }
+    .account-switcher { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; outline: none; }
+    .account-switcher:focus { border-color: var(--accent); }
+    .header-controls { display: flex; align-items: center; gap: 10px; }
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -377,14 +380,70 @@
         const res = await fetch(API+'/api/accounts/active', {
           headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
         });
-        if (!res.ok) { activeAccountId = 'mt5-demo'; return 'mt5-demo'; }
         const data = await res.json();
-        activeAccountId = data.active_account_id || 'mt5-demo';
+        activeAccountId = data.active_account_id || null;
+        if (!activeAccountId) activeAccountId = await firstAvailableAccount();
         return activeAccountId;
       } catch(e) {
         console.error('fetchActiveAccount error:', e);
-        activeAccountId = 'mt5-demo';
-        return 'mt5-demo';
+        activeAccountId = await firstAvailableAccount();
+        return activeAccountId;
+      }
+    }
+
+    // Dynamic fallback — never hardcode an account ID. Uses the first
+    // configured account so adding/removing accounts needs no code change.
+    async function firstAvailableAccount() {
+      try {
+        const res = await fetch(API+'/api/accounts', {
+          headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+        });
+        if (res.ok) {
+          const accounts = await res.json();
+          if (Array.isArray(accounts) && accounts.length > 0) return accounts[0].id;
+        }
+      } catch(e) { console.error('firstAvailableAccount error:', e); }
+      return null;
+    }
+
+    async function loadAccountSwitcher() {
+      try {
+        const res = await fetch(API+'/api/accounts', {
+          headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+        });
+        if (!res.ok) return;
+        const accounts = await res.json();
+        const sel = document.getElementById('accountSwitcher');
+        if (!sel || !Array.isArray(accounts) || accounts.length === 0) return;
+        sel.innerHTML = accounts.map(a =>
+          `<option value="${a.id}" ${a.id===activeAccountId?'selected':''}>${a.name} (${a.login||a.id})</option>`
+        ).join('');
+      } catch(e) { console.error('loadAccountSwitcher error:', e); }
+    }
+
+    async function switchActiveAccount(accountId) {
+      if (!accountId || accountId === activeAccountId) return;
+      const sel = document.getElementById('accountSwitcher');
+      const prev = activeAccountId;
+      try {
+        const res = await fetch(API+'/api/accounts/'+accountId+'/switch', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer '+localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        if (data.status !== 'switched') {
+          alert('Switch failed: '+(data.detail||'unknown error'));
+          if (sel) sel.value = prev;
+          return;
+        }
+        activeAccountId = accountId;
+        // Reload everything for the new account
+        await Promise.all([fetchPrices(), fetchStats(), fetchPositions()]);
+        document.getElementById('lastUpdate').textContent = 'Switched to '+accountId+' — '+new Date().toLocaleTimeString();
+      } catch(e) {
+        console.error('switchActiveAccount error:', e);
+        alert('Switch error: '+e.message);
+        if (sel) sel.value = prev;
       }
     }
 
@@ -431,6 +490,7 @@
     async function init() {
       authCheck();
       await fetchActiveAccount();
+      await loadAccountSwitcher();
       await updateLiveIndicator();
       setInterval(updateLiveIndicator, 10000);
       await Promise.all([fetchPrices(), fetchSentiment(), fetchStats(), fetchPositions()]);

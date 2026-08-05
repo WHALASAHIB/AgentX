@@ -27,6 +27,34 @@ def get_last_fetch_info() -> dict:
     """Return info about the most recent fetch call."""
     return {"source": _last_fetch_source, "bars_fetched": _last_fetch_count}
 
+
+def _resolve_bridge_account(bridge_url: str = "http://127.0.0.1:5000") -> str:
+    """Dynamically resolve the bridge account ID (active → first → '').
+
+    Never hardcodes an account ID so the backtester keeps working as
+    accounts are added or removed (30-40+ scaling).
+    """
+    import requests
+    try:
+        r = requests.get(f"{bridge_url}/api/v1/active-account", timeout=5)
+        if r.status_code == 200:
+            aid = (r.json().get("active_account_id") or "").strip()
+            if aid and aid not in ("null", "None", "default"):
+                return aid
+    except Exception:
+        pass
+    try:
+        r = requests.get(f"{bridge_url}/api/v1/accounts", timeout=5)
+        if r.status_code == 200:
+            accounts = r.json()
+            if isinstance(accounts, list) and accounts:
+                first = (accounts[0].get("id") or "").strip()
+                if first and first not in ("null", "None", "default"):
+                    return first
+    except Exception:
+        pass
+    return ""
+
 # ── Instrument metadata ──────────────────────────────────────────────────────
 INSTRUMENTS: dict[str, dict] = {
     "XAUUSD": {"ticker": "XAUUSD", "spread_pips": 1.0, "pip_value": 0.01, "contract_size": 100},
@@ -86,8 +114,9 @@ def _fetch_from_bridge(
     import requests
     global _last_fetch_source, _last_fetch_count
 
-    # Use ftmo-100k account (has market data access via bridge)
-    account_id = "ftmo-100k"
+    # Resolve account dynamically — never hardcode an account ID, so the
+    # backtester keeps working as accounts are added/removed (30-40+ scaling).
+    account_id = _resolve_bridge_account(bridge_url)
 
     # Map interval to bridge format
     interval_map = {

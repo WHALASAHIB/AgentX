@@ -1164,6 +1164,34 @@ async def switch_account(account_id: str, auth=Depends(require_auth)):
     bridge = get_bridge()
     db = get_db()
 
+    # No-op guard: if the target is already the active account (or the only
+    # configured account), skip the terminal restart entirely — killing and
+    # restarting terminal64.exe would disrupt the live data feed for nothing.
+    try:
+        active_resp = await bridge.get("/api/v1/active-account")
+        current_active = active_resp.get("active_account_id") if isinstance(active_resp, dict) else None
+    except Exception:
+        current_active = None
+    try:
+        bridge_accts = await bridge.list_accounts()
+    except Exception:
+        bridge_accts = []
+    if current_active == account_id or (len(bridge_accts) <= 1 and account_id in [a.get("id") for a in bridge_accts]):
+        db.set_active_account(account_id)
+        db_acct = db.get_account(account_id)
+        return {
+            "status": "switched",
+            "active_account_id": account_id,
+            "account": {
+                "id": account_id,
+                "login": (db_acct or {}).get("login", ""),
+                "name": (db_acct or {}).get("name", ""),
+                "server": (db_acct or {}).get("server", ""),
+                "connected": True, "stale": False,
+            },
+            "skipped_terminal_restart": True,
+        }
+
     # Step 1: Call bridge's terminal-switch endpoint (kills & restarts MT5
     # terminal with the target account's credentials). This bypasses the
     # mt5.login() limitation by fully restarting the terminal process.
@@ -1411,7 +1439,7 @@ async def test_bot_start():
             bridge_accts = await bridge.list_accounts()
             logger.info("TestBot fallback: bridge accounts=%s", bridge_accts)
             if bridge_accts and len(bridge_accts) > 0:
-                active_id = bridge_accts[0].get("id", "mt5-demo")
+                active_id = bridge_accts[0].get("id")
                 logger.info("Fallback: using first bridge account '%s' for test bot", active_id)
         except Exception as e:
             logger.error("TestBot fallback: bridge.list_accounts() failed: %s", e)
