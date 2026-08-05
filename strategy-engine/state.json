@@ -1,6 +1,6 @@
 {
-  "iteration": 800,
-  "last_run": "2026-08-04T06:54:40Z",
+  "iteration": 803,
+  "last_run": "2026-08-04T07:54:15Z",
   "best_strategy": "iter_464_ema3_8_atr_trail.pine",
   "best_metrics": {
     "pf": 104.45174129,
@@ -13,7 +13,7 @@
     "timeframe": "30m",
     "iteration": 464
   },
-  "current_hypothesis": "FRESH-SYMBOL PIVOT per the iter-799 conclusion (Ichimoku TK-cross-above-cloud DEGRADED the peak again: 41 trades, PF 0.708 vs 0.609, Sharpe -1.68 vs -2.87, WR 70.7% vs 58.0%, DD 6.59% vs 12.56%, net -$298.04 vs -$1,008.40, result 01KZ5RSNQYYRGZDKJ56AWM9FH0 -- frequency cut 81->41 exactly as hypothesized but payoff 0.293x puts breakeven WR at ~77.3% vs actual 70.7%; ICHIMOKU FAMILY CLOSED on BTC 30m: raw cloud breakout AND TK-cross both degrade below PF 1.3; BTC 30m edge CONFIRMED ENTRY-SPECIFIC to the EMA3/8+RSI40+ADX28+EMA150 stack; TP2500/SL5000 stands as terminal barrier optimum). ONE change: take the proven iter-796 stack (EMA3/8 + RSI40 + ADX28 + EMA150 long-only, TP2500/SL5000 manual barriers, flat-only, 1-bar min hold) to a FRESH SYMBOL -- BYBIT:ETHUSDT.P 30m -- to test whether the edge is symbol-transferable (ETH is the highest-liquidity alt perp on Bybit; iter-791 tested ETHUSDT 30m with TP3000/SL4500 and got 15 trades -- sub-20 invalid -- so the barrier geometry must be re-validated on ETH; the exploration ledger shows XAUUSD/GBPUSD/EURUSD 1h/4h all quality-negative on this stack, ETHUSDT 30m is the untested-valid frontier). If ETHUSDT 30m also degrades below PF 1.3, the strategy-engine store is saturated on this stack and the pivot is a genuinely new indicator family + symbol pair.",
+  "current_hypothesis": "REFORMULATE DONCHIAN PRIOR-BAR CHANNEL per the iter-802 result (ta.highest(high,20)[1] STILL produced ZERO trades on BYBIT:SOLUSDT.P 30m, result 01KZ5W5WVJ6YEPRPDNXX76E145 -- 4603 bars evaluated cleanly, engine tv_jul26_mc7, no compile errors, but totalTrades=0: the tv_jul26 engine does NOT honor the [1] history operator applied directly to a ta.highest()/ta.lowest() function call, so the shifted channel is either dropped (same-bar lookahead persists) or na (condition never true)). ONE change: prior-bar channel formulation -> INPUT-series shift upper_channel = ta.highest(high[1], donchian_len) and lower_channel = ta.lowest(low[1], donchian_len) (shift the INPUT series instead of the function result -- high[1] is a plain built-in series shift the engine MUST support since ta.crossover depends on it, so the 20-bar-prior channel is computed without history-referencing a function call). ALL else UNCHANGED: donchian_len 20, LONG-ONLY, flat-only, 1-bar min hold, manual TP2500/SL5000 tick barriers, BYBIT:SOLUSDT.P 30m. If this fires >= 20 trades with PF >= 1.3 the fresh-symbol Donchian hypothesis is validated; if it still produces 0 trades, the engine cannot compute a prior-bar Donchian channel at all and the family must be abandoned on SOLUSDT.",
   "evolution_log": [
     {
       "iteration": 685,
@@ -2778,6 +2778,100 @@
       },
       "verdict": "rejected (PF=0.71 < 1.3, Sharpe=-1.68 < 0.5) -- ICHIMOKU TK-CROSS VARIANT DEGRADED the iter-796 terminal peak on BYBIT:BTCUSDT.P 30m (result 01KZ5RSNQYYRGZDKJ56AWM9FH0): on the SAME ~4610-bar window (barsEvaluated 4606, coverage 106.97%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.1/qtyStep=0.001 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the tenkan/kijun TK-cross-above-cloud entry (tenkan 9 / kijun 26 / senkou 52 standard, close > cloud_top required) with the UNCHANGED TP2500/SL5000 manual barriers produced 41 trades (29W/12L, WR 70.7%, PF 0.708, Sharpe -1.68, DD 6.59%, net -$298.04, final equity $9,701.96, commission $397.73/41 ~ $9.70/trade incl. in netProfit) -- VALID sample (41 >= 20 floor). Frequency cut EXACTLY as hypothesized (81 -> 41 trades, the TK cross fires rarer than the cloud re-claim), but the edge still does NOT materialize: realized payoff 0.293x (avg win +$24.93 vs avg loss -$85.08) puts breakeven WR at ~77.3%; actual 70.7% misses it by ~6.6pp -- the TK-cross entry is BETTER than the raw cloud breakout (PF 0.708 vs 0.609, WR 70.7% vs 58.0%, DD 6.59% vs 12.56%, net -$298 vs -$1,008) but still far below the iter-796 EMA peak (22 trades, PF 2.06, Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74). LONG-ONLY exactly as intended (41 longs/0 shorts). Cascade 1.0 perfect (41 unique/41 rows, max depth 1). All rulebook gates FAILED (PF<1.3, Sharpe<0.5). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). ICHIMOKU FAMILY NOW CLOSED on BTC 30m: raw cloud breakout (iter 798, PF 0.61, 81 trades) AND TK-cross-above-cloud (iter 799, PF 0.71, 41 trades) both degrade below PF 1.3 -- the BTC 30m edge is CONFIRMED ENTRY-SPECIFIC to the EMA3/8+RSI40+ADX28+EMA150 stack. Per the iter-797/798 contingency, the final untested lever is a FRESH SYMBOL with the proven stack.",
       "time": "2026-08-04T06:54:40Z"
+    },
+    {
+      "iteration": 800,
+      "symbol": "BYBIT:ETHUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "FRESH-SYMBOL PIVOT per the iter-799 conclusion (Ichimoku TK-cross-above-cloud DEGRADED the peak again: 41 trades, PF 0.708 vs 0.609, Sharpe -1.68 vs -2.87, WR 70.7% vs 58.0%, DD 6.59% vs 12.56%, net -$298.04 vs -$1,008.40, result 01KZ5RSNQYYRGZDKJ56AWM9FH0 -- ICHIMOKU FAMILY CLOSED on BTC 30m; BTC 30m edge CONFIRMED ENTRY-SPECIFIC to the EMA3/8+RSI40+ADX28+EMA150 stack; TP2500/SL5000 stands as terminal barrier optimum). ONE change: symbol BYBIT:BTCUSDT.P -> BYBIT:ETHUSDT.P, timeframe 30m, ALL parameters UNCHANGED from the iter-796 TERMINAL PEAK (EMA3/8 crossover + RSI40 + ADX28 + EMA150 long-only regime + TP2500/SL5000 manual barriers, flat-only, 1-bar min hold, NO breakeven). Rationale: iter-791 tested ETHUSDT 30m with TP3000/SL4500 and got 15 trades (sub-20 invalid -- barrier geometry NOT validated on ETH); this run re-validates ETH at the terminal barrier optimum. If the EMA stack edge is structural (trend-following on crypto perps with fixed tick barriers) it should transfer to ETHUSDT at TP2500/SL5000 with WR/PF similar to the BTC 22-trade peak (PF 2.06, Sharpe 2.21, WR 77.3%, net +$313.74); if ETH degrades below PF 1.3, the store is saturated on this stack and the pivot is a genuinely new indicator family + symbol pair.",
+      "metrics": {
+        "pf": 0.76029739,
+        "sharpe": -1.07562641,
+        "wr": 61.9047619,
+        "dd": 6.37959819,
+        "trades": 21,
+        "net_profit": -505.712402550005,
+        "commission_paid": 205.49590255,
+        "cascade": 1.0,
+        "long_trades": 21,
+        "short_trades": 0,
+        "long_winning": 13,
+        "avg_win": 123.387448503846,
+        "avg_loss": -263.7186541375,
+        "ratio_avg_win_loss": 0.46787532,
+        "avg_bars_in_trade": 35.80952381,
+        "gross_profit": 1604.036830549997,
+        "gross_loss": 2109.749233100002,
+        "bars_evaluated": 4605,
+        "coverage_pct": 106.97,
+        "final_equity": 9494.287597449995,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5T7502VFJC11SV8T9GQCWN"
+      },
+      "verdict": "rejected (PF=0.76 < 1.3, Sharpe=-1.08 < 0.5) -- FRESH-SYMBOL PIVOT to BYBIT:ETHUSDT.P 30m DEGRADED the iter-796 terminal peak on BYBIT:BTCUSDT.P 30m (result 01KZ5T7502VFJC11SV8T9GQCWN): on the ~4605-bar window (coverage 106.97%, no truncation warnings, engine tv_jul26_mc7, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters tick=0.01/qtyStep=0.01 applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments) the EMA3/8 + RSI40 + ADX28 + EMA150 long-only stack with TP2500/SL5000 manual barriers produced 21 trades (13W/8L, WR 61.9%, PF 0.760, Sharpe -1.08, DD 6.38%, net -$505.71, final equity $9,494.29, commission $205.50/21 ~ $9.79/trade incl. in netProfit) -- VALID sample (21 >= 20 floor). Quality CRATERED vs the BTC 30m peak (22 trades, PF 2.06, Sharpe 2.21, WR 77.3%, DD 1.55%, net +$313.74): the entry stack fired at the SAME frequency (21 vs 22 trades -- signal cadence transfers) but the payoff structure collapsed: realized payoff 0.468x (avg win +$123.39 vs avg loss -$263.72) puts breakeven WR at ~68.1%; actual 61.9% misses it by ~6.2pp (vs BTC's 0.607x payoff and +15.1pp margin at the same WR), and avgBarsInTrade exploded 7.3 -> 35.8 -- the fixed tick barriers are proportionally FARTHER from ETH entry prices, so losers run 5x longer before the SL triggers. LONG-ONLY exactly as intended (21 longs/0 shorts, EMA150 regime gate kept). Cascade 1.0 perfect (21 unique/21 rows, max depth 1). All rulebook gates FAILED (PF<1.3, Sharpe<0.5). NOT a new all-time best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). KEY MAPPING RESULT: ETHUSDT 30m is now quality-negative on this stack at BOTH barrier configs tested (iter-791 TP3000/SL4500: 15 trades invalid; iter-800 TP2500/SL5000: PF 0.76 rejected) -- combined with the XAUUSD/GBPUSD/EURUSD 1h/4h/30m ledger, the EMA3/8+RSI40+ADX28+EMA150 stack edge is BTC-30m-SPECIFIC. Per the iter-799 contingency, the store is SATURATED on this stack; the next pivot is a genuinely new indicator family + symbol pair.",
+      "time": "2026-08-04T07:19:53Z"
+    },
+    {
+      "iteration": 801,
+      "symbol": "BYBIT:SOLUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "NEW FAMILY + FRESH SYMBOL PIVOT per the iter-800 conclusion (ETHUSDT 30m DEGRADED the peak at the terminal barrier optimum: 21 trades, PF 0.760, Sharpe -1.08, WR 61.9%, DD 6.38%, net -$505.71, result 01KZ5T7502VFJC11SV8T9GQCWN -- the EMA3/8+RSI40+ADX28+EMA150 stack fired at the SAME frequency on ETH (21 vs 22 trades) but payoff collapsed to 0.468x with avgBarsInTrade 35.8 vs 7.3 (fixed tick barriers are proportionally farther from ETH entry prices); combined with the XAUUSD/GBPUSD/EURUSD ledger, the stack edge is BTC-30m-SPECIFIC and the store is SATURATED on this stack). ONE change: indicator family -> Donchian channel breakout (donchian_len 20, ta.highest(high,20)/ta.lowest(low,20)) LONG-ONLY (close crosses above the upper channel = long) on a FRESH SYMBOL BYBIT:SOLUSDT.P 30m (never tested on the ledger; SOL is the 3rd-highest-liquidity Bybit perp after BTC/ETH), with the proven flat-only + 1-bar min hold structure and fixed-tick manual barriers TP2500/SL5000 as the starting default (sweep 1000-5000 step 500 to re-map barrier geometry on the new symbol's tick scale).",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": null,
+        "wr": 0.0,
+        "dd": 0.0,
+        "trades": 0,
+        "net_profit": 0.0,
+        "commission_paid": 0.0,
+        "cascade": 0.0,
+        "long_trades": 0,
+        "short_trades": 0,
+        "long_winning": 0,
+        "avg_win": 0.0,
+        "avg_loss": 0.0,
+        "ratio_avg_win_loss": 0.0,
+        "avg_bars_in_trade": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "bars_evaluated": 4603,
+        "final_equity": 10000.0,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5VBN60DF7B0SF8X279MPGA"
+      },
+      "verdict": "invalid (no trades) -- Donchian breakout produced ZERO trades on BYBIT:SOLUSDT.P 30m (result 01KZ5VBN60DF7B0SF8X279MPGA): the backtest executed cleanly (engine tv_jul26_mc7, 4603 bars evaluated May 2026-Aug 2026, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, cascade 1.0/0 rows, no compile errors, no truncation warnings) but totalTrades=0, net $0.00, final equity $10,000 flat. ROOT CAUSE = CLASSIC DONCHIAN SAME-BAR LOOKAHEAD BUG: ta.highest(high, 20) includes the CURRENT bar's high in the channel window, so upper_channel >= high >= close on every bar and ta.crossover(close, upper_channel) can NEVER fire -- close can never exceed a channel that contains the current bar's own high. The channel must be computed on PRIOR bars only: upper_channel = ta.highest(high, donchian_len)[1] (or ta.highest(high[1], donchian_len)), then close crossing above the 20-bar-prior high is a genuine breakout. No symbol/edge conclusion can be drawn from this run -- the SOLUSDT 30m Donchian hypothesis is UNTESTED until the lookahead is fixed. NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). NEXT: iter 802 re-runs the identical Donchian20 long-only SOLUSDT 30m hypothesis with the prior-bar channel fix ta.highest(high,20)[1]/ta.lowest(low,20)[1], TP2500/SL5000 unchanged.",
+      "time": "2026-08-04T07:39:04Z"
+    },
+    {
+      "iteration": 802,
+      "symbol": "BYBIT:SOLUSDT.P",
+      "timeframe": "30m",
+      "hypothesis": "FIX DONCHIAN SAME-BAR LOOKAHEAD per the iter-801 result (Donchian20 long-only on BYBIT:SOLUSDT.P 30m produced ZERO trades, result 01KZ5VBN60DF7B0SF8X279MPGA -- ta.highest(high,20) includes the CURRENT bar's high so close can never cross above the upper channel; 4603 bars evaluated cleanly, no compile errors, no symbol/edge conclusion possible). ONE change: channel lookback -> PRIOR-bar channel upper_channel = ta.highest(high, donchian_len)[1] and lower_channel = ta.lowest(low, donchian_len)[1] so close crossing above the 20-bar-prior high is a genuine breakout (classic Donchian fix). ALL else UNCHANGED: donchian_len 20, LONG-ONLY, flat-only, 1-bar min hold, manual TP2500/SL5000 tick barriers, BYBIT:SOLUSDT.P 30m.",
+      "metrics": {
+        "pf": 0.0,
+        "sharpe": -0.97970194,
+        "wr": 0.0,
+        "dd": 0.0,
+        "trades": 0,
+        "net_profit": 0.0,
+        "commission_paid": 0.0,
+        "cascade": 0.0,
+        "long_trades": 0,
+        "short_trades": 0,
+        "long_winning": 0,
+        "avg_win": 0.0,
+        "avg_loss": 0.0,
+        "ratio_avg_win_loss": 0.0,
+        "avg_bars_in_trade": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "bars_evaluated": 4603,
+        "final_equity": 10000.0,
+        "engine": "tv_jul26_mc7",
+        "result_id": "01KZ5W5WVJ6YEPRPDNXX76E145"
+      },
+      "verdict": "invalid (no trades) -- PRIOR-BAR FIX STILL ZERO TRADES on BYBIT:SOLUSDT.P 30m (result 01KZ5W5WVJ6YEPRPDNXX76E145): the backtest executed cleanly (engine tv_jul26_mc7, 4603 bars evaluated May 2026-Aug 2026, toTs clamped 2026-08-04T00:00 clickhouse last bar, Bybit lot filters applied, parity commission 0.05% + percent_of_equity:100 confirmed via parityAdjustments, cascade 1.0/0 rows, no compile errors, no truncation warnings) but totalTrades=0, net $0.00, final equity $10,000 flat. ROOT CAUSE: the tv_jul26 engine does NOT honor the [1] history operator applied DIRECTLY to a ta.highest()/ta.lowest() function call -- the shifted result is either dropped (same-bar lookahead persists: channel still includes the current bar's high, close can never cross) or evaluates to na (condition never true). Both failure modes produce 0 trades; over 4603 bars (~96 days) of volatile SOL 30m data a genuine prior-20-bar-high breakout CANNOT legitimately fire zero times. No symbol/edge conclusion possible -- the Donchian20 SOLUSDT 30m hypothesis remains UNTESTED until the prior-bar channel is computed in an engine-compatible form. NOT a new best (iter-464 record PF 104.45 / Sharpe 22.28 / WR 92.4% on 264 trades stands). NEXT: iter 803 reformulates the IDENTICAL hypothesis with the INPUT-series shift ta.highest(high[1], donchian_len)/ta.lowest(low[1], donchian_len) -- high[1] is a plain built-in series shift the engine must support (ta.crossover depends on it), so the prior-bar channel is computed without history-referencing a function call.",
+      "time": "2026-08-04T07:54:15Z"
     }
   ],
   "started_at": "2026-06-23T11:23:00",
@@ -2786,7 +2880,8 @@
     "GBPUSD",
     "BYBIT:BTCUSDT.P",
     "EURUSD",
-    "BYBIT:ETHUSDT.P"
+    "BYBIT:ETHUSDT.P",
+    "BYBIT:SOLUSDT.P"
   ],
   "timeframes_explored": [
     "1h",

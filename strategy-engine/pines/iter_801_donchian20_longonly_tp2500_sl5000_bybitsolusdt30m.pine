@@ -1,0 +1,55 @@
+//@version=6
+strategy(title="Donchian20 LongOnly Breakout BarrierExit TP2500 SL5000 BYBITSOLUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 801: NEW FAMILY + FRESH SYMBOL PIVOT per the iter-800 conclusion (ETHUSDT 30m DEGRADED
+// the peak at the terminal barrier optimum: 21 trades, PF 0.760, Sharpe -1.08, WR 61.9%,
+// DD 6.38%, net -$505.71, result 01KZ5T7502VFJC11SV8T9GQCWN -- the EMA3/8+RSI40+ADX28+EMA150
+// stack fired at the SAME frequency on ETH (21 vs 22 trades) but payoff collapsed to 0.468x with
+// avgBarsInTrade 35.8 vs 7.3 (fixed tick barriers are proportionally farther from ETH entry prices);
+// combined with the XAUUSD/GBPUSD/EURUSD ledger, the stack edge is BTC-30m-SPECIFIC and the store
+// is SATURATED on this stack).
+// ONE change: indicator family -> Donchian channel breakout (donchian_len 20,
+// ta.highest(high,20)/ta.lowest(low,20)) LONG-ONLY (close crosses above the upper channel = long)
+// on a FRESH SYMBOL BYBIT:SOLUSDT.P 30m (never tested on the ledger; SOL is the 3rd-highest-
+// liquidity Bybit perp after BTC/ETH), with the proven flat-only + 1-bar min hold structure and
+// fixed-tick manual barriers TP2500/SL5000 as the starting default.
+// Rationale: ta.highest/ta.lowest are supported by the tv_jul26 engine and Donchian is the only
+// untested major breakout family (EMA/MACD/BB/Supertrend/Ichimoku all mapped); if SOLUSDT 30m also
+// degrades below PF 1.3, the store is exhausted on the tested families x symbols and the BTC 30m
+// terminal peak (PF 2.06, net +$313.74 on 22 trades) is the final answer to accept and promote.
+
+//--- inputs
+donchian_len = input.int(20, "Donchian Length", minval=5, maxval=100)       // sweep: 10-40 step 5
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // sweep: 1000-5000 step 500 (re-map barrier geometry on SOL tick scale)
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // sweep: 1000-5000 step 500 (re-map barrier geometry on SOL tick scale)
+
+//--- indicator calculations
+upper_channel = ta.highest(high, donchian_len)
+lower_channel = ta.lowest(low, donchian_len)
+
+//--- entry conditions (LONG-ONLY. iter 801: Donchian channel breakout -- close crosses ABOVE the
+// upper channel = long; pure breakout, no RSI/ADX/EMA filters. SOLUSDT is a fresh symbol never
+// tested on the ledger. Hypothesis: if the Donchian breakout edge is structural on crypto perps it
+// should surface on SOL at the TP2500/SL5000 default; fixed BTC-tuned barriers may NOT transfer
+// (ETH failure) so the sweep comments re-map 1000-5000 step 500 on the next iterations.)
+cross_up = ta.crossover(close, upper_channel)
+long_condition = cross_up
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")

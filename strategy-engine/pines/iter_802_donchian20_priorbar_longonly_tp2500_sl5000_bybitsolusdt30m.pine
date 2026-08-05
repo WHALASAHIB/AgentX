@@ -1,0 +1,54 @@
+//@version=6
+strategy(title="Donchian20 PriorBar LongOnly Breakout BarrierExit TP2500 SL5000 BYBITSOLUSDT30m", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 802: FIX DONCHIAN SAME-BAR LOOKAHEAD per the iter-801 result (Donchian20 long-only on
+// BYBIT:SOLUSDT.P 30m produced ZERO trades, result 01KZ5VBN60DF7B0SF8X279MPGA -- ta.highest(high,20)
+// includes the CURRENT bar's high so close can never cross above the upper channel, 4603 bars
+// evaluated cleanly, no compile errors, no symbol/edge conclusion possible).
+// ONE change: channel lookback -> PRIOR-bar channel upper_channel = ta.highest(high, donchian_len)[1]
+// and lower_channel = ta.lowest(low, donchian_len)[1] so close crossing above the 20-bar-prior high
+// is a genuine breakout (classic Donchian fix). ALL else UNCHANGED: donchian_len 20, LONG-ONLY,
+// flat-only, 1-bar min hold, manual TP2500/SL5000 tick barriers, BYBIT:SOLUSDT.P 30m.
+// If the fixed Donchian fires >= 20 trades with PF >= 1.3, the fresh-symbol Donchian hypothesis is
+// validated, if it degrades below PF 1.3, the store is exhausted on the tested families
+// (EMA/MACD/BB/Supertrend/Ichimoku/Donchian) x symbols (XAUUSD/GBPUSD/EURUSD/BTC/ETH/SOL) and the
+// BTC 30m terminal peak (PF 2.06, net +$313.74 on 22 trades) is the final answer to accept and promote.
+
+//--- inputs
+donchian_len = input.int(20, "Donchian Length", minval=5, maxval=100)       // sweep: 10-40 step 5
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // sweep: 1000-5000 step 500 (re-map barrier geometry on SOL tick scale)
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // sweep: 1000-5000 step 500 (re-map barrier geometry on SOL tick scale)
+
+//--- indicator calculations (PRIOR-BAR channel -- iter 802 fix: [1] shift excludes the current
+// bar's own high/low so a close breakout above the 20-bar-prior channel is a GENUINE breakout,
+// without the shift ta.highest(high,20) >= high >= close on every bar and the crossover can never fire)
+upper_channel = ta.highest(high, donchian_len)[1]
+lower_channel = ta.lowest(low, donchian_len)[1]
+
+//--- entry conditions (LONG-ONLY. iter 802: Donchian channel breakout with prior-bar channel --
+// close crosses ABOVE the 20-bar-prior upper channel = long, pure breakout, no RSI/ADX/EMA filters.
+// SOLUSDT is a fresh symbol never tested on the ledger. Hypothesis: if the Donchian breakout edge
+// is structural on crypto perps it should surface on SOL at the TP2500/SL5000 default, fixed
+// BTC-tuned barriers may NOT transfer (ETH failure) so the sweep comments re-map 1000-5000 step 500
+// on the next iterations.)
+cross_up = ta.crossover(close, upper_channel)
+long_condition = cross_up
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")

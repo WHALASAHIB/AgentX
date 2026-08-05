@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-08-03",
+  "last_updated": "2026-08-04",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -153,6 +153,13 @@
       "root_cause": "Aug 2 council order not executed. C:\\Hermess\\mt5_config.json AND C:\\Hermess\\config\\mt5_config.json still login 5051185832/MetaQuotes-Demo (mtime Jul 29 22:44 unchanged; ground truth 1513990433/FTMO-Demo in C:\\Trading\\mt5_config.json Jul 15). PIDs 20008 (propfirm_pass_bot.py) + 20272 (propfirm_pass_gbpusd.py) still alive at 37MB each. TWO concurrent terminal64.exe (PIDs 9152+21684, liveupdate path, empty MainWindowTitle, ~103MB) stable across 3 samples but mt5.initialize HANGS (probe exit 124) = kill-loop persists. Risk supervisor TimeoutExpired 60s at 15:02+15:12 HKT, backend-watchdog exit 1 (15:07), bridge_watchdog exit 1 (14:30), paper_propfirm_pass timed out 3600s Aug 1. risk_state.json stale 29h (Aug 2 02:08 UTC, >24h CRITICAL). Bridge data stale since Jul 30 13:34 UTC (4+ days). Bot log silent since Aug 1 21:18 local.",
       "fix": "EXECUTE Aug 2 order BEFORE 07:30 UTC launcher fires: (1) restore BOTH C:\\Hermess\\mt5_config.json + C:\\Hermess\\config\\mt5_config.json to 1513990433/FTMO-Demo; (2) taskkill /F PIDs 20008+20272, verify 0 propfirm instances; (3) kill BOTH terminal64.exe instances so a single clean terminal restarts; (4) restart risk supervisor, verify it stops killing the CORRECT account; (5) restart exactly ONE bot, verify ACCOUNT READY login=1513990433; (6) verify bridge last_data_timestamp refreshes past Jul 30 13:34 UTC.",
       "prevention_rule": "Council orders must be executed or explicitly deferred the same day. Verify config mtimes, propfirm instance count, AND concurrent terminal64 count every council run until all normalize. 2+ concurrent terminal64 + init hang (exit 124) = kill-loop regardless of PID stability. Launcher fires 07:30 UTC Mon-Fri - pre-flight check must run before it."
+    },
+    {
+      "date": "2026-08-04",
+      "pattern": "Council Aug 4 15:07 HKT - DAY 5 kill-loop: FULL config poison (C:\\Trading\\mt5_config.json overwritten 01:24 UTC), zombies 20008+20272 STILL alive, risk supervisor + bridge_watchdog crons failing, but news feed RECOVERED and backend-watchdog RECOVERED",
+      "root_cause": "ALL 3 mt5_config.json files now carry login 5051185832/MetaQuotes-Demo (Hermess x2 mtime Jul 29 22:44 unchanged; C:\\Trading overwritten Aug 4 01:24 UTC). NO clean config on disk - expected account 1513990433/FTMO-Demo from historical record only (anchor rule). PIDs 20008 (propfirm_pass_bot.py) + 20272 (propfirm_pass_gbpusd.py) still alive at 37MB each - Aug 2 kill order unexecuted, day 5. Terminal kill-loop ACTIVE and oscillating: 2 concurrent terminal64 at 07:02 UTC -> 6 at 07:07 UTC, all PIDs rotated (liveupdate path, no account titles); probe exit 124 (init hang) = kill-loop persists, no init variants retried. Risk Supervisor TimeoutExpired 60s at 15:11 HKT (visible-blindness variant, day 4+); risk_state.json stale since 01:30 UTC (5.7h). bridge_watchdog exit 1 at 14:30 HKT. Bridge up (uptime 5.6h, restarted ~01:30 UTC) but last_data_timestamp NULL - subprocess proxy for CORRECT account 1513990433 spawned but connection never completes. NEW FINDING: usdjpy_momentum_bot (PID 20980, 41MB) alive on WRONG account 5051185832 with main loop silent since Aug 2 10:09 UTC - only news_calendar fetches logged since (2+ days), state file stale Jul 29. Propfirm bot log silent since Aug 1 21:18 local (66h); 0 trades magic 780012; v11 session window 09:00-00:00 UTC ahead today.",
+      "fix": "Escalate to Commander for hands-on execution (day 5): (1) restore ALL 3 configs to 1513990433/FTMO-Demo using historical credentials - manual re-entry required, no clean config remains on disk; (2) taskkill /F PIDs 20008 + 20272 + 20980, verify 0 propfirm/momentum instances; (3) kill ALL concurrent terminal64.exe so a single clean terminal restarts; (4) restart risk supervisor, verify it stops killing the CORRECT account; (5) reset risk_peak.json to the FTMO account starting balance; (6) restart exactly ONE propfirm bot, verify ACCOUNT READY login=1513990433; (7) verify bridge last_data_timestamp refreshes past its NULL state.",
+      "prevention_rule": "POSITIVE SIGNALS to log: ForexFactory news feed RECOVERED (97-98 events fetched since at least Aug 3 17:12 UTC, cache populated) and backend-watchdog recovered (ok 15:07 HKT) - the only subsystems that self-healed this week. Council kill/config orders remain unexecuted 5 days straight - any future council order must be verified executed or explicitly deferred the same day, and chronic unexecuted orders escalate to a Commander hands-on session."
     }
   ],
   "action_items": [
@@ -179,6 +186,7 @@
     "EURUSD sentiment mildly bullish (+0.33) but geopolitical risk elevated (Iran/US tensions)",
     "Risk supervisor GREEN on the WRONG account (5051185832/MetaQuotes-Demo, DD 3.79% vs contaminated peak $100,940) is meaningless for the FTMO challenge — supervisor must verify account login matches the FTMO config before reporting.",
     "0 trades since Jul 28 is NOT strategy failure — it is wrong-account + no-tick-data paralysis. Do not tune strategy parameters on zero new data.",
-    "EURUSD above 1.1500, DXY double-top breakdown toward 99.00, Eurozone Flash CPI today (headline expected 2.9% y/y) — high-impact event within session window."
+    "EURUSD above 1.1500, DXY double-top breakdown toward 99.00, Eurozone Flash CPI today (headline expected 2.9% y/y) — high-impact event within session window.",
+    "News feed + backend-watchdog self-healed (Aug 4) - the only subsystems to recover this week; all config/zombie/terminal issues still require manual execution after 5 days of unexecuted council orders."
   ]
 }
