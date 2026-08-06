@@ -1,0 +1,90 @@
+//@version=6
+strategy(title="EMA3/8 RSI40 ManualADX28 LongOnly EMA150Filter BarrierExit TP2500 SL5000 BYBITBTCUSDT30m iter845", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.04, process_orders_on_close=true, pyramiding=1)
+
+// iter 845: CHAMPION RE-VALIDATION (scheduled repro) per the iter-844 result
+// (result 01KZAVV1RPX7HKFXM4EJTK1T38 -- PF 1.96 / Sharpe 2.04 / WR 76.2% / DD 1.58% /
+// 21 trades / +$280.64, byte-identical to iter-816 through iter-843,
+// data window essentially unchanged).
+// ONE change: NONE -- next scheduled re-validation repro of the locked champion stack
+// (EMA3/8 + RSI40 + ADX28 + EMA150 long-only + TP2500/SL5000 manual barriers, flat-only,
+// 1-bar min hold, NO breakeven on BYBIT:BTCUSDT.P 30m).
+// Decision rule: repro stays within tolerance (PF >= 1.5 and trades >= 20 and WR >= 60%)
+// -> terminal answer iter-796 RE-CONFIRMED, store remains permanently locked; drift
+// beyond tolerance -> reopen exploration on the drifted axis.
+// Store locked at iter-796; iter-464 remains all-time best (PF 104.45 / Sharpe 22.28 /
+// WR 92.4% / 264 trades); 8/8 indicator families mapped, symbol/timeframe transfers failed.
+
+//--- inputs
+ema_fast_len = input.int(3, "Fast EMA", minval=1, maxval=50)       // iter 796: UNCHANGED at 3 (peak). sweep: 2-8 step 1
+ema_slow_len = input.int(8, "Slow EMA", minval=1, maxval=50)       // iter 796: UNCHANGED at 8 (peak). sweep: 5-21 step 2
+rsi_len = input.int(14, "RSI Length", minval=2, maxval=50)         // sweep: 7-21 step 7
+rsi_threshold = input.int(40, "RSI Threshold (long above)", minval=20, maxval=80)  // iter 796: RSI UNCHANGED at 40 (iter-769/770 peak). sweep: 30-60 step 10
+adx_len = input.int(14, "ADX Length", minval=7, maxval=30)         // sweep: 7-21 step 7
+adx_threshold = input.int(28, "ADX Threshold", minval=10, maxval=50)   // iter 796: ADX UNCHANGED at 28 (peak; ADX22 < ADX25 < ADX28 PEAK > ADX30 invalid). sweep: 15-35 step 5
+ema_regime_len = input.int(150, "Regime EMA Length", minval=50, maxval=300)   // iter 796: regime EMA 150 (proven-best long-side). sweep: 100-200 step 50
+take_profit_tick = input.int(2500, "Take Profit (ticks)", minval=100, maxval=20000, step=100)  // iter 796: TP UNCHANGED at 2500 (PF peak, iter 792). sweep: 2000-4000 step 500
+stop_loss_tick = input.int(5000, "Stop Loss (ticks)", minval=100, maxval=20000, step=100)     // iter 796: SL UNCHANGED at 5000 (SL map complete; TP2500/SL5000 confirmed optimum). sweep: 3000-6000 step 500
+
+//--- indicator calculations
+ema_fast = ta.ema(close, ema_fast_len)
+ema_slow = ta.ema(close, ema_slow_len)
+rsi_val = ta.rsi(close, rsi_len)
+ema_regime = ta.ema(close, ema_regime_len)
+
+//--- manual Wilder ADX calculation (built-in ta.adx not supported by engine)
+wilder_alpha = 1.0 / adx_len
+
+tr_val = math.max(high - low, math.abs(high - close[1]), math.abs(low - close[1]))
+up_move = high - high[1]
+down_move = low[1] - low
+plus_dm = up_move > down_move and up_move > 0 ? up_move : 0
+minus_dm = down_move > up_move and down_move > 0 ? down_move : 0
+
+var float smoothed_tr = na
+var float smoothed_plus_dm = na
+var float smoothed_minus_dm = na
+var float adx_val = na
+
+if na(smoothed_tr)
+    smoothed_tr := ta.sma(tr_val, adx_len)
+    smoothed_plus_dm := ta.sma(plus_dm, adx_len)
+    smoothed_minus_dm := ta.sma(minus_dm, adx_len)
+else
+    smoothed_tr := smoothed_tr + wilder_alpha * (tr_val - smoothed_tr)
+    smoothed_plus_dm := smoothed_plus_dm + wilder_alpha * (plus_dm - smoothed_plus_dm)
+    smoothed_minus_dm := smoothed_minus_dm + wilder_alpha * (minus_dm - smoothed_minus_dm)
+
+plus_di = 100 * smoothed_plus_dm / smoothed_tr
+minus_di = 100 * smoothed_minus_dm / smoothed_tr
+dx = 100 * math.abs(plus_di - minus_di) / (plus_di + minus_di)
+
+if na(adx_val)
+    adx_val := ta.sma(dx, adx_len)
+else
+    adx_val := adx_val + wilder_alpha * (dx - adx_val)
+
+//--- crossover detection
+cross_up = ta.crossover(ema_fast, ema_slow)
+
+//--- entry conditions (LONG-ONLY. iter 796 locked stack: EMA3/8 + RSI40 + ADX28 + EMA150
+// long-only regime + TP2500/SL5000 manual barriers, flat-only, 1-bar min hold, NO breakeven.)
+long_condition = cross_up and rsi_val > rsi_threshold and adx_val > adx_threshold and close > ema_regime
+
+//--- manual price-barrier tracking (no strategy.exit OCO -> no cascade)
+var float long_tp = na
+var float long_sl = na
+var int entry_bar = -1
+
+//--- entry logic (flat only, long side only)
+if long_condition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    long_tp := close + take_profit_tick * syminfo.mintick
+    long_sl := close - stop_loss_tick * syminfo.mintick
+    entry_bar := bar_index
+
+//--- exit management (manual barriers, min 1-bar hold to prevent same-bar cascade)
+if strategy.position_size > 0 and bar_index > entry_bar
+    if high >= long_tp
+        strategy.close("Long", comment="TP")
+    if low <= long_sl
+        strategy.close("Long", comment="SL")
