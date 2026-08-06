@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-08-04",
+  "last_updated": "2026-08-06",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -160,6 +160,13 @@
       "root_cause": "ALL 3 mt5_config.json files now carry login 5051185832/MetaQuotes-Demo (Hermess x2 mtime Jul 29 22:44 unchanged; C:\\Trading overwritten Aug 4 01:24 UTC). NO clean config on disk - expected account 1513990433/FTMO-Demo from historical record only (anchor rule). PIDs 20008 (propfirm_pass_bot.py) + 20272 (propfirm_pass_gbpusd.py) still alive at 37MB each - Aug 2 kill order unexecuted, day 5. Terminal kill-loop ACTIVE and oscillating: 2 concurrent terminal64 at 07:02 UTC -> 6 at 07:07 UTC, all PIDs rotated (liveupdate path, no account titles); probe exit 124 (init hang) = kill-loop persists, no init variants retried. Risk Supervisor TimeoutExpired 60s at 15:11 HKT (visible-blindness variant, day 4+); risk_state.json stale since 01:30 UTC (5.7h). bridge_watchdog exit 1 at 14:30 HKT. Bridge up (uptime 5.6h, restarted ~01:30 UTC) but last_data_timestamp NULL - subprocess proxy for CORRECT account 1513990433 spawned but connection never completes. NEW FINDING: usdjpy_momentum_bot (PID 20980, 41MB) alive on WRONG account 5051185832 with main loop silent since Aug 2 10:09 UTC - only news_calendar fetches logged since (2+ days), state file stale Jul 29. Propfirm bot log silent since Aug 1 21:18 local (66h); 0 trades magic 780012; v11 session window 09:00-00:00 UTC ahead today.",
       "fix": "Escalate to Commander for hands-on execution (day 5): (1) restore ALL 3 configs to 1513990433/FTMO-Demo using historical credentials - manual re-entry required, no clean config remains on disk; (2) taskkill /F PIDs 20008 + 20272 + 20980, verify 0 propfirm/momentum instances; (3) kill ALL concurrent terminal64.exe so a single clean terminal restarts; (4) restart risk supervisor, verify it stops killing the CORRECT account; (5) reset risk_peak.json to the FTMO account starting balance; (6) restart exactly ONE propfirm bot, verify ACCOUNT READY login=1513990433; (7) verify bridge last_data_timestamp refreshes past its NULL state.",
       "prevention_rule": "POSITIVE SIGNALS to log: ForexFactory news feed RECOVERED (97-98 events fetched since at least Aug 3 17:12 UTC, cache populated) and backend-watchdog recovered (ok 15:07 HKT) - the only subsystems that self-healed this week. Council kill/config orders remain unexecuted 5 days straight - any future council order must be verified executed or explicitly deferred the same day, and chronic unexecuted orders escalate to a Commander hands-on session."
+    },
+    {
+      "date": "2026-08-06",
+      "pattern": "Council Aug 6 15:02 HKT - DAY 8: connectivity recovered (probe exit 0) but NEW OANDA terminal + MetaQuotes balance reset 97,110->101,477 re-seeds risk peak to wrong account",
+      "root_cause": "Terminal landscape CHANGED since Aug 6 13:25 HKT (was single terminal PID 14552): now TWO concurrent terminal64.exe - PID 14416 OANDA_Global-Demo-1 (login 1715550185, Netting - account never seen in platform history) + PID 30816 MetaQuotes-Demo (5051185832, Hedge). MetaQuotes-Demo balance reset by broker 97,110.45 -> 101,477.45 with 0 trades today (demo reset, NOT profit); risk supervisor re-seeded risk_peak.json to 101,477.45 at 15:00 HKT -> GREEN/0% DD is now on the WRONG account, meaningless for FTMO (expected 1513990433/FTMO-Demo, last known ~$90,035, ~9.96% static DD). All 3 configs STILL poisoned (Hermess x2 mtime Jul 29 22:44, C:\\Trading Aug 4 01:24 UTC) - day 8, no clean config on disk. Bots idle at 9-16MB (9896/31924/15420), no MT5 connection; usdjpy_momentum_bot NEW instance PID 15420 (was 20980). Supervisors RECOVERED to ok (Risk Sup, SRE Watchdog, Trade Watchdog, Strategy Sup, Market Sentiment) - only Infrastructure Watchdog (bridge_watchdog.py) still error exit 1. 0 deals magic 780012 (state last close Jul 28). Bot EURUSD price feed frozen at 1.14188 vs real ~1.155 (stale ~130p).",
+      "fix": "Commander hands-on (day 8): (1) confirm/kill NEW OANDA terminal 14416 - origin unknown; (2) restore all 3 configs to 1513990433/FTMO-Demo (manual credential re-entry - no clean copy on disk); (3) kill BOTH terminals so a single clean terminal restarts; (4) restart exactly ONE propfirm bot BEFORE 15:30 HKT launcher / 09:00 UTC window; (5) reset risk_peak.json to FTMO starting balance; (6) investigate Infrastructure Watchdog exit 1.",
+      "prevention_rule": "risk_peak.json re-seeding must be tied to the EXPECTED (FTMO) account, not whatever account the supervisor happens to see. Any NEW terminal/account in the landscape (OANDA 1715550185) must be reported to Commander - unknown origin = manual GUI activity or new config. Verify single-terminal64 count every council run; 2+ concurrent terminals = kill-loop/oscillation signature regardless of probe exit code."
     }
   ],
   "action_items": [
@@ -172,7 +179,9 @@
     "Fix risk supervisor to use static FTMO DD (from initial balance, not peak)",
     "Replace/disable ForexFactory news feed (429/403 since Jul 30) — news cache is EMPTY, fail-CLOSED required",
     "Restore C:\\Hermess\\mt5_config.json to 1513990433/FTMO-Demo BEFORE Monday 07:00 UTC window",
-    "Update mistakes ledger and close this session"
+    "Update mistakes ledger and close this session",
+    "Commander: confirm origin of NEW OANDA_Global-Demo-1 terminal (PID 14416, login 1715550185) - kill if unintended",
+    "Before 15:30 HKT launcher + 09:00 UTC window: single-terminal verification + single-instance bot restart on the CORRECT account"
   ],
   "lessons_learned": [
     "10 total trades at 10% WR meets auto-disable criteria — strategy is fundamentally failing",
@@ -187,6 +196,7 @@
     "Risk supervisor GREEN on the WRONG account (5051185832/MetaQuotes-Demo, DD 3.79% vs contaminated peak $100,940) is meaningless for the FTMO challenge — supervisor must verify account login matches the FTMO config before reporting.",
     "0 trades since Jul 28 is NOT strategy failure — it is wrong-account + no-tick-data paralysis. Do not tune strategy parameters on zero new data.",
     "EURUSD above 1.1500, DXY double-top breakdown toward 99.00, Eurozone Flash CPI today (headline expected 2.9% y/y) — high-impact event within session window.",
-    "News feed + backend-watchdog self-healed (Aug 4) - the only subsystems to recover this week; all config/zombie/terminal issues still require manual execution after 5 days of unexecuted council orders."
+    "News feed + backend-watchdog self-healed (Aug 4) - the only subsystems to recover this week; all config/zombie/terminal issues still require manual execution after 5 days of unexecuted council orders.",
+    "MetaQuotes-Demo balance reset 97,110.45 -> 101,477.45 with 0 trades = broker demo reset, NOT PnL; risk supervisor GREEN + peak re-seeded to the reset balance is GREEN-on-the-wrong-account (Aug 6) - meaningless for the FTMO challenge. Supervisors recovering to ok does NOT mean the system is on the right account."
   ]
 }
