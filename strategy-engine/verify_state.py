@@ -30,7 +30,9 @@ def main() -> None:
     log = s.get("evolution_log", [])
     if not isinstance(log, list) or not log:
         fail("evolution_log empty")
-    last = log[-1]
+    # Convention: evolution_log is newest-first (each run inserts at index 0),
+    # so log[0] is the most recent entry and must be state.iteration - 1.
+    last = log[0]
     if not isinstance(last.get("iteration"), int):
         fail("last log entry has no integer iteration")
     if s.get("iteration") != last["iteration"] + 1:
