@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 220,
+    "total_ideas": 222,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -2104,6 +2104,42 @@
       "diversification_value": "Every existing cross_asset correlation idea uses the DXY-gold pair (DXY_Valence_Correlation, DXY_Deviation_Regime_Scalp, plus Correlation_Decoupling_Trend_Capture in other). This is the first SPX-gold correlation idea in the archive: the Equity Correlation cluster holds only Gold_Mining_Equity_Leading_Index (a GDX-leads-gold leading-indicator idea with no correlation state variable). Distinct from Cross_Asset_Gamma_Flip (event-level SPX+bond asymmetry at gamma extremes) and VIX_Gold_Regime_Divergence (VIX-gold volatility regime) - neither computes the direct equity-gold return correlation nor uses it as a directional exposure gate. As an overlay it also diversifies the cross_asset family's heavily DXY-weighted surface (13 DXY ideas) toward the equity leg.",
       "self_grade": "A-",
       "generated_at": "2026-08-05T02:25:59Z"
+    },
+    {
+      "name": "Consecutive_Close_Streak_Exhaustion_Fade",
+      "family": "momentum",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "Fades gold's climax runs: after 5+ consecutive same-direction daily closes, the marginal buyer/seller pool is exhausted and price mean-reverts over the next 3 days. Direction-split asymmetry verified on GC=F 2021-2026: up-streak fade -0.50% vs +0.21% unconditional 3d forward, down-streak bounce +0.54%.",
+      "market_behaviour": "Trends in gold do not end with a gradual drift; they end with a climax \u2014 the final vertical thrust where the last wave of marginal participants (stop-chasers, breakout momentum buyers, FOMO retail) is forced in at the worst possible price. When price prints 5+ consecutive closes in one direction, the move is statistically extended relative to the pool of remaining marginal participants: the buyers who would fuel the next leg of an up-streak have already committed. This is the classic 'climax run' any experienced discretionary gold trader recognises. The directional asymmetry is structural: up-streaks fade harder (mean -0.50% over the next 3 days vs +0.21% unconditional, n=39 events in 5 years) because gold's persistent structural bid (central bank accumulation, dip-buying) puts a ceiling on runaway rallies, while down-streaks bounce (+0.54%, n=24) because that same structural bid reasserts once the forced selling is done. The effect concentrates in the 3-day window: extending to 5 days dilutes it toward zero.",
+      "entry_logic": "1. On XAUUSD D1, count consecutive same-direction closes (close > previous close = up-streak; close < previous close = down-streak).\n2. Up-streak of 5+ closes -> SHORT at the close of the 5th streak bar. Down-streak of 5+ closes -> LONG at the close of the 5th streak bar.\n3. Require the streak's cumulative move >= 1.5x ATR(14) \u2014 a genuine thrust, not a slow crawl. Crawls have no climax character.\n4. SKIP if an event window is open (FOMC/NFP decision day +/-1): news-driven streaks are followed by a second news leg, not a pullback, and the fade loses on average there.\n5. Optional gate (see Trend_Climax_Exhaustion_State_Filter): the edge nearly doubles (to -0.96%) when ADX(14) >= 25 at streak end.\n6. One position per streak; no averaging; no re-entry after a stop until a fresh 5-streak forms.",
+      "exit_logic": "Stop: beyond the streak's extreme (highest high of the up-streak / lowest low of the down-streak) + 0.5x ATR(14). A new extreme beyond the streak invalidates the climax thesis. Target: 1.5-2x ATR toward the pullback, or the 20-EMA (mean anchor), whichever is hit first. Time stop: exit at the close of day 3 if neither hit \u2014 the verified edge is concentrated in the 3-day window. Management: move stop to breakeven after 1x ATR in profit; never trail beyond breakeven + 0.5x ATR \u2014 this is a snap-back trade, not a reversal trend trade.",
+      "failure_mode": "1) Strong-trend continuation: in a genuine trend (sustained geopolitical risk bid, 2024-2025 bull phases) a 5-streak is the middle of the move \u2014 gold keeps printing new highs and stops every fade. The ADX>=25 gate and the event-window skip reduce but do not eliminate this. 2) Event-driven streaks: a streak ending on FOMC/NFP day is often followed by a second news leg; the skip rule is mandatory, not optional. 3) Low frequency: ~13 events/year; weeks of idle time \u2014 this is a satellite idea, not a core income bot. 4) Small samples: only 24 down-streak events in 5 years; the +0.54% long-side mean partly reflects gold's structural upward drift, not pure mean reversion.",
+      "diversification_value": "Momentum Exhaustion/Fade cluster goes 1->2. Momentum_Exhaustion_Entropy_Decay uses CMF entropy divergence on ANY bar \u2014 a flow-based signal requiring tick-volume data. This idea uses pure close-streak price structure (D1 OHLC only); a 'streak' keyword scan across all 220 archive ideas returns zero hits. Different mechanisms from every other fade in the archive: Tick_Volume_Climax_Reversal (tick-volume spike), Breakout_Volume_Climax_Fade (volume climax at breakout), Gap_Exhaustion_Fade_Reverter (gap microstructure), Range_Extension_Statistical_Trap (intraday IB extension), Wick_Exhaustion_Reverter (wick structure), Session_Flow_Exhaustion (cumulative tick direction). The direction-split asymmetry claim (up-streak fades vs down-streak bounces) is a novel structural statement no existing idea makes.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-06T00:54:55Z"
+    },
+    {
+      "name": "Trend_Climax_Exhaustion_State_Filter",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1"
+      ],
+      "description": "New regime_filter sub-niche: classifies gold into TREND-INTACT / CLIMAX-EXHAUSTION / RANGING states. The climax state (ADX(14)>=25 AND a 5+ consecutive-close streak in progress) is the strongest verified mean-reversion regime in the gold daily series: 3d forward -0.96% after up-streaks (n=24) and +2.92% after down-streaks (n=6) vs +0.21% unconditional. A gate other counter-trend strategies can plug into.",
+      "market_behaviour": "Trend exhaustion in gold is not a gradual ADX rollover \u2014 it is a STATE of maximum trend strength. The trend's final vertical thrust happens while ADX(14) is still high or rising, because the climax is driven by the last marginal participants (stop-chasers, breakout buyers) entering at the worst possible price. When the streak ends, the market has no fuel: verified on GC=F D1 2021-2026, 3-day forward returns after a 5+ consecutive-close streak with ADX(14)>=25 average -0.96% for up-streaks (n=24) and +2.92% for down-streaks (n=6), versus +0.21% unconditional \u2014 the strongest mean-reversion state in the gold daily time series. Crucially, the naive 'exhaustion = ADX rolling over' hypothesis is FALSE in the data (only 4 such streaks in 5 years); the tradable state is the climax itself. This makes the filter a regime classifier: it tells any counter-trend strategy WHEN fade entries are statistically favourable, independent of the trigger mechanism.",
+      "entry_logic": "1. Daily classification on XAUUSD D1: compute ADX(14) and the consecutive-close streak count. 2. State = CLIMAX-EXHAUSTION when ADX(14) >= 25 AND a streak of 5+ same-direction closes is in progress; TREND-INTACT when ADX(14) >= 25 with no such streak; RANGING when ADX(14) < 25. 3. The filter's OUTPUT is the state \u2014 counter-trend strategies (any fade bot) may only fire when state = CLIMAX. 4. Concrete trade: at the close of the 5th consecutive same-direction close with ADX(14) >= 25, fade (short up-streak / long down-streak); require cumulative streak move >= 1.5x ATR(14). 5. A new extreme close beyond the streak resets the state to TREND-INTACT (thesis invalidated; do not re-fade the same streak). 6. Never classify during event windows (FOMC/NFP day +/-1) \u2014 news-driven moves are not climax states.",
+      "exit_logic": "Concrete fade: stop beyond streak extreme + 0.5x ATR(14); target 1.5-2x ATR or the 20-EMA; hard time-stop at day-3 close (edge concentrates in the 3-day window). Filter-only use: the filter holds no position \u2014 the consuming strategy's risk rules apply; validation rule: if fades following the CLIMAX state lose 2 consecutive times, the classifier is stale (regime change) \u2014 recompute ADX on a fresh window. Sizing: halve size on the down-streak side (n=6 cell is thin) until 10+ validated events accumulate.",
+      "failure_mode": "1) Rarity: ~26 climax events in 5 years (~5/year) \u2014 a strategy gated entirely on this state sits idle for weeks; it cannot be a standalone income bot. 2) Powerful trends extend: 2025-2026 bull phases print 7-9 streak closes; the 5-streak trigger fires early and the 6th-7th close is a new extreme that stops the fade \u2014 the new-extreme reset limits this to one loss per climax. 3) Thin samples: the down-streak/ADX-high cell is n=6; +2.92% is fragile and breaks under a genuine selloff cascade. 4) ADX lag: in fast reversals ADX stays high during the first down-leg after a top, misclassifying a NEW downtrend as CLIMAX \u2014 the event-window skip and new-extreme reset are the main defenses.",
+      "diversification_value": "regime_filter is the archive's lowest-density actionable family (47%) with all 4 matcher clusters saturated; this is a NEW sub-niche (trend-exhaustion STATE detection), the census-sanctioned route for this family. Distinct from ATR_Regime_Selector (switches momentum/mean-reversion modes by ATR level \u2014 no climax state), Regime_Transition_Velocity_Detector (measures transition SPEED), ADX_Volatility_Regime_Composite (2D ADX x volatility strength matrix, no streak/climax dimension), Markov_Switching_Momentum_Regime (two-state trend/ranging HMM), Hurst_Exponent_Regime_Detector (fractal persistence). The climax state is the 'trend is over but hasn't reversed' cell none of them occupy, and the only one with verified forward-return asymmetry. Cross-family hybrid: the streak trigger is a momentum-family concept (paired with Consecutive_Close_Streak_Exhaustion_Fade in momentum); the state classification is the regime-filter contribution \u2014 one is the trigger, the other the gate.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-06T00:54:55Z"
     }
   ],
   "archived": [
@@ -4183,7 +4219,8 @@
       "Max_Pain_Momentum_Gravity",
       "Global_Equity_Momentum_Transmission",
       "Volume_Expansion_Momentum_Persistence",
-      "Regime_Weighted_Momentum_Ensemble"
+      "Regime_Weighted_Momentum_Ensemble",
+      "Consecutive_Close_Streak_Exhaustion_Fade"
     ],
     "mean_reversion": [
       "Statistical_Mean_Reverter",
@@ -4283,7 +4320,8 @@
       "Regime_Transition_Velocity_Detector",
       "Options_Realized_Vol_Regime_Spread",
       "Gamma_Wall_Regime_Map",
-      "Fractal_Efficiency_Ratio_Switcher"
+      "Fractal_Efficiency_Ratio_Switcher",
+      "Trend_Climax_Exhaustion_State_Filter"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
