@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2026-06-23T14:00:00Z",
     "version": "2.0",
-    "total_ideas": 222,
+    "total_ideas": 224,
     "active_count": 14,
     "archived_count": 112,
     "families_covered": [
@@ -2140,6 +2140,44 @@
       "diversification_value": "regime_filter is the archive's lowest-density actionable family (47%) with all 4 matcher clusters saturated; this is a NEW sub-niche (trend-exhaustion STATE detection), the census-sanctioned route for this family. Distinct from ATR_Regime_Selector (switches momentum/mean-reversion modes by ATR level \u2014 no climax state), Regime_Transition_Velocity_Detector (measures transition SPEED), ADX_Volatility_Regime_Composite (2D ADX x volatility strength matrix, no streak/climax dimension), Markov_Switching_Momentum_Regime (two-state trend/ranging HMM), Hurst_Exponent_Regime_Detector (fractal persistence). The climax state is the 'trend is over but hasn't reversed' cell none of them occupy, and the only one with verified forward-return asymmetry. Cross-family hybrid: the streak trigger is a momentum-family concept (paired with Consecutive_Close_Streak_Exhaustion_Fade in momentum); the state classification is the regime-filter contribution \u2014 one is the trigger, the other the gate.",
       "self_grade": "A-",
       "generated_at": "2026-08-06T00:54:55Z"
+    },
+    {
+      "name": "NFP_Day_Range_Expansion_Bracket",
+      "family": "seasonal",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "M15"
+      ],
+      "description": "Direction-agnostic bracketed breakout on US Non-Farm Payroll day: NFP-day range averages 1.33x the 20-day mean (49% of events >1.25x vs 22% random-day baseline, 2023-2026). The edge is same-day RANGE expansion, not direction (54% up = coin flip).",
+      "market_behaviour": "The monthly US Non-Farm Payrolls release (first Friday, 8:30 ET = 12:30 UTC summer) is the single highest-impact scheduled macro event for gold. Unlike FOMC (afternoon release with days of pre-decision compression), NFP lands at the open of the US cash session when liquidity is deepest, producing a one-day volatility burst: NFP-day range = 1.33x the 20-day mean (median 1.22), >1.25x in 49% of events (20/41, MT5 XAUUSD D1 2023-2026) vs a 22% random-day baseline. The expansion is same-day only and direction is a coin flip (54% up), so the edge lives in the RANGE, not the direction. Pre-release compression is NOT significant (pre-day median 0.90 vs FOMC's verified 0.88 pre-window), so unlike the FOMC bracket the entry cannot be pre-positioned days ahead - it must be traded day-of as a bracketed breakout around the pre-release range.",
+      "entry_logic": "1) Maintain a calendar of NFP release dates (first Friday of each month, 8:30 ET). 2) On NFP morning, measure the pre-release range: high-low of the Asian + early-London session (00:00-12:00 UTC) on the release day. 3) Place a two-sided bracket: buy-stop above the pre-release range high plus a small buffer (0.1x 20d mean range), sell-stop below the pre-release range low minus the same buffer. 4) When one side triggers, the opposite order cancels immediately (OCO). 5) Skip the trade if the pre-release range is already >1.5x its own 20-day average (expansion consumed early), or if an NFP-bracket fired within the last 5 sessions (no stacking). 6) Enter only when the 20-day mean daily range is in its normal quintile band - skip if vol is already in the top quintile (the 1.25x multiple is less reliable on top of an elevated base).",
+      "exit_logic": "Stop = opposite side of the bracket (pre-release range high/low minus/plus the buffer) - i.e., the breakout fails and price returns inside the pre-release range. Target = 1.25x the 20-day mean daily range measured from the entry fill (the verified median expansion multiple). Time-stop: flat by 20:00 UTC on the release day - the expansion is same-day only (post-3d/pre-5d range ratio median 0.82 for FOMC shows range collapse after the event window). No re-entry after flat. Size for 8:30 ET slippage: the first seconds of the release can gap through both bracket levels in a thin pre-release book.",
+      "failure_mode": "1) Low-surprise NFP: a print in line with consensus produces no range expansion (51% of events stay <=1.25x); the bracket gets tagged then stalls, or both sides get swept in a thin-news whipsaw. 2) Range expansion without directional follow-through: price breaks the bracket, travels only ~0.5x target, then reverses fully - the day's range is large but the breakout leg fails, so the fixed 1.25x target is never reached. 3) 8:30 ET slippage: the release can gap through both bracket levels; resting entries and stops must be sized for adverse fills. 4) The 2023-2026 sample (41 events) spans a structural gold bull; the 1.33x multiple may compress in a low-vol macro regime - requires quarterly re-estimation.",
+      "diversification_value": "The archive's two existing NFP ideas are ARCHIVED and directional: NFP_Volatility_Momentum (momentum, 15-min post-release directional capture) and NFP_Week_Mean_Reversion_Bias (seasonal, week-level reversion). This is the first NON-directional NFP event-day play: it monetizes the verified same-day RANGE expansion (1.33x vs 1.01x baseline, 49% vs 22% >1.25x) via a bracketed breakout with no directional forecast. It differs from FOMC_PreDecision_Volatility_Compression_Expansion (A-, seasonal): FOMC has VERIFIED pre-decision compression (0.88x) enabling a pre-positioned compression->expansion bracket, while NFP shows no significant pre-compression (0.90 median), so this idea must be entered day-of via bracket rather than pre-positioned. It differs from Event_Window_Seasonal_Compression (B+) and FOMC_Blackout_Volatility_RangeTrade (B+) by targeting the expansion side of a single event window with its own verified statistics instead of the compression side of a composite window.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-07T02:31:25Z"
+    },
+    {
+      "name": "Fast_Decline_Persistence_State_Filter",
+      "family": "regime_filter",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "timeframes": [
+        "D1",
+        "H1"
+      ],
+      "description": "Regime state classifier on decline velocity: a fast drawdown (>=2% in <=3 days) persists significantly longer than a slow one (>=2% over >=10 days) - 67% vs 58% still underwater at +5d, 46% vs 33% extend past -4% (XAUUSD D1 2018-2026). Gates dip-buying and counter-trend entries.",
+      "market_behaviour": "Drawdowns arrive in two distinct velocity classes that carry different persistence information. A fast decline (>=2% from a 10-day peak in <=3 trading days) is typically forced-flow driven - stop cascades, margin calls, event shocks - and the dislocation takes time to resolve: 67% of fast declines are still below -2% at +5d and 46% extend past -4%. A slow decline (>=2% over >=10 days) reflects gradual distribution and repricing that exhausts sooner: only 58% still underwater at +5d and 33% extend past -4%. The VELOCITY of the initial decline is a state variable for how long the drawdown persists: fast = persistence regime (do not counter-trend), slow = exhaustion regime (mean-reversion window). Verified on MT5 XAUUSD D1 2018-2026: 766 local peaks, 81 fast vs 78 slow declines meeting the -2% threshold.",
+      "entry_logic": "This is a STATE FILTER for other strategies (dip-buyers, mean-reversion bots, grid recoveries), not a standalone entry: 1) Detect a local peak (10-day highest close). 2) Measure decline velocity: bars from peak to -2%. 3) If <=3 bars (FAST state): block new counter-trend long entries and dip-buying for 5 trading days; continuation shorts allowed at reduced size. 4) If >=10 bars (SLOW state): counter-trend entries permitted - the decline is exhausting. 5) Neutral band (4-9 bars): no filter applied. 6) State resets when price reclaims the peak or after 5 days. 7) Optional H1 confirmation for the FAST state: require a 30-min close below the decline's entry candle low before declaring the state active (filters choppy-range false peaks).",
+      "exit_logic": "The filter has no standalone SL/TP (it is an overlay gate). For its own book: if already long when the state flips FAST, tighten the stop to 1 ATR and exit on the first 30-min close below entry. Time-stop: 5 trading days for the FAST state (the persistence window measured). State resolution: reclaim of the 10-day peak cancels the block early. The filter's value is avoiding dip-buying into persistence regimes; its cost is the 33% of fast declines that V-reverse (see failure mode).",
+      "failure_mode": "1) V-shaped reversal on policy news: a fast decline reversed by an emergency Fed cut or geopolitical headline recovers in 1-2 days (33% of fast declines recover by +5d) - the filter blocks the best dip-buy of the year. 2) Threshold sensitivity: the -2%/<=3d vs >=10d cutoffs are data-chosen on 2018-2026; a regime with faster news cycles shifts the boundary and the state labels degrade. 3) Direction-dependence: in a structural gold bull, a fast 2% pullback is often a buying opportunity (structural bid compresses downside persistence), so the asymmetry may be stronger for drawdowns from short-side peaks - needs per-direction validation before gating long entries. 4) Choppy-range false peaks produce velocity noise (mitigated by the H1 confirmation in entry step 7).",
+      "diversification_value": "regime_filter's 4 matcher clusters (ATR/Vol 9, Macro/Intermarket 4, Hurst/Fractal 3, Options/Gamma 3) are all SATURATED; the 08-06 run created the family's first new sub-niche (Trend_Climax_Exhaustion_State_Filter - climax/exhaustion state at trend tops). This idea is a SECOND new sub-niche: decline-VELOCITY persistence state - it answers 'how long will this drawdown persist?' whereas the climax filter answers 'is the trend exhausting NOW?'. The 08-06 census sanctioned one more climax-state variant (volume-climax or range-climax trigger); my 2026-08-07 probes FALSIFIED both variants (H1 volume-climax 3h fwd -0.052% vs +0.013% baseline n=166; D1 range-climax 3d fwd 0.065% vs 0.099% baseline n=476), so instead of forcing the sanctioned-slot variant, this run creates a distinct verified state. It differs from risk_overlay's Drawdown Protection trio (Max_Drawdown_Lock_Protector, Drawdown_Regime_Recovery_Sizer, Strategy_Drawdown_Attribution_Brake - level/regime-based PORTFOLIO drawdown responses): this is a market-PRICE decline-velocity state classifier with a persistence forecast, not a sizing/locking overlay. Note: risk_overlay Drawdown Protection is now SATURATED at 3 ideas (Strategy_Drawdown_Attribution_Brake, 08-03, filled the census's 2->3 slot) - deliberately not placed there.",
+      "self_grade": "A-",
+      "generated_at": "2026-08-07T02:31:25Z"
     }
   ],
   "archived": [
@@ -4321,7 +4359,8 @@
       "Options_Realized_Vol_Regime_Spread",
       "Gamma_Wall_Regime_Map",
       "Fractal_Efficiency_Ratio_Switcher",
-      "Trend_Climax_Exhaustion_State_Filter"
+      "Trend_Climax_Exhaustion_State_Filter",
+      "Fast_Decline_Persistence_State_Filter"
     ],
     "risk_overlay": [
       "Volatility_Parity_Scale",
@@ -4408,7 +4447,8 @@
       "Quarter_End_Gold_Allocation_Accumulation",
       "Gold_Copper_Seasonal_Divergence_Trader",
       "Gold_Palladium_Seasonal_Industrial_Divergence",
-      "FOMC_PreDecision_Volatility_Compression_Expansion"
+      "FOMC_PreDecision_Volatility_Compression_Expansion",
+      "NFP_Day_Range_Expansion_Bracket"
     ],
     "other": [
       "OrderFlow_Imbalance_Scalper",
