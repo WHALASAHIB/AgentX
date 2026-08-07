@@ -197,10 +197,10 @@ def phase_analyze() -> Dict[str, Any]:
         # Log key metrics
         kpis = overall.get("kpis", {})
         logger.info(
-            f"Analytics: {kpis.get('total_trades', 0)} trades, "
-            f"{kpis.get('win_rate', 0):.1f}% WR, "
-            f"PF={kpis.get('profit_factor', 0):.2f}, "
-            f"DD={kpis.get('max_drawdown_pct', 0):.1f}%"
+            f"Analytics: {kpis.get('total_trades', 0) or 0} trades, "
+            f"{(kpis.get('win_rate', 0) or 0) * 100:.1f}% WR, "
+            f"PF={kpis.get('profit_factor', 0) or 0:.2f}, "
+            f"DD={kpis.get('max_drawdown_pct', 0) or 0:.1f}%"
         )
         return result
     except Exception as e:

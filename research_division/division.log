@@ -2209,3 +2209,107 @@
 2026-08-06 07:15:52,832 [RD] INFO === Phase 5: Report Generation ===
 2026-08-06 07:15:52,832 [RD] INFO Report saved to C:\Trading\research_division\reports\division_report_2026-08-06_07.json
 2026-08-06 07:15:52,832 [RD] INFO Full cycle completed in 3.8s
+2026-08-07 07:15:53,050 [RD] INFO ============================================================
+2026-08-07 07:15:53,050 [RD] INFO RESEARCH & INVOCATION DIVISION — FULL CYCLE START
+2026-08-07 07:15:53,050 [RD] INFO Time (HKT): 2026-08-07T07:15:53.050697+08:00
+2026-08-07 07:15:53,050 [RD] INFO ============================================================
+2026-08-07 07:15:53,050 [RD] INFO === Phase 1: Data Collection ===
+2026-08-07 07:15:53,696 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:15:53,700 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/stats
+2026-08-07 07:15:56,847 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/tick/BTCUSD
+2026-08-07 07:15:56,847 [RD] INFO Cached 21 trades to C:\Trading\research_division\state\trade_cache.json
+2026-08-07 07:15:56,847 [RD] INFO Collected: 21 trades, 0 positions, 15 bots
+2026-08-07 07:15:56,847 [RD] INFO === Phase 2: Analytics ===
+2026-08-07 07:15:56,855 [RD] INFO Using 21 cached trades
+2026-08-07 07:15:56,855 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:15:56,895 [RD] INFO Saved 30 analytics entries to C:\Trading\research_division\state\analytics_history.json
+2026-08-07 07:15:56,895 [RD] ERROR Analytics failed: unsupported format string passed to NoneType.__format__
+Traceback (most recent call last):
+  File "C:\Trading\research_division\run.py", line 202, in phase_analyze
+    f"PF={kpis.get('profit_factor', 0):.2f}, "
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__
+2026-08-07 07:15:56,895 [RD] ERROR Analytics failed — unsupported format string passed to NoneType.__format__
+2026-08-07 07:15:56,895 [RD] INFO === Phase 3: Sprint Management ===
+2026-08-07 07:15:56,895 [RD] WARNING Sprint management failed — No analytics reports available
+2026-08-07 07:15:56,895 [RD] INFO === Phase 5: Report Generation ===
+2026-08-07 07:15:56,895 [RD] INFO Report saved to C:\Trading\research_division\reports\division_report_2026-08-07_07.json
+2026-08-07 07:15:56,895 [RD] INFO Full cycle completed in 3.8s
+2026-08-07 07:16:22,172 [RD] INFO ============================================================
+2026-08-07 07:16:22,172 [RD] INFO RESEARCH & INVOCATION DIVISION — FULL CYCLE START
+2026-08-07 07:16:22,172 [RD] INFO Time (HKT): 2026-08-07T07:16:22.172193+08:00
+2026-08-07 07:16:22,172 [RD] INFO ============================================================
+2026-08-07 07:16:22,172 [RD] INFO === Phase 1: Data Collection ===
+2026-08-07 07:16:22,757 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:16:22,757 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/stats
+2026-08-07 07:16:24,072 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/tick/BTCUSD
+2026-08-07 07:16:24,088 [RD] INFO Cached 21 trades to C:\Trading\research_division\state\trade_cache.json
+2026-08-07 07:16:24,088 [RD] INFO Collected: 21 trades, 0 positions, 15 bots
+2026-08-07 07:16:24,088 [RD] INFO === Phase 2: Analytics ===
+2026-08-07 07:16:24,093 [RD] INFO Using 21 cached trades
+2026-08-07 07:16:24,104 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:16:24,135 [RD] INFO Saved 30 analytics entries to C:\Trading\research_division\state\analytics_history.json
+2026-08-07 07:16:24,135 [RD] INFO Analytics: 21 trades, 100.0% WR, PF=0.00, DD=0.0%
+2026-08-07 07:16:24,135 [RD] INFO === Phase 3: Sprint Management ===
+2026-08-07 07:16:24,135 [RD] INFO Generated backlog with 0 items
+2026-08-07 07:16:24,151 [RD] INFO Reusing existing sprint #2
+2026-08-07 07:16:24,151 [RD] INFO Detected 0 blocker(s): 0 critical, 0 warning
+2026-08-07 07:16:24,151 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:16:24,151 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:16:24,151 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:16:24,151 [RD] INFO Sprint: 0 backlog items, 1 blockers detected
+2026-08-07 07:16:24,151 [RD] INFO === Phase 5: Report Generation ===
+2026-08-07 07:16:24,151 [RD] INFO Report saved to C:\Trading\research_division\reports\division_report_2026-08-07_07.json
+2026-08-07 07:16:24,151 [RD] INFO Full cycle completed in 2.0s
+2026-08-07 07:17:52,983 [RD] INFO ============================================================
+2026-08-07 07:17:52,983 [RD] INFO RESEARCH & INVOCATION DIVISION — FULL CYCLE START
+2026-08-07 07:17:52,983 [RD] INFO Time (HKT): 2026-08-07T07:17:52.983361+08:00
+2026-08-07 07:17:52,983 [RD] INFO ============================================================
+2026-08-07 07:17:52,983 [RD] INFO === Phase 1: Data Collection ===
+2026-08-07 07:17:53,598 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:17:53,614 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/stats
+2026-08-07 07:17:54,957 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/tick/BTCUSD
+2026-08-07 07:17:54,957 [RD] INFO Cached 21 trades to C:\Trading\research_division\state\trade_cache.json
+2026-08-07 07:17:54,957 [RD] INFO Collected: 21 trades, 0 positions, 15 bots
+2026-08-07 07:17:54,957 [RD] INFO === Phase 2: Analytics ===
+2026-08-07 07:17:54,964 [RD] INFO Using 21 cached trades
+2026-08-07 07:17:54,988 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:17:55,019 [RD] INFO Saved 30 analytics entries to C:\Trading\research_division\state\analytics_history.json
+2026-08-07 07:17:55,019 [RD] INFO Analytics: 21 trades, 100.0% WR, PF=0.00, DD=0.0%
+2026-08-07 07:17:55,019 [RD] INFO === Phase 3: Sprint Management ===
+2026-08-07 07:17:55,019 [RD] INFO Generated backlog with 0 items
+2026-08-07 07:17:55,019 [RD] INFO Reusing existing sprint #2
+2026-08-07 07:17:55,019 [RD] INFO Detected 0 blocker(s): 0 critical, 0 warning
+2026-08-07 07:17:55,019 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:17:55,019 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:17:55,019 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:17:55,019 [RD] INFO Sprint: 0 backlog items, 1 blockers detected
+2026-08-07 07:17:55,019 [RD] INFO === Phase 5: Report Generation ===
+2026-08-07 07:17:55,019 [RD] INFO Report saved to C:\Trading\research_division\reports\division_report_2026-08-07_07.json
+2026-08-07 07:17:55,019 [RD] INFO Full cycle completed in 2.0s
+2026-08-07 07:18:14,707 [RD] INFO ============================================================
+2026-08-07 07:18:14,707 [RD] INFO RESEARCH & INVOCATION DIVISION — FULL CYCLE START
+2026-08-07 07:18:14,707 [RD] INFO Time (HKT): 2026-08-07T07:18:14.707964+08:00
+2026-08-07 07:18:14,707 [RD] INFO ============================================================
+2026-08-07 07:18:14,707 [RD] INFO === Phase 1: Data Collection ===
+2026-08-07 07:18:15,294 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:18:15,310 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/stats
+2026-08-07 07:18:16,654 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/tick/BTCUSD
+2026-08-07 07:18:16,654 [RD] INFO Cached 21 trades to C:\Trading\research_division\state\trade_cache.json
+2026-08-07 07:18:16,654 [RD] INFO Collected: 21 trades, 0 positions, 15 bots
+2026-08-07 07:18:16,654 [RD] INFO === Phase 2: Analytics ===
+2026-08-07 07:18:16,663 [RD] INFO Using 21 cached trades
+2026-08-07 07:18:16,701 [RD] WARNING HTTPError 503 — http://127.0.0.1:5000/api/v1/accounts/mt5-demo/equity
+2026-08-07 07:18:16,733 [RD] INFO Saved 30 analytics entries to C:\Trading\research_division\state\analytics_history.json
+2026-08-07 07:18:16,733 [RD] INFO Analytics: 21 trades, 100.0% WR, PF=0.00, DD=0.0%
+2026-08-07 07:18:16,733 [RD] INFO === Phase 3: Sprint Management ===
+2026-08-07 07:18:16,733 [RD] INFO Generated backlog with 0 items
+2026-08-07 07:18:16,733 [RD] INFO Reusing existing sprint #2
+2026-08-07 07:18:16,733 [RD] INFO Detected 0 blocker(s): 0 critical, 0 warning
+2026-08-07 07:18:16,733 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:18:16,733 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:18:16,733 [RD] INFO Detected 1 blocker(s): 0 critical, 1 warning
+2026-08-07 07:18:16,733 [RD] INFO Sprint: 0 backlog items, 1 blockers detected
+2026-08-07 07:18:16,733 [RD] INFO === Phase 5: Report Generation ===
+2026-08-07 07:18:16,733 [RD] INFO Report saved to C:\Trading\research_division\reports\division_report_2026-08-07_07.json
+2026-08-07 07:18:16,733 [RD] INFO Full cycle completed in 2.0s
