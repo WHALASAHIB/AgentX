@@ -1,7 +1,7 @@
 {
   "strategy": "Propfirm Pass v11.0 — VWAP 2σ Bands (EURUSD)",
   "magic": 780012,
-  "last_updated": "2026-08-06",
+  "last_updated": "2026-08-07",
   "total_trades": 10,
   "total_wins": 1,
   "total_losses": 9,
@@ -167,6 +167,13 @@
       "root_cause": "Terminal landscape CHANGED since Aug 6 13:25 HKT (was single terminal PID 14552): now TWO concurrent terminal64.exe - PID 14416 OANDA_Global-Demo-1 (login 1715550185, Netting - account never seen in platform history) + PID 30816 MetaQuotes-Demo (5051185832, Hedge). MetaQuotes-Demo balance reset by broker 97,110.45 -> 101,477.45 with 0 trades today (demo reset, NOT profit); risk supervisor re-seeded risk_peak.json to 101,477.45 at 15:00 HKT -> GREEN/0% DD is now on the WRONG account, meaningless for FTMO (expected 1513990433/FTMO-Demo, last known ~$90,035, ~9.96% static DD). All 3 configs STILL poisoned (Hermess x2 mtime Jul 29 22:44, C:\\Trading Aug 4 01:24 UTC) - day 8, no clean config on disk. Bots idle at 9-16MB (9896/31924/15420), no MT5 connection; usdjpy_momentum_bot NEW instance PID 15420 (was 20980). Supervisors RECOVERED to ok (Risk Sup, SRE Watchdog, Trade Watchdog, Strategy Sup, Market Sentiment) - only Infrastructure Watchdog (bridge_watchdog.py) still error exit 1. 0 deals magic 780012 (state last close Jul 28). Bot EURUSD price feed frozen at 1.14188 vs real ~1.155 (stale ~130p).",
       "fix": "Commander hands-on (day 8): (1) confirm/kill NEW OANDA terminal 14416 - origin unknown; (2) restore all 3 configs to 1513990433/FTMO-Demo (manual credential re-entry - no clean copy on disk); (3) kill BOTH terminals so a single clean terminal restarts; (4) restart exactly ONE propfirm bot BEFORE 15:30 HKT launcher / 09:00 UTC window; (5) reset risk_peak.json to FTMO starting balance; (6) investigate Infrastructure Watchdog exit 1.",
       "prevention_rule": "risk_peak.json re-seeding must be tied to the EXPECTED (FTMO) account, not whatever account the supervisor happens to see. Any NEW terminal/account in the landscape (OANDA 1715550185) must be reported to Commander - unknown origin = manual GUI activity or new config. Verify single-terminal64 count every council run; 2+ concurrent terminals = kill-loop/oscillation signature regardless of probe exit code."
+    },
+    {
+      "date": "2026-08-07",
+      "pattern": "DAY 9: Bot RECONNECTED with LIVE feed but ARMED on WRONG account (5051185832/MetaQuotes-Demo) - will EXECUTE wrong-account trades when 09:00 UTC window opens; NFP 12:30 UTC inside window; launcher 15:30 HKT fires without instance-cleanup check",
+      "root_cause": "All 3 mt5_config.json still poisoned (Hermess x2 mtime Jul 29 22:44, C:\\Trading Aug 4 01:24 UTC - day 9, no clean copy on disk). Bot config == terminal account (5051185832) so ACCOUNT READY passes and no alarm fires. Price feed RECOVERED (frozen 1.14188 -> live 1.1522, EMA(55) filter active, 2-sigma band tags live) so the bot is fully functional - on the WRONG account. Expected 1513990433/FTMO-Demo (~$90K, ~9.96% static DD) from historical record only.",
+      "fix": "Commander hands-on BEFORE 09:00 UTC window (fires in ~2h): (1) restore all 3 configs to 1513990433/FTMO-Demo (manual credential re-entry - no clean copy on disk); (2) confirm/kill OANDA terminal 14416 (1715550185, unknown origin day 2); (3) kill BOTH terminals (14416 + 30816) so a single clean terminal restarts; (4) restart exactly ONE propfirm bot, verify ACCOUNT READY login=1513990433; (5) reset risk_peak.json to FTMO starting balance; (6) verify launcher (15:30 HKT) did not spawn duplicate instances.",
+      "prevention_rule": "A bot with LIVE feed + ACCOUNT READY is ARMED - wrong-account paralysis (no feed) masked the risk; feed recovery turned it into wrong-account EXECUTION risk. Verify account BEFORE the window opens, not after. Re-check config mtimes + instance count after every launcher fire."
     }
   ],
   "action_items": [
@@ -181,7 +188,11 @@
     "Restore C:\\Hermess\\mt5_config.json to 1513990433/FTMO-Demo BEFORE Monday 07:00 UTC window",
     "Update mistakes ledger and close this session",
     "Commander: confirm origin of NEW OANDA_Global-Demo-1 terminal (PID 14416, login 1715550185) - kill if unintended",
-    "Before 15:30 HKT launcher + 09:00 UTC window: single-terminal verification + single-instance bot restart on the CORRECT account"
+    "Before 15:30 HKT launcher + 09:00 UTC window: single-terminal verification + single-instance bot restart on the CORRECT account",
+    "Commander hands-on (day 9) BEFORE 09:00 UTC: restore all 3 configs to 1513990433/FTMO-Demo, single clean terminal, single bot instance, verify ACCOUNT READY",
+    "Confirm origin of OANDA terminal 14416 (1715550185) - kill if unintended (day 2)",
+    "Verify launcher (15:30 HKT) did not spawn duplicate propfirm instances (currently 2: 9896 EURUSD + 31924 GBPUSD)",
+    "Investigate 3 paper-signal 3600s timeouts (propfirm 06:51, volbreak/atr 00:00) - MT5 connect hang pattern"
   ],
   "lessons_learned": [
     "10 total trades at 10% WR meets auto-disable criteria — strategy is fundamentally failing",
@@ -197,6 +208,8 @@
     "0 trades since Jul 28 is NOT strategy failure — it is wrong-account + no-tick-data paralysis. Do not tune strategy parameters on zero new data.",
     "EURUSD above 1.1500, DXY double-top breakdown toward 99.00, Eurozone Flash CPI today (headline expected 2.9% y/y) — high-impact event within session window.",
     "News feed + backend-watchdog self-healed (Aug 4) - the only subsystems to recover this week; all config/zombie/terminal issues still require manual execution after 5 days of unexecuted council orders.",
-    "MetaQuotes-Demo balance reset 97,110.45 -> 101,477.45 with 0 trades = broker demo reset, NOT PnL; risk supervisor GREEN + peak re-seeded to the reset balance is GREEN-on-the-wrong-account (Aug 6) - meaningless for the FTMO challenge. Supervisors recovering to ok does NOT mean the system is on the right account."
+    "MetaQuotes-Demo balance reset 97,110.45 -> 101,477.45 with 0 trades = broker demo reset, NOT PnL; risk supervisor GREEN + peak re-seeded to the reset balance is GREEN-on-the-wrong-account (Aug 6) - meaningless for the FTMO challenge. Supervisors recovering to ok does NOT mean the system is on the right account.",
+    "Wrong-account bot with LIVE feed is an EXECUTION risk, not a paralysis risk - verify account before window (Aug 7, day 9)",
+    "NFP (Employment Change/Unemployment/AHE/NFP) 12:30 UTC today inside 09:00-00:00 UTC window - news feed working (99 events), bot should skip 11:30-13:00 UTC"
   ]
 }
