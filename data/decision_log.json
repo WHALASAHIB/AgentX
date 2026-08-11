@@ -902,5 +902,29 @@
     "metadata": {
       "source": "bot_controller"
     }
+  },
+  {
+    "id": "dec_1786403504680_4fc5",
+    "timestamp": "2026-08-10T23:11:44.680080+00:00",
+    "agent_id": "MACD_AUDUSD",
+    "agent_name": "Macd Audusd",
+    "action": "Bot Started",
+    "detail": "Bot 'MACD_AUDUSD' started (PID 18044)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
+  },
+  {
+    "id": "dec_1786403641618_784b",
+    "timestamp": "2026-08-10T23:14:01.618485+00:00",
+    "agent_id": "MACD_AUDUSD",
+    "agent_name": "Macd Audusd",
+    "action": "Bot Stop Failed",
+    "detail": "Failed to stop bot 'MACD_AUDUSD': object int can't be used in 'await' expression",
+    "outcome": "error",
+    "metadata": {
+      "source": "bot_controller"
+    }
   }
 ]
