@@ -212,3 +212,17 @@ GitHub auto-sync runs via cron (every 2h) — local changes are committed and pu
 ---
 
 *AgentX — Algorithmic Trading Dashboard. Built for Project PropMillion.*
+
+---
+
+<!-- last-refreshed: 2026-08-20 -->
+
+## 📡 Live Status
+
+| Metric | Value |
+|--------|-------|
+| Stars | 0 |
+| Forks | 0 |
+| Commits | 330 |
+| Last commit | `d30a67a docs: overhaul README — hero, badges, feature grid, architecture, roadmap` |
+| Refreshed | 2026-08-20 (auto) |
