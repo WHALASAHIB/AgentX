@@ -1,18 +1,89 @@
-# 📊 AgentX — Algorithmic Trading Dashboard
+<div align="center">
 
-> **Full-stack algorithmic trading web platform** — monitor, control, and analyze live trading bots in real-time across multiple MT5 accounts.
->
-> 🟢 **Live:** [`inventra.website`](https://inventra.website) — powered by FastAPI + SPA frontend + Cloudflare Tunnel
-> 🔌 **Local:** `http://localhost:8005`
-> ⚙️ **Bridge:** `http://127.0.0.1:5000` (Hermess)
+# 📊 AgentX — Algorithmic Trading OS
+
+**Full-stack algorithmic trading platform: research → strategy → backtest → live execution → monitoring.**
+
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square)](#license)
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg?style=flat-square)](https://www.python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Uvicorn-009688.svg?style=flat-square)](https://fastapi.tiangolo.com)
+[![MT5](https://img.shields.io/badge/MetaTrader%205-Connected-green.svg?style=flat-square)](#connected-accounts)
+[![Status](https://img.shields.io/badge/Status-Live-brightgreen.svg?style=flat-square)](https://inventra.website)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20VM-0078D6.svg?style=flat-square)](#deployment)
+
+**🟢 Live:** [`inventra.website`](https://inventra.website) · **🔌 Local:** `http://localhost:8005` · **⚙️ Bridge:** `127.0.0.1:5000`
+
+*Part of Project PropMillion — $1M in 12 months via algorithmic trading.*
+
+</div>
 
 ---
 
-## 🎯 What This Is
+## 🎯 What Is AgentX?
 
-AgentX is the **web cockpit** for a professional algorithmic trading system. This repo contains the FastAPI backend (serving a pre-rendered SPA dashboard) plus infrastructure config.
+AgentX is the **command center** for a professional algorithmic trading operation. It connects a live MetaTrader 5 fleet, an AI research division, a backtesting lab, and a real-time web dashboard into one closed loop:
 
-**The trading intelligence — bots, research, DevOps, AI agents — lives in the [Hermess](https://github.com/WHALASAHIB/Hermess.git) repo.**
+```
+AI Research → Strategy Code → Backtest → Paper/Live Execution → Monitoring → (loop)
+```
+
+**This repo contains the full stack**: FastAPI backend + SPA dashboard, MT5 bridge integration, multi-account management, FTMO challenge tracking, and the AI orchestrator surface.
+
+---
+
+## ✨ Feature Highlights
+
+| # | Feature | What It Does |
+|:-:|---------|--------------|
+| 1 | 📊 **Command Center** | Real-time trading overview, KPI cards, equity chart, daily change % |
+| 2 | 💼 **Portfolio** | Account positions, strategy allocation, risk metrics |
+| 3 | 📓 **Trade Journal** | Full trade history with smart filters + export |
+| 4 | 🧪 **Backtesting Lab** | Strategy validation, Monte Carlo, Walk-Forward analysis |
+| 5 | 🤖 **Bot Control** | Start / stop / monitor / edit trading bots |
+| 6 | 📝 **Script Editor** | Monaco editor with one-click deploy flow |
+| 7 | 🧠 **AI Orchestrator** | Multi-agent status and command surface |
+| 8 | 🏦 **Account Manager** | Multi-account switching (`mt5-demo`, `ftmo-10k`, `ftmo-100k`) |
+| 9 | 🏆 **FTMO Challenge** | Challenge progress, drawdown tracking, compliance |
+| 10 | 📈 **Analytics** | Strategy comparison, deep risk analysis |
+| 11 | ⚙️ **Settings** | Configuration, integrations, security |
+| 12 | 📄 **File Converter** | PDF/DOCX/XLSX → Markdown |
+
+Each page dynamically resolves the active account — switching accounts updates **all** pages automatically.
+
+---
+
+## 🏗️ Architecture
+
+```
+Browser ──► Cloudflare ──► Tunnel ──► FastAPI (:8005)
+                                          │
+                                    ┌─────┴─────┐
+                                  SQLite      JSON Store
+                                    │
+                              MT5 Bridge (:5000)
+                                    │
+                              MetaTrader 5
+                                    │
+                          mt5-demo | ftmo-10k | ftmo-100k
+```
+
+| Component | Port | Tech | Status |
+|-----------|------|------|--------|
+| **Backend** | `0.0.0.0:8005` | FastAPI + Uvicorn | ✅ Active |
+| **HTTPS (self-signed)** | `0.0.0.0:8443` | FastAPI + SSL | ✅ Active |
+| **MT5 Bridge** | `127.0.0.1:5000` | FastAPI subprocess | ✅ Connected |
+| **Cloudflare Tunnel** | → `localhost:8005` | cloudflared | ✅ Running |
+| **Domain** | `inventra.website` | Cloudflare proxied + Flexible SSL | ✅ Online |
+
+### Connected Accounts
+
+| ID | Login | Server | Balance |
+|----|-------|--------|---------|
+| `mt5-demo` | 5051185832 | MetaQuotes-Demo | ~$97K |
+| `ftmo-10k` | 1513767391 | FTMO-Demo | $9,076 |
+| `ftmo-100k` | 1513845007 | FTMO-Demo | $100,000 |
+
+> Bridge runs in **single-account mode** — only refreshes the active account to avoid hangs. Switch via the website's account switcher (restarts the MT5 terminal with chosen credentials).
 
 ---
 
@@ -20,7 +91,7 @@ AgentX is the **web cockpit** for a professional algorithmic trading system. Thi
 
 ### Prerequisites
 - Python 3.12+
-- MT5 Bridge running on port 5000 (see [Hermess](https://github.com/WHALASAHIB/Hermess.git))
+- MT5 Bridge running on port 5000
 - Cloudflared tunnel (for public access)
 
 ### Local Dev
@@ -43,77 +114,7 @@ cloudflared.exe tunnel run da2cf48b
 
 ---
 
-## 🏗️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | Python 3.12, FastAPI, Uvicorn |
-| **Frontend** | Vanilla JS SPA, Chart.js, CSS3 |
-| **Database** | JSON file store + SQLite |
-| **Auth** | Google OAuth 2.0 + Dev-mode bypass + Access Codes |
-| **Infrastructure** | Cloudflare Tunnel (da2cf48b), Cloudflare SSL (Flexible) |
-| **Bridge** | MT5 Bridge (Hermess) — single-account subprocess coordinator |
-
----
-
-## 📐 Dashboard — 12 Sections
-
-| # | Section | Purpose |
-|:-:|---------|---------|
-| 1 | 📊 **Command Center** | Real-time trading overview, KPI cards, equity chart, daily change % |
-| 2 | 💼 **Portfolio** | Account positions, strategy allocation, risk metrics |
-| 3 | 📓 **Trade Journal** | Complete trade history with smart filters, export |
-| 4 | 🧪 **Backtesting Lab** | Strategy validation, Monte Carlo, Walk-Forward |
-| 5 | 🤖 **Bot Control** | Start/stop/monitor/edit trading bots |
-| 6 | 📝 **Script Editor** | Monaco editor with deploy flow |
-| 7 | 🧠 **AI Orchestrator** | Multi-agent status and commands |
-| 8 | 🏦 **Account Manager** | Multi-account switching (mt5-demo, ftmo-10k, ftmo-100k) |
-| 9 | 🏆 **FTMO Challenge** | Challenge progress, DD tracking, compliance |
-| 10 | 📈 **Analytics** | Deep metrics, strategy comparison, risk analysis |
-| 11 | ⚙️ **Settings** | Configuration, integrations, security |
-| 12 | 📄 **File Converter** | PDF/DOCX/XLSX → Markdown |
-
-Each page dynamically resolves the active account — switching accounts updates **all** pages automatically.
-
----
-
-## 🌐 Infrastructure
-
-```
-Browser ──► Cloudflare ──► Tunnel ──► FastAPI (:8005)
-                                          │
-                                    ┌─────┴─────┐
-                                    │           │
-                                 SQLite      JSON Store
-                                    │
-                              MT5 Bridge (:5000)
-                                    │
-                              MetaTrader 5
-                                    │
-                          mt5-demo | ftmo-10k | ftmo-100k
-```
-
-| Component | Port | Tech | Status |
-|-----------|------|------|--------|
-| **Backend** | `0.0.0.0:8005` | FastAPI + Uvicorn | ✅ Active |
-| **HTTPS (self-signed)** | `0.0.0.0:8443` | FastAPI + SSL | ✅ Active |
-| **MT5 Bridge** | `127.0.0.1:5000` | FastAPI Subprocess | ✅ Connected |
-| **Cloudflare Tunnel** | → `localhost:8005` | cloudflared da2cf48b | ✅ Running |
-| **Domain** | `inventra.website` | Cloudflare proxied + Flexible SSL | ✅ Online |
-
-### Connected Accounts
-
-| ID | Login | Server | Balance |
-|----|-------|--------|---------|
-| `mt5-demo` | 5051185832 | MetaQuotes-Demo | ~$97,107 |
-| `ftmo-10k` | 1513767391 | FTMO-Demo | $9,076 |
-| `ftmo-100k` | 1513845007 | FTMO-Demo | $100,000 |
-
-Bridge runs in **single-account mode** — only refreshes the active account to avoid hangs. Switch via the website's Switch button (restarts MT5 terminal with chosen credentials).
-
----
-
-## 🛡️ API Endpoints
+## 🛡️ API (75+ REST endpoints + SSE + WebSocket)
 
 | Category | Base Path | Key Endpoints |
 |----------|-----------|---------------|
@@ -132,19 +133,16 @@ Bridge runs in **single-account mode** — only refreshes the active account to 
 | **Events (SSE)** | `/api/events` | Real-time streaming |
 | **WebSocket** | `/api/ws/{path}` | Proxy → MT5 Bridge |
 
-**75+ REST endpoints** + SSE real-time streaming + WebSocket proxy.
-
 ---
 
 ## 🔒 Security
 
-- **Google OAuth 2.0** (primary auth)
-- **Access Codes** (secondary auth)
+- **Google OAuth 2.0** — primary auth
+- **Access Codes** — secondary auth
 - **JWT sessions** with Redis support
-- **Dev-mode bypass** (auto signin as Commander)
-- **Scanner blocker** — blocks `.php`, `/wp-`, `/xmlrpc` requests with 404
+- **Dev-mode bypass** — auto sign-in as Commander (dev only)
+- **Scanner blocker** — `.php`, `/wp-`, `/xmlrpc` requests → 404
 - **No secrets in code** — all in `.env.*` (gitignored)
-- **CORS** — open for dev (`allow_origins=["*"]`), restrict for production
 
 ---
 
@@ -152,47 +150,65 @@ Bridge runs in **single-account mode** — only refreshes the active account to 
 
 ```
 AgentX/
-├── backend/
-│   ├── app.py            # Main FastAPI application (141KB)
-│   ├── auth.py           # Auth handlers (OAuth, dev-mode)
-│   ├── models.py         # Pydantic models
-│   ├── bridge_client.py  # Bridge API client
-│   ├── ftmo_manager.py   # FTMO challenge logic
-│   ├── redis_client.py   # Redis caching layer
-│   ├── db/               # SQLite databases
-│   ├── ssl/              # Self-signed SSL certs
-│   └── tests/            # Test suite
-├── frontend/
-│   └── public/           # 12 pre-rendered SPA pages
-├── bots/                 # Bot strategy configs
-├── devops/               # DevOps/SRE configs
-├── strategy-engine/      # Pine Script strategy engine
-└── BASELINE.md           # Infrastructure immutable baseline
+├── backend/            # FastAPI app: app.py, auth.py, models.py, bridge_client.py
+│   ├── db/             # SQLite databases
+│   ├── ssl/            # Self-signed SSL certs
+│   └── tests/          # Test suite
+├── frontend/           # 12 pre-rendered SPA pages
+├── bots/               # Bot strategy configs
+├── backtester/         # Backtest engine + strategy library
+├── edge_discovery/     # Edge-finding research pipeline
+├── research_division/  # AI research agents
+├── strategy_council/   # Strategy vetting/approval
+├── knowledge/          # RAG knowledge base
+├── devops/             # DevOps/SRE configs
+├── agent-x-landing/    # Marketing/landing page
+├── mcp_server.py       # MCP server for AI tool access
+└── BASELINE.md         # Infrastructure immutable baseline
 ```
 
 ---
 
-## 🔧 Deployment
+## 🔧 Deployment & Operations
 
-### Current Setup (Windows VM)
 | Service | Command |
 |---------|---------|
 | **Backend** | `python -m backend --host 0.0.0.0 --port 8005` |
-| **HTTPS** | `python -m backend --host 0.0.0.0 --port 8443` (with --ssl-*) |
+| **HTTPS** | `python -m backend --host 0.0.0.0 --port 8443 --ssl-*` |
 | **Tunnel** | `./cloudflared.exe tunnel run da2cf48b` |
-| **Watchdog** | Cron job checks bridge/backend/tunnel every 1h — silent unless broken |
+| **Watchdog** | Cron checks bridge/backend/tunnel every 1h — silent unless broken |
 
 ### Auto-Sync
-GitHub auto-sync runs every hour via cron (`auto-sync: HH:00 UTC`).
+GitHub auto-sync runs via cron (every 2h) — local changes are committed and pushed automatically.
+
+---
+
+## 🗺️ Roadmap
+
+- [x] MT5 multi-account bridge
+- [x] FTMO challenge tracking
+- [x] Backtesting lab (Monte Carlo, Walk-Forward)
+- [x] AI orchestrator + MCP server
+- [ ] Low-latency C++ execution engine
+- [ ] Strategy factory v2 (defeated-Sharpe OOS validation)
+- [ ] Portfolio risk aggregation across accounts
 
 ---
 
 ## 📚 Related
 
-| Repo | What It Has |
-|------|-------------|
-| **[Hermess](https://github.com/WHALASAHIB/Hermess.git)** | Bot strategies, AI agents, research pipeline, DevOps/SRE, RAG knowledge base, MT5 Bridge, config |
+| Repo / System | What It Has |
+|---------------|-------------|
+| **Hermess (bridge)** | MT5 Bridge — single-account subprocess coordinator |
+| **Backtester** | Strategy validation engine (Monte Carlo, Walk-Forward) |
+| **Research Division** | AI research agents for edge discovery |
 
 ---
 
-*AgentX v3 — Trading Dashboard. Part of Project PropMillion: $1M in 12 months via algorithmic trading.*
+## ⚠️ Disclaimer
+
+**Trading involves substantial risk.** This software is provided for educational and research purposes. Past performance does not guarantee future results. Use at your own risk — never trade with money you cannot afford to lose.
+
+---
+
+*AgentX — Algorithmic Trading Dashboard. Built for Project PropMillion.*
