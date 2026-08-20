@@ -14,6 +14,7 @@ Expected depth:
 """
 
 from __future__ import annotations
+import json
 import logging
 import os
 import time
@@ -184,18 +185,30 @@ def get_data(symbol: str, timeframe: str = "H1",
 # ============================================================================
 
 def get_next_pair() -> str:
-    """Determine which pair to scan this run based on current hour."""
-    hour = datetime.now(timezone.utc).hour + 8  # HKT
-    session_slots = [7, 13, 19, 1]
-    current_slot = None
-    for slot in session_slots:
-        if hour >= slot:
-            current_slot = slot
-    if current_slot is None:
-        current_slot = 1
-    slot_index = session_slots.index(current_slot)
-    pair_index = slot_index % len(ROTATION)
-    return ROTATION[pair_index]
+    """Determine which pair to scan this run — state-based full rotation.
+
+    Advances a persistent pointer through ALL pairs in ROTATION so every
+    pair gets scanned (hour-slot mapping only ever covered 4 of 8 pairs).
+    Falls back to hour-slot logic if the state file is missing.
+    """
+    state_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "..", "state", "rotation_state.json")
+    try:
+        with open(state_file, encoding="utf-8") as f:
+            st = json.load(f)
+        idx = int(st.get("next_index", 0)) % len(ROTATION)
+    except Exception:
+        idx = 0
+    pair = ROTATION[idx]
+    try:
+        os.makedirs(os.path.dirname(state_file), exist_ok=True)
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump({"next_index": (idx + 1) % len(ROTATION),
+                       "last_pair": pair,
+                       "at": datetime.now(timezone.utc).isoformat()}, f)
+    except Exception:
+        pass
+    return pair
 
 
 # ============================================================================
