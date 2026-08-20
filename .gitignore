@@ -45,3 +45,7 @@ temp/
 Thumbs.db
 tunnel_token.txt
 venv/
+
+# Edge discovery runtime cache — regenerated, not source
+edge_discovery/state/cache/
+edge_discovery/**/cache/*.npy
