@@ -1,7 +1,7 @@
 {
-  "run_timestamp": 1787346196.828175,
-  "datetime_utc": "2026-08-21 21:03:16 UTC",
-  "pair": "USDJPY",
+  "run_timestamp": 1787288422.0877697,
+  "datetime_utc": "2026-08-21 05:00:22 UTC",
+  "pair": "XAUUSD",
   "timeframes_scanned": [
     "M5",
     "M15",
@@ -10,8 +10,8 @@
     "D1"
   ],
   "total_combos": 75,
-  "scan_duration_seconds": 188.3,
-  "candidates_found": 1,
+  "scan_duration_seconds": 19.5,
+  "candidates_found": 2,
   "edges": [],
   "data_summary": {},
   "council_verdicts": []

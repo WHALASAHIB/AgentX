@@ -1,0 +1,53 @@
+{
+  "run_timestamp": 1787310071.2562807,
+  "datetime_utc": "2026-08-21 11:01:11 UTC",
+  "pair": "EURUSD",
+  "candidates_reviewed": 1,
+  "accepted": 0,
+  "rejected": 1,
+  "edges": [
+    {
+      "run_timestamp": 1787310063.8403203,
+      "pair": "EURUSD",
+      "timeframe": "H1",
+      "indicator": "MFI",
+      "parameters": {
+        "period": 14,
+        "oversold": 20,
+        "overbought": 80
+      },
+      "trades": 5798,
+      "win_rate": 0.5286,
+      "profit_factor": 1.1046,
+      "sharpe": 0.5025,
+      "avg_win": 0.155,
+      "avg_loss": 0.1579,
+      "max_drawdown_pct": 24.2625,
+      "max_cons_losses": 22,
+      "total_return_pct": 45.0191,
+      "walk_forward_pass": true,
+      "oos_win_rate": 0.5403,
+      "oos_profit_factor": 1.0871,
+      "p_value": 1.6462159989215086e-05,
+      "council_quant": 55.0,
+      "council_microstructure": 45,
+      "council_behavioral": 30,
+      "council_risk": 10,
+      "council_strategy": 75,
+      "council_final": 43.8,
+      "economic_rationale": "EURUSD is the most liquid pair \u2014 institutional flow dominates, retail is noise; Low WR (53%) \u2014 edge too weak for reliable exploitation; No clear behavioral bias identified for this indicator",
+      "who_loses": "EURUSD is the most liquid pair \u2014 institutional flow dominates, retail is noise; Low WR (53%) \u2014 edge too weak for reliable exploitation",
+      "status": "candidate",
+      "discovered": "2026-08-21 11:01:03 UTC",
+      "session_bias": "",
+      "council_decision": "REJECT",
+      "council_reasons": {
+        "quant": "Strong sample (5798 trades); Strongly significant (p=0.0000); OOS consistent (drop=-1.2pp); High max drawdown (24.3%)",
+        "microstructure": "EURUSD is the most liquid pair \u2014 institutional flow dominates, retail is noise; Low WR (53%) \u2014 edge too weak for reliable exploitation",
+        "behavioral": "No clear behavioral bias identified for this indicator",
+        "risk": "Max drawdown 24.3% is severe \u2014 edge can destroy account before recovering; 22 consecutive losses \u2014 psychological breaking point",
+        "strategy": "Standard indicator \u2014 straightforward MT5 implementation; H1 aligns with existing Propfirm Pass bot \u2014 can piggyback; Positive expected value per trade ($0.01)"
+      }
+    }
+  ]
+}
