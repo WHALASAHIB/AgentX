@@ -1,0 +1,54 @@
+{
+  "run_timestamp": 1787482864.6673925,
+  "datetime_utc": "2026-08-23 11:01:04 UTC",
+  "pair": "EURUSD",
+  "timeframes_scanned": [
+    "M5",
+    "M15",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "total_combos": 75,
+  "scan_duration_seconds": 19.8,
+  "candidates_found": 1,
+  "edges": [
+    {
+      "run_timestamp": 1787482859.8412962,
+      "pair": "EURUSD",
+      "timeframe": "H1",
+      "indicator": "MFI",
+      "parameters": {
+        "period": 14,
+        "oversold": 20,
+        "overbought": 80
+      },
+      "trades": 5798,
+      "win_rate": 0.5286,
+      "profit_factor": 1.1046,
+      "sharpe": 0.5025,
+      "avg_win": 0.155,
+      "avg_loss": 0.1579,
+      "max_drawdown_pct": 24.2625,
+      "max_cons_losses": 22,
+      "total_return_pct": 45.0191,
+      "walk_forward_pass": true,
+      "oos_win_rate": 0.5403,
+      "oos_profit_factor": 1.0871,
+      "p_value": 1.6462159989215086e-05,
+      "council_quant": 0.0,
+      "council_microstructure": 0.0,
+      "council_behavioral": 0.0,
+      "council_risk": 0.0,
+      "council_strategy": 0.0,
+      "council_final": 0.0,
+      "economic_rationale": "",
+      "who_loses": "",
+      "status": "candidate",
+      "discovered": "2026-08-23 11:00:59 UTC",
+      "session_bias": ""
+    }
+  ],
+  "data_summary": {},
+  "council_verdicts": []
+}
