@@ -1,0 +1,53 @@
+{
+  "run_timestamp": 1787670024.6679566,
+  "datetime_utc": "2026-08-25 15:00:24 UTC",
+  "pair": "GBPUSD",
+  "timeframes_scanned": [
+    "M5",
+    "M15",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "total_combos": 75,
+  "scan_duration_seconds": 19.4,
+  "candidates_found": 2,
+  "edges": [
+    {
+      "run_timestamp": 1787670012.7037401,
+      "pair": "GBPUSD",
+      "timeframe": "M15",
+      "indicator": "Bollinger_Bands",
+      "parameters": {
+        "period": 10,
+        "num_std": 2.0
+      },
+      "trades": 7059,
+      "win_rate": 0.5226,
+      "profit_factor": 1.1129,
+      "sharpe": 0.564,
+      "avg_win": 0.1191,
+      "avg_loss": 0.1177,
+      "max_drawdown_pct": 11.1536,
+      "max_cons_losses": 11,
+      "total_return_pct": 44.5622,
+      "walk_forward_pass": true,
+      "oos_win_rate": 0.5185,
+      "oos_profit_factor": 1.1336,
+      "p_value": 0.00016290210609369918,
+      "council_quant": 0.0,
+      "council_microstructure": 0.0,
+      "council_behavioral": 0.0,
+      "council_risk": 0.0,
+      "council_strategy": 0.0,
+      "council_final": 0.0,
+      "economic_rationale": "",
+      "who_loses": "",
+      "status": "candidate",
+      "discovered": "2026-08-25 15:00:12 UTC",
+      "session_bias": ""
+    }
+  ],
+  "data_summary": {},
+  "council_verdicts": []
+}

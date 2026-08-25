@@ -1,0 +1,52 @@
+{
+  "run_timestamp": 1787670024.803816,
+  "datetime_utc": "2026-08-25 15:00:24 UTC",
+  "pair": "GBPUSD",
+  "candidates_reviewed": 1,
+  "accepted": 0,
+  "rejected": 1,
+  "edges": [
+    {
+      "run_timestamp": 1787670012.7037401,
+      "pair": "GBPUSD",
+      "timeframe": "M15",
+      "indicator": "Bollinger_Bands",
+      "parameters": {
+        "period": 10,
+        "num_std": 2.0
+      },
+      "trades": 7059,
+      "win_rate": 0.5226,
+      "profit_factor": 1.1129,
+      "sharpe": 0.564,
+      "avg_win": 0.1191,
+      "avg_loss": 0.1177,
+      "max_drawdown_pct": 11.1536,
+      "max_cons_losses": 11,
+      "total_return_pct": 44.5622,
+      "walk_forward_pass": true,
+      "oos_win_rate": 0.5185,
+      "oos_profit_factor": 1.1336,
+      "p_value": 0.00016290210609369918,
+      "council_quant": 65.0,
+      "council_microstructure": 73,
+      "council_behavioral": 60,
+      "council_risk": 15,
+      "council_strategy": 70,
+      "council_final": 59.2,
+      "economic_rationale": "Retail overreaction to news/momentum creates temporary price extremes; algorithms and market makers fade these; Statistical arbitrage: extreme deviations attract mean-reverting flow from prop desks and HFTs; Volatility clustering (Mandelbrot): large moves beget large moves \u2014 statistical fact of financial time series; Stop-loss cascades: leveraged retail positions get liquidated, accelerating the move; GBPUSD has strong institutional participation; Low WR (52%) \u2014 edge too weak for reliable exploitation; Recency + representativeness \u2014 'this time is different' thinking at extremes, usually wrong; Lower timeframe (M15) \u2014 behavioral biases are weaker, noise dominates",
+      "who_loses": "Retail overreaction to news/momentum creates temporary price extremes; algorithms and market makers fade these; Statistical arbitrage: extreme deviations attract mean-reverting flow from prop desks and HFTs; Volatility clustering (Mandelbrot): large moves beget large moves \u2014 statistical fact of financial time series; Stop-loss cascades: leveraged retail positions get liquidated, accelerating the move; GBPUSD has strong institutional participation; Low WR (52%) \u2014 edge too weak for reliable exploitation",
+      "status": "candidate",
+      "discovered": "2026-08-25 15:00:12 UTC",
+      "session_bias": "",
+      "council_decision": "REJECT",
+      "council_reasons": {
+        "quant": "Strong sample (7059 trades); Strongly significant (p=0.0002); OOS consistent (drop=0.4pp)",
+        "microstructure": "Retail overreaction to news/momentum creates temporary price extremes; algorithms and market makers fade these; Statistical arbitrage: extreme deviations attract mean-reverting flow from prop desks and HFTs; Volatility clustering (Mandelbrot): large moves beget large moves \u2014 statistical fact of financial time series; Stop-loss cascades: leveraged retail positions get liquidated, accelerating the move; GBPUSD has strong institutional participation; Low WR (52%) \u2014 edge too weak for reliable exploitation",
+        "behavioral": "Recency + representativeness \u2014 'this time is different' thinking at extremes, usually wrong; Lower timeframe (M15) \u2014 behavioral biases are weaker, noise dominates",
+        "risk": "Max drawdown 11.2% is significant; 11 consecutive losses \u2014 psychological breaking point; Vulnerable to: strong trending markets (can't catch falling knife); Vulnerable to: volatility regime shifts (bands expand/contract); Lower TF edges decay faster \u2014 microstructure changes quickly",
+        "strategy": "Standard indicator \u2014 straightforward MT5 implementation; Low TF (M15) \u2014 more signals, faster compounding; Positive expected value per trade ($0.01)"
+      }
+    }
+  ]
+}
