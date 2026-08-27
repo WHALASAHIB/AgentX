@@ -1,0 +1,18 @@
+{
+  "run_timestamp": 1787806841.9871614,
+  "datetime_utc": "2026-08-27 05:00:41 UTC",
+  "pair": "XAUUSD",
+  "timeframes_scanned": [
+    "M5",
+    "M15",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "total_combos": 75,
+  "scan_duration_seconds": 18.8,
+  "candidates_found": 1,
+  "edges": [],
+  "data_summary": {},
+  "council_verdicts": []
+}
