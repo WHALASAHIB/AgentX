@@ -926,5 +926,17 @@
     "metadata": {
       "source": "bot_controller"
     }
+  },
+  {
+    "id": "dec_1789460076286_5de9",
+    "timestamp": "2026-09-15T08:14:36.286476+00:00",
+    "agent_id": "VolatilityBreakout_XAUUSD",
+    "agent_name": "Volatilitybreakout Xauusd",
+    "action": "Bot Stopped",
+    "detail": "Bot 'VolatilityBreakout_XAUUSD' stopped (PID 11296)",
+    "outcome": "success",
+    "metadata": {
+      "source": "bot_controller"
+    }
   }
 ]
