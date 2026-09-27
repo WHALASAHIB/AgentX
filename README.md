@@ -215,7 +215,17 @@ GitHub auto-sync runs via cron (every 2h) — local changes are committed and pu
 
 ---
 
-<!-- last-refreshed: 2026-09-15 -->
+<!-- last-refreshed: 2026-09-27 -->
+
+## 📡 Live Status
+
+| Metric | Value |
+|--------|-------|
+| Stars | 0 |
+| Forks | 0 |
+| Commits | 344 |
+| Last commit | `c98a1bd auto-sync: 2026-09-16 09:59 UTC / 2026-09-16 09:59 HKT` |
+| Refreshed | 2026-09-27 (auto) |
 
 ## 📡 Live Status
 
